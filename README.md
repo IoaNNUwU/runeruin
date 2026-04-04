@@ -1,6 +1,6 @@
 ## World Structure
 
-```txt
+```
                                           + Y = 512
              /````\                       | 
  TOP LAYER   \_  _/  /````\        .__.   | - - - 217 blocks below build limit
