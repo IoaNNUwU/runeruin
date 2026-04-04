@@ -1,0 +1,13 @@
+{
+  "itemGroup.runeruin": "Example Mod Tab",
+  "block.runeruin.example_block": "Example Block",
+  "item.runeruin.example_item": "Example Item",
+
+  "runeruin.configuration.title": "RuneRuin Configs",
+  "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",
+  "runeruin.configuration.section.runeruin.common.toml.title": "RuneRuin Configs",
+  "runeruin.configuration.items": "Item List",
+  "runeruin.configuration.logDirtBlock": "Log Dirt Block",
+  "runeruin.configuration.magicNumberIntroduction": "Magic Number Text",
+  "runeruin.configuration.magicNumber": "Magic Number"
+}

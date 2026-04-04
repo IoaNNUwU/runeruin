@@ -1,0 +1,53 @@
+{
+  "type": "runeruin:runeruin_dimension_type",
+  "generator": {
+    "type": "runeruin:runeruin_chunk_generator",
+    "biome_source": {
+      "type": "runeruin:runeruin_biome_source",
+      "layer_biomes": [
+        [
+          "minecraft:cherry_grove",
+          "minecraft:plains",
+          "minecraft:birch_forest"
+        ],
+        [
+          "minecraft:jungle",
+          "minecraft:bamboo_jungle",
+          "minecraft:lush_caves",
+          "minecraft:crimson_forest"
+        ],
+        [
+          "minecraft:jungle",
+          "minecraft:bamboo_jungle",
+          "minecraft:lush_caves",
+          "minecraft:crimson_forest"
+        ],
+        [
+          "minecraft:dripstone_caves",
+          "minecraft:cold_ocean",
+          "minecraft:deep_dark"
+        ],
+        [
+          "minecraft:dripstone_caves",
+          "minecraft:cold_ocean",
+          "minecraft:deep_dark"
+        ],
+        [
+          "minecraft:basalt_deltas",
+          "minecraft:warped_forest",
+          "minecraft:crimson_forest"
+        ],
+        [
+          "minecraft:basalt_deltas",
+          "minecraft:warped_forest",
+          "minecraft:crimson_forest"
+        ],
+        [
+          "minecraft:the_void",
+          "minecraft:the_end",
+          "minecraft:small_end_islands"
+        ]
+      ]
+    }
+  }
+}
