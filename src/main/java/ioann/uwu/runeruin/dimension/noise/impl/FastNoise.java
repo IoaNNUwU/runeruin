@@ -1,4 +1,4 @@
-package ioann.uwu.runeruin.dimension;
+package ioann.uwu.runeruin.dimension.noise.impl;
 
 // MIT License
 //

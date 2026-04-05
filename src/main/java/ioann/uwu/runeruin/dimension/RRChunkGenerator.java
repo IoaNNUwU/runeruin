@@ -3,10 +3,12 @@ package ioann.uwu.runeruin.dimension;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.noise.Noise;
+import ioann.uwu.runeruin.dimension.noise.SingleNoise;
+import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.WorldGenRegion;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
@@ -49,10 +51,11 @@ public class RRChunkGenerator extends ChunkGenerator {
     public static final int UNDERGROUND_LEVEL_HEIGHT = 75;
     public static final int ARCANE_PLATE_HEIGHT = 5;
 
-    public static final int BIOME_HEIGHT = 25;
-    public static final int BIOME_MIN_HEIGHT = 10;
-    public static final int CEILING_BIOME_HEIGHT = 15;
-    public static final int CEILING_BIOME_MIN_HEIGHT = 5;
+    public static final int TOP_LAYER_TERRAIN_HEIGHT = 50;
+    public static final int TERRAIN_HEIGHT = 25;
+    public static final int TERRAIN_MIN_HEIGHT = 10;
+    public static final int CEILING_TERRAIN_HEIGHT = 15;
+    public static final int CEILING_TERRAIN_MIN_HEIGHT = 5;
 
     public static final int CEILING_VOID_Y = VOID_HEIGHT;
     public static final int LOST_CAVES_Y = CEILING_VOID_Y + ARCANE_PLATE_HEIGHT + 1;
@@ -83,10 +86,6 @@ public class RRChunkGenerator extends ChunkGenerator {
         return 512;
     }
 
-    private static final RandomSource randomSource = new WorldgenRandom(new LegacyRandomSource(292912813912L));
-    private static final FastNoise arcaneStructureNoise = new FastNoise(randomSource.nextInt());
-    private static final FastNoise worldGenNoise = new FastNoise(randomSource.nextInt());
-
     @Override
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
         return CompletableFuture.supplyAsync(() -> {
@@ -97,6 +96,10 @@ public class RRChunkGenerator extends ChunkGenerator {
             return chunk;
         });
     }
+
+    private static final Noise undergroundNoise = new SingleNoise("undergroundNoise".hashCode());
+
+    private static final Noise topLevelNoise = new TopLevelNoise();
 
     private void generateTerrain(ChunkAccess chunk) {
         for (int x = 0; x < 16; x++) {
@@ -110,50 +113,44 @@ public class RRChunkGenerator extends ChunkGenerator {
                     int xOffset = 4272 * i;
                     int zOffset = 3372 * i;
 
-                    float noise = worldGenNoise.GetNoise(
+                    float noise = undergroundNoise.noise(
                             chunk.getPos().getMiddleBlockX() + x + xOffset,
                             chunk.getPos().getMiddleBlockZ() + z + zOffset
                     );
-                    float normalizedNoise = normalizeNoise(noise);
 
-                    int biomeHeight = (int) (BIOME_MIN_HEIGHT + normalizedNoise * (BIOME_HEIGHT - BIOME_MIN_HEIGHT));
+                    int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
 
                     for (int y = layerStartingHeights[i]; y < layerStartingHeights[i] + biomeHeight + 1; y++) {
                         chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
                     }
-
                 }
             }
         }
 
-        if (isTopLayer(chunk)) {
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    float noise = worldGenNoise.GetNoise(
-                            chunk.getPos().getMiddleBlockX() + x + 6133,
-                            chunk.getPos().getMiddleBlockZ() + z + 2223
-                    );
-                    float normalizedNoise = normalizeNoise(noise);
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
 
-                    int biomeHeight = (int) (BIOME_MIN_HEIGHT + normalizedNoise * (BIOME_HEIGHT - BIOME_MIN_HEIGHT));
+                float noise = topLevelNoise.noise(
+                        chunk.getPos().getMiddleBlockX() + x,
+                        chunk.getPos().getMiddleBlockZ() + z
+                );
 
-                    for (int y = TOP_LAYER_Y; y < TOP_LAYER_Y + biomeHeight - 3; y++) {
-                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
-                    }
-                    for (int y = TOP_LAYER_Y + biomeHeight - 3; y < TOP_LAYER_Y + biomeHeight; y++) {
-                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState());
-                    }
-                    chunk.setBlockState(new BlockPos(x, TOP_LAYER_Y + biomeHeight, z), Blocks.GRASS_BLOCK.defaultBlockState());
+                if (Float.isNaN(noise)) {
+                    continue;
                 }
+
+                int biomeHeight = (int) (noise * (TOP_LAYER_TERRAIN_HEIGHT));
+
+                for (int y = TOP_LAYER_Y; y < TOP_LAYER_Y + biomeHeight - 3; y++) {
+                    chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+                }
+                for (int y = TOP_LAYER_Y + biomeHeight - 3; y < TOP_LAYER_Y + biomeHeight; y++) {
+                    chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState());
+                }
+                chunk.setBlockState(new BlockPos(x, TOP_LAYER_Y + biomeHeight, z), Blocks.GRASS_BLOCK.defaultBlockState());
             }
         }
-
     }
-
-    // how far away peaks are from each other and how wide they are
-    // default 1.0f - for normal world gen
-    // 0.2f         - smooth edges. ideal for generation wide plateaus
-    private static final float XZ_SCALE = 0.4f;
 
     private void fillArcaneStructure(ChunkAccess chunk) {
 
@@ -229,15 +226,11 @@ public class RRChunkGenerator extends ChunkGenerator {
             BlockPos nzBlock = chunk.getPos().getBlockAt(0, 0, 15);
             BlockPos nnBlock = chunk.getPos().getBlockAt(0, 0, 0);
 
-            float xzNoise = arcaneStructureNoise.GetNoise(xzBlock.getX() * XZ_SCALE, xzBlock.getZ() * XZ_SCALE);
-            float xnNoise = arcaneStructureNoise.GetNoise(xnBlock.getX() * XZ_SCALE, xnBlock.getZ() * XZ_SCALE);
-            float nzNoise = arcaneStructureNoise.GetNoise(nzBlock.getX() * XZ_SCALE, nzBlock.getZ() * XZ_SCALE);
-            float nnNoise = arcaneStructureNoise.GetNoise(nnBlock.getX() * XZ_SCALE, nnBlock.getZ() * XZ_SCALE);
-
-            xzNoise = normalizeNoise(xzNoise);
-            xnNoise = normalizeNoise(xnNoise);
-            nzNoise = normalizeNoise(nzNoise);
-            nnNoise = normalizeNoise(nnNoise);
+            // TODO:
+            float xzNoise = topLevelNoise.noise(xzBlock.getX(), xzBlock.getZ());
+            float xnNoise = topLevelNoise.noise(xnBlock.getX(), xnBlock.getZ());
+            float nzNoise = topLevelNoise.noise(nzBlock.getX(), nzBlock.getZ());
+            float nnNoise = topLevelNoise.noise(nnBlock.getX(), nnBlock.getZ());
 
             return new ChunkVerticesNoise(xzNoise, xnNoise, nzNoise, nnNoise);
         }
@@ -248,11 +241,15 @@ public class RRChunkGenerator extends ChunkGenerator {
     }
 
     private static boolean isTopLayer(ChunkVerticesNoise chunk) {
+
+        return true;
+
+        /*
         boolean isAtLeastOneCornerTopLayer = isTopLayer(chunk.xzNoise) || isTopLayer(chunk.xnNoise)
                 || isTopLayer(chunk.nzNoise) || isTopLayer(chunk.nnNoise);
 
         return isAtLeastOneCornerTopLayer;
-
+         */
     }
 
     private static boolean isTopLayerBorder(ChunkAccess chunk) {
@@ -290,12 +287,6 @@ public class RRChunkGenerator extends ChunkGenerator {
     // 0.33f means 33% of chunks will be top layer and 66% holes
     private static final float TOP_LAYER_PERCENTAGE = 0.5f;
 
-    /// @param noise noise in range `-1..1`
-    /// @return noise in range `0..1`
-    private static float normalizeNoise(float noise) {
-        return (noise + 1) / 2;
-    }
-
     private static boolean isTopLayer(float normalizedNoise) {
         return normalizedNoise > TOP_LAYER_PERCENTAGE;
     }
@@ -311,8 +302,8 @@ public class RRChunkGenerator extends ChunkGenerator {
     }
 
     @Override
-    public int getBaseHeight(int i, int i1, Heightmap.Types types, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
-        return TOP_LAYER_Y;
+    public int getBaseHeight(int x, int z, Heightmap.Types types, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
+        return (int) (TOP_LAYER_Y + TERRAIN_MIN_HEIGHT + (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT) * topLevelNoise.noise(x, z));
     }
 
     @Override

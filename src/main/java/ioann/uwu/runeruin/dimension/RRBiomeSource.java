@@ -11,8 +11,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
-import net.minecraft.world.level.levelgen.LegacyRandomSource;
-import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -99,10 +97,8 @@ public class RRBiomeSource extends BiomeSource {
     }
 
     private static final RandomSource randomSource = RandomSource.createThreadLocalInstance(1022101L);
-    private static final FastNoise arcaneStructureNoise = new FastNoise(randomSource.nextInt());
-    private static final FastNoise worldGenNoise = new FastNoise(randomSource.nextInt());
 
-    private static final int CEILING_BIOME_HEIGHT = RRChunkGenerator.CEILING_BIOME_HEIGHT + 15;
+    private static final int CEILING_BIOME_HEIGHT = RRChunkGenerator.CEILING_TERRAIN_HEIGHT + 15;
     private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
 
     @Override
