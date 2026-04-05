@@ -5,11 +5,14 @@ import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
+import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.levelgen.LegacyRandomSource;
+import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -25,32 +28,32 @@ public class RRBiomeSource extends BiomeSource {
             REGISTRY.register("runeruin_biome_source", () -> RRBiomeSource.CODEC);
 
     private final HolderSet<Biome> topLevelBiomes;
-    private final HolderSet<Biome> topLevelUndergroundBiomes;
-    private final HolderSet<Biome> secondLevelBiomes;
-    private final HolderSet<Biome> secondLevelUndergroundBiomes;
-    private final HolderSet<Biome> thirdLevelBiomes;
-    private final HolderSet<Biome> thirdLevelUndergroundBiomes;
-    private final HolderSet<Biome> fourthLevelBiomes;
-    private final HolderSet<Biome> fourthLevelUndergroundBiomes;
+    private final HolderSet<Biome> bloomingCavesCeilingBiomes;
+    private final HolderSet<Biome> bloomingCavesBiomes;
+    private final HolderSet<Biome> deepCavesCeilingBiomes;
+    private final HolderSet<Biome> deepCavesBiomes;
+    private final HolderSet<Biome> lostCavesCeilingBiomes;
+    private final HolderSet<Biome> lostCavesBiomes;
+    private final HolderSet<Biome> voidBiomes;
 
     public RRBiomeSource(
             HolderSet<Biome> topLevelBiomes,
-            HolderSet<Biome> topLevelUndergroundBiomes,
-            HolderSet<Biome> secondLevelBiomes,
-            HolderSet<Biome> secondLevelUndergroundBiomes,
-            HolderSet<Biome> thirdLevelBiomes,
-            HolderSet<Biome> thirdLevelUndergroundBiomes,
-            HolderSet<Biome> fourthLevelBiomes,
-            HolderSet<Biome> fourthLevelUndergroundBiomes
+            HolderSet<Biome> bloomingCavesCeilingBiomes,
+            HolderSet<Biome> bloomingCavesBiomes,
+            HolderSet<Biome> deepCavesCeilingBiomes,
+            HolderSet<Biome> deepCavesBiomes,
+            HolderSet<Biome> lostCavesCeilingBiomes,
+            HolderSet<Biome> lostCavesBiomes,
+            HolderSet<Biome> voidBiomes
     ) {
         this.topLevelBiomes = topLevelBiomes;
-        this.topLevelUndergroundBiomes = topLevelUndergroundBiomes;
-        this.secondLevelBiomes = secondLevelBiomes;
-        this.secondLevelUndergroundBiomes = secondLevelUndergroundBiomes;
-        this.thirdLevelBiomes = thirdLevelBiomes;
-        this.thirdLevelUndergroundBiomes = thirdLevelUndergroundBiomes;
-        this.fourthLevelBiomes = fourthLevelBiomes;
-        this.fourthLevelUndergroundBiomes = fourthLevelUndergroundBiomes;
+        this.bloomingCavesBiomes = bloomingCavesBiomes;
+        this.bloomingCavesCeilingBiomes = bloomingCavesCeilingBiomes;
+        this.deepCavesBiomes = deepCavesBiomes;
+        this.deepCavesCeilingBiomes = deepCavesCeilingBiomes;
+        this.lostCavesBiomes = lostCavesBiomes;
+        this.lostCavesCeilingBiomes = lostCavesCeilingBiomes;
+        this.voidBiomes = voidBiomes;
     }
 
     public static final MapCodec<RRBiomeSource> CODEC = Codec.list(Biome.LIST_CODEC).xmap(
@@ -66,15 +69,15 @@ public class RRBiomeSource extends BiomeSource {
             ),
             biomeSource -> List.of(
                     biomeSource.topLevelBiomes,
-                    biomeSource.topLevelUndergroundBiomes,
-                    biomeSource.secondLevelBiomes,
-                    biomeSource.secondLevelUndergroundBiomes,
-                    biomeSource.thirdLevelBiomes,
-                    biomeSource.thirdLevelUndergroundBiomes,
-                    biomeSource.fourthLevelBiomes,
-                    biomeSource.fourthLevelUndergroundBiomes
+                    biomeSource.bloomingCavesCeilingBiomes,
+                    biomeSource.bloomingCavesBiomes,
+                    biomeSource.deepCavesCeilingBiomes,
+                    biomeSource.deepCavesBiomes,
+                    biomeSource.lostCavesCeilingBiomes,
+                    biomeSource.lostCavesBiomes,
+                    biomeSource.voidBiomes
             )
-    ).fieldOf("layer_biomes");
+    ).fieldOf("top_to_bottom_biomes");
 
     @Override
     protected MapCodec<? extends BiomeSource> codec() {
@@ -85,27 +88,46 @@ public class RRBiomeSource extends BiomeSource {
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
         return Stream.of(
                 topLevelBiomes,
-                topLevelUndergroundBiomes,
-                secondLevelBiomes,
-                secondLevelUndergroundBiomes,
-                thirdLevelBiomes,
-                thirdLevelUndergroundBiomes,
-                fourthLevelBiomes,
-                fourthLevelUndergroundBiomes
+                bloomingCavesCeilingBiomes,
+                bloomingCavesBiomes,
+                deepCavesCeilingBiomes,
+                deepCavesBiomes,
+                lostCavesCeilingBiomes,
+                lostCavesBiomes,
+                voidBiomes
         ).flatMap(HolderSet::stream);
     }
 
+    private static final RandomSource randomSource = RandomSource.createThreadLocalInstance(1022101L);
+    private static final FastNoise arcaneStructureNoise = new FastNoise(randomSource.nextInt());
+    private static final FastNoise worldGenNoise = new FastNoise(randomSource.nextInt());
+
+    private static final int CEILING_BIOME_HEIGHT = RRChunkGenerator.CEILING_BIOME_HEIGHT + 15;
+    private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
+
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
-        var rnd = RandomSource.create();
-        if (y < 5) {
-            return this.fourthLevelBiomes.getRandomElement(rnd).get();
-        } else if (y < 23) {
-            return this.thirdLevelBiomes.getRandomElement(rnd).get();
-        } else if (y < 42) {
-            return this.secondLevelBiomes.getRandomElement(rnd).get();
+
+        x = QuartPos.toBlock(x);
+        y = QuartPos.toBlock(y);
+        z = QuartPos.toBlock(z);
+
+        if (y < RRChunkGenerator.CEILING_VOID_Y + ARCANE_PLATE_BIOME_HEIGHT) {
+            return this.voidBiomes.getRandomElement(randomSource).get();
+        } else if (y < RRChunkGenerator.LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
+            return this.lostCavesBiomes.getRandomElement(randomSource).get();
+        } else if (y < RRChunkGenerator.LOST_CAVES_CEILING_Y + ARCANE_PLATE_BIOME_HEIGHT) {
+            return this.lostCavesCeilingBiomes.getRandomElement(randomSource).get();
+        } else if (y < RRChunkGenerator.DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
+            return this.deepCavesBiomes.getRandomElement(randomSource).get();
+        } else if (y < RRChunkGenerator.DEEP_CAVES_CEILING_Y + ARCANE_PLATE_BIOME_HEIGHT) {
+            return this.deepCavesCeilingBiomes.getRandomElement(randomSource).get();
+        } else if (y < RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
+            return this.bloomingCavesBiomes.getRandomElement(randomSource).get();
+        } else if (y < RRChunkGenerator.BLOOMING_CAVES_CEILING_Y + ARCANE_PLATE_BIOME_HEIGHT) {
+            return this.bloomingCavesCeilingBiomes.getRandomElement(randomSource).get();
         } else {
-            return this.topLevelBiomes.getRandomElement(rnd).get();
+            return this.topLevelBiomes.getRandomElement(randomSource).get();
         }
     }
 }

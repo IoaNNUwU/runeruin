@@ -45,23 +45,23 @@ public class RRChunkGenerator extends ChunkGenerator {
         return CODEC;
     }
 
-    private static final int VOID_HEIGHT = 50;
-    private static final int UNDERGROUND_LEVEL_HEIGHT = 75;
-    private static final int ARCANE_PLATE_HEIGHT = 5;
+    public static final int VOID_HEIGHT = 50;
+    public static final int UNDERGROUND_LEVEL_HEIGHT = 75;
+    public static final int ARCANE_PLATE_HEIGHT = 5;
 
-    private static final int BIOME_HEIGHT = 25;
-    private static final int BIOME_MIN_HEIGHT = 10;
-    private static final int CEILING_BIOME_HEIGHT = 15;
-    private static final int CEILING_BIOME_MIN_HEIGHT = 5;
+    public static final int BIOME_HEIGHT = 25;
+    public static final int BIOME_MIN_HEIGHT = 10;
+    public static final int CEILING_BIOME_HEIGHT = 15;
+    public static final int CEILING_BIOME_MIN_HEIGHT = 5;
 
-    private static final int CEILING_VOID_Y = VOID_HEIGHT;
-    private static final int LOST_CAVES_Y = CEILING_VOID_Y + ARCANE_PLATE_HEIGHT + 1;
-    private static final int LOST_CAVES_CEILING_Y = LOST_CAVES_Y + UNDERGROUND_LEVEL_HEIGHT;
-    private static final int DEEP_CAVES_Y = LOST_CAVES_CEILING_Y + ARCANE_PLATE_HEIGHT + 1;
-    private static final int DEEP_CAVES_CEILING_Y = DEEP_CAVES_Y + UNDERGROUND_LEVEL_HEIGHT;
-    private static final int BLOOMING_CAVES_Y = DEEP_CAVES_CEILING_Y + ARCANE_PLATE_HEIGHT + 1;
-    private static final int BLOOMING_CAVES_CEILING_Y = BLOOMING_CAVES_Y + UNDERGROUND_LEVEL_HEIGHT;
-    private static final int TOP_LAYER_Y = BLOOMING_CAVES_CEILING_Y + ARCANE_PLATE_HEIGHT + 1;
+    public static final int CEILING_VOID_Y = VOID_HEIGHT;
+    public static final int LOST_CAVES_Y = CEILING_VOID_Y + ARCANE_PLATE_HEIGHT + 1;
+    public static final int LOST_CAVES_CEILING_Y = LOST_CAVES_Y + UNDERGROUND_LEVEL_HEIGHT;
+    public static final int DEEP_CAVES_Y = LOST_CAVES_CEILING_Y + ARCANE_PLATE_HEIGHT + 1;
+    public static final int DEEP_CAVES_CEILING_Y = DEEP_CAVES_Y + UNDERGROUND_LEVEL_HEIGHT;
+    public static final int BLOOMING_CAVES_Y = DEEP_CAVES_CEILING_Y + ARCANE_PLATE_HEIGHT + 1;
+    public static final int BLOOMING_CAVES_CEILING_Y = BLOOMING_CAVES_Y + UNDERGROUND_LEVEL_HEIGHT;
+    public static final int TOP_LAYER_Y = BLOOMING_CAVES_CEILING_Y + ARCANE_PLATE_HEIGHT + 1;
 
     @Override
     public void applyCarvers(WorldGenRegion worldGenRegion, long l, RandomState randomState, BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunkAccess) {
@@ -137,9 +137,13 @@ public class RRChunkGenerator extends ChunkGenerator {
 
                     int biomeHeight = (int) (BIOME_MIN_HEIGHT + normalizedNoise * (BIOME_HEIGHT - BIOME_MIN_HEIGHT));
 
-                    for (int y = TOP_LAYER_Y; y < TOP_LAYER_Y + biomeHeight + 1; y++) {
+                    for (int y = TOP_LAYER_Y; y < TOP_LAYER_Y + biomeHeight - 3; y++) {
                         chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
                     }
+                    for (int y = TOP_LAYER_Y + biomeHeight - 3; y < TOP_LAYER_Y + biomeHeight; y++) {
+                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState());
+                    }
+                    chunk.setBlockState(new BlockPos(x, TOP_LAYER_Y + biomeHeight, z), Blocks.GRASS_BLOCK.defaultBlockState());
                 }
             }
         }

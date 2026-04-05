@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "runeruin:block/polished_arcane_stone"
-  }
-}

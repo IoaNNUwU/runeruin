@@ -1,7 +1,0 @@
-{
-  "parent": "minecraft:block/cube_column_horizontal",
-  "textures": {
-    "end": "runeruin:block/arcane_stone_pillar_top",
-    "side": "runeruin:block/arcane_stone_pillar"
-  }
-}
