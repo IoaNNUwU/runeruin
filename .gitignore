@@ -39,4 +39,4 @@ run/
 repo/
 !**/src/**/repo/
 
-src/generated/*
+src/generated
