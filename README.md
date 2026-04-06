@@ -36,3 +36,15 @@
  <>    `         `                <>      | - - - 50 blocks of height
      VOID LAYER          `                + Y = 0
 ```
+
+### TODO:
+
+- Add ceiling biomes generation
+- Add `Grappling hook`
+- Improve edge generation. Inspiration: 
+    - [Cool caves](https://www.reddit.com/r/Minecraftbuilds/comments/1scbh2e/my_new_phone_background/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+    - [Cool terraforming](https://www.reddit.com/r/Minecraftbuilds/comments/1s7dp7w/made_a_castle_on_a_greek_ruin/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+    - [Wall decorations](https://www.reddit.com/r/Minecraftbuilds/comments/1sa8f3e/geode_in_the_walls/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
+- Add `Arcane Frog` boss and magic abilities
+- Add `Pirates Ship` boss/invasion and crew
+- Add ores generation as `Runes` on the pillars
