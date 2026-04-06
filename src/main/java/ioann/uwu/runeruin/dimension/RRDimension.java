@@ -70,46 +70,46 @@ public class RRDimension {
 
         RRChunkGenerator chunkGenerator = new RRChunkGenerator(new RRBiomeSource(
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.CHERRY_GROVE),
-                        biomeRegistry.getOrThrow(Biomes.PLAINS),
-                        biomeRegistry.getOrThrow(Biomes.BIRCH_FOREST)
+                        // biomeRegistry.getOrThrow(Biomes.PLAINS),
+                        // biomeRegistry.getOrThrow(Biomes.BIRCH_FOREST),
+                        biomeRegistry.getOrThrow(Biomes.CHERRY_GROVE)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.JUNGLE),
-                        biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE),
-                        biomeRegistry.getOrThrow(Biomes.LUSH_CAVES),
-                        biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST)
+                        // biomeRegistry.getOrThrow(Biomes.JUNGLE),
+                        // biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE),
+                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
+                        biomeRegistry.getOrThrow(Biomes.LUSH_CAVES)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.JUNGLE),
-                        biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE),
-                        biomeRegistry.getOrThrow(Biomes.LUSH_CAVES),
-                        biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST)
+                        // biomeRegistry.getOrThrow(Biomes.JUNGLE),
+                        // biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE),
+                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
+                        biomeRegistry.getOrThrow(Biomes.LUSH_CAVES)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES),
-                        biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
+                        // biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES),
+                        // biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
                         biomeRegistry.getOrThrow(Biomes.DEEP_DARK)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES),
-                        biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
+                        // biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES),
+                        // biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
                         biomeRegistry.getOrThrow(Biomes.DEEP_DARK)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS),
-                        biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST)
+                        // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
+                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
+                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS),
-                        biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST)
+                        // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
+                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
+                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.THE_VOID),
-                        biomeRegistry.getOrThrow(Biomes.THE_END),
-                        biomeRegistry.getOrThrow(Biomes.SMALL_END_ISLANDS)
+                        // biomeRegistry.getOrThrow(Biomes.THE_END),
+                        // biomeRegistry.getOrThrow(Biomes.SMALL_END_ISLANDS),
+                        biomeRegistry.getOrThrow(Biomes.THE_VOID)
                 )
         ));
 

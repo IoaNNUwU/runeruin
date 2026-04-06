@@ -22,6 +22,7 @@ public class RRBlocks {
     public static final DeferredBlock<Block> ARCANE_STONE_BRICKS = register("arcane_stone_bricks", ARCANE_STONE_PROPS);
     public static final DeferredBlock<Block> POLISHED_ARCANE_STONE = register("polished_arcane_stone", ARCANE_STONE_PROPS);
     public static final DeferredBlock<Block> ARCANE_STONE_PILLAR = register("arcane_stone_pillar", ARCANE_STONE_PROPS, RotatedPillarBlock::new);
+    public static final DeferredBlock<Block> ARCANE_STONE_COLUMN = register("arcane_stone_column", ARCANE_STONE_PROPS, RotatedPillarBlock::new);
 
     private static DeferredBlock<Block> register(String name, UnaryOperator<BlockBehaviour.Properties> props) {
         DeferredBlock<Block> blockRecord = REGISTRY.registerSimpleBlock(name, props);

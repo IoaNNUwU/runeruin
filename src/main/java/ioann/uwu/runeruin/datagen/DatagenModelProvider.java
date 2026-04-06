@@ -23,6 +23,7 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createTrivialCube(RRBlocks.ARCANE_STONE_BRICKS.get());
         blockModels.createTrivialCube(RRBlocks.POLISHED_ARCANE_STONE.get());
         blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ARCANE_STONE_PILLAR.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
+        blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ARCANE_STONE_COLUMN.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
 
         itemModels.generateFlatItem(RRItems.RUNE_OF_SPACE.get(), ModelTemplates.FLAT_ITEM);
     }
