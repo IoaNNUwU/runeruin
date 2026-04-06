@@ -1,34 +1,30 @@
 package ioann.uwu.runeruin.dimension.noise;
 
-import java.util.List;
+public class TopLevelNoise implements Noise {
 
-public class TopLevelNoise implements Noise{
+    private final Noise baseNoise = Noise.flatten(0.152f, Noise.multi(
+            new SingleNoise("bigNoise1".hashCode(), 0.5f),
+            new SingleNoise("bigNoise2".hashCode(), 0.4f),
+            new SingleNoise("bigNoise3".hashCode(), 0.3f)
+    ));
 
-    private final Noise bigNoise = new Noise() {
-
-        private final Noise noise = new MultiNoise(List.of(
-                new SingleNoise("bigNoise2".hashCode(), 0.5f),
-                new SingleNoise("bigNoise3".hashCode(), 0.4f),
-                new SingleNoise("bigNoise5".hashCode(), 0.3f)
-        ));
-
-        @Override
-        public float noise(float x, float z) {
-
-            float negRange = noise.noise(x, z) * 2 - 1;
-
-            float ampMultiplier = (float) Math.pow(negRange, 0.222);
-
-            return ampMultiplier; // / 2 + 1;
-        }
-    };
+    private final Noise miniNoise = Noise.flatten(0.22f, Noise.multi(
+            new SingleNoise("miniNoise4".hashCode(), 0.9f),
+            new SingleNoise("miniNoise5".hashCode(), 1.4f),
+            new SingleNoise("miniNoise11".hashCode(), 1.4f),
+            new SingleNoise("miniNoise6".hashCode(), 0.3f)
+    ));
 
     @Override
-    public float noise(float x, float z) {
+    public float noise(float x, float y, float z) {
 
-        // TODO: Чтобы сделать генерацию территории красивой и чтоб она не затрагивала ямы
-        // лучше умножать bigNoise на дополнительный шум, а не складывать.
+        float base = baseNoise.noise(x, y, z);
 
-        return bigNoise.noise(x, z);
+        float n1 = base * miniNoise.noise(x, y, z);
+
+        return (
+                base * 0.5f
+                        + n1 * 0.5f
+        );
     }
 }

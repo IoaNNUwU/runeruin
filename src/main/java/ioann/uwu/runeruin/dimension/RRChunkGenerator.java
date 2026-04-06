@@ -146,7 +146,7 @@ public class RRChunkGenerator extends ChunkGenerator {
                         chunk.getPos().getBlockAt(0, 0, 0).getZ() + z
                 );
 
-                if (Float.isNaN(noise)) {
+                if (noise < 0.01) {
                     continue;
                 }
 
@@ -198,7 +198,7 @@ public class RRChunkGenerator extends ChunkGenerator {
                         chunk.getPos().getBlockAt(0, 0, 0).getZ() + z
                 );
 
-                if (Float.isNaN(noise)) {
+                if (noise < 0.01) {
                     continue;
                 }
 
@@ -262,7 +262,7 @@ public class RRChunkGenerator extends ChunkGenerator {
 
         // Generate column only if all vertices are on top layer
         for (float noise : List.of(xzNoise, xnNoise, nzNoise, nnNoise)) {
-            if (Float.isNaN(noise)) {
+            if (noise < 0.01) {
                 return false;
             }
         }
@@ -278,7 +278,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             int z = chPos.getMiddleBlockZ();
 
             float noise = topLevelNoise.noise(x, z);
-            if (Float.isNaN(noise)) {
+            if (noise < 0.01) {
                 return true;
             }
         }
