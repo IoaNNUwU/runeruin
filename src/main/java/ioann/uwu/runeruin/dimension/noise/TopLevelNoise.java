@@ -1,10 +1,16 @@
 package ioann.uwu.runeruin.dimension.noise;
 
+import java.util.List;
+
 public class TopLevelNoise implements Noise{
 
     private final Noise bigNoise = new Noise() {
 
-        private final Noise noise = new SingleNoise("bigNoise".hashCode(), 0.5f);
+        private final Noise noise = new MultiNoise(List.of(
+                new SingleNoise("bigNoise2".hashCode(), 0.5f),
+                new SingleNoise("bigNoise3".hashCode(), 0.4f),
+                new SingleNoise("bigNoise5".hashCode(), 0.3f)
+        ));
 
         @Override
         public float noise(float x, float z) {
@@ -19,6 +25,10 @@ public class TopLevelNoise implements Noise{
 
     @Override
     public float noise(float x, float z) {
+
+        // TODO: Чтобы сделать генерацию территории красивой и чтоб она не затрагивала ямы
+        // лучше умножать bigNoise на дополнительный шум, а не складывать.
+
         return bigNoise.noise(x, z);
     }
 }

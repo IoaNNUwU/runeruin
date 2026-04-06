@@ -177,16 +177,25 @@ public class RRChunkGenerator extends ChunkGenerator {
         }
 
         ChunkVerticesNoise chunkNoise = ChunkVerticesNoise.fromChunk(chunk);
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
 
-        if (isTopLayer(chunkNoise)) {
-            for (int y = BLOOMING_CAVES_CEILING_Y + 1; y < TOP_LAYER_Y; y++) {
-                for (int x = 0; x < 16; x++) {
-                    for (int z = 0; z < 16; z++) {
-                        chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
-                    }
+                float noise = topLevelNoise.noise(
+                        chunk.getPos().getMiddleBlockX() + x,
+                        chunk.getPos().getMiddleBlockZ() + z
+                );
+
+                if (Float.isNaN(noise)) {
+                    continue;
+                }
+
+                for (int y = BLOOMING_CAVES_CEILING_Y + 1; y < TOP_LAYER_Y; y++) {
+                    chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
                 }
             }
         }
+
+        /*
 
         if (isVertexOfTopLayer(chunkNoise)) {
             generateArcaneColumn(chunk);
@@ -196,7 +205,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             generateTopLevelBorder(chunk, chunkNoise);
         }
 
-
+         */
     }
 
     private static void generateArcaneColumn(ChunkAccess chunk) {
