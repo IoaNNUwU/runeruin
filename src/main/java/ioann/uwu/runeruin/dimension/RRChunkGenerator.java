@@ -9,6 +9,7 @@ import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
@@ -23,7 +24,6 @@ import net.minecraft.world.level.levelgen.blending.Blender;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -131,8 +131,8 @@ public class RRChunkGenerator extends ChunkGenerator {
             for (int z = 0; z < 16; z++) {
 
                 float noise = topLevelNoise.noise(
-                        chunk.getPos().getMiddleBlockX() + x,
-                        chunk.getPos().getMiddleBlockZ() + z
+                        chunk.getPos().getBlockAt(0, 0, 0).getX() + x,
+                        chunk.getPos().getBlockAt(0, 0, 0).getZ() + z
                 );
 
                 if (Float.isNaN(noise)) {
@@ -176,119 +176,119 @@ public class RRChunkGenerator extends ChunkGenerator {
             }
         }
 
-        ChunkVerticesNoise chunkNoise = ChunkVerticesNoise.fromChunk(chunk);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
 
                 float noise = topLevelNoise.noise(
-                        chunk.getPos().getMiddleBlockX() + x,
-                        chunk.getPos().getMiddleBlockZ() + z
+                        chunk.getPos().getBlockAt(0, 0, 0).getX() + x,
+                        chunk.getPos().getBlockAt(0, 0, 0).getZ() + z
                 );
 
                 if (Float.isNaN(noise)) {
                     continue;
                 }
 
-                for (int y = BLOOMING_CAVES_CEILING_Y + 1; y < TOP_LAYER_Y; y++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
+                chunk.setBlockState(
+                        new BlockPos(x, BLOOMING_CAVES_CEILING_Y + 1, z),
+                        RRBlocks.ARCANE_STONE_COLUMN.get().defaultBlockState()
+                );
+                for (int y = BLOOMING_CAVES_CEILING_Y + 2; y < TOP_LAYER_Y - 1; y++) {
+                    chunk.setBlockState(
+                            new BlockPos(x, y, z),
+                            RRBlocks.ARCANE_STONE.get().defaultBlockState()
+                    );
                 }
+                chunk.setBlockState(
+                        new BlockPos(x, TOP_LAYER_Y - 1, z),
+                        RRBlocks.ARCANE_STONE_COLUMN.get().defaultBlockState()
+                );
             }
         }
 
-        /*
-
-        if (isVertexOfTopLayer(chunkNoise)) {
+        if (doGenerateColumn(chunk.getPos())) {
             generateArcaneColumn(chunk);
         }
+    }
 
-        if (RRChunkGenerator.isTopLayerBorder(chunkNoise)) {
-            generateTopLevelBorder(chunk, chunkNoise);
+    private static boolean doGenerateColumn(ChunkPos chunkPos) {
+        boolean simple = doGenerateColumnSimple(chunkPos);
+        if (!simple) {
+            return false;
         }
 
-         */
+        if ((doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z()))
+                && doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z())))
+                ||
+                (doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() + 1))
+                        && doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() - 1)))
+                ||
+                (doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() + 1))
+                        && doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() - 1)))
+                ||
+                (doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() - 1))
+                        && doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() + 1)))
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean doGenerateColumnSimple(ChunkPos chunkPos) {
+
+        BlockPos xzBlock = chunkPos.getBlockAt(15, 0, 15);
+        BlockPos xnBlock = chunkPos.getBlockAt(15, 0, 0);
+        BlockPos nzBlock = chunkPos.getBlockAt(0, 0, 15);
+        BlockPos nnBlock = chunkPos.getBlockAt(0, 0, 0);
+
+        float xzNoise = topLevelNoise.noise(xzBlock.getX(), xzBlock.getZ());
+        float xnNoise = topLevelNoise.noise(xnBlock.getX(), xnBlock.getZ());
+        float nzNoise = topLevelNoise.noise(nzBlock.getX(), nzBlock.getZ());
+        float nnNoise = topLevelNoise.noise(nnBlock.getX(), nnBlock.getZ());
+
+        // Generate column only if all vertices are on top layer
+        for (float noise : List.of(xzNoise, xnNoise, nzNoise, nnNoise)) {
+            if (Float.isNaN(noise)) {
+                return false;
+            }
+        }
+
+        ChunkPos xzChunk = new ChunkPos(chunkPos.x() + 1, chunkPos.z() + 1);
+        ChunkPos xnChunk = new ChunkPos(chunkPos.x() + 1, chunkPos.z() - 1);
+        ChunkPos nzChunk = new ChunkPos(chunkPos.x() - 1, chunkPos.z() + 1);
+        ChunkPos nnChunk = new ChunkPos(chunkPos.x() - 1, chunkPos.z() - 1);
+
+        // Generate column only if one of diagonal chunks is a hole
+        for (ChunkPos chPos : List.of(xzChunk, xnChunk, nzChunk, nnChunk)) {
+            int x = chPos.getMiddleBlockX();
+            int z = chPos.getMiddleBlockZ();
+
+            float noise = topLevelNoise.noise(x, z);
+            if (Float.isNaN(noise)) {
+                return true;
+            }
+        }
+
+        // No diagonal chunks are holes. We are in the middle of an island, no need for column
+        return false;
     }
 
     private static void generateArcaneColumn(ChunkAccess chunk) {
         for (int y = LOST_CAVES_Y; y < BLOOMING_CAVES_CEILING_Y + 1; y++) {
-            for (int x = 2; x < 14; x++) {
+            for (int x = 3; x < 13; x++) {
                 for (int z = 2; z < 14; z++) {
                     chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE_PILLAR.get().defaultBlockState());
                 }
             }
-        }
-    }
-
-    private static void generateTopLevelBorder(ChunkAccess chunk, @Nullable ChunkVerticesNoise noise) {
-        for (int y = BLOOMING_CAVES_CEILING_Y; y < TOP_LAYER_Y + 1; y++) {
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.POLISHED_ARCANE_STONE.get().defaultBlockState());
-                }
+            int x = 2;
+            for (int z = 3; z < 13; z++) {
+                chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE_PILLAR.get().defaultBlockState());
+            }
+            x = 13;
+            for (int z = 3; z < 13; z++) {
+                chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE_PILLAR.get().defaultBlockState());
             }
         }
-    }
-
-    private record ChunkVerticesNoise(float xzNoise, float xnNoise, float nzNoise, float nnNoise) {
-        public static ChunkVerticesNoise fromChunk(ChunkAccess chunk) {
-            BlockPos xzBlock = chunk.getPos().getBlockAt(15, 0, 15);
-            BlockPos xnBlock = chunk.getPos().getBlockAt(15, 0, 0);
-            BlockPos nzBlock = chunk.getPos().getBlockAt(0, 0, 15);
-            BlockPos nnBlock = chunk.getPos().getBlockAt(0, 0, 0);
-
-            // TODO:
-            float xzNoise = topLevelNoise.noise(xzBlock.getX(), xzBlock.getZ());
-            float xnNoise = topLevelNoise.noise(xnBlock.getX(), xnBlock.getZ());
-            float nzNoise = topLevelNoise.noise(nzBlock.getX(), nzBlock.getZ());
-            float nnNoise = topLevelNoise.noise(nnBlock.getX(), nnBlock.getZ());
-
-            return new ChunkVerticesNoise(xzNoise, xnNoise, nzNoise, nnNoise);
-        }
-    }
-
-    private static boolean isTopLayer(ChunkAccess chunk) {
-        return isTopLayer(ChunkVerticesNoise.fromChunk(chunk));
-    }
-
-    private static boolean isTopLayer(ChunkVerticesNoise chunk) {
-
-        return true;
-
-        /*
-        boolean isAtLeastOneCornerTopLayer = isTopLayer(chunk.xzNoise) || isTopLayer(chunk.xnNoise)
-                || isTopLayer(chunk.nzNoise) || isTopLayer(chunk.nnNoise);
-
-        return isAtLeastOneCornerTopLayer;
-         */
-    }
-
-    private static boolean isTopLayerBorder(ChunkAccess chunk) {
-        return isTopLayer(ChunkVerticesNoise.fromChunk(chunk));
-    }
-
-    private static boolean isTopLayerBorder(ChunkVerticesNoise chunk) {
-
-        boolean isAllCornersTopLevel = isTopLayer(chunk.xzNoise) && isTopLayer(chunk.xnNoise)
-                && isTopLayer(chunk.nzNoise) && isTopLayer(chunk.nnNoise);
-
-        boolean isAllCornersLowLevel = !isTopLayer(chunk.xzNoise) && !isTopLayer(chunk.xnNoise)
-                && !isTopLayer(chunk.nzNoise) && !isTopLayer(chunk.nnNoise);
-
-        return !isAllCornersTopLevel && !isAllCornersLowLevel;
-    }
-
-    private static boolean isVertexOfTopLayer(ChunkAccess chunk) {
-        return isVertexOfTopLayer(ChunkVerticesNoise.fromChunk(chunk));
-    }
-
-    private static boolean isVertexOfTopLayer(ChunkVerticesNoise chunk) {
-
-        boolean isSingleCornerTopLevel =
-                (isTopLayer(chunk.xzNoise) && !isTopLayer(chunk.xnNoise) && !isTopLayer(chunk.nzNoise) && !isTopLayer(chunk.nnNoise)) ||
-                        (!isTopLayer(chunk.xzNoise) && isTopLayer(chunk.xnNoise) && !isTopLayer(chunk.nzNoise) && !isTopLayer(chunk.nnNoise)) ||
-                        (!isTopLayer(chunk.xzNoise) && !isTopLayer(chunk.xnNoise) && isTopLayer(chunk.nzNoise) && !isTopLayer(chunk.nnNoise)) ||
-                        (!isTopLayer(chunk.xzNoise) && !isTopLayer(chunk.xnNoise) && !isTopLayer(chunk.nzNoise) && isTopLayer(chunk.nnNoise));
-
-        return isSingleCornerTopLevel;
     }
 
     // Controls amount of generated top layer
