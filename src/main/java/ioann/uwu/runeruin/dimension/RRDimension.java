@@ -87,14 +87,14 @@ public class RRDimension {
                         biomeRegistry.getOrThrow(Biomes.LUSH_CAVES)
                 ),
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES),
+                        // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),
                         // biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
-                        biomeRegistry.getOrThrow(Biomes.DEEP_DARK)
+                        biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES)
                 ),
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES),
+                        // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),
                         // biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
-                        biomeRegistry.getOrThrow(Biomes.DEEP_DARK)
+                        biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),

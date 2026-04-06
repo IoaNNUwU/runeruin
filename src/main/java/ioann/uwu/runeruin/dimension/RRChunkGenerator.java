@@ -129,6 +129,17 @@ public class RRChunkGenerator extends ChunkGenerator {
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
+                int y = DEEP_CAVES_CEILING_Y;
+                chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+                y = LOST_CAVES_CEILING_Y;
+                chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+                y = CEILING_VOID_Y;
+                chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+            }
+        }
+
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
 
                 float noise = topLevelNoise.noise(
                         chunk.getPos().getBlockAt(0, 0, 0).getX() + x,
@@ -148,6 +159,9 @@ public class RRChunkGenerator extends ChunkGenerator {
                     chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState());
                 }
                 chunk.setBlockState(new BlockPos(x, TOP_LAYER_Y + biomeHeight, z), Blocks.GRASS_BLOCK.defaultBlockState());
+
+                int y = BLOOMING_CAVES_CEILING_Y;
+                chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
             }
         }
     }
