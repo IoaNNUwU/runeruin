@@ -5,6 +5,7 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
+import ioann.uwu.runeruin.dimension.noise.TopLevelBouldersNoise;
 import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.FeatureSorter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -99,7 +101,7 @@ public class RRChunkGenerator extends ChunkGenerator {
 
     private static final Noise undergroundNoise = new SingleNoise("undergroundNoise".hashCode());
 
-    private static final Noise topLevelNoise = new TopLevelNoise();
+    private static final TopLevelNoise topLevelNoise = new TopLevelNoise();
 
     private void generateTerrain(ChunkAccess chunk) {
         for (int x = 0; x < 16; x++) {
@@ -164,7 +166,29 @@ public class RRChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
             }
         }
+
+        /*
+        ChunkPos chPos = chunk.getPos();
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+
+                for (int y = TOP_LAYER_Y - TopLevelBouldersNoise.BOULDERS_HEIGHT_BELOW_PLATE - ARCANE_PLATE_HEIGHT; y < TOP_LAYER_Y + TopLevelBouldersNoise.BOULDERS_HEIGHT; y++) {
+                    float noise = topLevelBouldersNoise.noise(
+                            x + chPos.getBlockAt(0, 0, 0).getX(),
+                            y,
+                            z + chPos.getBlockAt(0, 0, 0).getZ()
+                    );
+
+                    if (noise > 0.4f) {
+                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+                    }
+                }
+            }
+        }
+         */
     }
+
+    private final Noise topLevelBouldersNoise = new TopLevelBouldersNoise(topLevelNoise);
 
     private void fillArcaneStructure(ChunkAccess chunk) {
 

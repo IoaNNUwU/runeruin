@@ -2,11 +2,13 @@ package ioann.uwu.runeruin.dimension.noise;
 
 public class TopLevelNoise implements Noise {
 
-    private final Noise baseNoise = Noise.flatten(0.152f, Noise.multi(
+    public final Noise superBaseNoise = Noise.multi(
             new SingleNoise("bigNoise1".hashCode(), 0.5f),
             new SingleNoise("bigNoise2".hashCode(), 0.4f),
             new SingleNoise("bigNoise3".hashCode(), 0.3f)
-    ));
+    );
+
+    private final Noise baseNoise = Noise.flatten(0.152f, superBaseNoise);
 
     private final Noise miniNoise = Noise.flatten(0.22f, Noise.multi(
             new SingleNoise("miniNoise4".hashCode(), 0.9f),

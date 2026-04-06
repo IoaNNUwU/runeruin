@@ -27,7 +27,7 @@ public interface Noise {
     /// Flattens noise
     /// @param smoothness how smooth final noise should be. `2.0f` - super smooth. `0.1f` - super flat.
     /// @return flattened noise in range `[0..1]`
-    private static float flatten(float noise, float smoothness) {
+    static float flatten(float noise, float smoothness) {
         float negRange = noise * 2 - 1;
         float flattened = (float) Math.pow(negRange, smoothness);
 
