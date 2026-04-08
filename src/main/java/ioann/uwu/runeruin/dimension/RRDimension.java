@@ -76,7 +76,8 @@ public class RRDimension {
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.PLAINS),
                         // biomeRegistry.getOrThrow(Biomes.BIRCH_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.CHERRY_GROVE)
+                        // biomeRegistry.getOrThrow(Biomes.CHERRY_GROVE),
+                        biomeRegistry.getOrThrow(RRBiomes.ELDEN_GARDEN)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.JUNGLE),
