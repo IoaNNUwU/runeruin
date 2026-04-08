@@ -11,14 +11,14 @@ import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public class ModWorldGenProvider extends DatapackBuiltinEntriesProvider {
+public class DatagenWorldGenProvider extends DatapackBuiltinEntriesProvider {
 
     public static final RegistrySetBuilder BUILDER = new RegistrySetBuilder()
             .add(Registries.DIMENSION_TYPE, RRDimension::bootstrapType)
             .add(Registries.LEVEL_STEM, RRDimension::bootstrapStem);
 
 
-    public ModWorldGenProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+    public DatagenWorldGenProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
         super(output, registries, BUILDER, Set.of(RR.MODID));
     }
 }

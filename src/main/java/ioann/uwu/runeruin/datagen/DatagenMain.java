@@ -30,6 +30,6 @@ public class DatagenMain {
         gen.addProvider(true, new DatagenModelProvider(packOutput));
         gen.addProvider(true, new DatagenBlockTagProvider(packOutput, lookupProvider));
 
-        gen.addProvider(true, new ModWorldGenProvider(packOutput, lookupProvider));
+        gen.addProvider(true, new DatagenWorldGenProvider(packOutput, lookupProvider));
     }
 }

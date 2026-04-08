@@ -1,4 +1,4 @@
 package ioann.uwu.runeruin.datagen;
 
-public class ModItemTagProvider {
+public class DatagenRecipeProvider {
 }
