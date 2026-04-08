@@ -5,12 +5,12 @@ import net.minecraft.util.Mth;
 
 public class TopLevelBouldersNoise implements Noise {
 
-    private final TopLevelNoise topLevelNoise;
+    private final Noise baseTopLevelNoise;
 
     private final Noise noise = new SingleNoise("topLevelBorders".hashCode(), 5f, 0.3f);
 
-    public TopLevelBouldersNoise(TopLevelNoise topLevelNoise) {
-        this.topLevelNoise = topLevelNoise;
+    public TopLevelBouldersNoise(Noise baseTopLevelNoise) {
+        this.baseTopLevelNoise = baseTopLevelNoise;
     }
 
     public static final int BOULDERS_HEIGHT = 13;
@@ -18,7 +18,7 @@ public class TopLevelBouldersNoise implements Noise {
 
     @Override
     public float noise(float x, float y, float z) {
-        float base = topLevelNoise.superBaseNoise.noise(x, z);
+        float base = baseTopLevelNoise.noise(x, z);
 
         float needSubtract = Mth.abs(Mth.cos(base * Math.PI));
         float nearEdgeFactor = (Noise.flatten(base * 5f, 0.133f) - needSubtract * 8f);
