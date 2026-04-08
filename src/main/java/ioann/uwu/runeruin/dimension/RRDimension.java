@@ -10,6 +10,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.attribute.EnvironmentAttributeMap;
 import net.minecraft.world.level.CardinalLighting;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.*;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
@@ -23,6 +24,9 @@ public class RRDimension {
 
     // used in `/execute in runeruin:runeruin_dimension run tp ~ ~ ~`
     public static final ResourceKey<LevelStem> LEVEL_STEM = ResourceKey.create(Registries.LEVEL_STEM, RR.id("runeruin_dimension"));
+
+    // Optional. Has to have the same name as LEVEL_STEM
+    public static final ResourceKey<Level> LEVEL = ResourceKey.create(Registries.DIMENSION, RR.id("runeruin_dimension"));
 
     public static final ResourceKey<DimensionType> DIMENSION_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, RR.id("runeruin_dimension_type"));
 

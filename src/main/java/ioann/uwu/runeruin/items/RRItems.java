@@ -10,6 +10,15 @@ public class RRItems {
 
     public static final DeferredRegister.Items REGISTRY = DeferredRegister.createItems(RR.MODID);
 
-    public static final DeferredItem<Item> RUNE_OF_SPACE = REGISTRY.registerSimpleItem("rune_of_space", p -> p.food(new FoodProperties.Builder()
-            .alwaysEdible().nutrition(1).saturationModifier(2f).build()));
+    public static final DeferredItem<Item> RUNE_OF_SPACE = REGISTRY.registerItem(
+            "rune_of_space",
+            RuneOfSpaceItem::new,
+            p -> p.food(
+                    new FoodProperties.Builder()
+                            .alwaysEdible()
+                            .nutrition(1)
+                            .saturationModifier(2f)
+                            .build()
+            )
+    );
 }
