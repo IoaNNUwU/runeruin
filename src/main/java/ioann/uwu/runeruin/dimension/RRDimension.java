@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.attribute.EnvironmentAttributeMap;
+import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.level.CardinalLighting;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.*;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.timeline.Timelines;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +33,10 @@ public class RRDimension {
     public static final ResourceKey<DimensionType> DIMENSION_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, RR.id("runeruin_dimension_type"));
 
     public static void bootstrapType(BootstrapContext<DimensionType> ctx) {
+
+        var clocks = ctx.lookup(Registries.WORLD_CLOCK);
+        var timelines = ctx.lookup(Registries.TIMELINE);
+
         DimensionType dimensionType = new DimensionType(
                 false,
                 true,
@@ -42,12 +48,12 @@ public class RRDimension {
                 512,
                 BlockTags.INFINIBURN_OVERWORLD,
                 1.0f,
-                new DimensionType.MonsterSettings(ConstantInt.of(0), 0),
+                new DimensionType.MonsterSettings(ConstantInt.of(6), 0),
                 DimensionType.Skybox.OVERWORLD,
                 CardinalLighting.Type.DEFAULT,
                 EnvironmentAttributeMap.EMPTY,
-                HolderSet.empty(),
-                Optional.empty()
+                HolderSet.direct(timelines.getOrThrow(Timelines.OVERWORLD_DAY)),
+                Optional.of(clocks.getOrThrow(WorldClocks.OVERWORLD))
         );
 
         ctx.register(DIMENSION_TYPE, dimensionType);
