@@ -6,10 +6,10 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.placement.BiomeFilter;
-import net.minecraft.world.level.levelgen.placement.HeightmapPlacement;
-import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.heightproviders.VeryBiasedToBottomHeight;
+import net.minecraft.world.level.levelgen.placement.*;
 
 import java.util.List;
 
@@ -27,9 +27,10 @@ public class RRPlacedFeatures {
                 // https://misode.github.io/worldgen/placed-feature/
                 // https://youtu.be/B4cyrSExjpc?si=8hDK_-61NfGq2K1D
                 List.of(
-                        HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG),
+                        CountPlacement.of(4096),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.of(VeryBiasedToBottomHeight.of(VerticalAnchor.bottom(), VerticalAnchor.belowTop(8), 8)),
                         BiomeFilter.biome()
-
                 )
         );
 
