@@ -1,8 +1,7 @@
 package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.dimension.RRBiomes;
-import ioann.uwu.runeruin.dimension.RRDimension;
+import ioann.uwu.runeruin.dimension.*;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
@@ -15,6 +14,8 @@ import java.util.concurrent.CompletableFuture;
 public class DatagenWorldGenProvider extends DatapackBuiltinEntriesProvider {
 
     public static final RegistrySetBuilder BUILDER = new RegistrySetBuilder()
+            .add(Registries.PLACED_FEATURE, RRPlacedFeatures::bootstrap)
+            .add(Registries.CONFIGURED_FEATURE, RRConfiguredFeatures::bootstrap)
             .add(Registries.BIOME, RRBiomes::bootstrap)
             .add(Registries.DIMENSION_TYPE, RRDimension::bootstrapType)
             .add(Registries.LEVEL_STEM, RRDimension::bootstrapStem);
