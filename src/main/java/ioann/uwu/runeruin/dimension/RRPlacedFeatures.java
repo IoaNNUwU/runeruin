@@ -17,35 +17,50 @@ import java.util.List;
 
 public class RRPlacedFeatures {
 
-    public static final ResourceKey<PlacedFeature> RED_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "red_wall_mushroom");
-    public static final ResourceKey<PlacedFeature> BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "brown_wall_mushroom");
+    public static final ResourceKey<PlacedFeature> SMALL_RED_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "small_red_wall_mushroom");
+    public static final ResourceKey<PlacedFeature> BIG_RED_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "big_red_wall_mushroom");
+    public static final ResourceKey<PlacedFeature> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "small_brown_wall_mushroom");
+    public static final ResourceKey<PlacedFeature> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "big_brown_wall_mushroom");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
 
-        ctx.register(RED_WALL_MUSHROOM, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.MUSH_CONFIGURED),
-                List.of(
-                        CountPlacement.of(128),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - RRChunkGenerator.CEILING_TERRAIN_HEIGHT),
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y + RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT),
-                                        1
-                                )) //,
-                        // BiomeFilter.biome()
-                )
+        List<PlacementModifier> smallWallMushroomPlacement = List.of(
+                CountPlacement.of(64),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
+                        VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - RRChunkGenerator.CEILING_TERRAIN_HEIGHT),
+                        VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y + RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT),
+                        1
+                ))
+        );
+
+        ctx.register(SMALL_RED_WALL_MUSHROOM, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_RED_WALL_MUSHROOM),
+                smallWallMushroomPlacement
         ));
-        /*
-        ctx.register(BROWN_WALL_MUSHROOM, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.MUSH_CONFIGURED),
-                List.of(
-                        CountPlacement.of(4096),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.of(VeryBiasedToBottomHeight.of(VerticalAnchor.bottom(), VerticalAnchor.belowTop(8), 8)),
-                        BiomeFilter.biome()
-                )
+        ctx.register(SMALL_BROWN_WALL_MUSHROOM, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_BROWN_WALL_MUSHROOM),
+                smallWallMushroomPlacement
         ));
-         */
+
+        List<PlacementModifier> bigWallMushroomPlacement = List.of(
+                CountPlacement.of(32),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
+                        VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - RRChunkGenerator.CEILING_TERRAIN_HEIGHT),
+                        VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y + RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT),
+                        1
+                ))
+        );
+
+        ctx.register(BIG_RED_WALL_MUSHROOM, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.BIG_RED_WALL_MUSHROOM),
+                bigWallMushroomPlacement
+        ));
+        ctx.register(BIG_BROWN_WALL_MUSHROOM, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.BIG_BROWN_WALL_MUSHROOM),
+                bigWallMushroomPlacement
+        ));
     }
 }
