@@ -59,15 +59,21 @@ public class RRBiomes {
         BiomeDefaultFeatures.addExtraEmeralds(generation);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
-                .waterColor(0xAA9000)
-                .grassColorOverride(0xAA9000);
+                .waterColor(0xFFAA70)
+                .grassColorOverride(0xFFAA70);
 
         Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
                 .hasPrecipitation(true)
                 .temperature(10f)
                 .downfall(10f)
-                .setAttribute(EnvironmentAttributes.SKY_COLOR, 0xAA9000)
+                .setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
                 .setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
+                .setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
+                .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x101010)
+                // TODO: Make caves biome ambient color PINK or something
+
+                .setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
+                .setAttribute(EnvironmentAttributes.FOG_COLOR, 0xFF8860)
                 .mobSpawnSettings(mobs.build())
                 .generationSettings(generation.build())
                 .specialEffects(effects.build());
