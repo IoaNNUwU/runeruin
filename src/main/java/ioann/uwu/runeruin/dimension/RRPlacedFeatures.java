@@ -1,11 +1,15 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.heightproviders.VeryBiasedToBottomHeight;
 import net.minecraft.world.level.levelgen.placement.*;
@@ -23,6 +27,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "big_brown_wall_mushroom");
 
     public static final ResourceKey<PlacedFeature> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "long_ceiling_block_vine");
+
+    public static final ResourceKey<PlacedFeature> CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "ceiling_vine");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -77,6 +83,28 @@ public class RRPlacedFeatures {
         ctx.register(LONG_CEILING_BLOCK_VINE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.LONG_CEILING_BLOCK_VINE),
                 ceilingBlockVinePlacement
+        ));
+
+        ctx.register(CEILING_VINE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.CEILING_VINE),
+                List.of(
+                        CountPlacement.of(188),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.UP,
+                                BlockPredicate.hasSturdyFace(Direction.DOWN), // .and()
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                12
+                        ),
+
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-1)),
+                        BiomeFilter.biome()
+
+                )
         ));
     }
 }

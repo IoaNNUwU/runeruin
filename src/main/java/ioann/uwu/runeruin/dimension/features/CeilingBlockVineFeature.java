@@ -18,9 +18,9 @@ import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvi
 
 import java.util.List;
 
-public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
+public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Config> {
 
-    public CeilingVineFeature() {
+    public CeilingBlockVineFeature() {
         super(Config.CODEC);
     }
 
