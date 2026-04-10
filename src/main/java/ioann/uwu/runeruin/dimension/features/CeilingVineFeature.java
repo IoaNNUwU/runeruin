@@ -10,6 +10,7 @@ import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -40,7 +41,7 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
         float maxLength = config.maxLength.sample(random);
         int height = (int) (maxLength / 2 + (maxLength / 2) * random.nextFloat());
 
-        if (isValidPlacement(level, origin, ceilingBlock, height)) {
+        if (isValidPlacement(level, origin, ceilingBlock, trunkBlock, height)) {
 
             // --- Roots ---
             for (int y = origin.getY() - 1; y <= origin.getY() + 1; y++) {
@@ -58,7 +59,8 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
                 }
             }
 
-            boolean rand = random.nextBoolean();
+            boolean mirror = random.nextBoolean();
+            boolean rotate = random.nextBoolean();
 
             // --- Trunk ---
             int segmentHeight = 6;
@@ -70,7 +72,7 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
                 if (nSeg % 2 == 0) {
                     xzOffset = 0;
                 } else {
-                    xzOffset = 1;
+                    xzOffset = mirror ? -1 : 1;
                 }
 
                 // --- Main segment body ---
@@ -105,11 +107,21 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
                     BlockPos blockPos1;
                     BlockPos blockPos2;
                     if (nSeg % 2 == 0) {
-                        blockPos1 = new BlockPos(origin.getX() - 1, origin.getY() - y, origin.getZ());
-                        blockPos2 = new BlockPos(origin.getX(), origin.getY() - y, origin.getZ() - 1);
+                        if (!mirror) {
+                            blockPos1 = new BlockPos(origin.getX() - 1, origin.getY() - y, origin.getZ());
+                            blockPos2 = new BlockPos(origin.getX(), origin.getY() - y, origin.getZ() - 1);
+                        } else {
+                            blockPos1 = new BlockPos(origin.getX() + 2, origin.getY() - y, origin.getZ() + 1);
+                            blockPos2 = new BlockPos(origin.getX() + 1, origin.getY() - y, origin.getZ() + 2);
+                        }
                     } else {
-                        blockPos1 = new BlockPos(origin.getX() + 3, origin.getY() - y, origin.getZ() + 2);
-                        blockPos2 = new BlockPos(origin.getX() + 2, origin.getY() - y, origin.getZ() + 3);
+                        if (!mirror) {
+                            blockPos1 = new BlockPos(origin.getX() + 3, origin.getY() - y, origin.getZ() + 2);
+                            blockPos2 = new BlockPos(origin.getX() + 2, origin.getY() - y, origin.getZ() + 3);
+                        } else {
+                            blockPos1 = new BlockPos(origin.getX() - 2, origin.getY() - y, origin.getZ() - 1);
+                            blockPos2 = new BlockPos(origin.getX() - 1, origin.getY() - y, origin.getZ() - 2);
+                        }
                     }
 
                     level.setBlock(blockPos1, trunkBlock, 1);
@@ -124,15 +136,29 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
 
             // --- Tip of the vine ---
             if (nSegments % 2 == 0) {
-                tipOrigin = new BlockPos(origin.getX() + 1, origin.getY() - segmentHeight * nSegments, origin.getZ() + 1);
-                tipSide1 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() - 1);
-                tipSide2 = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() + 1, tipOrigin.getZ());
-                tipThorns = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() - 1, tipOrigin.getZ() - 1);
+                if (!mirror) {
+                    tipOrigin = new BlockPos(origin.getX() + 1, origin.getY() - segmentHeight * nSegments, origin.getZ() + 1);
+                    tipSide1 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() - 1);
+                    tipSide2 = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() + 1, tipOrigin.getZ());
+                    tipThorns = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() - 1, tipOrigin.getZ() - 1);
+                } else {
+                    tipOrigin = new BlockPos(origin.getX(), origin.getY() - segmentHeight * nSegments, origin.getZ());
+                    tipSide1 = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() + 1, tipOrigin.getZ());
+                    tipSide2 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() + 1);
+                    tipThorns = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() - 1, tipOrigin.getZ() + 1);
+                }
             } else {
-                tipOrigin = new BlockPos(origin.getX() + 1, origin.getY() - segmentHeight * nSegments, origin.getZ() + 1);
-                tipSide1 = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() + 1, tipOrigin.getZ());
-                tipSide2 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() + 1);
-                tipThorns = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() - 1, tipOrigin.getZ() + 1);
+                if (!mirror) {
+                    tipOrigin = new BlockPos(origin.getX() + 1, origin.getY() - segmentHeight * nSegments, origin.getZ() + 1);
+                    tipSide1 = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() + 1, tipOrigin.getZ());
+                    tipSide2 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() + 1);
+                    tipThorns = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() - 1, tipOrigin.getZ() + 1);
+                } else {
+                    tipOrigin = new BlockPos(origin.getX(), origin.getY() - segmentHeight * nSegments, origin.getZ());
+                    tipSide1 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() - 1);
+                    tipSide2 = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() + 1, tipOrigin.getZ());
+                    tipThorns = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() - 1, tipOrigin.getZ() - 1);
+                }
             }
 
             for (int y = 0; y < 6; y++) {
@@ -154,12 +180,15 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
         return false;
     }
 
-    private static boolean isValidPlacement(WorldGenLevel level, BlockPos origin, BlockState ceilingBlock, int height) {
+    private static boolean isValidPlacement(WorldGenLevel level, BlockPos origin, BlockState ceilingBlock, BlockState trunkBlock, int height) {
         if (!level.getBlockState(origin).is(ceilingBlock.getBlock())) {
             return false;
         }
 
         for (BlockPos blockPos : List.of(origin.north(), origin.south(), origin.west(), origin.east())) {
+            if (level.getBlockState(blockPos).is(trunkBlock.getBlock())) {
+                return false;
+            }
             if (level.getBlockState(blockPos).is(RRBlocks.ARCANE_STONE)) {
                 return false;
             }
