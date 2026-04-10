@@ -23,6 +23,16 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.POLISHED_ARCANE_STONE.get());
         dropSelf(RRBlocks.ARCANE_STONE_PILLAR.get());
         dropSelf(RRBlocks.ARCANE_STONE_COLUMN.get());
+
+        dropSelf(RRBlocks.ELDEN_SAPLING.get());
+        dropSelf(RRBlocks.ELDEN_LOG.get());
+        dropSelf(RRBlocks.ELDEN_PLANKS.get());
+
+        dropSelf(RRBlocks.ELDEN_LEAVES.get());
+
+        dropPottedContents(RRBlocks.POTTED_ELDEN_SAPLING.get());
+
+        // createLeavesDrops(RRBlocks.ELDEN_LEAVES.get(), RRBlocks.ELDEN_SAPLING.get(), BlockLootSubProvider.NORMAL_LEAVES_SAPLING_CHANCES);
     }
 
     @Override

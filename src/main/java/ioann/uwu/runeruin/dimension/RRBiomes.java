@@ -22,13 +22,7 @@ public class RRBiomes {
     public static final ResourceKey<Biome> ELDEN_GARDEN = ResourceKey.create(Registries.BIOME, RR.id("elden_garden"));
 
     public static void bootstrap(BootstrapContext<Biome> ctx) {
-
-        var biome = eldenGarden(
-                ctx.lookup(Registries.PLACED_FEATURE),
-                ctx.lookup(Registries.CONFIGURED_CARVER)
-        );
-
-        ctx.register(ELDEN_GARDEN, biome);
+        ctx.register(ELDEN_GARDEN, eldenGarden(ctx.lookup(Registries.PLACED_FEATURE), ctx.lookup(Registries.CONFIGURED_CARVER)));
     }
 
     public static Biome eldenGarden(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
@@ -59,7 +53,7 @@ public class RRBiomes {
         BiomeDefaultFeatures.addExtraEmeralds(generation);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
-                .waterColor(0xFFAA70)
+                .waterColor(0xF7F284)
                 .grassColorOverride(0xFFAA70);
 
         Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
@@ -69,9 +63,8 @@ public class RRBiomes {
                 .setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
                 .setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
-                .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x101010)
-                // TODO: Make caves biome ambient color PINK or something
-
+                .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
+                // TODO: Make MUSHROOM cave biome ambient color PINK or something
                 .setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0xFF8860)
                 .mobSpawnSettings(mobs.build())

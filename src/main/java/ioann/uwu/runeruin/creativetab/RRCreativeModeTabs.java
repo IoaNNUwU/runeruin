@@ -21,10 +21,20 @@ public class RRCreativeModeTabs {
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> RRItems.RUNE_OF_SPACE.get().getDefaultInstance())
             .displayItems((_, output) -> output.acceptAll(List.of(
+                    // --- Items ---
                     RRItems.RUNE_OF_SPACE.toStack(),
+
+
+                    // --- Blocks ---
                     RRBlocks.ARCANE_STONE.toStack(),
                     RRBlocks.ARCANE_STONE_BRICKS.toStack(),
                     RRBlocks.ARCANE_STONE_PILLAR.toStack(),
-                    RRBlocks.POLISHED_ARCANE_STONE.toStack()
+                    RRBlocks.ARCANE_STONE_COLUMN.toStack(),
+                    RRBlocks.POLISHED_ARCANE_STONE.toStack(),
+
+                    RRBlocks.ELDEN_SAPLING.toStack(),
+                    RRBlocks.ELDEN_LOG.toStack(),
+                    RRBlocks.ELDEN_PLANKS.toStack(),
+                    RRBlocks.ELDEN_LEAVES.toStack()
             ))).build());
 }

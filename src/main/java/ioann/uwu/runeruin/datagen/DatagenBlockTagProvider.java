@@ -23,7 +23,15 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 .add(RRBlocks.ARCANE_STONE_BRICKS.get())
                 .add(RRBlocks.POLISHED_ARCANE_STONE.get())
                 .add(RRBlocks.ARCANE_STONE_PILLAR.get())
-                .add(RRBlocks.ARCANE_STONE_COLUMN.get())
-        ;
+                .add(RRBlocks.ARCANE_STONE_COLUMN.get());
+
+        // TODO: ELDEN_SAPLING
+
+        tag(BlockTags.MINEABLE_WITH_AXE)
+                .add(RRBlocks.ELDEN_LOG.get())
+                .add(RRBlocks.ELDEN_PLANKS.get());
+
+        tag(BlockTags.MINEABLE_WITH_HOE)
+                .add(RRBlocks.ELDEN_LEAVES.get());
     }
 }
