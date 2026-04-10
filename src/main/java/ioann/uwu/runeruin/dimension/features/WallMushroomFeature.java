@@ -23,6 +23,9 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         super(Config.CODEC);
     }
 
+    // TODO: Find a flag or make properly aligned mushroom blocks
+    private static final int FLAG = 1;
+
     @Override
     public boolean place(FeaturePlaceContext<WallMushroomFeature.Config> ctx) {
 
@@ -44,7 +47,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
                     BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                     if (level.getBlockState(blockPos).isAir()) {
-                        level.setBlock(blockPos, blockState, 1);
+                        level.setBlock(blockPos, blockState, FLAG);
                     }
                 }
             }
@@ -58,7 +61,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
                 BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                 if (level.getBlockState(blockPos).isAir()) {
-                    level.setBlock(blockPos, blockState, 1);
+                    level.setBlock(blockPos, blockState, FLAG);
                 }
             }
 
@@ -71,7 +74,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
                 BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                 if (level.getBlockState(blockPos).isAir()) {
-                    level.setBlock(blockPos, blockState, 1);
+                    level.setBlock(blockPos, blockState, FLAG);
                 }
             }
 
@@ -84,7 +87,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
                 BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                 if (level.getBlockState(blockPos).isAir()) {
-                    level.setBlock(blockPos, blockState, 1);
+                    level.setBlock(blockPos, blockState, FLAG);
                 }
             }
 
@@ -97,7 +100,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
                 BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                 if (level.getBlockState(blockPos).isAir()) {
-                    level.setBlock(blockPos, blockState, 1);
+                    level.setBlock(blockPos, blockState, FLAG);
                 }
             }
 

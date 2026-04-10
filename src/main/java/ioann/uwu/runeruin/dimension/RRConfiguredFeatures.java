@@ -13,6 +13,8 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 
+import java.util.List;
+
 public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_RED_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_red_mushroom");
@@ -58,6 +60,7 @@ public class RRConfiguredFeatures {
                 new CeilingVineFeature.Config(
                         BlockStateProvider.simple(Blocks.MOSS_BLOCK),
                         BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
+                        List.of(BlockStateProvider.simple(Blocks.OCHRE_FROGLIGHT)),
                         ConstantInt.of(35)
                 )
         ));

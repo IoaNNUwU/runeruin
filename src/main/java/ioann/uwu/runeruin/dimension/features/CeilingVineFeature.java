@@ -5,12 +5,11 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -181,6 +180,33 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
                     level.setBlock(blockPos1, trunkBlock, 1);
                     level.setBlock(blockPos2, trunkBlock, 1);
                 }
+
+                // --- Berries ---
+                List<BlockStateProvider> berryBlocks = config.berryBlocks;
+                if (berryBlocks.isEmpty()) {
+                    return true;
+                }
+
+                int rand = random.nextIntBetweenInclusive(0, berryBlocks.size() - 1);
+                BlockState berryBlock = config.berryBlocks.get(rand).getState(level, random, origin);
+
+                for (int y = 1; y < segmentHeight; y = y + 2) {
+                    Direction dir = Direction.getRandom(random);
+
+                    for (int i = 0; i < 5; i++) {
+
+                        BlockPos blockPos = new BlockPos(
+                                origin.getX() + xOffset,
+                                origin.getY() - nSeg * segmentHeight - y,
+                                origin.getZ() + zOffset
+                        ).relative(dir, i);
+
+                        if (level.getBlockState(blockPos).isAir()) {
+                            level.setBlock(blockPos, berryBlock, 1);
+                            break;
+                        }
+                    }
+                }
             }
 
             BlockPos tipOrigin;
@@ -275,12 +301,14 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
     public record Config(
             BlockStateProvider placeOn,
             BlockStateProvider trunkBlock,
+            List<BlockStateProvider> berryBlocks,
             IntProvider maxLength
     ) implements FeatureConfiguration {
         public static final Codec<Config> CODEC = RecordCodecBuilder.create(codec ->
                 codec.group(
                         BlockStateProvider.CODEC.fieldOf("place_on").forGetter(Config::placeOn),
                         BlockStateProvider.CODEC.fieldOf("trunk_block").forGetter(Config::trunkBlock),
+                        Codec.list(BlockStateProvider.CODEC).fieldOf("berry_blocks").forGetter(Config::berryBlocks),
                         IntProviders.codec(5, RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - RRChunkGenerator.BLOOMING_CAVES_Y)
                                 .fieldOf("max_length").forGetter(Config::maxLength)
                 ).apply(codec, Config::new));
