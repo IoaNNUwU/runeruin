@@ -34,7 +34,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
         int diameter = config.diameter().sample(random);
 
-        if (isValidMushPlacement(level, origin)) {
+        if (isValidWallMushroomPlacement(level, origin)) {
 
             for (int x = -diameter / 2 + 1; x < diameter / 2; x++) {
                 for (int z = -diameter / 2 + 1; z < diameter / 2; z++) {
@@ -106,13 +106,13 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         return false;
     }
 
-    private static boolean isValidMushPlacement(WorldGenLevel level, BlockPos origin) {
+    private static boolean isValidWallMushroomPlacement(WorldGenLevel level, BlockPos origin) {
 
         if (!level.getBlockState(origin).is(Tags.Blocks.STONES)) {
             return false;
         }
 
-        var list = List.of(
+        var noMushroomsNeighbours = List.of(
                 origin.north().above(),
                 origin.north().below(),
                 origin.south().above(),
@@ -123,7 +123,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
                 origin.east().below()
         );
 
-        for (BlockPos blockPos : list) {
+        for (BlockPos blockPos : noMushroomsNeighbours) {
             BlockState blockState = level.getBlockState(blockPos);
             if (blockState.is(Blocks.RED_MUSHROOM_BLOCK) || blockState.is(Blocks.BROWN_MUSHROOM_BLOCK)) {
                 return false;
