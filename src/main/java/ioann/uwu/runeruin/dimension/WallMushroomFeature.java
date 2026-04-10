@@ -15,6 +15,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfigur
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.neoforged.neoforge.common.Tags;
 
+import java.util.List;
+
 public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
     public WallMushroomFeature() {
@@ -108,6 +110,24 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
         if (!level.getBlockState(origin).is(Tags.Blocks.STONES)) {
             return false;
+        }
+
+        var list = List.of(
+                origin.north().above(),
+                origin.north().below(),
+                origin.south().above(),
+                origin.south().below(),
+                origin.west().above(),
+                origin.west().below(),
+                origin.east().above(),
+                origin.east().below()
+        );
+
+        for (BlockPos blockPos : list) {
+            BlockState blockState = level.getBlockState(blockPos);
+            if (blockState.is(Blocks.RED_MUSHROOM_BLOCK) || blockState.is(Blocks.BROWN_MUSHROOM_BLOCK)) {
+                return false;
+            }
         }
 
         int holeCount = 0;
