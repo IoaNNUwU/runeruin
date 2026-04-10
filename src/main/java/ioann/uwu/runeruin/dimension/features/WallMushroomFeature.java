@@ -1,4 +1,4 @@
-package ioann.uwu.runeruin.dimension;
+package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -41,7 +41,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
                     BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
 
-                    BlockState blockState = config.stateProvider().getState(level, random, origin);
+                    BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                     if (level.getBlockState(blockPos).isAir()) {
                         level.setBlock(blockPos, blockState, 1);
@@ -55,7 +55,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
                 BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
 
-                BlockState blockState = config.stateProvider().getState(level, random, origin);
+                BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                 if (level.getBlockState(blockPos).isAir()) {
                     level.setBlock(blockPos, blockState, 1);
@@ -68,7 +68,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
                 BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
 
-                BlockState blockState = config.stateProvider().getState(level, random, origin);
+                BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                 if (level.getBlockState(blockPos).isAir()) {
                     level.setBlock(blockPos, blockState, 1);
@@ -81,7 +81,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
                 BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
 
-                BlockState blockState = config.stateProvider().getState(level, random, origin);
+                BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                 if (level.getBlockState(blockPos).isAir()) {
                     level.setBlock(blockPos, blockState, 1);
@@ -94,7 +94,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
                 BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
 
-                BlockState blockState = config.stateProvider().getState(level, random, origin);
+                BlockState blockState = config.mushroomBlock().getState(level, random, origin);
 
                 if (level.getBlockState(blockPos).isAir()) {
                     level.setBlock(blockPos, blockState, 1);
@@ -163,10 +163,14 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         return blockCount > 0 && holeCount > 0;
     }
 
-    public record Config(BlockStateProvider stateProvider, IntProvider diameter) implements FeatureConfiguration {
+    public record Config(
+            BlockStateProvider mushroomBlock,
+            IntProvider diameter
+    ) implements FeatureConfiguration {
+
         public static final Codec<Config> CODEC = RecordCodecBuilder.create(codec ->
                 codec.group(
-                        BlockStateProvider.CODEC.fieldOf("state_provider").forGetter(Config::stateProvider),
+                        BlockStateProvider.CODEC.fieldOf("mushroom_block").forGetter(Config::mushroomBlock),
                         IntProviders.codec(3, 7).fieldOf("diameter").forGetter(Config::diameter)
                 ).apply(codec, Config::new));
     }

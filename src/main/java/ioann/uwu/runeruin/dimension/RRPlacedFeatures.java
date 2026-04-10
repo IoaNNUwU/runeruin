@@ -22,6 +22,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "small_brown_wall_mushroom");
     public static final ResourceKey<PlacedFeature> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "big_brown_wall_mushroom");
 
+    public static final ResourceKey<PlacedFeature> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "long_ceiling_block_vine");
+
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
 
@@ -61,6 +63,20 @@ public class RRPlacedFeatures {
         ctx.register(BIG_BROWN_WALL_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.BIG_BROWN_WALL_MUSHROOM),
                 bigWallMushroomPlacement
+        ));
+
+        List<PlacementModifier> ceilingBlockVinePlacement = List.of(
+                CountPlacement.of(32),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
+                        VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - RRChunkGenerator.CEILING_TERRAIN_HEIGHT),
+                        VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y),
+                        1
+                ))
+        );
+        ctx.register(LONG_CEILING_BLOCK_VINE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.LONG_CEILING_BLOCK_VINE),
+                ceilingBlockVinePlacement
         ));
     }
 }

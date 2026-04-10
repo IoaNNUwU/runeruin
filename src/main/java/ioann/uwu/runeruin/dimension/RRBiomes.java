@@ -90,6 +90,8 @@ public class RRBiomes {
         BiomeDefaultFeatures.addJungleTrees(generation);
         BiomeDefaultFeatures.addExtraEmeralds(generation);
 
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
+
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
                 //.grassColorOverride(0xFFAA70);
