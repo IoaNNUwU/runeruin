@@ -5,10 +5,12 @@ import ioann.uwu.runeruin.RR;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.biome.OverworldBiomes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.attribute.EnvironmentAttributeMap;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.level.CardinalLighting;
 import net.minecraft.world.level.Level;
@@ -37,6 +39,12 @@ public class RRDimension {
         var clocks = ctx.lookup(Registries.WORLD_CLOCK);
         var timelines = ctx.lookup(Registries.TIMELINE);
 
+        EnvironmentAttributeMap environmentAttributeMap = EnvironmentAttributeMap.builder()
+                //.set(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
+                .set(EnvironmentAttributes.CLOUD_HEIGHT, 370f)
+                .set(EnvironmentAttributes.SKY_COLOR, OverworldBiomes.calculateSkyColor(0.8F))
+                .build();
+
         DimensionType dimensionType = new DimensionType(
                 false,
                 true,
@@ -51,7 +59,7 @@ public class RRDimension {
                 new DimensionType.MonsterSettings(ConstantInt.of(6), 0),
                 DimensionType.Skybox.OVERWORLD,
                 CardinalLighting.Type.DEFAULT,
-                EnvironmentAttributeMap.EMPTY,
+                environmentAttributeMap,
                 HolderSet.direct(timelines.getOrThrow(Timelines.OVERWORLD_DAY)),
                 Optional.of(clocks.getOrThrow(WorldClocks.OVERWORLD))
         );
@@ -89,13 +97,13 @@ public class RRDimension {
                         // biomeRegistry.getOrThrow(Biomes.JUNGLE),
                         // biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE),
                         // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.LUSH_CAVES)
+                        biomeRegistry.getOrThrow(RRBiomes.BLOOMING_SWAMP)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.JUNGLE),
                         // biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE),
                         // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.LUSH_CAVES)
+                        biomeRegistry.getOrThrow(RRBiomes.BLOOMING_SWAMP)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),

@@ -19,10 +19,15 @@ import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 public class RRBiomes {
 
+    // --- Top Layer ---
     public static final ResourceKey<Biome> ELDEN_GARDEN = ResourceKey.create(Registries.BIOME, RR.id("elden_garden"));
+
+    // --- Blooming caves Layer ---
+    public static final ResourceKey<Biome> BLOOMING_SWAMP = ResourceKey.create(Registries.BIOME, RR.id("blooming_swamp"));
 
     public static void bootstrap(BootstrapContext<Biome> ctx) {
         ctx.register(ELDEN_GARDEN, eldenGarden(ctx.lookup(Registries.PLACED_FEATURE), ctx.lookup(Registries.CONFIGURED_CARVER)));
+        ctx.register(BLOOMING_SWAMP, bloomingSwamp(ctx.lookup(Registries.PLACED_FEATURE), ctx.lookup(Registries.CONFIGURED_CARVER)));
     }
 
     public static Biome eldenGarden(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
@@ -58,8 +63,8 @@ public class RRBiomes {
 
         Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
                 .hasPrecipitation(true)
-                .temperature(10f)
-                .downfall(10f)
+                .temperature(1f)
+                .downfall(0.5f)
                 .setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
                 .setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
@@ -67,6 +72,38 @@ public class RRBiomes {
                 // TODO: Make MUSHROOM cave biome ambient color PINK or something
                 .setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0xFF8860)
+                .mobSpawnSettings(mobs.build())
+                .generationSettings(generation.build())
+                .specialEffects(effects.build());
+
+        return biomeBuilder.build();
+    }
+
+    public static Biome bloomingSwamp(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
+        MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
+
+        BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
+
+        BiomeDefaultFeatures.addLushCavesVegetationFeatures(generation);
+        BiomeDefaultFeatures.addLushCavesSpecialOres(generation);
+
+        BiomeDefaultFeatures.addJungleTrees(generation);
+        BiomeDefaultFeatures.addExtraEmeralds(generation);
+
+        BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
+                .waterColor(0x20AA80);
+                //.grassColorOverride(0xFFAA70);
+
+        Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
+                .hasPrecipitation(true)
+                .temperature(1f)
+                .downfall(0.5f)
+                //.setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
+                //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
+                //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
+                .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
+                //.setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
+                .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
                 .mobSpawnSettings(mobs.build())
                 .generationSettings(generation.build())
                 .specialEffects(effects.build());
