@@ -180,33 +180,6 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
                     level.setBlock(blockPos1, trunkBlock, 1);
                     level.setBlock(blockPos2, trunkBlock, 1);
                 }
-
-                // --- Berries ---
-                List<BlockStateProvider> berryBlocks = config.berryBlocks;
-                if (berryBlocks.isEmpty()) {
-                    return true;
-                }
-
-                int rand = random.nextIntBetweenInclusive(0, berryBlocks.size() - 1);
-                BlockState berryBlock = config.berryBlocks.get(rand).getState(level, random, origin);
-
-                for (int y = 1; y < segmentHeight; y = y + 2) {
-                    Direction dir = Direction.getRandom(random);
-
-                    for (int i = 0; i < 5; i++) {
-
-                        BlockPos blockPos = new BlockPos(
-                                origin.getX() + xOffset,
-                                origin.getY() - nSeg * segmentHeight - y,
-                                origin.getZ() + zOffset
-                        ).relative(dir, i);
-
-                        if (level.getBlockState(blockPos).isAir()) {
-                            level.setBlock(blockPos, berryBlock, 1);
-                            break;
-                        }
-                    }
-                }
             }
 
             BlockPos tipOrigin;
@@ -269,6 +242,47 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
                 BlockPos blockPos = new BlockPos(tipThorns.getX(), tipThorns.getY() - y, tipThorns.getZ());
                 level.setBlock(blockPos, trunkBlock, 1);
             }
+
+            // --- Berries ---
+            List<BlockStateProvider> berryBlocks = config.berryBlocks;
+            if (berryBlocks.isEmpty()) {
+                return true;
+            }
+
+            int rand = random.nextIntBetweenInclusive(0, berryBlocks.size() - 1);
+            BlockState berryBlock = config.berryBlocks.get(rand).getState(level, random, origin);
+
+            for (int nSeg = 0; nSeg < nSegments; nSeg++) {
+
+                int xOffset;
+                int zOffset;
+                if (nSeg % 2 == 0) {
+                    xOffset = 0;
+                    zOffset = 0;
+                } else {
+                    xOffset = mirror ? -1 : 1;
+                    zOffset = rotate ? -1 : 1;
+                }
+
+                for (int y = 1; y < segmentHeight; y = y + 2) {
+                    Direction dir = Direction.getRandom(random);
+
+                    for (int i = 0; i < 5; i++) {
+
+                        BlockPos blockPos = new BlockPos(
+                                origin.getX() + xOffset,
+                                origin.getY() - nSeg * segmentHeight - y,
+                                origin.getZ() + zOffset
+                        ).relative(dir, i);
+
+                        if (level.getBlockState(blockPos).isAir()) {
+                            level.setBlock(blockPos, berryBlock, 1);
+                            break;
+                        }
+                    }
+                }
+            }
+
             return true;
         }
         return false;

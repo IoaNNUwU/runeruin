@@ -60,7 +60,11 @@ public class RRConfiguredFeatures {
                 new CeilingVineFeature.Config(
                         BlockStateProvider.simple(Blocks.MOSS_BLOCK),
                         BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
-                        List.of(BlockStateProvider.simple(Blocks.OCHRE_FROGLIGHT)),
+                        List.of(
+                                BlockStateProvider.simple(Blocks.OCHRE_FROGLIGHT),
+                                BlockStateProvider.simple(Blocks.VERDANT_FROGLIGHT),
+                                BlockStateProvider.simple(Blocks.PEARLESCENT_FROGLIGHT)
+                        ),
                         ConstantInt.of(35)
                 )
         ));
