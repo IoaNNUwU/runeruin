@@ -59,6 +59,19 @@ public class CeilingVineFeature extends Feature<CeilingVineFeature.Config> {
                 }
             }
 
+            List<BlockPos> additionalRoots = List.of(
+                    new BlockPos(origin.getX() - 1, origin.getY() - 2, origin.getZ() + 1),
+                    new BlockPos(origin.getX() + 1, origin.getY() - 2, origin.getZ() - 1),
+                    new BlockPos(origin.getX(), origin.getY() - 2, origin.getZ() + 2),
+                    new BlockPos(origin.getX() + 2, origin.getY() - 2, origin.getZ() + 1)
+            );
+
+            for (BlockPos blockPos : additionalRoots) {
+                level.setBlock(blockPos, trunkBlock, 1);
+                BlockPos upperBlockPos = new BlockPos(blockPos.getX(), blockPos.getY() + 4, blockPos.getZ());
+                level.setBlock(upperBlockPos, trunkBlock, 1);
+            }
+
             boolean mirror = random.nextBoolean();
             boolean rotate = random.nextBoolean();
 
