@@ -58,6 +58,14 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
                 }
             }
 
+            for (int y = origin.getY() + 1; y < origin.getY() + 4; y++) {
+                for (int x = origin.getX(); x < origin.getX() + 2; x++) {
+                    for (int z = origin.getZ(); z < origin.getZ() + 2; z++) {
+                        level.setBlock(new BlockPos(x, y, z), trunkBlock, 1);
+                    }
+                }
+            }
+
             List<BlockPos> additionalRoots = List.of(
                     new BlockPos(origin.getX() - 1, origin.getY() - 2, origin.getZ() + 1),
                     new BlockPos(origin.getX() + 1, origin.getY() - 2, origin.getZ() - 1),

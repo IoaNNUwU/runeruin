@@ -109,9 +109,7 @@ public class RRPlacedFeatures {
                                 32
                         ),
 
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-1)),
-                        BiomeFilter.biome()
-
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-1))
                 )
         ));
     }
