@@ -1,4 +1,10 @@
-## World Structure
+# Rune Ruin
+
+**Rune Ruin** is WIP mod for **Minecraft 1.26.1**
+
+![](.github/assets/preview.png)
+
+# World Structure
 
 ```
                                           + Y = 512
@@ -39,13 +45,15 @@
 
 ### TODO:
 
-- Add ceiling biomes generation
-- Add `Grappling hook`
-- Make bottom pillars wider than on top layer
-- Improve edge generation. Inspiration: 
-    - [Cool caves](https://www.reddit.com/r/Minecraftbuilds/comments/1scbh2e/my_new_phone_background/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
-    - [Cool terraforming](https://www.reddit.com/r/Minecraftbuilds/comments/1s7dp7w/made_a_castle_on_a_greek_ruin/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
-    - [Wall decorations](https://www.reddit.com/r/Minecraftbuilds/comments/1sa8f3e/geode_in_the_walls/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
-- Add `Arcane Frog` boss and magic abilities
-- Add `Pirates Ship` boss/invasion and crew
-- Add ores generation as `Runes` on the pillars
+- [ ] **TOP** Layer
+  - [ ] Improve generation of the top layer so it isn't too flat.
+  - [ ] Add more biomes.
+  - [X] Improve pillars generation and put runes on them.
+- [ ] **Blooming Caves** Layer
+  - [ ] Add `Frog` boss and magic abilities
+  - [ ] Add `Pirates Ship` boss/invasion and crew
+- [ ] **Deep Caves** Layer
+  - [ ] Start adding custom biomes.
+- [ ] **Equipment**
+  - [ ] Add `Grappling hook`
+  - [ ] Add other rock climbing equipment.
