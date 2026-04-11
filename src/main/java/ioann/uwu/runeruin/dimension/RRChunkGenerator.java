@@ -4,9 +4,12 @@ import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.noise.*;
+import ioann.uwu.runeruin.dimension.runes.Runes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
@@ -88,7 +91,11 @@ public class RRChunkGenerator extends ChunkGenerator {
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
         return CompletableFuture.supplyAsync(() -> {
             generateTerrain(chunk);
-            fillArcaneStructure(chunk);
+            fillArcaneStructure(
+                    chunk,
+                    randomState.getOrCreateRandomFactory(RR.id("fill_from_noise"))
+                            .at(chunk.getPos().getMiddleBlockPosition(10))
+            );
             return chunk;
         });
     }
@@ -224,7 +231,7 @@ public class RRChunkGenerator extends ChunkGenerator {
          */
     }
 
-    private void fillArcaneStructure(ChunkAccess chunk) {
+    private void fillArcaneStructure(ChunkAccess chunk, RandomSource random) {
 
         for (int y = CEILING_VOID_Y + 1; y < LOST_CAVES_Y; y++) {
             for (int x = 0; x < 16; x++) {
@@ -280,7 +287,7 @@ public class RRChunkGenerator extends ChunkGenerator {
          */
 
         if (doGenerateColumn(chunk.getPos())) {
-            generateArcaneColumn(chunk);
+            generateArcaneColumn(chunk, random);
         }
     }
 
@@ -347,7 +354,9 @@ public class RRChunkGenerator extends ChunkGenerator {
         return false;
     }
 
-    private static void generateArcaneColumn(ChunkAccess chunk) {
+    private static final List<List<List<Boolean>>> RUNES_DESCRIPTION = Runes.list();
+
+    private static void generateArcaneColumn(ChunkAccess chunk, RandomSource random) {
         for (int y = LOST_CAVES_Y; y < BLOOMING_CAVES_CEILING_Y + 1; y++) {
             for (int x = 3; x < 13; x++) {
                 for (int z = 2; z < 14; z++) {
@@ -361,6 +370,68 @@ public class RRChunkGenerator extends ChunkGenerator {
             x = 13;
             for (int z = 3; z < 13; z++) {
                 chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
+            }
+        }
+
+        int idx = random.nextIntBetweenInclusive(0, RUNES_DESCRIPTION.size() - 1);
+        var runeDesc = RUNES_DESCRIPTION.get(idx);
+
+        System.out.println("DESC: " + runeDesc);
+
+        int y = BLOOMING_CAVES_CEILING_Y - 15 - random.nextIntBetweenInclusive(-2, 15);
+
+        boolean rotate = random.nextBoolean();
+        boolean opposite = random.nextBoolean();
+
+        if (!rotate) {
+            int x;
+            int xInner;
+            if (!opposite) {
+                x = 2;
+                xInner = 3;
+            } else {
+                x = 13;
+                xInner = 12;
+            }
+            int z = 3;
+            for (int zz = 0; zz < 10; zz++) {
+                for (int yy = 0; yy < 16; yy++) {
+                    if (runeDesc.get(yy).get(zz)) {
+                        chunk.setBlockState(
+                                new BlockPos(x, y - yy, z + zz),
+                                Blocks.AIR.defaultBlockState()
+                        );
+                        chunk.setBlockState(
+                                new BlockPos(xInner, y - yy, z + zz),
+                                Blocks.DIAMOND_BLOCK.defaultBlockState()
+                        );
+                    }
+                }
+            }
+        } else {
+            int z;
+            int zInner;
+            if (!opposite) {
+                z = 2;
+                zInner = 3;
+            } else {
+                z = 13;
+                zInner = 12;
+            }
+            int x = 3;
+            for (int xx = 0; xx < 10; xx++) {
+                for (int yy = 0; yy < 16; yy++) {
+                    if (runeDesc.get(yy).get(xx)) {
+                        chunk.setBlockState(
+                                new BlockPos(x + xx, y - yy, z),
+                                Blocks.AIR.defaultBlockState()
+                        );
+                        chunk.setBlockState(
+                                new BlockPos(x + xx, y - yy, zInner),
+                                Blocks.DIAMOND_BLOCK.defaultBlockState()
+                        );
+                    }
+                }
             }
         }
     }
