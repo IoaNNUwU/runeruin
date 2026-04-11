@@ -114,7 +114,7 @@ public class RRBiomeSource extends BiomeSource {
         float baselineNoise = RRChunkGenerator.topLevelBaselineNoise.noise(x, y, z);
         int baseLine = BLOOMING_CAVES_CEILING_Y +
                 (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
-                TOP_LAYER_OFFSET - 5;
+                TOP_LAYER_OFFSET - 3;
 
         if (y > baseLine) {
             return this.topLevelBiomes.getRandomElement(randomSource).get();
