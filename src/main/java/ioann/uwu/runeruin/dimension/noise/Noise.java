@@ -20,6 +20,10 @@ public interface Noise {
         };
     }
 
+    static Noise constant(float noise) {
+        return (x, y, z) -> noise;
+    }
+
     static Noise flatten(float smoothness, Noise noise) {
         return (x, y, z) -> flatten(noise.noise(x, y, z), smoothness);
     }

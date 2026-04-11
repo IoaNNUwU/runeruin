@@ -83,9 +83,6 @@ public class RRDimension {
                 noiseGenSettings.getOrThrow(NoiseGeneratorSettings.AMPLIFIED)
         );
 
-
-        var biomes = HolderSet.direct(biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE), biomeRegistry.getOrThrow(Biomes.BADLANDS), biomeRegistry.getOrThrow(Biomes.COLD_OCEAN));
-
         RRChunkGenerator chunkGenerator = new RRChunkGenerator(new RRBiomeSource(
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.PLAINS),

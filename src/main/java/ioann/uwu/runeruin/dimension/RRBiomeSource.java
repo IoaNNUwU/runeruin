@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.RR;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.biome.Biome;
@@ -16,6 +17,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.List;
 import java.util.stream.Stream;
+
+import static ioann.uwu.runeruin.dimension.RRChunkGenerator.*;
 
 public class RRBiomeSource extends BiomeSource {
 
@@ -99,7 +102,7 @@ public class RRBiomeSource extends BiomeSource {
     private static final RandomSource randomSource = RandomSource.createThreadLocalInstance(1022101L);
 
     private static final int CEILING_BIOME_HEIGHT = RRChunkGenerator.CEILING_TERRAIN_HEIGHT + 15;
-    private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
+    // private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
 
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
@@ -108,22 +111,27 @@ public class RRBiomeSource extends BiomeSource {
         y = QuartPos.toBlock(y);
         z = QuartPos.toBlock(z);
 
-        if (y < RRChunkGenerator.CEILING_VOID_Y + ARCANE_PLATE_BIOME_HEIGHT) {
-            return this.voidBiomes.getRandomElement(randomSource).get();
-        } else if (y < RRChunkGenerator.LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-            return this.lostCavesBiomes.getRandomElement(randomSource).get();
-        } else if (y < RRChunkGenerator.LOST_CAVES_CEILING_Y + ARCANE_PLATE_BIOME_HEIGHT) {
-            return this.lostCavesCeilingBiomes.getRandomElement(randomSource).get();
-        } else if (y < RRChunkGenerator.DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-            return this.deepCavesBiomes.getRandomElement(randomSource).get();
-        } else if (y < RRChunkGenerator.DEEP_CAVES_CEILING_Y + ARCANE_PLATE_BIOME_HEIGHT) {
-            return this.deepCavesCeilingBiomes.getRandomElement(randomSource).get();
-        } else if (y < RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-            return this.bloomingCavesBiomes.getRandomElement(randomSource).get();
-        } else if (y < RRChunkGenerator.BLOOMING_CAVES_CEILING_Y + ARCANE_PLATE_BIOME_HEIGHT) {
-            return this.bloomingCavesCeilingBiomes.getRandomElement(randomSource).get();
-        } else {
+        float baselineNoise = RRChunkGenerator.topLevelBaselineNoise.noise(x, y, z);
+        int baseLine = BLOOMING_CAVES_CEILING_Y +
+                (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
+                TOP_LAYER_OFFSET - 5;
+
+        if (y > baseLine) {
             return this.topLevelBiomes.getRandomElement(randomSource).get();
+        } else if (y > BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
+            return this.bloomingCavesCeilingBiomes.getRandomElement(randomSource).get();
+        } else if (y > BLOOMING_CAVES_Y) {
+            return this.bloomingCavesBiomes.getRandomElement(randomSource).get();
+        } else if (y > DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
+            return this.deepCavesCeilingBiomes.getRandomElement(randomSource).get();
+        } else if (y > DEEP_CAVES_Y) {
+            return this.deepCavesBiomes.getRandomElement(randomSource).get();
+        } else if (y > LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
+            return this.lostCavesCeilingBiomes.getRandomElement(randomSource).get();
+        } else if (y > LOST_CAVES_Y) {
+            return this.lostCavesBiomes.getRandomElement(randomSource).get();
+        } else {
+            return this.voidBiomes.getRandomElement(randomSource).get();
         }
     }
 }

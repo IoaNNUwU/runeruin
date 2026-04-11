@@ -76,7 +76,11 @@ public class RRPlacedFeatures {
                 InSquarePlacement.spread(),
                 HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
                         VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - RRChunkGenerator.CEILING_TERRAIN_HEIGHT),
-                        VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y),
+                        VerticalAnchor.aboveBottom(
+                                RRChunkGenerator.BLOOMING_CAVES_CEILING_Y +
+                                        RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                        RRChunkGenerator.TERRAIN_HEIGHT
+                        ),
                         1
                 ))
         );
@@ -92,13 +96,17 @@ public class RRPlacedFeatures {
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_CEILING_Y)
+                                VerticalAnchor.aboveBottom(
+                                        RRChunkGenerator.BLOOMING_CAVES_CEILING_Y +
+                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                )
                         ),
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.UP,
                                 BlockPredicate.hasSturdyFace(Direction.DOWN), // .and()
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                12
+                                32
                         ),
 
                         RandomOffsetPlacement.vertical(ConstantInt.of(-1)),

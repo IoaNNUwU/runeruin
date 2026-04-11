@@ -6,7 +6,6 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.noise.*;
 import ioann.uwu.runeruin.dimension.runes.Runes;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
@@ -53,6 +52,9 @@ public class RRChunkGenerator extends ChunkGenerator {
     public static final int ARCANE_PLATE_HEIGHT = 5;
 
     public static final int TOP_LAYER_TERRAIN_HEIGHT = 50;
+    public static final int TOP_LAYER_MAX_BASELINE_HEIGHT = 25;
+    public static final int TOP_LAYER_OFFSET = -15;
+
     public static final int TERRAIN_HEIGHT = 25;
     public static final int TERRAIN_MIN_HEIGHT = 10;
     public static final int CEILING_TERRAIN_HEIGHT = 15;
@@ -110,7 +112,13 @@ public class RRChunkGenerator extends ChunkGenerator {
 
     private static final Noise flattenedBaseTopLevelNoise = Noise.flatten(0.152f, baseTopLevelNoise);
 
-    private static final Noise topLevelNoise = new TopLevelNoise(flattenedBaseTopLevelNoise);
+    public static final Noise topLevelNoise = new TopLevelNoise(flattenedBaseTopLevelNoise);
+
+    public static final Noise topLevelBaselineNoise = Noise.multi(
+            new SingleNoise("topLevelBaselineNoise0".hashCode(), 1f),
+            new SingleNoise("topLevelBaselineNoise1".hashCode(), 0.1f),
+            new SingleNoise("topLevelBaselineNoise2".hashCode(), 0.4f)
+    );
 
     private static final Noise bloomingCavesCeilingNoise = Noise.multi(
             new SingleNoise("bloomingCavesCeiling".hashCode()),
@@ -156,6 +164,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             }
         }
 
+        // --- CEILING BIOME ---
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
 
@@ -171,18 +180,23 @@ public class RRChunkGenerator extends ChunkGenerator {
 
                 int ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
 
+                float baselineNoise = topLevelBaselineNoise.noise(xx, zz);
+                int baseLine = BLOOMING_CAVES_CEILING_Y +
+                        (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
+                        TOP_LAYER_OFFSET;
+
                 BlockState blockState;
                 if (bedrockNoise.noise(xx, 1f, zz) > 0.5f) {
                     blockState = Blocks.DEEPSLATE.defaultBlockState();
                 } else {
                     blockState = Blocks.STONE.defaultBlockState();
                 }
-                chunk.setBlockState(new BlockPos(x, BLOOMING_CAVES_CEILING_Y, z), blockState);
+                chunk.setBlockState(new BlockPos(x, baseLine, z), blockState);
 
-                for (int y = BLOOMING_CAVES_CEILING_Y - ceilingHeight + 1; y < BLOOMING_CAVES_CEILING_Y; y++) {
+                for (int y = baseLine - ceilingHeight + 1; y < baseLine; y++) {
                     chunk.setBlockState(new BlockPos(x, y, z), Blocks.DEEPSLATE.defaultBlockState());
                 }
-                chunk.setBlockState(new BlockPos(x, BLOOMING_CAVES_CEILING_Y - ceilingHeight, z), Blocks.MOSS_BLOCK.defaultBlockState());
+                chunk.setBlockState(new BlockPos(x, baseLine - ceilingHeight, z), Blocks.MOSS_BLOCK.defaultBlockState());
             }
         }
 
@@ -200,35 +214,19 @@ public class RRChunkGenerator extends ChunkGenerator {
 
                 int biomeHeight = (int) (noise * (TOP_LAYER_TERRAIN_HEIGHT)) - ARCANE_PLATE_HEIGHT;
 
-                for (int y = TOP_LAYER_Y; y < TOP_LAYER_Y + biomeHeight - 2; y++) {
+                float baselineNoise = topLevelBaselineNoise.noise(xx, zz);
+                int baseLine = TOP_LAYER_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
+                        TOP_LAYER_OFFSET;
+
+                for (int y = baseLine; y < baseLine + biomeHeight - 2; y++) {
                     chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
                 }
-                for (int y = TOP_LAYER_Y + biomeHeight - 2; y < TOP_LAYER_Y + biomeHeight; y++) {
+                for (int y = baseLine + biomeHeight - 2; y < baseLine + biomeHeight; y++) {
                     chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState());
                 }
-                chunk.setBlockState(new BlockPos(x, TOP_LAYER_Y + biomeHeight, z), Blocks.GRASS_BLOCK.defaultBlockState());
+                chunk.setBlockState(new BlockPos(x, baseLine + biomeHeight, z), Blocks.GRASS_BLOCK.defaultBlockState());
             }
         }
-
-        /*
-        ChunkPos chPos = chunk.getPos();
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-
-                for (int y = TOP_LAYER_Y - TopLevelBouldersNoise.BOULDERS_HEIGHT_BELOW_PLATE - ARCANE_PLATE_HEIGHT; y < TOP_LAYER_Y + TopLevelBouldersNoise.BOULDERS_HEIGHT; y++) {
-                    float noise = topLevelBouldersNoise.noise(
-                            x + chPos.getBlockAt(0, 0, 0).getX(),
-                            y,
-                            z + chPos.getBlockAt(0, 0, 0).getZ()
-                    );
-
-                    if (noise > 0.4f) {
-                        chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
-                    }
-                }
-            }
-        }
-         */
     }
 
     private void fillArcaneStructure(ChunkAccess chunk, RandomSource random) {
@@ -254,37 +252,6 @@ public class RRChunkGenerator extends ChunkGenerator {
                 }
             }
         }
-
-        /*
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-
-                float noise = topLevelNoise.noise(
-                        chunk.getPos().getBlockAt(0, 0, 0).getX() + x,
-                        chunk.getPos().getBlockAt(0, 0, 0).getZ() + z
-                );
-
-                if (noise < 0.01) {
-                    continue;
-                }
-
-                chunk.setBlockState(
-                        new BlockPos(x, BLOOMING_CAVES_CEILING_Y + 1, z),
-                        RRBlocks.ARCANE_STONE_COLUMN.get().defaultBlockState()
-                );
-                for (int y = BLOOMING_CAVES_CEILING_Y + 2; y < TOP_LAYER_Y - 1; y++) {
-                    chunk.setBlockState(
-                            new BlockPos(x, y, z),
-                            RRBlocks.ARCANE_STONE.get().defaultBlockState()
-                    );
-                }
-                chunk.setBlockState(
-                        new BlockPos(x, TOP_LAYER_Y - 1, z),
-                        RRBlocks.ARCANE_STONE_COLUMN.get().defaultBlockState()
-                );
-            }
-        }
-         */
 
         if (doGenerateColumn(chunk.getPos())) {
             generateArcaneColumn(chunk, random);
@@ -357,7 +324,19 @@ public class RRChunkGenerator extends ChunkGenerator {
     private static final List<List<List<Boolean>>> RUNES_DESCRIPTION = Runes.list();
 
     private static void generateArcaneColumn(ChunkAccess chunk, RandomSource random) {
-        for (int y = LOST_CAVES_Y; y < BLOOMING_CAVES_CEILING_Y + 1; y++) {
+
+        int chX = chunk.getPos().getBlockAt(0, 0, 0).getX();
+        int chZ = chunk.getPos().getBlockAt(0, 0, 0).getZ();
+
+        float baselineNoiseXZ = topLevelBaselineNoise.noise(chX + 3, chZ + 3);
+        float baselineNoiseXN = topLevelBaselineNoise.noise(chX + 12, chZ + 3);
+        float baselineNoiseNZ = topLevelBaselineNoise.noise(chX + 3, chZ + 12);
+        float baselineNoiseNN = topLevelBaselineNoise.noise(chX + 12, chZ + 12);
+
+        float maxNoise = Math.max(Math.max(baselineNoiseXZ, baselineNoiseXN), Math.max(baselineNoiseNZ, baselineNoiseNN));
+        int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * maxNoise) + 1  + TOP_LAYER_OFFSET;
+
+        for (int y = LOST_CAVES_Y; y < baseLine; y++) {
             for (int x = 3; x < 13; x++) {
                 for (int z = 2; z < 14; z++) {
                     chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
@@ -373,10 +352,9 @@ public class RRChunkGenerator extends ChunkGenerator {
             }
         }
 
+        // --- Side wall Runes ---
         int idx = random.nextIntBetweenInclusive(0, RUNES_DESCRIPTION.size() - 1);
         var runeDesc = RUNES_DESCRIPTION.get(idx);
-
-        System.out.println("DESC: " + runeDesc);
 
         int y = BLOOMING_CAVES_CEILING_Y - 15 - random.nextIntBetweenInclusive(-2, 15);
 

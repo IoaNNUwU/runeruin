@@ -104,7 +104,10 @@ public class RRConfiguredFeatures {
                         List.of(
                                 BlockColumnConfiguration.layer(
                                         new WeightedListInt(
-                                                WeightedList.<IntProvider>builder().add(UniformInt.of(0, 19), 2).add(UniformInt.of(0, 2), 3).add(UniformInt.of(0, 6), 10).build()
+                                                WeightedList.<IntProvider>builder().add(UniformInt.of(0, 19), 2)
+                                                        .add(UniformInt.of(0, 2), 3)
+                                                        .add(UniformInt.of(0, 6), 10)
+                                                        .build()
                                         ),
                                         caveVinesBodyProvider
                                 ),
