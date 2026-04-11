@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.features.BoulderFeature;
 import ioann.uwu.runeruin.dimension.features.CeilingBlockVineFeature;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import net.minecraft.core.registries.Registries;
@@ -17,4 +18,7 @@ public class RRFeatures {
 
     public static final DeferredHolder<Feature<?>, CeilingBlockVineFeature> CEILING_BLOCK_VINE =
             REGISTRY.register("ceiling_block_wine", CeilingBlockVineFeature::new);
+
+    public static final DeferredHolder<Feature<?>, BoulderFeature> BOULDER =
+            REGISTRY.register("boulder", BoulderFeature::new);
 }

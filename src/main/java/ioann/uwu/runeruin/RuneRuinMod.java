@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.creativetab.RRCreativeModeTabs;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
+import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
 import ioann.uwu.runeruin.items.RRItems;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Blocks;
@@ -35,6 +36,7 @@ public class RuneRuinMod {
         RRBiomeSource.REGISTRY.register(modEventBus);
         RRChunkGenerator.REGISTRY.register(modEventBus);
 
+        RRPlacementModifierTypes.REGISTRY.register(modEventBus);
         RRFeatures.REGISTRY.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.

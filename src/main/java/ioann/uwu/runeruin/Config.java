@@ -18,7 +18,7 @@ public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.BooleanValue LOG_DIRT_BLOCK = BUILDER
-            .comment("Whether to log the dirt block on common setup")
+            .comment("Whether to log the dirt stoneBlock on common setup")
             .define("logDirtBlock", true);
 
     public static final ModConfigSpec.IntValue MAGIC_NUMBER = BUILDER

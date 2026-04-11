@@ -38,6 +38,8 @@ public class RRBiomes {
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.DEEPSLATE_MOSS_BOULDER);
+
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.SMALL_RED_WALL_MUSHROOM);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.SMALL_BROWN_WALL_MUSHROOM);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.BIG_RED_WALL_MUSHROOM);
@@ -83,6 +85,8 @@ public class RRBiomes {
         MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
+
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.TUFF_MOSS_BOULDER);
 
         BiomeDefaultFeatures.addLushCavesVegetationFeatures(generation);
         BiomeDefaultFeatures.addLushCavesSpecialOres(generation);

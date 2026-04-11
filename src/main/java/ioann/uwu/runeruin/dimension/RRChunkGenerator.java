@@ -3,7 +3,10 @@ package ioann.uwu.runeruin.dimension;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.dimension.noise.*;
+import ioann.uwu.runeruin.dimension.noise.Noise;
+import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
+import ioann.uwu.runeruin.dimension.noise.SingleNoise;
+import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
 import ioann.uwu.runeruin.dimension.runes.Runes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -19,7 +22,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.*;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -29,18 +33,15 @@ import java.util.concurrent.CompletableFuture;
 
 public class RRChunkGenerator extends ChunkGenerator {
 
-    public static final DeferredRegister<MapCodec<? extends ChunkGenerator>> REGISTRY =
-            DeferredRegister.create(Registries.CHUNK_GENERATOR, RR.MODID);
+    public static final DeferredRegister<MapCodec<? extends ChunkGenerator>> REGISTRY = DeferredRegister.create(Registries.CHUNK_GENERATOR, RR.MODID);
 
-    public static final DeferredHolder<MapCodec<? extends ChunkGenerator>, MapCodec<RRChunkGenerator>> CHUNK_GENERATOR =
-            REGISTRY.register("runeruin_chunk_generator", () -> RRChunkGenerator.CODEC);
+    public static final DeferredHolder<MapCodec<? extends ChunkGenerator>, MapCodec<RRChunkGenerator>> CHUNK_GENERATOR = REGISTRY.register("runeruin_chunk_generator", () -> RRChunkGenerator.CODEC);
 
     public RRChunkGenerator(BiomeSource biomeSource) {
         super(biomeSource);
     }
 
-    public static final MapCodec<RRChunkGenerator> CODEC = BiomeSource.CODEC.fieldOf("biome_source")
-            .xmap(RRChunkGenerator::new, RRChunkGenerator::getBiomeSource);
+    public static final MapCodec<RRChunkGenerator> CODEC = BiomeSource.CODEC.fieldOf("biome_source").xmap(RRChunkGenerator::new, RRChunkGenerator::getBiomeSource);
 
     @Override
     protected MapCodec<? extends ChunkGenerator> codec() {
@@ -93,37 +94,22 @@ public class RRChunkGenerator extends ChunkGenerator {
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
         return CompletableFuture.supplyAsync(() -> {
             generateTerrain(chunk);
-            fillArcaneStructure(
-                    chunk,
-                    randomState.getOrCreateRandomFactory(RR.id("fill_from_noise"))
-                            .at(chunk.getPos().getMiddleBlockPosition(10))
-            );
+            fillArcaneStructure(chunk, randomState.getOrCreateRandomFactory(RR.id("fill_from_noise")).at(chunk.getPos().getMiddleBlockPosition(10)));
             return chunk;
         });
     }
 
     private static final Noise undergroundNoise = new SingleNoise("undergroundNoise".hashCode());
 
-    private static final Noise baseTopLevelNoise = Noise.multi(
-            new SingleNoise("bigNoise1".hashCode(), 0.5f),
-            new SingleNoise("bigNoise2".hashCode(), 0.4f),
-            new SingleNoise("bigNoise3".hashCode(), 0.3f)
-    );
+    private static final Noise baseTopLevelNoise = Noise.multi(new SingleNoise("bigNoise1".hashCode(), 0.5f), new SingleNoise("bigNoise2".hashCode(), 0.4f), new SingleNoise("bigNoise3".hashCode(), 0.3f));
 
     private static final Noise flattenedBaseTopLevelNoise = Noise.flatten(0.152f, baseTopLevelNoise);
 
     public static final Noise topLevelNoise = new TopLevelNoise(flattenedBaseTopLevelNoise);
 
-    public static final Noise topLevelBaselineNoise = Noise.multi(
-            new SingleNoise("topLevelBaselineNoise0".hashCode(), 1f),
-            new SingleNoise("topLevelBaselineNoise1".hashCode(), 0.1f),
-            new SingleNoise("topLevelBaselineNoise2".hashCode(), 0.4f)
-    );
+    public static final Noise topLevelBaselineNoise = Noise.multi(new SingleNoise("topLevelBaselineNoise0".hashCode(), 1f), new SingleNoise("topLevelBaselineNoise1".hashCode(), 0.1f), new SingleNoise("topLevelBaselineNoise2".hashCode(), 0.4f));
 
-    private static final Noise bloomingCavesCeilingNoise = Noise.multi(
-            new SingleNoise("bloomingCavesCeiling".hashCode()),
-                    (x, y, z) -> 1f
-            );
+    private static final Noise bloomingCavesCeilingNoise = Noise.multi(new SingleNoise("bloomingCavesCeiling".hashCode()), (x, y, z) -> 1f);
 
     private static final Noise bedrockNoise = new PositionalRandomNoise("bedrockNoise".hashCode());
 
@@ -131,18 +117,13 @@ public class RRChunkGenerator extends ChunkGenerator {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
 
-                int[] layerStartingHeights = new int[]{
-                        LOST_CAVES_Y, DEEP_CAVES_Y, BLOOMING_CAVES_Y
-                };
+                int[] layerStartingHeights = new int[]{LOST_CAVES_Y, DEEP_CAVES_Y, BLOOMING_CAVES_Y};
 
                 for (int i = 0; i < 3; i++) {
                     int xOffset = 4272 * i;
                     int zOffset = 3372 * i;
 
-                    float noise = undergroundNoise.noise(
-                            chunk.getPos().getMiddleBlockX() + x + xOffset,
-                            chunk.getPos().getMiddleBlockZ() + z + zOffset
-                    );
+                    float noise = undergroundNoise.noise(chunk.getPos().getMiddleBlockX() + x + xOffset, chunk.getPos().getMiddleBlockZ() + z + zOffset);
 
                     int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
 
@@ -181,9 +162,7 @@ public class RRChunkGenerator extends ChunkGenerator {
                 int ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
 
                 float baselineNoise = topLevelBaselineNoise.noise(xx, zz);
-                int baseLine = BLOOMING_CAVES_CEILING_Y +
-                        (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
-                        TOP_LAYER_OFFSET;
+                int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) + TOP_LAYER_OFFSET;
 
                 BlockState blockState;
                 if (bedrockNoise.noise(xx, 1f, zz) > 0.5f) {
@@ -215,8 +194,7 @@ public class RRChunkGenerator extends ChunkGenerator {
                 int biomeHeight = (int) (noise * (TOP_LAYER_TERRAIN_HEIGHT)) - ARCANE_PLATE_HEIGHT;
 
                 float baselineNoise = topLevelBaselineNoise.noise(xx, zz);
-                int baseLine = TOP_LAYER_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
-                        TOP_LAYER_OFFSET;
+                int baseLine = TOP_LAYER_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) + TOP_LAYER_OFFSET;
 
                 for (int y = baseLine; y < baseLine + biomeHeight - 2; y++) {
                     chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
@@ -264,22 +242,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             return false;
         }
 
-        if ((doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z()))
-                && doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z())))
-                ||
-                (doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() + 1))
-                        && doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() - 1)))
-                ||
-                (doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() + 1))
-                        && doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() - 1)))
-                ||
-                (doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() - 1))
-                        && doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() + 1)))
-        ) {
-            return false;
-        }
-
-        return true;
+        return (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z())) || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z()))) && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() + 1)) || !doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() - 1))) && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() + 1)) || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() - 1))) && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() - 1)) || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() + 1)));
     }
 
     private static boolean doGenerateColumnSimple(ChunkPos chunkPos) {
@@ -334,7 +297,7 @@ public class RRChunkGenerator extends ChunkGenerator {
         float baselineNoiseNN = topLevelBaselineNoise.noise(chX + 12, chZ + 12);
 
         float maxNoise = Math.max(Math.max(baselineNoiseXZ, baselineNoiseXN), Math.max(baselineNoiseNZ, baselineNoiseNN));
-        int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * maxNoise) + 1  + TOP_LAYER_OFFSET;
+        int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * maxNoise) + 1 + TOP_LAYER_OFFSET;
 
         for (int y = LOST_CAVES_Y; y < baseLine; y++) {
             for (int x = 3; x < 13; x++) {
@@ -375,14 +338,8 @@ public class RRChunkGenerator extends ChunkGenerator {
             for (int zz = 0; zz < 10; zz++) {
                 for (int yy = 0; yy < 16; yy++) {
                     if (runeDesc.get(yy).get(zz)) {
-                        chunk.setBlockState(
-                                new BlockPos(x, y - yy, z + zz),
-                                Blocks.AIR.defaultBlockState()
-                        );
-                        chunk.setBlockState(
-                                new BlockPos(xInner, y - yy, z + zz),
-                                Blocks.DIAMOND_BLOCK.defaultBlockState()
-                        );
+                        chunk.setBlockState(new BlockPos(x, y - yy, z + zz), Blocks.AIR.defaultBlockState());
+                        chunk.setBlockState(new BlockPos(xInner, y - yy, z + zz), Blocks.DIAMOND_BLOCK.defaultBlockState());
                     }
                 }
             }
@@ -400,14 +357,8 @@ public class RRChunkGenerator extends ChunkGenerator {
             for (int xx = 0; xx < 10; xx++) {
                 for (int yy = 0; yy < 16; yy++) {
                     if (runeDesc.get(yy).get(xx)) {
-                        chunk.setBlockState(
-                                new BlockPos(x + xx, y - yy, z),
-                                Blocks.AIR.defaultBlockState()
-                        );
-                        chunk.setBlockState(
-                                new BlockPos(x + xx, y - yy, zInner),
-                                Blocks.DIAMOND_BLOCK.defaultBlockState()
-                        );
+                        chunk.setBlockState(new BlockPos(x + xx, y - yy, z), Blocks.AIR.defaultBlockState());
+                        chunk.setBlockState(new BlockPos(x + xx, y - yy, zInner), Blocks.DIAMOND_BLOCK.defaultBlockState());
                     }
                 }
             }

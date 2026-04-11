@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.features.BoulderFeature;
 import ioann.uwu.runeruin.dimension.features.CeilingBlockVineFeature;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import net.minecraft.core.Direction;
@@ -35,8 +36,10 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_brown_mushroom");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "long_ceiling_block_vine");
-
     public static final ResourceKey<ConfiguredFeature<?, ?>> CEILING_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ceiling_vine");
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DEEPSLATE_MOSS_BOULDER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deepslate_moss_boulder");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "tuff_moss_boulder");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -116,6 +119,26 @@ public class RRConfiguredFeatures {
                         Direction.DOWN,
                         BlockPredicate.ONLY_IN_AIR_PREDICATE,
                         true
+                )
+        ));
+
+        ctx.register(DEEPSLATE_MOSS_BOULDER, new ConfiguredFeature<>(
+                RRFeatures.BOULDER.get(),
+                new BoulderFeature.Config(
+                        BlockStateProvider.simple(Blocks.DEEPSLATE),
+                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        ConstantInt.of(5),
+                        ConstantInt.of(16)
+                )
+        ));
+
+        ctx.register(TUFF_MOSS_BOULDER, new ConfiguredFeature<>(
+                RRFeatures.BOULDER.get(),
+                new BoulderFeature.Config(
+                        BlockStateProvider.simple(Blocks.TUFF),
+                        BlockStateProvider.simple(Blocks.PALE_MOSS_BLOCK),
+                        ConstantInt.of(5),
+                        ConstantInt.of(16)
                 )
         ));
     }
