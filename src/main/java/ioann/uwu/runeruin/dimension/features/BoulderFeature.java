@@ -31,40 +31,20 @@ public class BoulderFeature extends Feature<BoulderFeature.Config> {
 
         BlockPos origin = ctx.origin();
 
-        for (int x = -radius; x < radius; x++) {
+        for (int x = -radius; x <= radius; x++) {
             for (int y = -radius; y < radius; y++) {
-                for (int z = -radius; z < radius; z++) {
+                for (int z = -radius; z <= radius; z++) {
                     int xx = origin.getX() + x;
                     int zz = origin.getZ() + z;
                     int yy = origin.getY() + y;
 
-                    level.setBlock(new BlockPos(xx, yy, zz), Blocks.DIAMOND_BLOCK.defaultBlockState(), 1);
-                }
-            }
-        }
-
-
-        /*
-        for (int x = origin.getX() - radius; x < origin.getX() + radius; x++) {
-            for (int z = origin.getZ() - radius; z < origin.getZ() + radius; z++) {
-                for (int y = origin.getY() - radius; y < origin.getY() + radius; y++) {
-                    // var distanceSqr = origin.distToCenterSqr(origin.getX() + x, origin.getY() + y, origin.getZ() + z);
-
-                    BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY() + y, origin.getZ() + z);
-
-                    ctx.level().setBlock(blockPos, block, 1);
-
-                    if (Math.sqrt(distanceSqr) < radius) {
-                        ctx.level().setBlock(
-                                new BlockPos(x, y, z),
-                                block,
-                                1
-                        );
+                    if (origin.distToCenterSqr(xx, yy, zz) < radius * radius) {
+                        level.setBlock(new BlockPos(xx, yy, zz), block, 1);
                     }
                 }
             }
         }
-        */
+
         return true;
     }
 

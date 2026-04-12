@@ -38,7 +38,6 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "long_ceiling_block_vine");
     public static final ResourceKey<ConfiguredFeature<?, ?>> CEILING_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ceiling_vine");
 
-    public static final ResourceKey<ConfiguredFeature<?, ?>> DEEPSLATE_MOSS_BOULDER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deepslate_moss_boulder");
     public static final ResourceKey<ConfiguredFeature<?, ?>> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "tuff_moss_boulder");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
@@ -122,23 +121,13 @@ public class RRConfiguredFeatures {
                 )
         ));
 
-        ctx.register(DEEPSLATE_MOSS_BOULDER, new ConfiguredFeature<>(
-                RRFeatures.BOULDER.get(),
-                new BoulderFeature.Config(
-                        BlockStateProvider.simple(Blocks.DEEPSLATE),
-                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
-                        ConstantInt.of(5),
-                        ConstantInt.of(16)
-                )
-        ));
-
         ctx.register(TUFF_MOSS_BOULDER, new ConfiguredFeature<>(
                 RRFeatures.BOULDER.get(),
                 new BoulderFeature.Config(
                         BlockStateProvider.simple(Blocks.TUFF),
                         BlockStateProvider.simple(Blocks.PALE_MOSS_BLOCK),
                         ConstantInt.of(5),
-                        ConstantInt.of(16)
+                        ConstantInt.of(7)
                 )
         ));
     }

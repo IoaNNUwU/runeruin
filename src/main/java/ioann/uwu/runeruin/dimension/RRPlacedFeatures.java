@@ -33,7 +33,6 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "long_ceiling_block_vine");
     public static final ResourceKey<PlacedFeature> CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "ceiling_vine");
 
-    public static final ResourceKey<PlacedFeature> DEEPSLATE_MOSS_BOULDER = RR.resourceKey(Registries.PLACED_FEATURE, "deepslate_moss_boulder");
     public static final ResourceKey<PlacedFeature> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.PLACED_FEATURE, "tuff_moss_boulder");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
@@ -124,26 +123,10 @@ public class RRPlacedFeatures {
                 )
         ));
 
-        List<PlacementModifier> wallBoulderPlacement = List.of(
-                CountPlacement.of(64),
-                InSquarePlacement.spread(),
-                HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
-                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT),
-                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y + RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT),
-                        1
-                ))
-        );
-
-        ctx.register(DEEPSLATE_MOSS_BOULDER, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEPSLATE_MOSS_BOULDER),
-                List.of() // wallBoulderPlacement
-        ));
-
         ctx.register(TUFF_MOSS_BOULDER, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.TUFF_MOSS_BOULDER),
-                List.of() /*
                 List.of(
-                        CountPlacement.of(188),
+                        CountPlacement.of(8),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
@@ -159,9 +142,12 @@ public class RRPlacedFeatures {
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-1))
+                        new WallPlacementFilter(
+                                List.of(Blocks.STONE.defaultBlockState()),
+                                List.of()
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-2))
                 )
-                */
         ));
     }
 }
