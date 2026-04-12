@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.heightproviders.VeryBiasedToBottomHeight;
 import net.minecraft.world.level.levelgen.placement.*;
 
@@ -34,6 +35,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "ceiling_vine");
 
     public static final ResourceKey<PlacedFeature> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.PLACED_FEATURE, "tuff_moss_boulder");
+
+    public static final ResourceKey<PlacedFeature> MONOLITH = RR.resourceKey(Registries.PLACED_FEATURE, "monolith");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -126,7 +129,7 @@ public class RRPlacedFeatures {
         ctx.register(TUFF_MOSS_BOULDER, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.TUFF_MOSS_BOULDER),
                 List.of(
-                        CountPlacement.of(8),
+                        CountPlacement.of(4),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
@@ -142,11 +145,33 @@ public class RRPlacedFeatures {
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
-                        new WallPlacementFilter(
-                                List.of(Blocks.STONE.defaultBlockState()),
-                                List.of()
-                        ),
                         RandomOffsetPlacement.vertical(ConstantInt.of(-2))
+                )
+        ));
+
+        ctx.register(MONOLITH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MONOLITH),
+                List.of(
+                        CountPlacement.of(1),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(
+                                        RRChunkGenerator.BLOOMING_CAVES_Y +
+                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                )
+                        ),
+                        PlacementUtils.HEIGHTMAP,
+                        RarityFilter.onAverageOnceEvery(128),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                16
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-2)),
+                        BiomeFilter.biome()
                 )
         ));
     }

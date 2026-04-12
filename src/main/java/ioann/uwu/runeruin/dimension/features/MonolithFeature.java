@@ -46,7 +46,7 @@ public class MonolithFeature extends Feature<MonolithFeature.Config> {
                 30
         );
 
-        return false;
+        return true;
     }
 
     public record Config(

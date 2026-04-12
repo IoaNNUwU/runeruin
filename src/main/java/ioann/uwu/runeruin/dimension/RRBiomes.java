@@ -85,6 +85,7 @@ public class RRBiomes {
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.TUFF_MOSS_BOULDER);
+        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MONOLITH);
 
         BiomeDefaultFeatures.addLushCavesVegetationFeatures(generation);
         BiomeDefaultFeatures.addLushCavesSpecialOres(generation);

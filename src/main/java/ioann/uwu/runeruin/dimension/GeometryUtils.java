@@ -14,8 +14,8 @@ public class GeometryUtils {
     public static void cyl(WorldGenLevel level, BlockPos origin, BlockState block, int radius, int height) {
 
         for (int y = 0; y <= height; y++) {
-            for (int x = -radius; x < radius; x++) {
-                for (int z = -radius; z < radius; z++) {
+            for (int x = -radius; x <= radius; x++) {
+                for (int z = -radius; z <= radius; z++) {
                     int xx = origin.getX() + x;
                     int zz = origin.getZ() + z;
                     int yy = origin.getY() + y;

@@ -1,8 +1,10 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.features.BoulderFeature;
 import ioann.uwu.runeruin.dimension.features.CeilingBlockVineFeature;
+import ioann.uwu.runeruin.dimension.features.MonolithFeature;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -39,6 +41,8 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> CEILING_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ceiling_vine");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "tuff_moss_boulder");
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MONOLITH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "monolith");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -128,6 +132,19 @@ public class RRConfiguredFeatures {
                         BlockStateProvider.simple(Blocks.PALE_MOSS_BLOCK),
                         ConstantInt.of(5),
                         ConstantInt.of(7)
+                )
+        ));
+
+        ctx.register(MONOLITH, new ConfiguredFeature<>(
+                RRFeatures.MONOLITH.get(),
+                new MonolithFeature.Config(
+                        BlockStateProvider.simple(RRBlocks.ARCANE_STONE.get()),
+                        BlockStateProvider.simple(Blocks.DIAMOND_BLOCK.defaultBlockState()),
+                        ConstantInt.of(7),
+                        ConstantInt.of(13),
+                        ConstantInt.of(3),
+                        ConstantInt.of(7)
+
                 )
         ));
     }
