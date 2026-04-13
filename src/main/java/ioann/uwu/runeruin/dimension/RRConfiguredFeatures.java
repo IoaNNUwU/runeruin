@@ -6,7 +6,10 @@ import ioann.uwu.runeruin.dimension.features.*;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.features.CaveFeatures;
+import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -21,9 +24,11 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockColumnConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.RandomizedIntStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.WeightedStateProvider;
+import net.minecraft.world.level.levelgen.placement.CaveSurface;
 
 import java.util.List;
 
@@ -41,9 +46,12 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MONOLITH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "monolith");
 
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_POOL_WITH_DRIPLEAVES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_pool_with_dripleaves");
     public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_lily");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
+
+        var otherConfiguredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
 
         ctx.register(SMALL_RED_WALL_MUSHROOM, new ConfiguredFeature<>(
                 RRFeatures.WALL_MUSHROOM.get(),
@@ -144,6 +152,22 @@ public class RRConfiguredFeatures {
                         ConstantInt.of(3),
                         ConstantInt.of(7)
 
+                )
+        ));
+
+        ctx.register(MOSS_POOL_WITH_DRIPLEAVES, new ConfiguredFeature<>(
+                Feature.WATERLOGGED_VEGETATION_PATCH,
+                new VegetationPatchConfiguration(
+                        BlockTags.LUSH_GROUND_REPLACEABLE,
+                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.DRIPLEAF)),
+                        CaveSurface.FLOOR,
+                        ConstantInt.of(3),
+                        0.8F,
+                        5,
+                        0.2F,
+                        UniformInt.of(4, 7),
+                        0.7F
                 )
         ));
 

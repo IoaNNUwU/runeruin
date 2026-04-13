@@ -42,16 +42,10 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
 
         BlockState root = config.rootBlock.getState(level, random, origin);
 
-        BlockState slab = config.flowerSlab.getState(level, random, origin);
-        BlockState topSlab = slab.setValue(SlabBlock.TYPE, SlabType.TOP);
-        BlockState bottomSlab = slab.setValue(SlabBlock.TYPE, SlabType.BOTTOM);
+        // BlockState slab = config.flowerSlab.getState(level, random, origin);
 
         BlockState wall = config.trunkWall.getState(level, random, origin);
         BlockState straightWall = wall.setValue(WallBlock.UP, true);
-        BlockState wallX = straightWall.setValue(WallBlock.NORTH, WallSide.LOW);
-        BlockState wallNX = straightWall.setValue(WallBlock.SOUTH, WallSide.LOW);
-        BlockState wallZ = straightWall.setValue(WallBlock.EAST, WallSide.LOW);
-        BlockState wallNZ = straightWall.setValue(WallBlock.WEST, WallSide.LOW);
 
         List<BlockPos> roots = List.of(
                 origin,

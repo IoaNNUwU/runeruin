@@ -86,24 +86,17 @@ public class RRDimension {
         RRChunkGenerator chunkGenerator = new RRChunkGenerator(new RRBiomeSource(
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.PLAINS),
-                        // biomeRegistry.getOrThrow(Biomes.BIRCH_FOREST),
-                        // biomeRegistry.getOrThrow(Biomes.CHERRY_GROVE),
                         biomeRegistry.getOrThrow(RRBiomes.ELDEN_GARDEN),
                         biomeRegistry.getOrThrow(Biomes.FOREST)
                 ),
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.JUNGLE),
-                        // biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE),
-                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
                         biomeRegistry.getOrThrow(RRBiomes.JUNGLE_SWAMP),
                         biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST)
                 ),
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.JUNGLE),
-                        // biomeRegistry.getOrThrow(Biomes.BAMBOO_JUNGLE),
-                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
                         biomeRegistry.getOrThrow(RRBiomes.JUNGLE_SWAMP),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST)
+                        biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST),
+                        biomeRegistry.getOrThrow(RRBiomes.GHOST_GROVE)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),

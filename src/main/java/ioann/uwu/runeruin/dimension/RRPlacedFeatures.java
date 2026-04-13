@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.heightproviders.VeryBiasedToBottomHeight;
 import net.minecraft.world.level.levelgen.placement.*;
 
@@ -36,6 +37,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.PLACED_FEATURE, "tuff_moss_boulder");
 
     public static final ResourceKey<PlacedFeature> MONOLITH = RR.resourceKey(Registries.PLACED_FEATURE, "monolith");
+
+    public static final ResourceKey<PlacedFeature> MOSS_LAKE = RR.resourceKey(Registries.PLACED_FEATURE, "moss_lake");
 
     public static final ResourceKey<PlacedFeature> RARE_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "rare_stone_lily");
     public static final ResourceKey<PlacedFeature> COMMON_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "common_stone_lily");
@@ -177,6 +180,29 @@ public class RRPlacedFeatures {
                 )
         ));
 
+        ctx.register(MOSS_LAKE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_POOL_WITH_DRIPLEAVES),
+                List.of(
+                        CountPlacement.of(16),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(
+                                        RRChunkGenerator.BLOOMING_CAVES_Y +
+                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                )
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                16
+                        ),
+                        BiomeFilter.biome()
+                )
+        ));
+
         ctx.register(RARE_STONE_LILY, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_LILY),
                 List.of(
@@ -215,7 +241,13 @@ public class RRPlacedFeatures {
                         ),
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,
-                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.matchesBlocks(
+                                        Blocks.MOSS_BLOCK,
+                                        Blocks.MOSSY_COBBLESTONE,
+                                        Blocks.STONE,
+                                        Blocks.CLAY,
+                                        Blocks.WATER
+                                ),
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
