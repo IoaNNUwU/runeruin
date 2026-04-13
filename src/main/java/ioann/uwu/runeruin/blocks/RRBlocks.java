@@ -45,6 +45,10 @@ public class RRBlocks {
             p -> new UntintedParticleLeavesBlock(0.1f, ParticleTypes.CLOUD, p) // TODO: ParticleType
     );
 
+    public static final DeferredBlock<Block> MOSSLIGHT = register("mosslight",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSSY_COBBLESTONE).lightLevel(_ -> 10)
+            );
+
     private static DeferredBlock<Block> register(String name, UnaryOperator<BlockBehaviour.Properties> props) {
         DeferredBlock<Block> blockRecord = REGISTRY.registerSimpleBlock(name, props);
         RRItems.REGISTRY.registerSimpleBlockItem(name, blockRecord);

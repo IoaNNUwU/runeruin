@@ -32,6 +32,8 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
 
         dropPottedContents(RRBlocks.POTTED_ELDEN_SAPLING.get());
 
+        dropSelf(RRBlocks.MOSSLIGHT.get());
+
         // createLeavesDrops(RRBlocks.ELDEN_LEAVES.get(), RRBlocks.ELDEN_SAPLING.get(), BlockLootSubProvider.NORMAL_LEAVES_SAPLING_CHANCES);
     }
 
