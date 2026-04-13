@@ -3,6 +3,8 @@ package ioann.uwu.runeruin.dimension;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.noise.Noise;
+import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
@@ -104,6 +106,9 @@ public class RRBiomeSource extends BiomeSource {
     private static final int CEILING_BIOME_HEIGHT = RRChunkGenerator.CEILING_TERRAIN_HEIGHT + 15;
     // private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
 
+    private static final Noise topLevelBiomesNoise = new SingleNoise("topLevelBiomeNoise".hashCode(), 0.05f);
+    private static final Noise bloomingCavesBiomesNoise = new SingleNoise("bloomingCavesBiomeNoise".hashCode(), 0.05f);
+
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
 
@@ -117,11 +122,26 @@ public class RRBiomeSource extends BiomeSource {
                 TOP_LAYER_OFFSET - 10;
 
         if (y > baseLine) {
-            return this.topLevelBiomes.getRandomElement(randomSource).get();
+            float noise = topLevelBiomesNoise.noise(x, z);
+            if (noise > 0.5) {
+                return this.topLevelBiomes.get(0);
+            } else {
+                return this.topLevelBiomes.get(1);
+            }
         } else if (y > BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-            return this.bloomingCavesCeilingBiomes.getRandomElement(randomSource).get();
+            float noise = bloomingCavesBiomesNoise.noise(x, z);
+            if (noise > 0.5) {
+                return this.bloomingCavesCeilingBiomes.get(0);
+            } else {
+                return this.bloomingCavesCeilingBiomes.get(1);
+            }
         } else if (y > BLOOMING_CAVES_Y) {
-            return this.bloomingCavesBiomes.getRandomElement(randomSource).get();
+            float noise = bloomingCavesBiomesNoise.noise(x, z);
+            if (noise > 0.5) {
+                return this.bloomingCavesBiomes.get(0);
+            } else {
+                return this.bloomingCavesBiomes.get(1);
+            }
         } else if (y > DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
             return this.deepCavesCeilingBiomes.getRandomElement(randomSource).get();
         } else if (y > DEEP_CAVES_Y) {

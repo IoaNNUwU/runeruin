@@ -10,10 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.WallBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.block.state.properties.WallSide;
@@ -115,11 +112,18 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
 
         StructureTemplate structureTemplate = manager.get(STONE_LILY).orElseThrow();
 
+        Rotation rotation = Rotation.getRandom(random);
+        int rand = random.nextIntBetweenInclusive(0, Mirror.values().length - 1);
+        Mirror mirror = Mirror.values()[rand];
+
         structureTemplate.placeInWorld(
                 level,
                 currentBlockState,
                 currentBlockState,
-                new StructurePlaceSettings().setRotation(Rotation.getRandom(random)),
+                new StructurePlaceSettings()
+                        .setRotation(rotation)
+                        .setMirror(mirror)
+                ,
                 random,
                 1
                 );

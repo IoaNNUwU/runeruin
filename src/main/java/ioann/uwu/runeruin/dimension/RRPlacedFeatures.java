@@ -13,7 +13,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.heightproviders.VeryBiasedToBottomHeight;
 import net.minecraft.world.level.levelgen.placement.*;
 
@@ -38,7 +37,8 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> MONOLITH = RR.resourceKey(Registries.PLACED_FEATURE, "monolith");
 
-    public static final ResourceKey<PlacedFeature> STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "stone_lily");
+    public static final ResourceKey<PlacedFeature> RARE_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "rare_stone_lily");
+    public static final ResourceKey<PlacedFeature> COMMON_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "common_stone_lily");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -177,10 +177,10 @@ public class RRPlacedFeatures {
                 )
         ));
 
-        ctx.register(STONE_LILY, new PlacedFeature(
+        ctx.register(RARE_STONE_LILY, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_LILY),
                 List.of(
-                        CountPlacement.of(6),
+                        CountPlacement.of(4),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
@@ -190,7 +190,29 @@ public class RRPlacedFeatures {
                                                 RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
                                 )
                         ),
-                        PlacementUtils.HEIGHTMAP,
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                16
+                        ),
+                        BiomeFilter.biome()
+                )
+        ));
+
+        ctx.register(COMMON_STONE_LILY, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_LILY),
+                List.of(
+                        CountPlacement.of(16),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(
+                                        RRChunkGenerator.BLOOMING_CAVES_Y +
+                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                )
+                        ),
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,
                                 BlockPredicate.hasSturdyFace(Direction.UP),

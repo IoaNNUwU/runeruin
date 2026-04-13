@@ -5,6 +5,7 @@ import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.placement.CavePlacements;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.EntityType;
@@ -23,11 +24,13 @@ public class RRBiomes {
     public static final ResourceKey<Biome> ELDEN_GARDEN = ResourceKey.create(Registries.BIOME, RR.id("elden_garden"));
 
     // --- Blooming caves Layer ---
-    public static final ResourceKey<Biome> BLOOMING_SWAMP = ResourceKey.create(Registries.BIOME, RR.id("blooming_swamp"));
+    public static final ResourceKey<Biome> JUNGLE_SWAMP = ResourceKey.create(Registries.BIOME, RR.id("jungle_swamp"));
+    public static final ResourceKey<Biome> STONE_FOREST = ResourceKey.create(Registries.BIOME, RR.id("stone_forest"));
 
     public static void bootstrap(BootstrapContext<Biome> ctx) {
         ctx.register(ELDEN_GARDEN, eldenGarden(ctx.lookup(Registries.PLACED_FEATURE), ctx.lookup(Registries.CONFIGURED_CARVER)));
-        ctx.register(BLOOMING_SWAMP, bloomingSwamp(ctx.lookup(Registries.PLACED_FEATURE), ctx.lookup(Registries.CONFIGURED_CARVER)));
+        ctx.register(JUNGLE_SWAMP, jungleSwamp(ctx.lookup(Registries.PLACED_FEATURE), ctx.lookup(Registries.CONFIGURED_CARVER)));
+        ctx.register(STONE_FOREST, stoneForest(ctx.lookup(Registries.PLACED_FEATURE), ctx.lookup(Registries.CONFIGURED_CARVER)));
     }
 
     public static Biome eldenGarden(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
@@ -79,7 +82,7 @@ public class RRBiomes {
         return biomeBuilder.build();
     }
 
-    public static Biome bloomingSwamp(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
+    public static Biome jungleSwamp(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
         MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
@@ -95,11 +98,57 @@ public class RRBiomes {
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.STONE_LILY);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.RARE_STONE_LILY);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
-                //.grassColorOverride(0xFFAA70);
+        //.grassColorOverride(0xFFAA70);
+
+        Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
+                .hasPrecipitation(true)
+                .temperature(1f)
+                .downfall(0.5f)
+                //.setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
+                //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
+                //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
+                .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
+                //.setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
+                .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
+                .mobSpawnSettings(mobs.build())
+                .generationSettings(generation.build())
+                .specialEffects(effects.build());
+
+        return biomeBuilder.build();
+    }
+
+    public static Biome stoneForest(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
+        MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
+
+        BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
+
+        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.TUFF_MOSS_BOULDER);
+        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MONOLITH);
+
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_CEILING_VEGETATION);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CAVE_VINES);
+        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_CLAY);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_VEGETATION);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.ROOTED_AZALEA_TREE);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.SPORE_BLOSSOM);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CLASSIC_VINES);
+
+        BiomeDefaultFeatures.addLushCavesSpecialOres(generation);
+
+        // BiomeDefaultFeatures.addJungleTrees(generation);
+        // BiomeDefaultFeatures.addExtraEmeralds(generation);
+
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.COMMON_STONE_LILY);
+
+        BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
+                .waterColor(0x20AA80);
+        //.grassColorOverride(0xFFAA70);
 
         Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
                 .hasPrecipitation(true)

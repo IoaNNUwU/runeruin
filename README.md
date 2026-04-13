@@ -46,14 +46,24 @@
 ### TODO:
 
 - [ ] **TOP** Layer
-  - [ ] Improve generation of the top layer so it isn't too flat.
-  - [ ] Add more biomes.
+  - [ ] Add diamond-like block and change pillars to not have diamonds.
+  - [ ] Add more biomes. Like yellow one.
+  - [X] Improve generation of the top layer so it isn't too flat.
   - [X] Improve pillars generation and put runes on them.
 - [ ] **Blooming Caves** Layer
+  - [ ] Divide into 2 biomes: jungle and stone forest.
+  - [ ] Make boulders generate only under the sun.
+  - [ ] Add another type of glowing flora to glow in blooming caves under the top layer (where dark)
   - [ ] Add `Frog` boss and magic abilities
   - [ ] Add `Pirates Ship` boss/invasion and crew
 - [ ] **Deep Caves** Layer
-  - [ ] Start adding custom biomes.
+  - [ ] Add magenta mushrooms biome with big worms
+- [ ] **Lost Caves** Layer
+  - [ ] Add Lava biome
+  - [ ] Add Ice biome
+- [ ] **Void** layer
+  - [ ] Add stars as small blocks of stardust - a useful material hard to mine above the abyss.
+  - [ ] Add radioactive flesh biome maybe
 - [ ] **Equipment**
   - [ ] Add `Grappling hook`
   - [ ] Add other rock climbing equipment.
