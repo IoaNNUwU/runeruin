@@ -40,3 +40,6 @@ repo/
 !**/src/**/repo/
 
 src/generated
+
+internal/*
+!internal/OffsetNbt.java

@@ -38,6 +38,8 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> MONOLITH = RR.resourceKey(Registries.PLACED_FEATURE, "monolith");
 
+    public static final ResourceKey<PlacedFeature> STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "stone_lily");
+
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
 
@@ -171,6 +173,30 @@ public class RRPlacedFeatures {
                                 16
                         ),
                         RandomOffsetPlacement.vertical(ConstantInt.of(-2)),
+                        BiomeFilter.biome()
+                )
+        ));
+
+        ctx.register(STONE_LILY, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_LILY),
+                List.of(
+                        CountPlacement.of(6),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(
+                                        RRChunkGenerator.BLOOMING_CAVES_Y +
+                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                )
+                        ),
+                        PlacementUtils.HEIGHTMAP,
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                16
+                        ),
                         BiomeFilter.biome()
                 )
         ));

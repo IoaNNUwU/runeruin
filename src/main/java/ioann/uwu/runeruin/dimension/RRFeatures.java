@@ -1,10 +1,7 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.dimension.features.BoulderFeature;
-import ioann.uwu.runeruin.dimension.features.CeilingBlockVineFeature;
-import ioann.uwu.runeruin.dimension.features.MonolithFeature;
-import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
+import ioann.uwu.runeruin.dimension.features.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -25,4 +22,7 @@ public class RRFeatures {
 
     public static final DeferredHolder<Feature<?>, MonolithFeature> MONOLITH =
             REGISTRY.register("monolith", MonolithFeature::new);
+
+    public static final DeferredHolder<Feature<?>, StoneLilyFeature> STONE_LILY =
+            REGISTRY.register("stone_lily", StoneLilyFeature::new);
 }

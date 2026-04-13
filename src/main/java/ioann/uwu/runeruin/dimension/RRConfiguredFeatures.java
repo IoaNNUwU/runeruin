@@ -2,10 +2,7 @@ package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.dimension.features.BoulderFeature;
-import ioann.uwu.runeruin.dimension.features.CeilingBlockVineFeature;
-import ioann.uwu.runeruin.dimension.features.MonolithFeature;
-import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
+import ioann.uwu.runeruin.dimension.features.*;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
@@ -43,6 +40,8 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "tuff_moss_boulder");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MONOLITH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "monolith");
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_lily");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -145,6 +144,16 @@ public class RRConfiguredFeatures {
                         ConstantInt.of(3),
                         ConstantInt.of(7)
 
+                )
+        ));
+
+        ctx.register(STONE_LILY, new ConfiguredFeature<>(
+                RRFeatures.STONE_LILY.get(),
+                new StoneLilyFeature.Config(
+                        BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE),
+                        BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_WALL),
+                        BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_SLAB),
+                        BlockStateProvider.simple(Blocks.MOSS_CARPET)
                 )
         ));
     }
