@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.blocks;
 
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.loottables.RRLootTables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -133,7 +134,7 @@ public class MossBerryBushBlock extends VegetationBlock implements BonemealableB
             if (level instanceof ServerLevel serverLevel) {
 
                 Block.dropFromBlockInteractLootTable(serverLevel,
-                        BuiltInLootTables.HARVEST_SWEET_BERRY_BUSH,
+                        RRLootTables.HARVEST_MOSS_BERRY,
                         state,
                         level.getBlockEntity(pos),
                         null,
