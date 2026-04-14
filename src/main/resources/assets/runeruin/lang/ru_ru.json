@@ -3,6 +3,9 @@
 
   "block.runeruin.diamond_arcane_stone": "Мистический камень с алмазным напылением",
 
+  "block.runeruin.moss_berry_bush": "Куст моховой ягоды",
+  "item.runeruin.moss_berry": "Моховая ягода",
+
   "runeruin.configuration.title": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml.title": "RuneRuin Configs",

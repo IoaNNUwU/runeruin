@@ -3,6 +3,9 @@
 
   "block.runeruin.diamond_arcane_stone": "Diamond-coated arcane stone",
 
+  "block.runeruin.moss_berry_bush": "Mossberry bush",
+  "item.runeruin.moss_berry": "Mossberry",
+
   "runeruin.configuration.title": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml.title": "RuneRuin Configs",
