@@ -95,8 +95,8 @@ public class RRDimension {
                 ),
                 HolderSet.direct(
                         biomeRegistry.getOrThrow(RRBiomes.JUNGLE_SWAMP),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST),
-                        biomeRegistry.getOrThrow(RRBiomes.GHOST_GROVE)
+                        biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST)
+                        // biomeRegistry.getOrThrow(RRBiomes.GHOST_GROVE)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),

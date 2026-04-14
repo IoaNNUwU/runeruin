@@ -130,6 +130,8 @@ public class RRBiomes {
     public static Biome stoneForest(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
         MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
 
+        BiomeDefaultFeatures.swampSpawns(mobs, 1);
+
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MOSS_LAKE);

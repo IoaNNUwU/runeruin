@@ -1,11 +1,6 @@
 package ioann.uwu.runeruin.items;
 
-import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.RRDimension;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
