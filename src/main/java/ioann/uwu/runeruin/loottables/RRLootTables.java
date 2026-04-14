@@ -8,8 +8,4 @@ import net.minecraft.world.level.storage.loot.LootTable;
 public class RRLootTables {
 
     public static final ResourceKey<LootTable> HARVEST_MOSS_BERRY = RR.resourceKey(Registries.LOOT_TABLE, "harvest/moss_berry");
-
-    public static void bootstrap() {
-
-    }
 }

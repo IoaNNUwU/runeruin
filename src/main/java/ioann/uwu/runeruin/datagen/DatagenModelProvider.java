@@ -34,6 +34,8 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ARCANE_STONE_PILLAR.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
         blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ARCANE_STONE_COLUMN.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
 
+        blockModels.createTrivialCube(RRBlocks.DIAMOND_ARCANE_STONE.get());
+
         blockModels.createPlantWithDefaultItem(RRBlocks.ELDEN_SAPLING.get(), RRBlocks.POTTED_ELDEN_SAPLING.get(), BlockModelGenerators.PlantType.NOT_TINTED);
 
         blockModels.createTrivialCube(RRBlocks.ELDEN_LEAVES.get());
@@ -61,6 +63,5 @@ public class DatagenModelProvider extends ModelProvider {
                                 ))
                         )
         );
-
     }
 }

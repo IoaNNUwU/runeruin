@@ -339,7 +339,7 @@ public class RRChunkGenerator extends ChunkGenerator {
                 for (int yy = 0; yy < 16; yy++) {
                     if (runeDesc.get(yy).get(zz)) {
                         chunk.setBlockState(new BlockPos(x, y - yy, z + zz), Blocks.AIR.defaultBlockState());
-                        chunk.setBlockState(new BlockPos(xInner, y - yy, z + zz), Blocks.DIAMOND_BLOCK.defaultBlockState());
+                        chunk.setBlockState(new BlockPos(xInner, y - yy, z + zz), RRBlocks.DIAMOND_ARCANE_STONE.get().defaultBlockState());
                     }
                 }
             }
@@ -358,7 +358,7 @@ public class RRChunkGenerator extends ChunkGenerator {
                 for (int yy = 0; yy < 16; yy++) {
                     if (runeDesc.get(yy).get(xx)) {
                         chunk.setBlockState(new BlockPos(x + xx, y - yy, z), Blocks.AIR.defaultBlockState());
-                        chunk.setBlockState(new BlockPos(x + xx, y - yy, zInner), Blocks.DIAMOND_BLOCK.defaultBlockState());
+                        chunk.setBlockState(new BlockPos(x + xx, y - yy, zInner), RRBlocks.DIAMOND_ARCANE_STONE.get().defaultBlockState());
                     }
                 }
             }

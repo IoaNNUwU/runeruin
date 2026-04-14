@@ -1,7 +1,7 @@
 {
   "itemGroup.runeruin": "Rune Ruin",
 
-  "block.runeruin.diamond_arcane_stone": "Diamond-coated arcane stone",
+  "block.runeruin.diamond_arcane_stone": "Мистический камень с алмазным напылением",
 
   "runeruin.configuration.title": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",

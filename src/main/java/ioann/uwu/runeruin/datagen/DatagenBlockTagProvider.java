@@ -21,6 +21,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_PICKAXE)
                 .add(RRBlocks.ARCANE_STONE.get())
                 .add(RRBlocks.ARCANE_STONE_BRICKS.get())
+                .add(RRBlocks.DIAMOND_ARCANE_STONE.get())
                 .add(RRBlocks.POLISHED_ARCANE_STONE.get())
                 .add(RRBlocks.ARCANE_STONE_PILLAR.get())
                 .add(RRBlocks.ARCANE_STONE_COLUMN.get())

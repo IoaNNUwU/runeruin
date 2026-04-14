@@ -34,6 +34,8 @@ public class RRCreativeModeTabs {
                     RRBlocks.ARCANE_STONE_COLUMN.toStack(),
                     RRBlocks.POLISHED_ARCANE_STONE.toStack(),
 
+                    RRBlocks.DIAMOND_ARCANE_STONE.toStack(),
+
                     RRBlocks.MOSS_LIGHT.toStack(),
 
                     RRBlocks.ELDEN_SAPLING.toStack(),

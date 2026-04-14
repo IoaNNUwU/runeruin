@@ -7,6 +7,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 
 import java.util.concurrent.CompletableFuture;
@@ -27,7 +28,23 @@ public class DatagenRecipeProvider extends RecipeProvider {
                 .pattern("#M#")
                 .pattern("###")
                 .unlockedBy(getHasName(RRItems.MOSS_BERRY), has(RRItems.MOSS_BERRY))
-                .save(this.output); // , "string"
+                .save(this.output);
+
+        this.shaped(RecipeCategory.BUILDING_BLOCKS, RRBlocks.DIAMOND_ARCANE_STONE, 2)
+                .define('#', RRBlocks.ARCANE_STONE)
+                .define('D', Items.DIAMOND)
+                .pattern("#D")
+                .pattern("D#")
+                .unlockedBy(getHasName(RRBlocks.ARCANE_STONE), has(RRBlocks.ARCANE_STONE))
+                .save(this.output, "diamond_arcane_stone");
+
+        this.shaped(RecipeCategory.BUILDING_BLOCKS, RRBlocks.DIAMOND_ARCANE_STONE, 2)
+                .define('#', RRBlocks.ARCANE_STONE)
+                .define('D', Items.DIAMOND)
+                .pattern("D#")
+                .pattern("#D")
+                .unlockedBy(getHasName(RRBlocks.ARCANE_STONE), has(RRBlocks.ARCANE_STONE))
+                .save(this.output, "diamond_arcane_stone_mirrored");
 
     }
 
