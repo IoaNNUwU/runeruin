@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.features.*;
 import net.minecraft.core.Direction;
@@ -11,19 +12,18 @@ import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
-import net.minecraft.util.valueproviders.ConstantInt;
-import net.minecraft.util.valueproviders.IntProvider;
-import net.minecraft.util.valueproviders.UniformInt;
-import net.minecraft.util.valueproviders.WeightedListInt;
+import net.minecraft.util.valueproviders.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVines;
 import net.minecraft.world.level.block.CaveVinesBlock;
+import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockColumnConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.RandomizedIntStateProvider;
@@ -48,6 +48,8 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_POOL_WITH_DRIPLEAVES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_pool_with_dripleaves");
     public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_lily");
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_berry_bush_patch");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -178,6 +180,17 @@ public class RRConfiguredFeatures {
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_WALL),
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_SLAB),
                         BlockStateProvider.simple(Blocks.MOSS_CARPET)
+                )
+        ));
+
+        ctx.register(MOSS_BERRY_BUSH_PATCH, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(
+                        new RandomizedIntStateProvider(
+                                BlockStateProvider.simple(RRBlocks.MOSS_BERRY_BUSH.get()),
+                                MossBerryBushBlock.AGE,
+                                new UniformInt(1, 3)
+                        )
                 )
         ));
     }

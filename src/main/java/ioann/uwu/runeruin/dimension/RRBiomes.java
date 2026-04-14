@@ -132,10 +132,10 @@ public class RRBiomes {
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
+        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MOSS_LAKE);
+
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.TUFF_MOSS_BOULDER);
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MONOLITH);
-
-        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MOSS_LAKE);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_CEILING_VEGETATION);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CAVE_VINES);
@@ -146,9 +146,9 @@ public class RRBiomes {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CLASSIC_VINES);
 
         BiomeDefaultFeatures.addLushCavesSpecialOres(generation);
+        BiomeDefaultFeatures.addExtraEmeralds(generation);
 
-        // BiomeDefaultFeatures.addJungleTrees(generation);
-        // BiomeDefaultFeatures.addExtraEmeralds(generation);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.MOSS_BERRY_BUSH_PATCH);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);

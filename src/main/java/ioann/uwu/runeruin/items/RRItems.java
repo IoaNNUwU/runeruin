@@ -1,8 +1,11 @@
 package ioann.uwu.runeruin.items;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -20,5 +23,14 @@ public class RRItems {
                             .saturationModifier(2f)
                             .build()
             )
+    );
+
+    public static final DeferredItem<Item> MOSS_BERRY = REGISTRY.registerItem(
+            "moss_berry",
+            p -> new BlockItem(RRBlocks.MOSS_BERRY_BUSH.get(), p.useItemDescriptionPrefix()),
+            p -> p.food(new FoodProperties.Builder()
+                    .nutrition(2)
+                    .saturationModifier(0.1f)
+                    .build())
     );
 }

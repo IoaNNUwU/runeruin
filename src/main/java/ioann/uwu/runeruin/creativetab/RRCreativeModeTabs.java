@@ -24,6 +24,8 @@ public class RRCreativeModeTabs {
                     // --- Items ---
                     RRItems.RUNE_OF_SPACE.toStack(),
 
+                    RRItems.MOSS_BERRY.toStack(),
+
 
                     // --- Blocks ---
                     RRBlocks.ARCANE_STONE.toStack(),
@@ -31,6 +33,8 @@ public class RRCreativeModeTabs {
                     RRBlocks.ARCANE_STONE_PILLAR.toStack(),
                     RRBlocks.ARCANE_STONE_COLUMN.toStack(),
                     RRBlocks.POLISHED_ARCANE_STONE.toStack(),
+
+                    RRBlocks.MOSSLIGHT.toStack(),
 
                     RRBlocks.ELDEN_SAPLING.toStack(),
                     RRBlocks.ELDEN_LOG.toStack(),

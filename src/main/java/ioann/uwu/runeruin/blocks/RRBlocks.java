@@ -46,8 +46,17 @@ public class RRBlocks {
     );
 
     public static final DeferredBlock<Block> MOSSLIGHT = register("mosslight",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSSY_COBBLESTONE).lightLevel(_ -> 10)
-            );
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSSY_COBBLESTONE)
+                    .lightLevel(_ -> 7),
+            MossLightBlock::new
+    );
+
+    public static final DeferredBlock<Block> MOSS_BERRY_BUSH = REGISTRY.registerBlock(
+            "moss_berry_bush",
+            MossBerryBushBlock::new,
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
+                    .lightLevel(MossBerryBushBlock::getLightLevel)
+    );
 
     private static DeferredBlock<Block> register(String name, UnaryOperator<BlockBehaviour.Properties> props) {
         DeferredBlock<Block> blockRecord = REGISTRY.registerSimpleBlock(name, props);

@@ -43,6 +43,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> RARE_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "rare_stone_lily");
     public static final ResourceKey<PlacedFeature> COMMON_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "common_stone_lily");
 
+    public static final ResourceKey<PlacedFeature> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "moss_berry_bush_patch");
+
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
 
@@ -206,7 +208,7 @@ public class RRPlacedFeatures {
         ctx.register(RARE_STONE_LILY, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_LILY),
                 List.of(
-                        CountPlacement.of(4),
+                        CountPlacement.of(1),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
@@ -252,6 +254,37 @@ public class RRPlacedFeatures {
                                 16
                         ),
                         BiomeFilter.biome()
+                )
+        ));
+
+        ctx.register(MOSS_BERRY_BUSH_PATCH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_BERRY_BUSH_PATCH),
+                List.of(
+                        RarityFilter.onAverageOnceEvery(1),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(
+                                        RRChunkGenerator.BLOOMING_CAVES_Y +
+                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                )
+                        ),
+                        BiomeFilter.biome(),
+                        CountPlacement.of(96),
+                        RandomOffsetPlacement.ofTriangle(7, 3),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.matchesBlocks(
+                                        Blocks.MOSS_BLOCK,
+                                        Blocks.MOSSY_COBBLESTONE,
+                                        Blocks.STONE
+                                ),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                16
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(1))
+
                 )
         ));
     }

@@ -47,17 +47,18 @@
 
 - [ ] **TOP** Layer
   - [ ] Add diamond-like block and change pillars to not have diamonds.
-  - [ ] Add more biomes. Like yellow one.
+  - [ ] Add more biomes. Like a yellow one.
   - [X] Improve generation of the top layer so it isn't too flat.
   - [X] Improve pillars generation and put runes on them.
 - [ ] **Blooming Caves** Layer
-  - [ ] Divide into 2 biomes: jungle and stone forest.
-  - [ ] Make boulders generate only under the sun.
-  - [ ] Add another type of glowing flora to glow in blooming caves under the top layer (where dark)
+  - [ ] Add `Hive` biome as large stone hanging from the top layer and other types of hanging stones
   - [ ] Add `Frog` boss and magic abilities
   - [ ] Add `Pirates Ship` boss/invasion and crew
+  - [X] Divide into 2 biomes: jungle and stone forest.
+  - [X] Add another type of glowing flora to glow in blooming caves under the top layer (where dark)
 - [ ] **Deep Caves** Layer
   - [ ] Add magenta mushrooms biome with big worms
+  - [ ] Add spider caves biome with giant spider boss.
 - [ ] **Lost Caves** Layer
   - [ ] Add Lava biome
   - [ ] Add Ice biome
@@ -65,5 +66,7 @@
   - [ ] Add stars as small blocks of stardust - a useful material hard to mine above the abyss.
   - [ ] Add radioactive flesh biome maybe
 - [ ] **Equipment**
+  - [ ] Add `Blowpipe` - shoots `mossberries` / `glowberries`. applies effect on the enemy
+  - [ ] Add `ring` that makes every tool deal x2 damage on poisoned enemies to work with `blowpipe` or a `sword`
   - [ ] Add `Grappling hook`
   - [ ] Add other rock climbing equipment.

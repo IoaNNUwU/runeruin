@@ -6,10 +6,13 @@ import ioann.uwu.runeruin.items.RRItems;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
+import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.data.PackOutput;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jspecify.annotations.NonNull;
 
 public class DatagenModelProvider extends ModelProvider {
@@ -38,5 +41,26 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ELDEN_LOG.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
 
         blockModels.createTrivialCube(RRBlocks.MOSSLIGHT.get());
+
+        createMossBerry(blockModels, itemModels);
+    }
+
+    private static void createMossBerry(@NonNull BlockModelGenerators blockModels, @NonNull ItemModelGenerators itemModels) {
+        itemModels.generateFlatItem(RRItems.MOSS_BERRY.get(), ModelTemplates.FLAT_ITEM);
+
+        blockModels.blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(RRBlocks.MOSS_BERRY_BUSH.get())
+                        .with(PropertyDispatch.initial(BlockStateProperties.AGE_3)
+                                .generate(age -> BlockModelGenerators.plainVariant(
+                                        blockModels.createSuffixedVariant(
+                                                RRBlocks.MOSS_BERRY_BUSH.get(),
+                                                "_stage" + age,
+                                                ModelTemplates.CROSS,
+                                                TextureMapping::cross
+                                        )
+                                ))
+                        )
+        );
+
     }
 }
