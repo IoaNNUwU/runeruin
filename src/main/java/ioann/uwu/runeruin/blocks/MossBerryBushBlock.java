@@ -106,7 +106,7 @@ public class MossBerryBushBlock extends VegetationBlock implements BonemealableB
                         double xs = Math.abs(movement.x());
                         double zs = Math.abs(movement.z());
                         if (xs >= (double)0.003F || zs >= (double)0.003F) {
-                            DamageSource damageSource = level.damageSources().sweetBerryBush();
+                            DamageSource damageSource = level.damageSources().generic();
 
                             entity.hurtServer(serverLevel, damageSource, 1.0F);
                             livingEntity.addEffect(new MobEffectInstance(MobEffects.POISON, 5 * 20));
