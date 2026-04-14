@@ -24,7 +24,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 .add(RRBlocks.POLISHED_ARCANE_STONE.get())
                 .add(RRBlocks.ARCANE_STONE_PILLAR.get())
                 .add(RRBlocks.ARCANE_STONE_COLUMN.get())
-                .add(RRBlocks.MOSSLIGHT.get());
+                .add(RRBlocks.MOSS_LIGHT.get());
 
         // TODO: ELDEN_SAPLING
 
@@ -34,6 +34,6 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.MINEABLE_WITH_HOE)
                 .add(RRBlocks.ELDEN_LEAVES.get())
-                .add(RRBlocks.MOSSLIGHT.get());
+                .add(RRBlocks.MOSS_LIGHT.get());
     }
 }

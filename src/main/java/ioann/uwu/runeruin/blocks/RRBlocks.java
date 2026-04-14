@@ -45,7 +45,7 @@ public class RRBlocks {
             p -> new UntintedParticleLeavesBlock(0.1f, ParticleTypes.CLOUD, p) // TODO: ParticleType
     );
 
-    public static final DeferredBlock<Block> MOSSLIGHT = register("mosslight",
+    public static final DeferredBlock<Block> MOSS_LIGHT = register("moss_light",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSSY_COBBLESTONE)
                     .lightLevel(_ -> 7),
             MossLightBlock::new
