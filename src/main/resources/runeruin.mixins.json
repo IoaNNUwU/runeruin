@@ -3,9 +3,9 @@
   "package": "ioann.uwu.runeruin.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "SlimeMixin"
   ],
   "client": [
-
   ],
   "injectors": {
     "defaultRequire": 1

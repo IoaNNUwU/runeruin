@@ -93,7 +93,7 @@ public class MossBerryBushBlock extends VegetationBlock implements BonemealableB
     @Override
     protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean isPrecise) {
 
-        if (entity instanceof LivingEntity livingEntity && !entity.is(EntityType.FOX) && !entity.is(EntityType.BEE)) {
+        if (entity instanceof LivingEntity livingEntity && !entity.is(EntityType.FROG) && !entity.is(EntityType.BOGGED)) {
 
             entity.makeStuckInBlock(state, new Vec3(0.8F, 0.75F, 0.8F));
 
