@@ -76,10 +76,7 @@ public class RRBiomes {
                 .downfall(0.5f)
                 .setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
                 .setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
-                .setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
-                // TODO: Make MUSHROOM cave biome ambient color PINK or something
-                .setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0xFF8860)
                 .mobSpawnSettings(mobs.build())
                 .generationSettings(generation.build())
@@ -118,7 +115,6 @@ public class RRBiomes {
                 //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
                 //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
-                //.setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
                 .mobSpawnSettings(mobs.build())
                 .generationSettings(generation.build())
@@ -168,7 +164,6 @@ public class RRBiomes {
                 //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
                 //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
-                //.setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
                 .mobSpawnSettings(mobs.build())
                 .generationSettings(generation.build())
@@ -182,25 +177,6 @@ public class RRBiomes {
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
-        // generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MOSS_LAKE);
-
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_CEILING_VEGETATION);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CAVE_VINES);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_CLAY);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_VEGETATION);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.ROOTED_AZALEA_TREE);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.SPORE_BLOSSOM);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CLASSIC_VINES);
-
-        // BiomeDefaultFeatures.addLushCavesSpecialOres(generation);
-
-        // BiomeDefaultFeatures.addJungleTrees(generation);
-        // BiomeDefaultFeatures.addExtraEmeralds(generation);
-
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.COMMON_STONE_LILY);
-
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
         //.grassColorOverride(0xFFAA70);
@@ -213,7 +189,6 @@ public class RRBiomes {
                 //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
                 //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
-                //.setAttribute(EnvironmentAttributes.CLOUD_HEIGHT, 280f)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
                 .mobSpawnSettings(mobs.build())
                 .generationSettings(generation.build())

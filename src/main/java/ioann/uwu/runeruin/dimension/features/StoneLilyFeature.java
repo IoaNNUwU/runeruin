@@ -155,6 +155,7 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
             frog.setBaby(random.nextBoolean());
 
             level.addFreshEntity(frog);
+            currentBlockState.move(Direction.UP);
         }
 
         return true;

@@ -49,16 +49,12 @@ public class RuneRuinMod {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
-        // Some common setup code
-        RR.LOGGER.info("HELLO FROM COMMON SETUP");
 
-        if (Config.LOG_DIRT_BLOCK.getAsBoolean()) {
-            RR.LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
+        if (Config.RENDER_CLOUDS_BELOW_TOP_LAYER.getAsBoolean()) {
+            RR.LOGGER.info("RENDER CLOUDS");
+        } else {
+            RR.LOGGER.info("DON'T RENDER CLOUDS");
         }
-
-        RR.LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
-
-        Config.ITEM_STRINGS.get().forEach((item) -> RR.LOGGER.info("ITEM >> {}", item));
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
