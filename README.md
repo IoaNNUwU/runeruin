@@ -1,6 +1,6 @@
 # Rune Ruin
 
-**Rune Ruin** is WIP mod for **Minecraft 1.26.1**
+**Rune Ruin** is WIP mod for **Minecraft 26.1.1**
 
 ![](.github/assets/preview.png)
 

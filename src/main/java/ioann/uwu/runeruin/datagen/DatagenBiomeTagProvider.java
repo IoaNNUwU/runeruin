@@ -20,5 +20,6 @@ public class DatagenBiomeTagProvider extends BiomeTagsProvider {
 
         this.tag(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS)
                 .add(RRBiomes.STONE_FOREST);
+
     }
 }
