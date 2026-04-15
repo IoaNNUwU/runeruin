@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.client;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.datagen.DatagenBiomeTagProvider;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -10,6 +11,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRendererEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = RR.MODID, dist = Dist.CLIENT)

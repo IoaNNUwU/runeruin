@@ -8,8 +8,6 @@ import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
 import ioann.uwu.runeruin.items.RRItems;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -17,6 +15,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.data.internal.*;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
@@ -49,12 +48,6 @@ public class RuneRuinMod {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
-
-        if (Config.RENDER_CLOUDS_BELOW_TOP_LAYER.getAsBoolean()) {
-            RR.LOGGER.info("RENDER CLOUDS");
-        } else {
-            RR.LOGGER.info("DON'T RENDER CLOUDS");
-        }
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

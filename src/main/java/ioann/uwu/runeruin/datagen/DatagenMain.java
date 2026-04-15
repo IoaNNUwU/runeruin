@@ -2,7 +2,9 @@ package ioann.uwu.runeruin.datagen;
 
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.RRBiomes;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.LootTableProvider;
@@ -15,6 +17,7 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 @EventBusSubscriber(modid = RR.MODID)
@@ -45,6 +48,8 @@ public class DatagenMain {
         gen.addProvider(true, new DatagenBlockTagProvider(packOutput, lookupProvider));
 
         gen.addProvider(true, new DatagenWorldGenProvider(packOutput, lookupProvider));
+
+        gen.addProvider(true, new DatagenBiomeTagProvider(packOutput, lookupProvider));
 
         gen.addProvider(true, new DatagenRecipeProvider.Runner(packOutput, lookupProvider));
     }
