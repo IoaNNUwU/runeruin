@@ -46,10 +46,10 @@
 ### TODO:
 
 - [ ] **TOP** Layer
-  - [ ] Add diamond-like block and change pillars to not have diamonds.
   - [ ] Add more biomes. Like a yellow one.
   - [X] Improve generation of the top layer so it isn't too flat.
   - [X] Improve pillars generation and put runes on them.
+  - [X] Improve runes design.
 - [ ] **Blooming Caves** Layer
   - [ ] Add `Hive` biome as large stone hanging from the top layer and other types of hanging stones
   - [ ] Add `Frog` boss and magic abilities

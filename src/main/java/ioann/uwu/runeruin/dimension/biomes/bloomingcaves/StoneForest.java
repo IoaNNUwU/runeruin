@@ -92,7 +92,6 @@ public class StoneForest {
                     && pos.getY() < RRChunkGenerator.BLOOMING_CAVES_CEILING_Y) {
 
                 if (level.getMaxLocalRawBrightness(pos) <= random.nextInt(8)) {
-                    System.out.println("  CHECK_SPAWN_RULES: " + Mob.checkMobSpawnRules(type, level, spawnReason, pos, random));
                     return Mob.checkMobSpawnRules(type, level, spawnReason, pos, random);
                 }
             }
