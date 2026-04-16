@@ -103,7 +103,7 @@ public class RRConfiguredFeatures {
                 RRFeatures.CEILING_BALL.get(),
                 new CeilingBallFeature.Config(
                         BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
-                        BlockStateProvider.simple(Blocks.PEARLESCENT_FROGLIGHT),
+                        BlockStateProvider.simple(RRBlocks.LAPIS_LIGHT.get()),
                         ConstantInt.of(20),
                         ConstantInt.of(10)
                 )

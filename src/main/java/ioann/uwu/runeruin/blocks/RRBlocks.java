@@ -26,6 +26,10 @@ public class RRBlocks {
     public static final DeferredBlock<Block> ARCANE_STONE_COLUMN = register("arcane_stone_column", ARCANE_STONE_PROPS, RotatedPillarBlock::new);
 
     public static final DeferredBlock<Block> DIAMOND_ARCANE_STONE = register("diamond_arcane_stone", _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.DIAMOND_BLOCK));
+    public static final DeferredBlock<Block> LAPIS_LIGHT = register("lapis_light",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PEARLESCENT_FROGLIGHT)
+                    .lightLevel(_ -> 6)
+    );
 
     public static final DeferredBlock<Block> ELDEN_SAPLING = register("elden_sapling",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_SAPLING).mapColor(MapColor.COLOR_YELLOW),

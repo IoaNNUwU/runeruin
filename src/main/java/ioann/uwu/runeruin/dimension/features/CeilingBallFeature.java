@@ -7,8 +7,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Spawner;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SpawnerBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -36,7 +41,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
         BlockState ballBlock = config.ballBlock.getState(level, random, origin);
 
         float maxLength = config.maxTrunkLength.sample(random);
-        int trunkLength = (int) (maxLength / 4 + (maxLength / 4 * 3) * random.nextFloat());
+        int trunkLength = (int) (maxLength / 4 + (maxLength * 3 / 4) * random.nextFloat());
 
         float maxRadius = config.maxRadius.sample(random);
         int radius = (int) (maxRadius / 2 + (maxRadius / 2) * random.nextFloat());
@@ -220,7 +225,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
 
         // --- Additional thorns in the middle of the trunk ---
 
-        int segmentLength = 6;
+        int segmentLength = 7;
         int segmentCount = trunkLength / segmentLength;
         for (int nSegment = 0; nSegment < segmentCount; nSegment++) {
             BlockPos yOrigin = origin.below(nSegment * segmentLength + segmentLength / 2 - trunkLength % segmentCount);
@@ -258,19 +263,43 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
 
         // --- Sphere ---
 
-        GeometryUtils.sphere(
-                level,
-                origin.below(trunkLength + radius),
-                () -> random.nextBoolean() ? trunkBlock : Blocks.AIR.defaultBlockState(),
-                radius + 1
-        );
+        BlockPos center = origin.below(trunkLength + radius);
 
         GeometryUtils.sphere(
                 level,
-                origin.below(trunkLength + radius),
+                center,
+                () -> random.nextBoolean() ? trunkBlock : Blocks.AIR.defaultBlockState(),
+                radius + 1
+        );
+        GeometryUtils.sphere(
+                level,
+                center,
                 () -> ballBlock,
                 radius
         );
+        GeometryUtils.sphere(
+                level,
+                center,
+                () -> random.nextBoolean() ? trunkBlock : Blocks.AIR.defaultBlockState(),
+                radius - 1
+        );
+        GeometryUtils.sphere(
+                level,
+                center,
+                Blocks.AIR::defaultBlockState,
+                radius - 2
+        );
+
+        BlockState spawnerBlockState = Blocks.SPAWNER.defaultBlockState();
+        if (random.nextBoolean()) {
+            level.setBlock(center, spawnerBlockState, 1);
+            BlockEntity blockEntity = level.getBlockEntity(center);
+            if (blockEntity instanceof SpawnerBlockEntity spawner) {
+                spawner.setEntityId(EntityType.CAVE_SPIDER, random);
+                spawner.setChanged();
+                // TODO
+            }
+        }
 
         // --- Additional blocks at the bottom of the Trunk ---
         for (int x = -2; x <= 2; x++) {

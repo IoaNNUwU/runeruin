@@ -25,7 +25,7 @@ public class RRCreativeModeTabs {
                     RRItems.RUNE_OF_SPACE.toStack(),
 
                     RRItems.MOSS_BERRY.toStack(),
-
+                    RRBlocks.LAPIS_LIGHT.toStack(),
 
                     // --- Blocks ---
                     RRBlocks.ARCANE_STONE.toStack(),

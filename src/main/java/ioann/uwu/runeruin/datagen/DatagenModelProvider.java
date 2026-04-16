@@ -43,6 +43,7 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ELDEN_LOG.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
 
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
+        blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
 
         createMossBerry(blockModels, itemModels);
     }
