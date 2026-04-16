@@ -34,8 +34,8 @@ public class RRItems {
             "moss_berry",
             p -> new BlockItem(RRBlocks.MOSS_BERRY_BUSH.get(), p.useItemDescriptionPrefix()),
             p -> p.food(new FoodProperties.Builder()
-                    .nutrition(2)
-                    .saturationModifier(0.1f)
+                    .nutrition(3)
+                    .saturationModifier(0.3f)
                     .build(),
                     Consumable.builder()
                             .onConsume(new ApplyStatusEffectsConsumeEffect(

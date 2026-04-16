@@ -189,7 +189,7 @@ public class RRConfiguredFeatures {
                         new RandomizedIntStateProvider(
                                 BlockStateProvider.simple(RRBlocks.MOSS_BERRY_BUSH.get()),
                                 MossBerryBushBlock.AGE,
-                                new UniformInt(1, 3)
+                                new UniformInt(0, 3)
                         )
                 )
         ));

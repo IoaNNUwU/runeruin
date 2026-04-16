@@ -3,6 +3,8 @@ package ioann.uwu.runeruin.dimension.features;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.RRTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -18,18 +20,19 @@ import net.minecraft.world.entity.variant.VariantUtils;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.block.state.properties.WallSide;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.FossilFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import net.minecraft.world.level.levelgen.structure.templatesystem.*;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.Tags;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
@@ -118,6 +121,10 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
         int rand = random.nextIntBetweenInclusive(0, Mirror.values().length - 1);
         Mirror mirror = Mirror.values()[rand];
 
+        // TODO: Look into so called BlockProcessors. Maybe they allow to not replace existing blocks.
+
+        var blockProcessor = new ProtectedBlockProcessor(RRTags.VEGETABLES_NON_REPLACEABLE);
+
         structureTemplate.placeInWorld(
                 level,
                 currentBlockState,
@@ -125,6 +132,7 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
                 new StructurePlaceSettings()
                         .setRotation(rotation)
                         .setMirror(mirror)
+                        .addProcessor(blockProcessor)
                 ,
                 random,
                 1

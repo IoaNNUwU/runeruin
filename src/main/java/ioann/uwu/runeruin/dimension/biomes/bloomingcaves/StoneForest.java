@@ -61,7 +61,7 @@ public class StoneForest {
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
-        //.grassColorOverride(0xFFAA70);
+        //      .grassColorOverride(0xFFAA70);
 
         Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
                 .hasPrecipitation(true)
@@ -86,11 +86,6 @@ public class StoneForest {
             if (EntitySpawnReason.isSpawner(spawnReason)) {
                 return Mob.checkMobSpawnRules(type, level, spawnReason, pos, random);
             }
-
-            System.out.println("HELLO:");
-            System.out.println("  ALLOW: " + level.getBiome(pos).is(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS));
-            System.out.println("  Y_ABOVE: " + (pos.getY() > RRChunkGenerator.BLOOMING_CAVES_Y));
-            System.out.println("  Y_BELOW: " + (pos.getY() < RRChunkGenerator.BLOOMING_CAVES_CEILING_Y));
 
             if (level.getBiome(pos).is(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS)
                     && pos.getY() > RRChunkGenerator.BLOOMING_CAVES_Y

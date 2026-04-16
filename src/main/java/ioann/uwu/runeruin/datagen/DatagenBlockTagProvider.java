@@ -2,9 +2,11 @@ package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.RRTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.data.BlockTagsProvider;
 import org.jspecify.annotations.NonNull;
 
@@ -36,5 +38,11 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_HOE)
                 .add(RRBlocks.ELDEN_LEAVES.get())
                 .add(RRBlocks.MOSS_LIGHT.get());
+
+
+        tag(RRTags.VEGETABLES_NON_REPLACEABLE)
+                .add(RRBlocks.ARCANE_STONE.get())
+                .add(Blocks.MOSSY_COBBLESTONE_WALL)
+                .add(Blocks.MOSSY_COBBLESTONE_SLAB);
     }
 }
