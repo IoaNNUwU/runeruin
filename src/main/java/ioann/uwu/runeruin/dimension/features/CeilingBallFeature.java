@@ -162,6 +162,44 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
             level.setBlock(block, trunkBlock, 1);
         }
 
+        // --- Additional blocks at the bottom of the Trunk ---
+        BlockPos trunkBottom = origin.below(trunkLength - 1);
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                for (int y = -1; y <= 1; y++) {
+                    int xx = trunkBottom.getX() + x;
+                    int zz = trunkBottom.getZ() + z;
+                    int yy = trunkBottom.getY() + y;
+
+                    level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+                }
+            }
+        }
+
+        List<BlockPos> moreBlocks;
+        if (random.nextBoolean()) {
+            moreBlocks = List.of(
+                    trunkBottom.north(2).west(1),
+                    trunkBottom.north(1).west(2),
+                    trunkBottom.north(1).west(1).above(2),
+                    trunkBottom.north(-2).west(-1),
+                    trunkBottom.north(-1).west(-2),
+                    trunkBottom.north(-1).west(-1).above(2)
+            );
+        } else {
+            moreBlocks = List.of(
+                    trunkBottom.north(2).west(-1),
+                    trunkBottom.north(1).west(-2),
+                    trunkBottom.north(1).west(-1).above(2),
+                    trunkBottom.north(-2).west(1),
+                    trunkBottom.north(-1).west(2),
+                    trunkBottom.north(-1).west(1).above(2)
+            );
+        }
+        for (BlockPos blockPos : moreBlocks) {
+            level.setBlock(blockPos, trunkBlock, 1);
+        }
+
         // --- Trunk ---
 
         for (int y = 0; y < trunkLength; y++) {
@@ -180,6 +218,44 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
             }
         }
 
+        // --- Additional thorns in the middle of the trunk ---
+
+        int segmentLength = 6;
+        int segmentCount = trunkLength / segmentLength;
+        for (int nSegment = 0; nSegment < segmentCount; nSegment++) {
+            BlockPos yOrigin = origin.below(nSegment * segmentLength + segmentLength / 2 - trunkLength % segmentCount);
+
+            List<BlockPos> additionalBlocks;
+            if (random.nextBoolean()) {
+                additionalBlocks = List.of(
+                        yOrigin.north().west(),
+                        yOrigin.north().west().above(),
+                        yOrigin.north().east(),
+                        yOrigin.north().east().below(),
+                        yOrigin.south().west(),
+                        yOrigin.south().west().above(),
+                        yOrigin.south().east(),
+                        yOrigin.south().east().below()
+                );
+            } else {
+                additionalBlocks = List.of(
+                        yOrigin.north().west(),
+                        yOrigin.north().west().below(),
+                        yOrigin.north().east(),
+                        yOrigin.north().east().above(),
+                        yOrigin.south().west(),
+                        yOrigin.south().west().above(),
+                        yOrigin.south().east(),
+                        yOrigin.south().east().below()
+                );
+            }
+
+            for (BlockPos blockPos : additionalBlocks) {
+                level.setBlock(blockPos, trunkBlock, 1);
+            }
+        }
+
+
         // --- Sphere ---
 
         GeometryUtils.sphere(
@@ -195,6 +271,17 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                 () -> ballBlock,
                 radius
         );
+
+        // --- Additional blocks at the bottom of the Trunk ---
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) {
+                int xx = trunkBottom.getX() + x;
+                int zz = trunkBottom.getZ() + z;
+                int yy = trunkBottom.getY() - 1;
+
+                level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+            }
+        }
 
         return true;
     }
