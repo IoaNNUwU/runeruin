@@ -43,3 +43,4 @@ src/generated
 
 internal/*
 !internal/OffsetNbt.java
+!internal/RemoveAir.java
