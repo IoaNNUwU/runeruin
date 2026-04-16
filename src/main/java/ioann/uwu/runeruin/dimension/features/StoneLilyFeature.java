@@ -121,8 +121,6 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
         int rand = random.nextIntBetweenInclusive(0, Mirror.values().length - 1);
         Mirror mirror = Mirror.values()[rand];
 
-        // TODO: Look into so called BlockProcessors. Maybe they allow to not replace existing blocks.
-
         var blockProcessor = new ProtectedBlockProcessor(RRTags.VEGETABLES_NON_REPLACEABLE);
 
         structureTemplate.placeInWorld(

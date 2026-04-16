@@ -301,6 +301,19 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
             return false;
         }
 
+        List<BlockPos> noBlocks = List.of(
+                origin.above(3).north(2),
+                origin.above(3).south(2),
+                origin.above(3).east(2),
+                origin.above(3).west(2)
+        );
+
+        for (BlockPos blockPos : noBlocks) {
+            if (level.isEmptyBlock(blockPos)) {
+                return false;
+            }
+        }
+
         for (BlockPos blockPos : List.of(origin.north(), origin.south(), origin.west(), origin.east())) {
             if (level.getBlockState(blockPos).is(trunkBlock.getBlock())) {
                 return false;

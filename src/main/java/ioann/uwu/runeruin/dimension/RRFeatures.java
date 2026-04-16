@@ -11,18 +11,13 @@ public class RRFeatures {
 
     public static final DeferredRegister<Feature<?>> REGISTRY = DeferredRegister.create(Registries.FEATURE, RR.MODID);
 
-    public static final DeferredHolder<Feature<?>, WallMushroomFeature> WALL_MUSHROOM =
-            REGISTRY.register("wall_mushroom", WallMushroomFeature::new);
+    public static final DeferredHolder<Feature<?>, WallMushroomFeature> WALL_MUSHROOM = REGISTRY.register("wall_mushroom", WallMushroomFeature::new);
 
-    public static final DeferredHolder<Feature<?>, CeilingBlockVineFeature> CEILING_BLOCK_VINE =
-            REGISTRY.register("ceiling_block_wine", CeilingBlockVineFeature::new);
+    public static final DeferredHolder<Feature<?>, CeilingBlockVineFeature> CEILING_BLOCK_VINE = REGISTRY.register("ceiling_block_wine", CeilingBlockVineFeature::new);
+    public static final DeferredHolder<Feature<?>, CeilingBallFeature> CEILING_BALL = REGISTRY.register("ceiling_ball", CeilingBallFeature::new);
 
-    public static final DeferredHolder<Feature<?>, BoulderFeature> BOULDER =
-            REGISTRY.register("boulder", BoulderFeature::new);
+    public static final DeferredHolder<Feature<?>, BoulderFeature> BOULDER = REGISTRY.register("boulder", BoulderFeature::new);
+    public static final DeferredHolder<Feature<?>, MonolithFeature> MONOLITH = REGISTRY.register("monolith", MonolithFeature::new);
 
-    public static final DeferredHolder<Feature<?>, MonolithFeature> MONOLITH =
-            REGISTRY.register("monolith", MonolithFeature::new);
-
-    public static final DeferredHolder<Feature<?>, StoneLilyFeature> STONE_LILY =
-            REGISTRY.register("stone_lily", StoneLilyFeature::new);
+    public static final DeferredHolder<Feature<?>, StoneLilyFeature> STONE_LILY = REGISTRY.register("stone_lily", StoneLilyFeature::new);
 }

@@ -79,26 +79,14 @@ public class RRDimension {
         var dimTypes = ctx.lookup(Registries.DIMENSION_TYPE);
         var noiseGenSettings = ctx.lookup(Registries.NOISE_SETTINGS);
 
-        NoiseBasedChunkGenerator noiseBasedChunkGenerator = new NoiseBasedChunkGenerator(
-                MultiNoiseBiomeSource.createFromList(
-                        new Climate.ParameterList<>(List.of(
-                                Pair.of(
-                                        Climate.parameters(0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.8f, 0.0f), biomeRegistry.getOrThrow(Biomes.BADLANDS)
-                                )
-                        ))
-                ),
-                noiseGenSettings.getOrThrow(NoiseGeneratorSettings.AMPLIFIED)
-        );
-
         RRChunkGenerator chunkGenerator = new RRChunkGenerator(new RRBiomeSource(
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.PLAINS),
                         biomeRegistry.getOrThrow(RRBiomes.ELDEN_GARDEN),
                         biomeRegistry.getOrThrow(Biomes.FOREST)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.JUNGLE_SWAMP),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST)
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_ROOTS),
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_BALLS)
                 ),
                 HolderSet.direct(
                         biomeRegistry.getOrThrow(RRBiomes.JUNGLE_SWAMP),

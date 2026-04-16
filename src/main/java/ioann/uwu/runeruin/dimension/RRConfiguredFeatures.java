@@ -39,8 +39,9 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_brown_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_brown_mushroom");
 
-    public static final ResourceKey<ConfiguredFeature<?, ?>> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "long_ceiling_block_vine");
     public static final ResourceKey<ConfiguredFeature<?, ?>> CEILING_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ceiling_vine");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "long_ceiling_block_vine");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> CEILING_BALL = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ceiling_ball");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "tuff_moss_boulder");
 
@@ -95,6 +96,16 @@ public class RRConfiguredFeatures {
                                 BlockStateProvider.simple(Blocks.PEARLESCENT_FROGLIGHT)
                         ),
                         ConstantInt.of(35)
+                )
+        ));
+
+        ctx.register(CEILING_BALL, new ConfiguredFeature<>(
+                RRFeatures.CEILING_BALL.get(),
+                new CeilingBallFeature.Config(
+                        BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
+                        BlockStateProvider.simple(Blocks.PEARLESCENT_FROGLIGHT),
+                        ConstantInt.of(20),
+                        ConstantInt.of(10)
                 )
         ));
 

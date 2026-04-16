@@ -31,8 +31,9 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "small_brown_wall_mushroom");
     public static final ResourceKey<PlacedFeature> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "big_brown_wall_mushroom");
 
-    public static final ResourceKey<PlacedFeature> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "long_ceiling_block_vine");
     public static final ResourceKey<PlacedFeature> CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "ceiling_vine");
+    public static final ResourceKey<PlacedFeature> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "long_ceiling_block_vine");
+    public static final ResourceKey<PlacedFeature> CEILING_BALL = RR.resourceKey(Registries.PLACED_FEATURE, "ceiling_ball");
 
     public static final ResourceKey<PlacedFeature> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.PLACED_FEATURE, "tuff_moss_boulder");
 
@@ -112,6 +113,26 @@ public class RRPlacedFeatures {
         ctx.register(LONG_CEILING_BLOCK_VINE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.LONG_CEILING_BLOCK_VINE),
                 ceilingBlockVinePlacement
+        ));
+
+        List<PlacementModifier> ceilingBallPlacement = List.of(
+                CountPlacement.of(8),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(
+                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
+                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
+                ),
+                EnvironmentScanPlacement.scanningFor(
+                        Direction.UP,
+                        BlockPredicate.hasSturdyFace(Direction.DOWN),
+                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                        16
+                )
+        );
+
+        ctx.register(CEILING_BALL, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.CEILING_BALL),
+                ceilingBallPlacement
         ));
 
         ctx.register(CEILING_VINE, new PlacedFeature(

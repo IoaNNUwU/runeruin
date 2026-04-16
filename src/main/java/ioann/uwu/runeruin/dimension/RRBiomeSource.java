@@ -107,6 +107,7 @@ public class RRBiomeSource extends BiomeSource {
     // private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
 
     private static final Noise topLevelBiomesNoise = new SingleNoise("topLevelBiomeNoise".hashCode(), 0.2f);
+    private static final Noise bloomingCavesCeilingBiomesNoise = new SingleNoise("bloomingCavesCeilingBiomeNoise".hashCode(), 0.4f);
     private static final Noise bloomingCavesBiomesNoise = new SingleNoise("bloomingCavesBiomeNoise".hashCode(), 0.2f);
 
     @Override
@@ -129,7 +130,7 @@ public class RRBiomeSource extends BiomeSource {
 
         } else if (y > BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
 
-            float noise = bloomingCavesBiomesNoise.noise(x, z);
+            float noise = bloomingCavesCeilingBiomesNoise.noise(x, z);
             int idx = (int) (bloomingCavesCeilingBiomes.size() * noise * 0.99999f);
             return this.bloomingCavesCeilingBiomes.get(idx);
 
@@ -151,4 +152,6 @@ public class RRBiomeSource extends BiomeSource {
             return this.voidBiomes.getRandomElement(randomSource).get();
         }
     }
+
+
 }

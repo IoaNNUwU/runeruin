@@ -41,11 +41,11 @@ public class StoneForest {
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.TUFF_MOSS_BOULDER);
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MONOLITH);
 
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_CEILING_VEGETATION);
+        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_CEILING_VEGETATION);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CAVE_VINES);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.LUSH_CAVES_VEGETATION);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.ROOTED_AZALEA_TREE);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.SPORE_BLOSSOM);
+        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.ROOTED_AZALEA_TREE);
+        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.SPORE_BLOSSOM);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CLASSIC_VINES);
 
         BiomeDefaultFeatures.addLushCavesSpecialOres(generation);
@@ -56,8 +56,8 @@ public class StoneForest {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.COMMON_STONE_LILY);
 
         // TODO: move this to to ceiling biome
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
+        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
+        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
