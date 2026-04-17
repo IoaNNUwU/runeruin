@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.GeometryUtils;
+import ioann.uwu.runeruin.loottables.RRLootTables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -14,6 +15,7 @@ import net.minecraft.world.level.Spawner;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -22,6 +24,8 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootTable;
 
 import java.util.List;
 import java.util.Map;
@@ -243,9 +247,9 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                         yOrigin.north().east(),
                         yOrigin.north().east().below(),
                         yOrigin.south().west(),
-                        yOrigin.south().west().above(),
+                        yOrigin.south().west().below(),
                         yOrigin.south().east(),
-                        yOrigin.south().east().below()
+                        yOrigin.south().east().above()
                 );
             } else {
                 additionalBlocks = List.of(
@@ -304,7 +308,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                 if (blockEntity instanceof SpawnerBlockEntity spawner) {
                     spawner.setEntityId(EntityType.CAVE_SPIDER, random);
                 } else {
-                    RR.LOGGER.warn("SpawnerBlockEntity from generated spawner is unaccessible");
+                    RR.LOGGER.warn("SpawnerBlockEntity generated in CeilingBallFeature is unaccessible");
                 }
 
                 for (int y = 1; y < radius - 2; y++) {
@@ -318,7 +322,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                 var west = CrossCollisionBlock.WEST;
                 var east = CrossCollisionBlock.EAST;
 
-                if (radius > 4) {
+                if (radius > 6) {
                     for (int y = -1; y <= 1; y++) {
                         BlockPos yCenter = center.above(y);
 
@@ -334,7 +338,18 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                     }
 
                     level.setBlock(center.above(), trunkBlock, Block.UPDATE_ALL);
-                    level.setBlock(center.below(), trunkBlock, Block.UPDATE_ALL);
+
+                    BlockPos chestPos = center.below();
+
+                    level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), Block.UPDATE_ALL);
+                    BlockEntity chestBlockEntity = level.getBlockEntity(chestPos);
+
+                    if (chestBlockEntity instanceof ChestBlockEntity chest) {
+                        // TODO: Custom loot table
+                        chest.setLootTable(BuiltInLootTables.ABANDONED_MINESHAFT, random.nextLong());
+                    } else {
+                        RR.LOGGER.warn("ChestBlockEntity generated in CeilingBallFeature is unaccessible");
+                    }
                 }
             }
             case 2 -> {
