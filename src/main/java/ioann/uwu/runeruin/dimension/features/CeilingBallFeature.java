@@ -2,25 +2,30 @@ package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.GeometryUtils;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Spawner;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SpawnerBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
 
@@ -277,27 +282,71 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                 () -> ballBlock,
                 radius
         );
-        GeometryUtils.sphere(
-                level,
-                center,
-                () -> random.nextBoolean() ? trunkBlock : Blocks.AIR.defaultBlockState(),
-                radius - 1
-        );
-        GeometryUtils.sphere(
-                level,
-                center,
-                Blocks.AIR::defaultBlockState,
-                radius - 2
-        );
 
-        BlockState spawnerBlockState = Blocks.SPAWNER.defaultBlockState();
-        if (random.nextBoolean()) {
-            level.setBlock(center, spawnerBlockState, 1);
-            BlockEntity blockEntity = level.getBlockEntity(center);
-            if (blockEntity instanceof SpawnerBlockEntity spawner) {
-                spawner.setEntityId(EntityType.CAVE_SPIDER, random);
-                spawner.setChanged();
-                // TODO
+        int spawnerRand = random.nextIntBetweenInclusive(0, 4);
+
+        switch (spawnerRand) {
+            case 0, 1 -> {
+                // --- Generate spawner room ---
+                GeometryUtils.sphere(level, center, () -> trunkBlock, radius - 1);
+
+                Supplier<BlockState> cobwebToPlace = () -> random.nextBoolean()
+                        ? Blocks.COBWEB.defaultBlockState()
+                        : Blocks.AIR.defaultBlockState();
+
+                GeometryUtils.sphere(level, center, cobwebToPlace, radius - 2);
+                GeometryUtils.sphere(level, center, Blocks.AIR::defaultBlockState, radius - 3);
+
+                BlockState spawnerBlockState = Blocks.SPAWNER.defaultBlockState();
+
+                level.setBlock(center, spawnerBlockState, 1);
+                BlockEntity blockEntity = level.getBlockEntity(center);
+                if (blockEntity instanceof SpawnerBlockEntity spawner) {
+                    spawner.setEntityId(EntityType.CAVE_SPIDER, random);
+                } else {
+                    RR.LOGGER.warn("SpawnerBlockEntity from generated spawner is unaccessible");
+                }
+
+                for (int y = 1; y < radius - 2; y++) {
+                    level.setBlock(center.above(y), Blocks.IRON_CHAIN.defaultBlockState(), Block.UPDATE_ALL);
+                }
+
+                BlockState bar = Blocks.IRON_BARS.defaultBlockState();
+
+                var north = CrossCollisionBlock.NORTH;
+                var south = CrossCollisionBlock.SOUTH;
+                var west = CrossCollisionBlock.WEST;
+                var east = CrossCollisionBlock.EAST;
+
+                if (radius > 4) {
+                    for (int y = -1; y <= 1; y++) {
+                        BlockPos yCenter = center.above(y);
+
+                        level.setBlock(yCenter.east(), bar.setValue(south, true).setValue(north, true), Block.UPDATE_ALL);
+                        level.setBlock(yCenter.west(), bar.setValue(south, true).setValue(north, true), Block.UPDATE_ALL);
+                        level.setBlock(yCenter.north(), bar.setValue(west, true).setValue(east, true), Block.UPDATE_ALL);
+                        level.setBlock(yCenter.south(), bar.setValue(west, true).setValue(east, true), Block.UPDATE_ALL);
+
+                        level.setBlock(yCenter.east().north(), bar.setValue(south, true).setValue(west, true), Block.UPDATE_ALL);
+                        level.setBlock(yCenter.east().south(), bar.setValue(north, true).setValue(west, true), Block.UPDATE_ALL);
+                        level.setBlock(yCenter.west().north(), bar.setValue(south, true).setValue(east, true), Block.UPDATE_ALL);
+                        level.setBlock(yCenter.west().south(), bar.setValue(north, true).setValue(east, true), Block.UPDATE_ALL);
+                    }
+
+                    level.setBlock(center.above(), trunkBlock, Block.UPDATE_ALL);
+                    level.setBlock(center.below(), trunkBlock, Block.UPDATE_ALL);
+                }
+            }
+            case 2 -> {
+                // --- Generate empty room ---
+                Supplier<BlockState> blockToPlace = () -> random.nextBoolean() ? trunkBlock : Blocks.AIR.defaultBlockState();
+
+                GeometryUtils.sphere(level, center, blockToPlace, radius - 1);
+                GeometryUtils.sphere(level, center, Blocks.AIR::defaultBlockState, radius - 2);
+            }
+            case 3, 4 -> {
+                GeometryUtils.sphere(level, center, Blocks.STONE::defaultBlockState, radius - 1);
+                // TODO: Generate extensive amount of custom ores
             }
         }
 

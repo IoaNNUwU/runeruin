@@ -169,7 +169,13 @@ public class RRPlacedFeatures {
                         ),
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,
-                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.matchesBlocks(
+                                        Blocks.MOSS_BLOCK,
+                                        Blocks.MOSSY_COBBLESTONE,
+                                        Blocks.STONE,
+                                        Blocks.CLAY,
+                                        Blocks.WATER
+                                ),
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
