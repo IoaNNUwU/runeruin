@@ -5,12 +5,14 @@ import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
@@ -20,7 +22,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static ioann.uwu.runeruin.dimension.RRChunkGenerator.*;
+import static ioann.uwu.runeruin.dimension.Const.*;
 
 public class RRBiomeSource extends BiomeSource {
 
@@ -103,7 +105,7 @@ public class RRBiomeSource extends BiomeSource {
 
     private static final RandomSource randomSource = RandomSource.createThreadLocalInstance(1022101L);
 
-    private static final int CEILING_BIOME_HEIGHT = RRChunkGenerator.CEILING_TERRAIN_HEIGHT + 15;
+    private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT + 15;
     // private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
 
     private static final Noise topLevelBiomesNoise = new SingleNoise("topLevelBiomeNoise".hashCode(), 0.2f);

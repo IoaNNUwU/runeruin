@@ -13,13 +13,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.heightproviders.VeryBiasedToBottomHeight;
 import net.minecraft.world.level.levelgen.placement.*;
 
 import java.util.List;
 
-import static ioann.uwu.runeruin.dimension.RRChunkGenerator.*;
+import static ioann.uwu.runeruin.dimension.Const.*;
 
 // https://misode.github.io/worldgen/placed-feature/
 // https://youtu.be/B4cyrSExjpc?si=8hDK_-61NfGq2K1D
@@ -54,7 +53,7 @@ public class RRPlacedFeatures {
                 InSquarePlacement.spread(),
                 HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
                         VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT),
-                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y + RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT),
+                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_TERRAIN_HEIGHT),
                         1
                 )),
                 new WallPlacementFilter(
@@ -77,7 +76,7 @@ public class RRPlacedFeatures {
                 InSquarePlacement.spread(),
                 HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
                         VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT),
-                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y + RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT),
+                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_TERRAIN_HEIGHT),
                         1
                 )),
                 new WallPlacementFilter(
@@ -160,11 +159,11 @@ public class RRPlacedFeatures {
                         CountPlacement.of(4),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
                                 VerticalAnchor.aboveBottom(
-                                        RRChunkGenerator.BLOOMING_CAVES_Y +
-                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                        BLOOMING_CAVES_Y +
+                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                TOP_LAYER_TERRAIN_HEIGHT
                                 )
                         ),
                         EnvironmentScanPlacement.scanningFor(
@@ -189,11 +188,11 @@ public class RRPlacedFeatures {
                         CountPlacement.of(1),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
                                 VerticalAnchor.aboveBottom(
-                                        RRChunkGenerator.BLOOMING_CAVES_Y +
-                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                        BLOOMING_CAVES_Y +
+                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                TOP_LAYER_TERRAIN_HEIGHT
                                 )
                         ),
                         PlacementUtils.HEIGHTMAP,
@@ -215,11 +214,11 @@ public class RRPlacedFeatures {
                         CountPlacement.of(16),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
                                 VerticalAnchor.aboveBottom(
-                                        RRChunkGenerator.BLOOMING_CAVES_Y +
-                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                        BLOOMING_CAVES_Y +
+                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                TOP_LAYER_TERRAIN_HEIGHT
                                 )
                         ),
                         EnvironmentScanPlacement.scanningFor(
@@ -238,11 +237,11 @@ public class RRPlacedFeatures {
                         CountPlacement.of(1),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
                                 VerticalAnchor.aboveBottom(
-                                        RRChunkGenerator.BLOOMING_CAVES_Y +
-                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                        BLOOMING_CAVES_Y +
+                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                TOP_LAYER_TERRAIN_HEIGHT
                                 )
                         ),
                         EnvironmentScanPlacement.scanningFor(
@@ -261,11 +260,11 @@ public class RRPlacedFeatures {
                         CountPlacement.of(16),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
                                 VerticalAnchor.aboveBottom(
-                                        RRChunkGenerator.BLOOMING_CAVES_Y +
-                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                        BLOOMING_CAVES_Y +
+                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                TOP_LAYER_TERRAIN_HEIGHT
                                 )
                         ),
                         EnvironmentScanPlacement.scanningFor(
@@ -290,11 +289,11 @@ public class RRPlacedFeatures {
                         RarityFilter.onAverageOnceEvery(1),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(RRChunkGenerator.BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
                                 VerticalAnchor.aboveBottom(
-                                        RRChunkGenerator.BLOOMING_CAVES_Y +
-                                                RRChunkGenerator.TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                RRChunkGenerator.TOP_LAYER_TERRAIN_HEIGHT
+                                        BLOOMING_CAVES_Y +
+                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
+                                                TOP_LAYER_TERRAIN_HEIGHT
                                 )
                         ),
                         BiomeFilter.biome(),

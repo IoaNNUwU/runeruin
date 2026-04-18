@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.dimension.biomes.bloomingcaves;
 
+import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import net.minecraft.core.BlockPos;
@@ -88,8 +89,8 @@ public class StoneForest {
             }
 
             if (level.getBiome(pos).is(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS)
-                    && pos.getY() > RRChunkGenerator.BLOOMING_CAVES_Y
-                    && pos.getY() < RRChunkGenerator.BLOOMING_CAVES_CEILING_Y) {
+                    && pos.getY() > Const.BLOOMING_CAVES_Y
+                    && pos.getY() < Const.BLOOMING_CAVES_CEILING_Y) {
 
                 if (level.getMaxLocalRawBrightness(pos) <= random.nextInt(8)) {
                     return Mob.checkMobSpawnRules(type, level, spawnReason, pos, random);

@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension.features;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -344,7 +345,7 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
                         BlockStateProvider.CODEC.fieldOf("place_on").forGetter(Config::placeOn),
                         BlockStateProvider.CODEC.fieldOf("trunk_block").forGetter(Config::trunkBlock),
                         Codec.list(BlockStateProvider.CODEC).fieldOf("berry_blocks").forGetter(Config::berryBlocks),
-                        IntProviders.codec(5, RRChunkGenerator.BLOOMING_CAVES_CEILING_Y - RRChunkGenerator.BLOOMING_CAVES_Y)
+                        IntProviders.codec(5, Const.BLOOMING_CAVES_CEILING_Y - Const.BLOOMING_CAVES_Y)
                                 .fieldOf("max_length").forGetter(Config::maxLength)
                 ).apply(codec, Config::new));
     }
