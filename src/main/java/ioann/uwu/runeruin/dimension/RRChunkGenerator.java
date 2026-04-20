@@ -7,6 +7,7 @@ import ioann.uwu.runeruin.dimension.noise.*;
 import ioann.uwu.runeruin.dimension.runes.Runes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.*;
@@ -65,25 +66,51 @@ public class RRChunkGenerator extends ChunkGenerator {
 
     @Override
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
+
         return CompletableFuture.supplyAsync(() -> {
             // TODO: Split chunk into sections to avoid unnecessary blocking
             generateTerrain(chunk, randomState);
-            fillArcaneStructure(chunk, randomState.getOrCreateRandomFactory(RR.id("fill_from_noise")).at(chunk.getPos().getMiddleBlockPosition(10)));
+            fillArcaneStructure(chunk, randomState);
             return chunk;
         });
     }
 
-    private static final LazyNoise undergroundNoise = new LazyNoise("underground_noise", SingleNoise::new);
+    private static final LazyNoise undergroundNoise = new LazyNoise("undergroundNoise", SingleNoise::new);
 
-    private static final Noise baseTopLevelNoise = Noise.multi(new SingleNoise("bigNoise1".hashCode(), 0.5f), new SingleNoise("bigNoise2".hashCode(), 0.4f), new SingleNoise("bigNoise3".hashCode(), 0.3f));
+    private static final LazyNoise baseTopLevelNoise = new LazyNoise("baseTopLevelNoise", seed -> Noise.multi(
+            new SingleNoise(Noise.hashString("bigNoise1" + seed), 0.5f),
+            new SingleNoise(Noise.hashString("bigNoise2" + seed), 0.4f),
+            new SingleNoise(Noise.hashString("bigNoise3" + seed), 0.3f)
+    ));
 
-    private static final Noise flattenedBaseTopLevelNoise = Noise.flatten(0.152f, baseTopLevelNoise);
+    private static final LazyNoise flattenedBaseTopLevelNoise = LazyNoise.chain(
+            "flattenedBaseTopLevelNoise",
+            baseTopLevelNoise,
+            noise -> Noise.flatten(0.152f, noise)
+    );
 
-    public static final Noise topLevelNoise = new TopLevelNoise(flattenedBaseTopLevelNoise);
+    public static final LazyNoise topLevelNoise = LazyNoise.chain(
+            "topLevelNoise",
+            flattenedBaseTopLevelNoise,
+            TopLevelNoise::new
+    );
 
-    public static final Noise topLevelBaselineNoise = Noise.multi(new SingleNoise("topLevelBaselineNoise0".hashCode(), 1f), new SingleNoise("topLevelBaselineNoise1".hashCode(), 0.1f), new SingleNoise("topLevelBaselineNoise2".hashCode(), 0.4f));
+    public static final LazyNoise topLevelBaselineNoise = new LazyNoise(
+            "topLevelBaselineNoise",
+            seed -> Noise.multi(
+                    new SingleNoise(Noise.hashString("topLevelBaselineNoise1" + seed), 1f),
+                    new SingleNoise(Noise.hashString("topLevelBaselineNoise2" + seed), 0.1f),
+                    new SingleNoise(Noise.hashString("topLevelBaselineNoise3" + seed), 0.4f)
+            )
+    );
 
-    private static final Noise bloomingCavesCeilingNoise = Noise.multi(new SingleNoise("bloomingCavesCeiling".hashCode()), (x, y, z) -> 1f);
+    private static final LazyNoise bloomingCavesCeilingNoise = new LazyNoise(
+            "bloomingCavesCeilingNoise",
+            seed -> Noise.multi(
+                    new SingleNoise(Noise.hashString("bloomingCavesCeilingNoise1" + seed)),
+                    Noise.constant(1f)
+            )
+    );
 
     private static final LazyNoise bedrockNoise = new LazyNoise("bedrockNoise", PositionalRandomNoise::new);
 
@@ -127,8 +154,8 @@ public class RRChunkGenerator extends ChunkGenerator {
                 int xx = chunk.getPos().getBlockAt(0, 0, 0).getX() + x;
                 int zz = chunk.getPos().getBlockAt(0, 0, 0).getZ() + z;
 
-                float ceilingNoise = bloomingCavesCeilingNoise.noise(xx, zz);
-                ceilingNoise = ceilingNoise * flattenedBaseTopLevelNoise.noise(xx, zz);
+                float ceilingNoise = bloomingCavesCeilingNoise.getOrCreateNoise(randomState).noise(xx, zz);
+                ceilingNoise = ceilingNoise * flattenedBaseTopLevelNoise.getOrCreateNoise(randomState).noise(xx, zz);
 
                 if (ceilingNoise < 0.01) {
                     continue;
@@ -136,7 +163,7 @@ public class RRChunkGenerator extends ChunkGenerator {
 
                 int ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
 
-                float baselineNoise = topLevelBaselineNoise.noise(xx, zz);
+                float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
                 int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) + TOP_LAYER_OFFSET;
 
                 BlockState blockState;
@@ -160,7 +187,7 @@ public class RRChunkGenerator extends ChunkGenerator {
                 int xx = chunk.getPos().getBlockAt(0, 0, 0).getX() + x;
                 int zz = chunk.getPos().getBlockAt(0, 0, 0).getZ() + z;
 
-                float noise = topLevelNoise.noise(xx, zz);
+                float noise = topLevelNoise.getOrCreateNoise(randomState).noise(xx, zz);
 
                 if (noise < 0.01) {
                     continue;
@@ -168,7 +195,7 @@ public class RRChunkGenerator extends ChunkGenerator {
 
                 int biomeHeight = (int) (noise * (TOP_LAYER_TERRAIN_HEIGHT)) - ARCANE_PLATE_HEIGHT;
 
-                float baselineNoise = topLevelBaselineNoise.noise(xx, zz);
+                float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
                 int baseLine = TOP_LAYER_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) + TOP_LAYER_OFFSET;
 
                 for (int y = baseLine; y < baseLine + biomeHeight - 2; y++) {
@@ -182,7 +209,7 @@ public class RRChunkGenerator extends ChunkGenerator {
         }
     }
 
-    private void fillArcaneStructure(ChunkAccess chunk, RandomSource random) {
+    private void fillArcaneStructure(ChunkAccess chunk, RandomState randomState) {
 
         for (int y = CEILING_VOID_Y + 1; y < LOST_CAVES_Y; y++) {
             for (int x = 0; x < 16; x++) {
@@ -206,31 +233,38 @@ public class RRChunkGenerator extends ChunkGenerator {
             }
         }
 
-        if (doGenerateColumn(chunk.getPos())) {
-            generateArcaneColumn(chunk, random);
+        if (doGenerateColumn(chunk.getPos(), randomState)) {
+            generateArcaneColumn(chunk, randomState);
         }
     }
 
-    private static boolean doGenerateColumn(ChunkPos chunkPos) {
-        boolean simple = doGenerateColumnSimple(chunkPos);
+    private static boolean doGenerateColumn(ChunkPos chunkPos, RandomState randomState) {
+        boolean simple = doGenerateColumnSimple(chunkPos, randomState);
         if (!simple) {
             return false;
         }
 
-        return (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z())) || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z()))) && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() + 1)) || !doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() - 1))) && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() + 1)) || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() - 1))) && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() - 1)) || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() + 1)));
+        return (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z()), randomState)
+                || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z()), randomState))
+                && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() + 1), randomState)
+                || !doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() - 1), randomState))
+                && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() + 1), randomState)
+                || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() - 1), randomState))
+                && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() - 1), randomState)
+                || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() + 1), randomState));
     }
 
-    private static boolean doGenerateColumnSimple(ChunkPos chunkPos) {
+    private static boolean doGenerateColumnSimple(ChunkPos chunkPos, RandomState randomState) {
 
         BlockPos xzBlock = chunkPos.getBlockAt(15, 0, 15);
         BlockPos xnBlock = chunkPos.getBlockAt(15, 0, 0);
         BlockPos nzBlock = chunkPos.getBlockAt(0, 0, 15);
         BlockPos nnBlock = chunkPos.getBlockAt(0, 0, 0);
 
-        float xzNoise = topLevelNoise.noise(xzBlock.getX(), xzBlock.getZ());
-        float xnNoise = topLevelNoise.noise(xnBlock.getX(), xnBlock.getZ());
-        float nzNoise = topLevelNoise.noise(nzBlock.getX(), nzBlock.getZ());
-        float nnNoise = topLevelNoise.noise(nnBlock.getX(), nnBlock.getZ());
+        float xzNoise = topLevelNoise.getOrCreateNoise(randomState).noise(xzBlock.getX(), xzBlock.getZ());
+        float xnNoise = topLevelNoise.getOrCreateNoise(randomState).noise(xnBlock.getX(), xnBlock.getZ());
+        float nzNoise = topLevelNoise.getOrCreateNoise(randomState).noise(nzBlock.getX(), nzBlock.getZ());
+        float nnNoise = topLevelNoise.getOrCreateNoise(randomState).noise(nnBlock.getX(), nnBlock.getZ());
 
         // Generate column only if all vertices are on top layer
         for (float noise : List.of(xzNoise, xnNoise, nzNoise, nnNoise)) {
@@ -249,7 +283,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             int x = chPos.getMiddleBlockX();
             int z = chPos.getMiddleBlockZ();
 
-            float noise = topLevelNoise.noise(x, z);
+            float noise = topLevelNoise.getOrCreateNoise(randomState).noise(x, z);
             if (noise < 0.01) {
                 return true;
             }
@@ -259,17 +293,21 @@ public class RRChunkGenerator extends ChunkGenerator {
         return false;
     }
 
+    private static final Identifier FILL_ARCANE_STRUCTURE_ID = RR.id("fill_arcane_structure");
+
     private static final List<List<List<Boolean>>> RUNES_DESCRIPTION = Runes.list();
 
-    private static void generateArcaneColumn(ChunkAccess chunk, RandomSource random) {
+    private static void generateArcaneColumn(ChunkAccess chunk, RandomState randomState) {
+
+        RandomSource random = randomState.getOrCreateRandomFactory(FILL_ARCANE_STRUCTURE_ID).at(chunk.getPos().getMiddleBlockPosition(10));
 
         int chX = chunk.getPos().getBlockAt(0, 0, 0).getX();
         int chZ = chunk.getPos().getBlockAt(0, 0, 0).getZ();
 
-        float baselineNoiseXZ = topLevelBaselineNoise.noise(chX + 3, chZ + 3);
-        float baselineNoiseXN = topLevelBaselineNoise.noise(chX + 12, chZ + 3);
-        float baselineNoiseNZ = topLevelBaselineNoise.noise(chX + 3, chZ + 12);
-        float baselineNoiseNN = topLevelBaselineNoise.noise(chX + 12, chZ + 12);
+        float baselineNoiseXZ = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(chX + 3, chZ + 3);
+        float baselineNoiseXN = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(chX + 12, chZ + 3);
+        float baselineNoiseNZ = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(chX + 3, chZ + 12);
+        float baselineNoiseNN = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(chX + 12, chZ + 12);
 
         float maxNoise = Math.max(Math.max(baselineNoiseXZ, baselineNoiseXN), Math.max(baselineNoiseNZ, baselineNoiseNN));
         int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * maxNoise) + 1 + TOP_LAYER_OFFSET;
@@ -353,7 +391,7 @@ public class RRChunkGenerator extends ChunkGenerator {
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types types, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
 
-        float topNoise = topLevelNoise.noise(x, z);
+        float topNoise = topLevelNoise.getOrCreateNoise(randomState).noise(x, z);
         if (topNoise > 0.01f) {
             return (int) (topNoise * (TOP_LAYER_TERRAIN_HEIGHT)) - ARCANE_PLATE_HEIGHT + TOP_LAYER_Y;
         } else {

@@ -103,14 +103,12 @@ public class RRBiomeSource extends BiomeSource {
         ).flatMap(HolderSet::stream);
     }
 
-    private static final RandomSource randomSource = RandomSource.createThreadLocalInstance(1022101L);
-
     private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT + 15;
     // private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
 
-    private static final Noise topLevelBiomesNoise = new SingleNoise("topLevelBiomeNoise".hashCode(), 0.2f);
-    private static final Noise bloomingCavesCeilingBiomesNoise = new SingleNoise("bloomingCavesCeilingBiomeNoise".hashCode(), 0.4f);
-    private static final Noise bloomingCavesBiomesNoise = new SingleNoise("bloomingCavesBiomeNoise".hashCode(), 0.2f);
+    private static final Noise topLevelBiomesNoise = new SingleNoise(Noise.hashString("topLevelBiomeNoise"), 0.2f);
+    private static final Noise bloomingCavesCeilingBiomesNoise = new SingleNoise(Noise.hashString("bloomingCavesCeilingBiomeNoise"), 0.4f);
+    private static final Noise bloomingCavesBiomesNoise = new SingleNoise(Noise.hashString("bloomingCavesBiomeNoise"), 0.2f);
 
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
@@ -119,7 +117,7 @@ public class RRBiomeSource extends BiomeSource {
         y = QuartPos.toBlock(y);
         z = QuartPos.toBlock(z);
 
-        float baselineNoise = RRChunkGenerator.topLevelBaselineNoise.noise(x, y, z);
+        float baselineNoise = RRChunkGenerator.topLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, y, z);
         int baseLine = BLOOMING_CAVES_CEILING_Y +
                 (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
                 TOP_LAYER_OFFSET - 10;
@@ -136,13 +134,15 @@ public class RRBiomeSource extends BiomeSource {
             int idx = (int) (bloomingCavesCeilingBiomes.size() * noise * 0.99999f);
             return this.bloomingCavesCeilingBiomes.get(idx);
 
-        } else if (y > BLOOMING_CAVES_Y) {
+        } else { // if (y > BLOOMING_CAVES_Y) {
 
             float noise = bloomingCavesBiomesNoise.noise(x, z);
             int idx = (int) (bloomingCavesBiomes.size() * noise * 0.99999f);
             return this.bloomingCavesBiomes.get(idx);
 
-        } else if (y > DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
+        }
+        /*
+        else if (y > DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
             return this.deepCavesCeilingBiomes.getRandomElement(randomSource).get();
         } else if (y > DEEP_CAVES_Y) {
             return this.deepCavesBiomes.getRandomElement(randomSource).get();
@@ -153,7 +153,6 @@ public class RRBiomeSource extends BiomeSource {
         } else {
             return this.voidBiomes.getRandomElement(randomSource).get();
         }
+         */
     }
-
-
 }

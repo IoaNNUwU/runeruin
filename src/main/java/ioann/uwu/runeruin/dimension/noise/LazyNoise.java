@@ -1,8 +1,6 @@
 package ioann.uwu.runeruin.dimension.noise;
 
-import ioann.uwu.runeruin.RR;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.levelgen.PositionalRandomFactory;
+import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.levelgen.RandomState;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,20 +20,28 @@ public class LazyNoise {
     }
 
     public Noise getOrCreateNoise(RandomState randomState) {
+        return getOrCreateNoise(randomState.sampler());
+    }
 
-        long worldSeed = extractWorldSeed(randomState);
+    public Noise getOrCreateNoise(Climate.Sampler sampler) {
+
+        long worldSeed = extractWorldSeed(sampler);
         String mapKey = this.noiseName + worldSeed;
 
         return REGISTRY.computeIfAbsent(mapKey, _ -> this.seedToNoise.apply(worldSeed));
     }
 
-    private static final Identifier RANDOM_FACTORY_ID = RR.id("worldgen_random_factory");
+    private static long extractWorldSeed(Climate.Sampler sampler) {
+        return sampler.sample(98, 3, 67).erosion();
+    }
 
-    private static long extractWorldSeed(RandomState randomState) {
-        PositionalRandomFactory factory = randomState.getOrCreateRandomFactory(RANDOM_FACTORY_ID);
-        long seed = factory.fromHashOf("worldgen_random_factory").nextLong();
-
-        // This is not the real seed, just random seed-dependant value
-        return seed;
+    public static LazyNoise chain(String noiseName, LazyNoise base, Function<Noise, Noise> transform) {
+        return new LazyNoise(
+                base.noiseName + ":" + noiseName,
+                seed -> {
+                    Noise baseNoise = base.seedToNoise.apply(seed);
+                    return transform.apply(baseNoise);
+                }
+        );
     }
 }

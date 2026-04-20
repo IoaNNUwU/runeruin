@@ -1,5 +1,7 @@
 package ioann.uwu.runeruin.dimension.noise;
 
+import java.util.UUID;
+
 public interface Noise {
 
     /// @return noise in range `[0..1]`
@@ -40,5 +42,9 @@ public interface Noise {
         } else {
             return flattened;
         }
+    }
+
+    static long hashString(String string) {
+        return UUID.nameUUIDFromBytes(string.getBytes()).getMostSignificantBits();
     }
 }
