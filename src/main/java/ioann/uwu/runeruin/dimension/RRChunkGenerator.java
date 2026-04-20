@@ -3,27 +3,20 @@ package ioann.uwu.runeruin.dimension;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.dimension.noise.Noise;
-import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
-import ioann.uwu.runeruin.dimension.noise.SingleNoise;
-import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
+import ioann.uwu.runeruin.dimension.noise.*;
 import ioann.uwu.runeruin.dimension.runes.Runes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.LevelHeightAccessor;
-import net.minecraft.world.level.NoiseColumn;
-import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.*;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -73,13 +66,14 @@ public class RRChunkGenerator extends ChunkGenerator {
     @Override
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
         return CompletableFuture.supplyAsync(() -> {
-            generateTerrain(chunk);
+            // TODO: Split chunk into sections to avoid unnecessary blocking
+            generateTerrain(chunk, randomState);
             fillArcaneStructure(chunk, randomState.getOrCreateRandomFactory(RR.id("fill_from_noise")).at(chunk.getPos().getMiddleBlockPosition(10)));
             return chunk;
         });
     }
 
-    private static final Noise undergroundNoise = new SingleNoise("undergroundNoise".hashCode());
+    private static final LazyNoise undergroundNoise = new LazyNoise("underground_noise", SingleNoise::new);
 
     private static final Noise baseTopLevelNoise = Noise.multi(new SingleNoise("bigNoise1".hashCode(), 0.5f), new SingleNoise("bigNoise2".hashCode(), 0.4f), new SingleNoise("bigNoise3".hashCode(), 0.3f));
 
@@ -91,9 +85,9 @@ public class RRChunkGenerator extends ChunkGenerator {
 
     private static final Noise bloomingCavesCeilingNoise = Noise.multi(new SingleNoise("bloomingCavesCeiling".hashCode()), (x, y, z) -> 1f);
 
-    private static final Noise bedrockNoise = new PositionalRandomNoise("bedrockNoise".hashCode());
+    private static final LazyNoise bedrockNoise = new LazyNoise("bedrockNoise", PositionalRandomNoise::new);
 
-    private void generateTerrain(ChunkAccess chunk) {
+    private void generateTerrain(ChunkAccess chunk, RandomState randomState) {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
 
@@ -103,7 +97,8 @@ public class RRChunkGenerator extends ChunkGenerator {
                     int xOffset = 4272 * i;
                     int zOffset = 3372 * i;
 
-                    float noise = undergroundNoise.noise(chunk.getPos().getMiddleBlockX() + x + xOffset, chunk.getPos().getMiddleBlockZ() + z + zOffset);
+                    float noise = undergroundNoise.getOrCreateNoise(randomState)
+                            .noise(chunk.getPos().getMiddleBlockX() + x + xOffset, chunk.getPos().getMiddleBlockZ() + z + zOffset);
 
                     int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
 
@@ -145,7 +140,7 @@ public class RRChunkGenerator extends ChunkGenerator {
                 int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) + TOP_LAYER_OFFSET;
 
                 BlockState blockState;
-                if (bedrockNoise.noise(xx, 1f, zz) > 0.5f) {
+                if (bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f) {
                     blockState = Blocks.DEEPSLATE.defaultBlockState();
                 } else {
                     blockState = Blocks.STONE.defaultBlockState();

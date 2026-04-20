@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.dimension;
 
-import com.mojang.datafixers.util.Pair;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.client.Renderers;
 import net.minecraft.core.HolderSet;
@@ -9,8 +8,6 @@ import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.biome.OverworldBiomes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.util.ARGB;
-import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.attribute.BedRule;
 import net.minecraft.world.attribute.EnvironmentAttributeMap;
@@ -21,12 +18,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.*;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
-import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.timeline.Timelines;
 import net.neoforged.neoforge.common.world.NeoForgeEnvironmentAttributes;
 
-import java.util.List;
 import java.util.Optional;
 
 public class RRDimension {
