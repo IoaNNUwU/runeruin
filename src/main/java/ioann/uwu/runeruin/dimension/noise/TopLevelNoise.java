@@ -15,7 +15,7 @@ public class TopLevelNoise implements Noise {
     public TopLevelNoise(Noise baseTopLevelNoise, Noise flattenedBaseTopLevelNoise) {
 
         Noise lowerBaseTopLevelNoise = (x, y, z) -> Math.max(baseTopLevelNoise.noise(x, y, z) - 0.045f, 0.0f);
-        this.moreFlattenedBaseTopLevelNoise = Noise.flatten(0.1f, lowerBaseTopLevelNoise);
+        this.moreFlattenedBaseTopLevelNoise = Noise.flatten(0.15f, lowerBaseTopLevelNoise);
 
         this.flattenedBaseTopLevelNoise = flattenedBaseTopLevelNoise;
     }
