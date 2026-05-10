@@ -115,6 +115,8 @@ public class RRChunkGenerator extends ChunkGenerator {
     private static final LazyNoise bedrockNoise = new LazyNoise("bedrockNoise", PositionalRandomNoise::new);
 
     private void generateTerrain(ChunkAccess chunk, RandomState randomState) {
+
+        // --- Underground biome floor ---
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
 
@@ -136,6 +138,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             }
         }
 
+        // --- Underground biome ceiling ---
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int y = DEEP_CAVES_CEILING_Y;
@@ -161,10 +164,10 @@ public class RRChunkGenerator extends ChunkGenerator {
                     continue;
                 }
 
-                int ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
+                float ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
 
                 float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
-                int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) + TOP_LAYER_OFFSET;
+                float baseLine = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
 
                 BlockState blockState;
                 if (bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f) {
@@ -172,12 +175,12 @@ public class RRChunkGenerator extends ChunkGenerator {
                 } else {
                     blockState = Blocks.STONE.defaultBlockState();
                 }
-                chunk.setBlockState(new BlockPos(x, baseLine, z), blockState);
+                chunk.setBlockState(new BlockPos(x, (int) baseLine, z), blockState);
 
-                for (int y = baseLine - ceilingHeight + 1; y < baseLine; y++) {
+                for (int y = (int) (baseLine - ceilingHeight + 1); y < baseLine - 1; y++) {
                     chunk.setBlockState(new BlockPos(x, y, z), Blocks.DEEPSLATE.defaultBlockState());
                 }
-                chunk.setBlockState(new BlockPos(x, baseLine - ceilingHeight, z), Blocks.MOSS_BLOCK.defaultBlockState());
+                chunk.setBlockState(new BlockPos(x, (int) (baseLine - ceilingHeight), z), Blocks.MOSS_BLOCK.defaultBlockState());
             }
         }
 
@@ -193,18 +196,18 @@ public class RRChunkGenerator extends ChunkGenerator {
                     continue;
                 }
 
-                int biomeHeight = (int) (noise * (TOP_LAYER_TERRAIN_HEIGHT)) - ARCANE_PLATE_HEIGHT;
+                float biomeHeight = noise * (TOP_LAYER_TERRAIN_HEIGHT) - ARCANE_PLATE_HEIGHT;
 
                 float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
-                int baseLine = TOP_LAYER_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) + TOP_LAYER_OFFSET;
+                float baseLine = TOP_LAYER_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
 
-                for (int y = baseLine; y < baseLine + biomeHeight - 2; y++) {
+                for (int y = (int) (baseLine); y < baseLine + biomeHeight - 2; y++) {
                     chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
                 }
-                for (int y = baseLine + biomeHeight - 2; y < baseLine + biomeHeight; y++) {
+                for (int y = (int) (baseLine + biomeHeight) - 2; y < baseLine + biomeHeight; y++) {
                     chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState());
                 }
-                chunk.setBlockState(new BlockPos(x, baseLine + biomeHeight, z), Blocks.GRASS_BLOCK.defaultBlockState());
+                chunk.setBlockState(new BlockPos(x, (int) (baseLine + biomeHeight), z), Blocks.GRASS_BLOCK.defaultBlockState());
             }
         }
     }
@@ -310,7 +313,7 @@ public class RRChunkGenerator extends ChunkGenerator {
         float baselineNoiseNN = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(chX + 12, chZ + 12);
 
         float maxNoise = Math.max(Math.max(baselineNoiseXZ, baselineNoiseXN), Math.max(baselineNoiseNZ, baselineNoiseNN));
-        int baseLine = BLOOMING_CAVES_CEILING_Y + (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * maxNoise) + 1 + TOP_LAYER_OFFSET;
+        float baseLine = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * maxNoise + 1 + TOP_LAYER_OFFSET;
 
         for (int y = LOST_CAVES_Y; y < baseLine; y++) {
             for (int x = 3; x < 13; x++) {
