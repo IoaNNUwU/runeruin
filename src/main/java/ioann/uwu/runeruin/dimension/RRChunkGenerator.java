@@ -91,6 +91,7 @@ public class RRChunkGenerator extends ChunkGenerator {
 
     public static final LazyNoise topLevelNoise = LazyNoise.chain(
             "topLevelNoise",
+            baseTopLevelNoise,
             flattenedBaseTopLevelNoise,
             TopLevelNoise::new
     );

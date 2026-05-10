@@ -4,6 +4,7 @@ import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.levelgen.RandomState;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class LazyNoise {
@@ -41,6 +42,19 @@ public class LazyNoise {
                 seed -> {
                     Noise baseNoise = base.seedToNoise.apply(seed);
                     return transform.apply(baseNoise);
+                }
+        );
+    }
+
+    public static LazyNoise chain(String noiseName, LazyNoise base1, LazyNoise base2, BiFunction<Noise, Noise, Noise> transform) {
+        return new LazyNoise(
+                base1.noiseName + "/" + base2.noiseName + ":" + noiseName,
+
+                seed -> {
+                    Noise baseNoise1 = base1.seedToNoise.apply(seed);
+                    Noise baseNoise2 = base2.seedToNoise.apply(seed);
+
+                    return transform.apply(baseNoise1, baseNoise2);
                 }
         );
     }
