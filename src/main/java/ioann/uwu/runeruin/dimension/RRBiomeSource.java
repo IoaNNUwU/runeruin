@@ -6,15 +6,13 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderSet;
-import net.minecraft.core.QuartPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.Climate;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -101,6 +99,48 @@ public class RRBiomeSource extends BiomeSource {
                 lostCavesBiomes,
                 voidBiomes
         ).flatMap(HolderSet::stream);
+    }
+
+    public static RRBiomeSource newDefault(HolderGetter<Biome> biomeRegistry) {
+        return new RRBiomeSource(
+                HolderSet.direct(
+                        biomeRegistry.getOrThrow(RRBiomes.ELDEN_GARDEN),
+                        biomeRegistry.getOrThrow(Biomes.FOREST)
+                ),
+                HolderSet.direct(
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_ROOTS),
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_BALLS)
+                ),
+                HolderSet.direct(
+                        biomeRegistry.getOrThrow(RRBiomes.JUNGLE_SWAMP),
+                        biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST)
+                        // biomeRegistry.getOrThrow(RRBiomes.GHOST_GROVE)
+                ),
+                HolderSet.direct(
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_ROOTS),
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_BALLS)
+                ),
+                HolderSet.direct(
+                        // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),
+                        // biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
+                        biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES)
+                ),
+                HolderSet.direct(
+                        // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
+                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
+                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS)
+                ),
+                HolderSet.direct(
+                        // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
+                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
+                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS)
+                ),
+                HolderSet.direct(
+                        // biomeRegistry.getOrThrow(Biomes.THE_END),
+                        // biomeRegistry.getOrThrow(Biomes.SMALL_END_ISLANDS),
+                        biomeRegistry.getOrThrow(Biomes.THE_VOID)
+                )
+        );
     }
 
     private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT + 15;

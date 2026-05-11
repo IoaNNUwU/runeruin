@@ -42,11 +42,13 @@ public class DeepCavesGen {
 
                 int biomeHeight = (int) (CEILING_TERRAIN_MIN_HEIGHT + noise * (CEILING_TERRAIN_HEIGHT - CEILING_TERRAIN_MIN_HEIGHT));
 
-                for (int y = 0; y < biomeHeight + 1; y++) {
+                for (int y = 0; y < biomeHeight; y++) {
 
                     int yy = DEEP_CAVES_CEILING_Y - y;
 
                     chunk.setBlockState(new BlockPos(x, yy, z), Blocks.STONE.defaultBlockState());
+
+                    chunk.setBlockState(new BlockPos(x, DEEP_CAVES_CEILING_Y - biomeHeight, z), Blocks.MOSS_BLOCK.defaultBlockState());
                 }
             }
         }

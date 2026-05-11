@@ -73,46 +73,7 @@ public class RRDimension {
         var dimTypes = ctx.lookup(Registries.DIMENSION_TYPE);
         var noiseGenSettings = ctx.lookup(Registries.NOISE_SETTINGS);
 
-        RRChunkGenerator chunkGenerator = new RRChunkGenerator(new RRBiomeSource(
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.ELDEN_GARDEN),
-                        biomeRegistry.getOrThrow(Biomes.FOREST)
-                ),
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_ROOTS),
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_BALLS)
-                ),
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.JUNGLE_SWAMP),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST)
-                        // biomeRegistry.getOrThrow(RRBiomes.GHOST_GROVE)
-                ),
-                HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),
-                        // biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
-                        biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES)
-                ),
-                HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),
-                        // biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
-                        biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES)
-                ),
-                HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
-                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS)
-                ),
-                HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
-                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS)
-                ),
-                HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.THE_END),
-                        // biomeRegistry.getOrThrow(Biomes.SMALL_END_ISLANDS),
-                        biomeRegistry.getOrThrow(Biomes.THE_VOID)
-                )
-        ));
+        RRChunkGenerator chunkGenerator = new RRChunkGenerator(RRBiomeSource.newDefault(biomeRegistry));
 
         LevelStem stem = new LevelStem(dimTypes.getOrThrow(DIMENSION_TYPE), chunkGenerator);
 
