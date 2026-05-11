@@ -109,6 +109,11 @@ public class RRBiomeSource extends BiomeSource {
     private static final Noise topLevelBiomesNoise = new SingleNoise(Noise.hashString("topLevelBiomeNoise"), 0.2f);
     private static final Noise bloomingCavesCeilingBiomesNoise = new SingleNoise(Noise.hashString("bloomingCavesCeilingBiomeNoise"), 0.4f);
     private static final Noise bloomingCavesBiomesNoise = new SingleNoise(Noise.hashString("bloomingCavesBiomeNoise"), 0.2f);
+    private static final Noise deepCavesCeilingBiomesNoise = new SingleNoise(Noise.hashString("deepCavesCeilingBiomesNoise"), 0.4f);
+    private static final Noise deepCavesBiomesNoise = new SingleNoise(Noise.hashString("deepCavesBiomesNoise"), 0.2f);
+    private static final Noise lostCavesCeilingBiomesNoise = new SingleNoise(Noise.hashString("lostCavesCeilingBiomesNoise"), 0.4f);
+    private static final Noise lostCavesBiomesNoise = new SingleNoise(Noise.hashString("lostCavesBiomesNoise"), 0.2f);
+    private static final Noise voidCeilingBiomesNoise = new SingleNoise(Noise.hashString("voidCeilingBiomesNoise"), 0.4f);
 
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
@@ -134,25 +139,42 @@ public class RRBiomeSource extends BiomeSource {
             int idx = (int) (bloomingCavesCeilingBiomes.size() * noise * 0.99999f);
             return this.bloomingCavesCeilingBiomes.get(idx);
 
-        } else { // if (y > BLOOMING_CAVES_Y) {
+        } else if (y > BLOOMING_CAVES_Y) {
 
             float noise = bloomingCavesBiomesNoise.noise(x, z);
             int idx = (int) (bloomingCavesBiomes.size() * noise * 0.99999f);
             return this.bloomingCavesBiomes.get(idx);
 
-        }
-        /*
-        else if (y > DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-            return this.deepCavesCeilingBiomes.getRandomElement(randomSource).get();
+        } else if (y > DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
+
+            float noise = deepCavesCeilingBiomesNoise.noise(x, z);
+            int idx = (int) (deepCavesCeilingBiomes.size() * noise * 0.99999f);
+            return this.deepCavesCeilingBiomes.get(idx);
+
         } else if (y > DEEP_CAVES_Y) {
-            return this.deepCavesBiomes.getRandomElement(randomSource).get();
+
+            float noise = deepCavesBiomesNoise.noise(x, z);
+            int idx = (int) (deepCavesBiomes.size() * noise * 0.99999f);
+            return this.deepCavesBiomes.get(idx);
+
         } else if (y > LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-            return this.lostCavesCeilingBiomes.getRandomElement(randomSource).get();
+
+            float noise = lostCavesCeilingBiomesNoise.noise(x, z);
+            int idx = (int) (lostCavesCeilingBiomes.size() * noise * 0.99999f);
+            return this.lostCavesCeilingBiomes.get(idx);
+
         } else if (y > LOST_CAVES_Y) {
-            return this.lostCavesBiomes.getRandomElement(randomSource).get();
+
+            float noise = lostCavesBiomesNoise.noise(x, z);
+            int idx = (int) (lostCavesBiomes.size() * noise * 0.99999f);
+            return this.lostCavesBiomes.get(idx);
+
         } else {
-            return this.voidBiomes.getRandomElement(randomSource).get();
+
+            float noise = voidCeilingBiomesNoise.noise(x, z);
+            int idx = (int) (voidBiomes.size() * noise * 0.99999f);
+            return this.voidBiomes.get(idx);
+
         }
-         */
     }
 }
