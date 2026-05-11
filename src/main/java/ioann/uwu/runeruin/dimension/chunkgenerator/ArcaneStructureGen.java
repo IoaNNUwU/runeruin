@@ -72,7 +72,7 @@ public class ArcaneStructureGen {
         float maxNoise = Math.max(Math.max(baselineNoiseXZ, baselineNoiseXN), Math.max(baselineNoiseNZ, baselineNoiseNN));
         float baseLine = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * maxNoise + 1 + TOP_LAYER_OFFSET;
 
-        for (int y = BLOOMING_CAVES_CEILING_Y; y < baseLine; y++) {
+        for (int y = BLOOMING_CAVES_Y; y < baseLine; y++) {
             for (int x = 3; x < 13; x++) {
                 for (int z = 2; z < 14; z++) {
                     chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
