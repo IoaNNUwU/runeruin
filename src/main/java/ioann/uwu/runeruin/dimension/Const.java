@@ -10,10 +10,10 @@ public class Const {
     public static final int TOP_LAYER_MAX_BASELINE_HEIGHT = 25;
     public static final int TOP_LAYER_OFFSET = -15;
 
-    public static final int TERRAIN_HEIGHT = 25;
-    public static final int TERRAIN_MIN_HEIGHT = 10;
-    public static final int CEILING_TERRAIN_HEIGHT = 15;
-    public static final int CEILING_TERRAIN_MIN_HEIGHT = 5;
+    public static final int TERRAIN_HEIGHT = 17;
+    public static final int TERRAIN_MIN_HEIGHT = 5;
+    public static final int CEILING_TERRAIN_HEIGHT = 10;
+    public static final int CEILING_TERRAIN_MIN_HEIGHT = 3;
 
     public static final int CEILING_VOID_Y = VOID_HEIGHT;
     public static final int LOST_CAVES_Y = CEILING_VOID_Y + ARCANE_PLATE_HEIGHT + 1;

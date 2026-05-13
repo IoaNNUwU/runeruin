@@ -52,6 +52,8 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_berry_bush_patch");
 
+    public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
+
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
         var otherConfiguredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -202,6 +204,19 @@ public class RRConfiguredFeatures {
                                 MossBerryBushBlock.AGE,
                                 new UniformInt(0, 3)
                         )
+                )
+        ));
+
+        ctx.register(INVERTED_TREE, new ConfiguredFeature<>(
+                RRFeatures.INVERTED_TREE.get(),
+                new InvertedTreeFeature.Config(
+                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
+                        List.of(
+                                BlockStateProvider.simple(Blocks.CHERRY_LEAVES),
+                                BlockStateProvider.simple(Blocks.PINK_GLAZED_TERRACOTTA)
+                        ),
+                        ConstantInt.of(15)
                 )
         ));
     }

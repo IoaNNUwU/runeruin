@@ -21,7 +21,7 @@ public class VoidGen {
                 float noise = ceilingNoise.getOrCreateNoise(randomState)
                         .noise(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z);
 
-                int biomeHeight = (int) (CEILING_TERRAIN_MIN_HEIGHT * 2 + noise * (CEILING_TERRAIN_HEIGHT * 2 - CEILING_TERRAIN_MIN_HEIGHT * 2));
+                int biomeHeight = (int) (CEILING_TERRAIN_MIN_HEIGHT + noise * (CEILING_TERRAIN_HEIGHT - CEILING_TERRAIN_MIN_HEIGHT));
 
                 for (int y = 0; y < biomeHeight + 1; y++) {
 

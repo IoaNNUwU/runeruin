@@ -5,11 +5,8 @@ import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Biomes;
@@ -117,8 +114,8 @@ public class RRBiomeSource extends BiomeSource {
                         // biomeRegistry.getOrThrow(RRBiomes.GHOST_GROVE)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_ROOTS),
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_BALLS)
+                        biomeRegistry.getOrThrow(RRBiomes.DEEP_ROOTS),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEP_INVERTED_FOREST)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),

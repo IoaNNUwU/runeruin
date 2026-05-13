@@ -45,6 +45,11 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "moss_berry_bush_patch");
 
+    public static final ResourceKey<PlacedFeature> DEEP_CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_vine");
+    public static final ResourceKey<PlacedFeature> DEEP_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_block_vine");
+
+    public static final ResourceKey<PlacedFeature> INVERTED_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "inverted_tree");
+
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
 
@@ -312,6 +317,65 @@ public class RRPlacedFeatures {
                         RandomOffsetPlacement.vertical(ConstantInt.of(1))
 
                 )
+        ));
+
+        ctx.register(DEEP_CEILING_VINE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.CEILING_VINE),
+                List.of(
+                        CountPlacement.of(188),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.UP,
+                                BlockPredicate.hasSturdyFace(Direction.DOWN),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                16
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-1))
+                )
+        ));
+
+        List<PlacementModifier> deepBlockVinePlacement = List.of(
+                CountPlacement.of(16),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(
+                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
+                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
+                ),
+                EnvironmentScanPlacement.scanningFor(
+                        Direction.UP,
+                        BlockPredicate.hasSturdyFace(Direction.DOWN),
+                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                        16
+                )
+        );
+
+        ctx.register(DEEP_CEILING_BLOCK_VINE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.LONG_CEILING_BLOCK_VINE),
+                deepBlockVinePlacement
+        ));
+
+        List<PlacementModifier> invertedTreePlacement = List.of(
+                CountPlacement.of(8),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(
+                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
+                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
+                ),
+                EnvironmentScanPlacement.scanningFor(
+                        Direction.UP,
+                        BlockPredicate.hasSturdyFace(Direction.DOWN),
+                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                        16
+                )
+        );
+
+        ctx.register(INVERTED_TREE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.INVERTED_TREE),
+                invertedTreePlacement
         ));
     }
 }
