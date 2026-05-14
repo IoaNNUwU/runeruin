@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
+import ioann.uwu.runeruin.dimension.GeometryUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -11,6 +12,7 @@ import net.minecraft.util.valueproviders.IntProviders;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -18,6 +20,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfigur
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
@@ -35,14 +38,93 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
         RandomSource random = ctx.random();
 
         BlockState ceilingBlock = config.placeOn.getState(level, random, origin);
-
         BlockState trunkBlock = config.trunkBlock.getState(level, random, origin);
 
+        BlockPos finalOrigin = origin;
+        List<BlockState> leaves = config.leavesBlock.stream()
+                .map(ski -> ski.getState(level, random, finalOrigin))
+                .toList();
+
         float maxLength = config.maxLength.sample(random);
-        int height = (int) (maxLength / 2 + (maxLength / 2) * random.nextFloat());
+        int height = (int) (maxLength + (maxLength / 2) * random.nextFloat());
 
         if (isValidPlacement(level, origin, ceilingBlock, trunkBlock, height)) {
-            level.setBlock(origin, Blocks.DIAMOND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
+
+            origin = origin.below();
+
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    for (int y = -4; y <= 2; y++) {
+                        int xx = origin.getX() + x;
+                        int yy = origin.getY() + y;
+                        int zz = origin.getZ() + z;
+
+                        BlockPos blockPos = new BlockPos(xx, yy, zz);
+
+                        level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
+                    }
+                }
+            }
+
+            for (int x = -2; x <= 2; x++) {
+                for (int z = -1; z <= 1; z++) {
+                    for (int y = -1; y <= 1; y++) {
+                        int xx = origin.getX() + x;
+                        int yy = origin.getY() + y;
+                        int zz = origin.getZ() + z;
+
+                        BlockPos blockPos = new BlockPos(xx, yy, zz);
+
+                        level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
+                    }
+                }
+            }
+
+            for (int x = -1; x <= 1; x++) {
+                for (int z = -2; z <= 2; z++) {
+                    for (int y = -1; y <= 1; y++) {
+                        int xx = origin.getX() + x;
+                        int yy = origin.getY() + y;
+                        int zz = origin.getZ() + z;
+
+                        BlockPos blockPos = new BlockPos(xx, yy, zz);
+
+                        level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
+                    }
+                }
+            }
+
+            BlockPos newBlockPos = origin.below(2);
+            List<BlockPos> blockPoses = List.of(
+                    newBlockPos.west(2),
+                    newBlockPos.east(2),
+                    newBlockPos.north(2),
+                    newBlockPos.south(2)
+            );
+            for (BlockPos pos : blockPoses) {
+                level.setBlock(pos, trunkBlock, Block.UPDATE_ALL);
+            }
+
+            for (int y = 0; y < height; y++) {
+                newBlockPos = origin.below(y);
+                blockPoses = List.of(newBlockPos, newBlockPos.west(), newBlockPos.east(), newBlockPos.north(), newBlockPos.south());
+
+                for (BlockPos pos : blockPoses) {
+                    level.setBlock(pos, trunkBlock, Block.UPDATE_ALL);
+                }
+            }
+
+            BlockPos bottomTrunkPos = origin.below(height);
+            int radius = height / 2;
+
+            Supplier<BlockState> leaveSupplier = () -> {
+                int idx = random.nextInt(0, leaves.size());
+
+                return leaves.get(idx)
+                        .trySetValue(LeavesBlock.PERSISTENT, true);
+            };
+
+            GeometryUtils.bottomHalfEmptySphere(level, bottomTrunkPos, leaveSupplier, radius);
         }
 
         return false;
@@ -95,7 +177,7 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                 codec.group(
                         BlockStateProvider.CODEC.fieldOf("place_on").forGetter(Config::placeOn),
                         BlockStateProvider.CODEC.fieldOf("trunk_block").forGetter(Config::trunkBlock),
-                        Codec.list(BlockStateProvider.CODEC).fieldOf("berry_blocks").forGetter(Config::leavesBlock),
+                        Codec.list(BlockStateProvider.CODEC).fieldOf("leaves_block").forGetter(Config::leavesBlock),
                         IntProviders.codec(5, Const.BLOOMING_CAVES_CEILING_Y - Const.BLOOMING_CAVES_Y)
                                 .fieldOf("max_length").forGetter(Config::maxLength)
                 ).apply(codec, Config::new));

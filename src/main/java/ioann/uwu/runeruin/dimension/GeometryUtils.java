@@ -51,4 +51,22 @@ public class GeometryUtils {
             }
         }
     }
+
+    public static void bottomHalfEmptySphere(WorldGenLevel level, BlockPos origin, Supplier<BlockState> block, int radius) {
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                for (int y = -radius; y <= 0; y++) {
+                    int xx = origin.getX() + x;
+                    int zz = origin.getZ() + z;
+                    int yy = origin.getY() + y;
+
+                    double distance = origin.distToCenterSqr(xx + 0.5d, yy + 0.5d, zz + 0.5d);
+
+                    if (distance > (radius - 1) * (radius - 1) && distance < ((radius + 1) * (radius + 1)) * 0.95f) {
+                        level.setBlock(new BlockPos(xx, yy, zz), block.get(), 1);
+                    }
+                }
+            }
+        }
+    }
 }
