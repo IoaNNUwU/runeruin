@@ -115,8 +115,34 @@ public class GeometryUtils {
                             + (fy * fy) / (fHeight * fHeight);
 
                     if (0.65 < dist && dist <= 1) {
-                        level.setBlock(new BlockPos(xx, yy, zz), block.apply(xx, yy, zz), Block.UPDATE_ALL);
+
+                        BlockState blockState = block.apply(xx, yy, zz);
+                        if (blockState.isAir()) {
+                            continue;
+                        }
+
+                        level.setBlock(new BlockPos(xx, yy, zz), blockState, Block.UPDATE_ALL);
                     }
+                }
+            }
+        }
+    }
+
+    public static void cube(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height) {
+
+        for (int x = -radius / 2 - 1; x <= radius / 2 + 1; x++) {
+            for (int z = -radius / 2 - 1; z <= radius / 2 + 1; z++) {
+                for (int y = -height / 2 - 1; y <= height / 2 + 1; y++) {
+                    int xx = origin.getX() + x;
+                    int yy = origin.getY() + y;
+                    int zz = origin.getZ() + z;
+
+                    BlockState blockState = block.apply(xx, yy, zz);
+                    if (blockState.isAir()) {
+                        continue;
+                    }
+
+                    level.setBlock(new BlockPos(xx, yy, zz), blockState, Block.UPDATE_ALL);
                 }
             }
         }

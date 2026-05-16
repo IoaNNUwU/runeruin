@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.GeometryUtils;
@@ -117,30 +118,47 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             BlockPos bottomTrunkPos = origin.below(height);
             int radius = height / 2;
 
+            double branchAngle = random.nextInt(0, 100) * Math.PI / 2 / 100d;
+
+            int branchCount = random.nextInt(4, 7);
+            double branchOffset = 2 * Math.PI / branchCount;
+
             GeometryUtils.BlockStateSupplier branchSupplier = (x, y, z) -> {
 
                 double rotation = Math.atan2(x - bottomTrunkPos.getX(), z - bottomTrunkPos.getZ());
+                if (rotation < 0) {
+                    rotation = 2 * Math.PI + rotation;
+                }
+
                 double distSqr = bottomTrunkPos.atY(y).distToLowCornerSqr(x, y, z);
 
-                // System.out.println(distSqr);
+                BlockState bl;
 
-                int branchCount = random.nextInt(2, 5);
-                double branchAngle = random.nextInt(0, 100) * Math.PI / 100d;
-
-                double branchOffset = Math.PI / branchCount;
-
-                // System.out.println(branchAngle);
-
-                boolean condition = distSqr < ((double) radius) / 1.1 ? rotation > (-0.1) && rotation < (0.5)
-                        : rotation > -0.1 && rotation < 0.2;
-
-                if (condition) {
-                    return distSqr < ((double) radius) / 1.1 ? Blocks.DIAMOND_BLOCK.defaultBlockState()
-                            : Blocks.IRON_BLOCK.defaultBlockState();
+                double threshold;
+                if ((double) radius / 1.2 > distSqr) {
+                    threshold = 0.6;
+                    bl = Blocks.DIAMOND_BLOCK.defaultBlockState();
+                } else if ((double) radius * 2 > distSqr) {
+                    threshold = 0.45;
+                    bl = Blocks.EMERALD_BLOCK.defaultBlockState();
                 } else {
-                    return Blocks.AIR.defaultBlockState();
+                    threshold = 0.2;
+                    bl = Blocks.IRON_BLOCK.defaultBlockState();
                 }
+
+                bl = trunkBlock;
+
+                for (int i = 0; i < branchCount; i++) {
+                    double finalBranchAngle = branchAngle + branchOffset * i % (2 * Math.PI);
+
+                    if (rotation > finalBranchAngle - threshold / 2 && rotation < finalBranchAngle + threshold / 2) {
+                        return bl;
+                    }
+                }
+                return Blocks.AIR.defaultBlockState();
             };
+
+            // Branches
 
             GeometryUtils.emptySphere(
                     level,
@@ -151,6 +169,8 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                     0,
                     0
             );
+
+            // Leaves
 
             GeometryUtils.BlockStateSupplier leaveSupplier = (_, y, _) -> {
                 int idx = random.nextInt(0, leaves.size());
@@ -170,6 +190,14 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             };
 
             GeometryUtils.emptySphere(level, bottomTrunkPos, leaveSupplier, radius, radius * 3 / 4, radius / 2 - 1, 0);
+
+            GeometryUtils.cube(
+                    level,
+                    bottomTrunkPos.above(radius / 2),
+                    (_, _, _) -> trunkBlock,
+                    1,
+                    1
+            );
         }
 
         return false;
