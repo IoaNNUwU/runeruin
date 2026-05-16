@@ -117,14 +117,59 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             BlockPos bottomTrunkPos = origin.below(height);
             int radius = height / 2;
 
-            Supplier<BlockState> leaveSupplier = () -> {
+            GeometryUtils.BlockStateSupplier branchSupplier = (x, y, z) -> {
+
+                double rotation = Math.atan2(x - bottomTrunkPos.getX(), z - bottomTrunkPos.getZ());
+                double distSqr = bottomTrunkPos.atY(y).distToLowCornerSqr(x, y, z);
+
+                // System.out.println(distSqr);
+
+                int branchCount = random.nextInt(2, 5);
+                double branchAngle = random.nextInt(0, 100) * Math.PI / 100d;
+
+                double branchOffset = Math.PI / branchCount;
+
+                // System.out.println(branchAngle);
+
+                boolean condition = distSqr < ((double) radius) / 1.1 ? rotation > (-0.1) && rotation < (0.5)
+                        : rotation > -0.1 && rotation < 0.2;
+
+                if (condition) {
+                    return distSqr < ((double) radius) / 1.1 ? Blocks.DIAMOND_BLOCK.defaultBlockState()
+                            : Blocks.IRON_BLOCK.defaultBlockState();
+                } else {
+                    return Blocks.AIR.defaultBlockState();
+                }
+            };
+
+            GeometryUtils.emptySphere(
+                    level,
+                    bottomTrunkPos,
+                    branchSupplier,
+                    radius - 1,
+                    radius * 3 / 4 - 1,
+                    0,
+                    0
+            );
+
+            GeometryUtils.BlockStateSupplier leaveSupplier = (_, y, _) -> {
                 int idx = random.nextInt(0, leaves.size());
+
+                if (random.nextInt(0, 7) == 0) {
+                    return Blocks.AIR.defaultBlockState();
+                }
+
+                if (y == bottomTrunkPos.getY() + 3) {
+                    return random.nextBoolean()
+                            ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
+                            : Blocks.AIR.defaultBlockState();
+                }
 
                 return leaves.get(idx)
                         .trySetValue(LeavesBlock.PERSISTENT, true);
             };
 
-            GeometryUtils.bottomHalfEmptySphere(level, bottomTrunkPos, leaveSupplier, radius);
+            GeometryUtils.emptySphere(level, bottomTrunkPos, leaveSupplier, radius, radius * 3 / 4, radius / 2 - 1, 0);
         }
 
         return false;
@@ -157,10 +202,21 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             }
         }
 
-        for (int y = 1; y < height; y++) {
-            BlockPos blockPos = new BlockPos(origin.getX(), origin.getY() - y, origin.getZ());
-            if (!level.getBlockState(blockPos).isAir()) {
-                return false;
+        int radius = height / 2;
+
+        for (int y = 5; y < height * 2; y++) {
+            List<BlockPos> poses = List.of(
+                    new BlockPos(origin.getX(), origin.getY() - y, origin.getZ()),
+                    new BlockPos(origin.getX() + radius, origin.getY() - y, origin.getZ()),
+                    new BlockPos(origin.getX() - radius, origin.getY() - y, origin.getZ()),
+                    new BlockPos(origin.getX(), origin.getY() - y, origin.getZ() + radius),
+                    new BlockPos(origin.getX(), origin.getY() - y, origin.getZ() - radius)
+            );
+
+            for (BlockPos blockPos : poses) {
+                if (!level.getBlockState(blockPos).isAir()) {
+                    return false;
+                }
             }
         }
 

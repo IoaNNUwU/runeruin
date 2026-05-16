@@ -363,7 +363,7 @@ public class RRPlacedFeatures {
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(
                         VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
-                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
+                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
                 ),
                 EnvironmentScanPlacement.scanningFor(
                         Direction.UP,
