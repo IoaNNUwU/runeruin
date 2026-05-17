@@ -190,4 +190,11 @@ public class GeometryUtils {
             level.setBlock(curBlockPos.below(), block, Block.UPDATE_ALL);
         }
     }
+
+    public static void curvedLine(WorldGenLevel level, BlockPos origin, BlockPos target, BlockStateSupplier blockSupplier) {
+        line(level, origin, target.above(), blockSupplier);
+
+        BlockState block = blockSupplier.apply(target.getX(), target.getY(), target.getZ());
+        level.setBlock(target.below(), block, Block.UPDATE_ALL);
+    }
 }

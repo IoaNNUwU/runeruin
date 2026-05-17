@@ -187,87 +187,114 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             if (height > 13) {
                 BlockPos trunkBranchesOrigin = origin.below((height - 3) / 2);
 
+                // Generate simple extension
+
+                List<BlockPos> additionalBlocks;
                 if (random.nextBoolean()) {
-                    // Generate simple extension
+                    additionalBlocks = List.of(
+                            trunkBranchesOrigin.south().west().above(),
+                            trunkBranchesOrigin.south().west(),
 
-                    List<BlockPos> additionalBlocks;
-                    if (random.nextBoolean()) {
-                        additionalBlocks = List.of(
-                                trunkBranchesOrigin.south().west().above(),
-                                trunkBranchesOrigin.south().west(),
+                            trunkBranchesOrigin.south(-1).west(-1).above(),
+                            trunkBranchesOrigin.south(-1).west(-1),
 
-                                trunkBranchesOrigin.south(-1).west(-1).above(),
-                                trunkBranchesOrigin.south(-1).west(-1),
+                            trunkBranchesOrigin.south().west(-1).below(),
+                            trunkBranchesOrigin.south().west(-1),
 
-                                trunkBranchesOrigin.south().west(-1).below(),
-                                trunkBranchesOrigin.south().west(-1),
-
-                                trunkBranchesOrigin.south(-1).west().below(),
-                                trunkBranchesOrigin.south(-1).west()
-                        );
-                    } else {
-                        additionalBlocks = List.of(
-                                trunkBranchesOrigin.south(-1).west().above(),
-                                trunkBranchesOrigin.south(-1).west(),
-
-                                trunkBranchesOrigin.south(1).west(-1).above(),
-                                trunkBranchesOrigin.south(1).west(-1),
-
-                                trunkBranchesOrigin.south(-1).west(-1).below(),
-                                trunkBranchesOrigin.south(-1).west(-1),
-
-                                trunkBranchesOrigin.south(1).west().below(),
-                                trunkBranchesOrigin.south(1).west()
-                        );
-                    }
-
-                    for (BlockPos blockPos : additionalBlocks) {
-                        level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
-                    }
+                            trunkBranchesOrigin.south(-1).west().below(),
+                            trunkBranchesOrigin.south(-1).west()
+                    );
                 } else {
+                    additionalBlocks = List.of(
+                            trunkBranchesOrigin.south(-1).west().above(),
+                            trunkBranchesOrigin.south(-1).west(),
+
+                            trunkBranchesOrigin.south(1).west(-1).above(),
+                            trunkBranchesOrigin.south(1).west(-1),
+
+                            trunkBranchesOrigin.south(-1).west(-1).below(),
+                            trunkBranchesOrigin.south(-1).west(-1),
+
+                            trunkBranchesOrigin.south(1).west().below(),
+                            trunkBranchesOrigin.south(1).west()
+                    );
+                }
+
+                for (BlockPos blockPos : additionalBlocks) {
+                    level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
+                }
+
+                if (random.nextBoolean()) {
                     // Generate additional branches on a trunk
 
-                    BlockPos target = trunkBranchesOrigin.south(5).east(4);
+                    int randYOffset = random.nextInt(-2, 2);
 
-                    int yThresholdBranches = trunkBranchesOrigin.getY() + 1;
+                    List<BlockPos> targets;
+                    int rand = random.nextInt(0, 4);
+                    if (rand == 0) {
+                        targets = List.of(
+                                trunkBranchesOrigin.south(5).east(4).above(randYOffset)
+                        );
+                    } else if (rand == 1) {
+                        targets = List.of(
+                                trunkBranchesOrigin.south(4).east(5).above(randYOffset),
+                                trunkBranchesOrigin.south(-5).east(-4).above(randYOffset)
+                        );
+                    } else if (rand == 2) {
+                        targets = List.of(
+                                trunkBranchesOrigin.south(-4).east(5).above(randYOffset),
+                                trunkBranchesOrigin.south(-5).east(4).above(randYOffset),
+                                trunkBranchesOrigin.south(5).east(4).above(randYOffset)
+                        );
+                    } else {
+                        targets = List.of(
+                                trunkBranchesOrigin.south(-4).east(-5).above(randYOffset),
+                                trunkBranchesOrigin.south(-5).east(-4).above(randYOffset)
+                        );
+                    }
 
-                    GeometryUtils.BlockStateSupplier additionalBranchesLeavesSupplier = (_, y, _) -> {
-                        int idx = random.nextInt(0, leaves.size());
+                    for (BlockPos target : targets) {
 
-                        if (random.nextInt(0, 7) == 0) {
-                            return Blocks.AIR.defaultBlockState();
-                        }
+                        int yThresholdBranches = target.above(1).getY();
 
-                        if (y == yThresholdBranches) {
-                            return random.nextBoolean()
-                                    ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
-                                    : Blocks.AIR.defaultBlockState();
-                        }
+                        GeometryUtils.BlockStateSupplier additionalBranchesLeavesSupplier = (_, y, _) -> {
+                            int idx = random.nextInt(0, leaves.size());
 
-                        if (y > yThresholdBranches) {
-                            return Blocks.AIR.defaultBlockState();
-                        }
+                            if (random.nextInt(0, 7) == 0) {
+                                return Blocks.AIR.defaultBlockState();
+                            }
 
-                        return leaves.get(idx)
-                                .trySetValue(LeavesBlock.PERSISTENT, true);
-                    };
+                            if (y == yThresholdBranches) {
+                                return random.nextBoolean()
+                                        ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
+                                        : Blocks.AIR.defaultBlockState();
+                            }
 
-                    GeometryUtils.emptySphere(
-                            level,
-                            target,
-                            additionalBranchesLeavesSupplier,
-                            4,
-                            4,
-                            0,
-                            0
-                    );
+                            if (y > yThresholdBranches) {
+                                return Blocks.AIR.defaultBlockState();
+                            }
 
-                    GeometryUtils.line(
-                            level,
-                            trunkBranchesOrigin.above(3),
-                            target.below(1),
-                            (_, _, _) -> trunkBlock
-                    );
+                            return leaves.get(idx)
+                                    .trySetValue(LeavesBlock.PERSISTENT, true);
+                        };
+
+                        GeometryUtils.emptySphere(
+                                level,
+                                target,
+                                additionalBranchesLeavesSupplier,
+                                4,
+                                4,
+                                0,
+                                0
+                        );
+
+                        GeometryUtils.curvedLine(
+                                level,
+                                trunkBranchesOrigin.above(3),
+                                target.below(1),
+                                (_, _, _) -> trunkBlock
+                        );
+                    }
                 }
             }
 

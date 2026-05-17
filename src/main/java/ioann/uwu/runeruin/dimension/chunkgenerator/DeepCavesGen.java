@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
+import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
@@ -30,7 +31,13 @@ public class DeepCavesGen {
         }
     }
 
-    private static final LazyNoise ceilingNoise = new LazyNoise("deepCavesCeilingNoise", SingleNoise::new);
+    private static final LazyNoise ceilingNoise = new LazyNoise("deepCavesCeilingNoise",
+            (seed) -> Noise.multi(
+                    new SingleNoise(Noise.hashString("deepCavesCeilingNoise1" + seed), 10f),
+                    new SingleNoise(Noise.hashString("deepCavesCeilingNoise2" + seed), 1f),
+                    new SingleNoise(Noise.hashString("deepCavesCeilingNoise3" + seed), 4f)
+            )
+    );
 
     public static void generateDeepCavesCeiling(ChunkAccess chunk, RandomState randomState) {
 
