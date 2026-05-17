@@ -51,11 +51,13 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
         if (isValidPlacement(level, origin, ceilingBlock, trunkBlock, height)) {
 
+            // Roots
+
             origin = origin.below();
 
             for (int x = -1; x <= 1; x++) {
                 for (int z = -1; z <= 1; z++) {
-                    for (int y = -4; y <= 2; y++) {
+                    for (int y = -3; y <= 2; y++) {
                         int xx = origin.getX() + x;
                         int yy = origin.getY() + y;
                         int zz = origin.getZ() + z;
@@ -65,6 +67,23 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                         level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
                     }
                 }
+            }
+
+            List<BlockPos> additionalRootBlocks;
+            if (random.nextBoolean()) {
+                additionalRootBlocks = List.of(
+                        origin.south().east().below(4),
+                        origin.south(-1).east(-1).below(4)
+                );
+            } else {
+                additionalRootBlocks = List.of(
+                        origin.south(-1).east().below(4),
+                        origin.south().east(-1).below(4)
+                );
+            }
+
+            for (BlockPos blockPos : additionalRootBlocks) {
+                level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
             }
 
             for (int x = -2; x <= 2; x++) {
@@ -95,6 +114,8 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                 }
             }
 
+            // Trunk
+
             BlockPos newBlockPos = origin.below(2);
             List<BlockPos> blockPoses = List.of(
                     newBlockPos.west(2),
@@ -123,6 +144,8 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             int branchCount = random.nextInt(4, 7);
             double branchOffset = 2 * Math.PI / branchCount;
 
+            // Branches
+
             GeometryUtils.BlockStateSupplier branchSupplier = (x, y, z) -> {
 
                 double rotation = Math.atan2(x - bottomTrunkPos.getX(), z - bottomTrunkPos.getZ());
@@ -132,33 +155,24 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
                 double distSqr = bottomTrunkPos.atY(y).distToLowCornerSqr(x, y, z);
 
-                BlockState bl;
-
                 double threshold;
                 if ((double) radius / 1.2 > distSqr) {
                     threshold = 0.6;
-                    bl = Blocks.DIAMOND_BLOCK.defaultBlockState();
                 } else if ((double) radius * 2 > distSqr) {
                     threshold = 0.45;
-                    bl = Blocks.EMERALD_BLOCK.defaultBlockState();
                 } else {
                     threshold = 0.2;
-                    bl = Blocks.IRON_BLOCK.defaultBlockState();
                 }
-
-                bl = trunkBlock;
 
                 for (int i = 0; i < branchCount; i++) {
                     double finalBranchAngle = branchAngle + branchOffset * i % (2 * Math.PI);
 
                     if (rotation > finalBranchAngle - threshold / 2 && rotation < finalBranchAngle + threshold / 2) {
-                        return bl;
+                        return trunkBlock;
                     }
                 }
                 return Blocks.AIR.defaultBlockState();
             };
-
-            // Branches
 
             GeometryUtils.emptySphere(
                     level,
@@ -169,6 +183,86 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                     0,
                     0
             );
+
+            if (height > 13) {
+                BlockPos trunkBranchesOrigin = origin.below((height - 3) / 2);
+
+                if (random.nextBoolean()) {
+                    // Generate simple extension
+
+                    List<BlockPos> additionalBlocks;
+                    if (random.nextBoolean()) {
+                        additionalBlocks = List.of(
+                                trunkBranchesOrigin.south().west().above(),
+                                trunkBranchesOrigin.south().west(),
+
+                                trunkBranchesOrigin.south(-1).west(-1).above(),
+                                trunkBranchesOrigin.south(-1).west(-1),
+
+                                trunkBranchesOrigin.south().west(-1).below(),
+                                trunkBranchesOrigin.south().west(-1),
+
+                                trunkBranchesOrigin.south(-1).west().below(),
+                                trunkBranchesOrigin.south(-1).west()
+                        );
+                    } else {
+                        additionalBlocks = List.of(
+                                trunkBranchesOrigin.south(-1).west().above(),
+                                trunkBranchesOrigin.south(-1).west(),
+
+                                trunkBranchesOrigin.south(1).west(-1).above(),
+                                trunkBranchesOrigin.south(1).west(-1),
+
+                                trunkBranchesOrigin.south(-1).west(-1).below(),
+                                trunkBranchesOrigin.south(-1).west(-1),
+
+                                trunkBranchesOrigin.south(1).west().below(),
+                                trunkBranchesOrigin.south(1).west()
+                        );
+                    }
+
+                    for (BlockPos blockPos : additionalBlocks) {
+                        level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
+                    }
+                } else {
+                    // Generate additional branches on a trunk
+
+                    BlockPos blockPos = trunkBranchesOrigin.south(4).east(3);
+
+                    int yThresholdBranches = trunkBranchesOrigin.getY() + 1;
+
+                    GeometryUtils.BlockStateSupplier additionalBranchesLeavesSupplier = (_, y, _) -> {
+                        int idx = random.nextInt(0, leaves.size());
+
+                        if (random.nextInt(0, 7) == 0) {
+                            return Blocks.AIR.defaultBlockState();
+                        }
+
+                        if (y == yThresholdBranches) {
+                            return random.nextBoolean()
+                                    ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
+                                    : Blocks.AIR.defaultBlockState();
+                        }
+
+                        if (y > yThresholdBranches) {
+                            return Blocks.AIR.defaultBlockState();
+                        }
+
+                        return leaves.get(idx)
+                                .trySetValue(LeavesBlock.PERSISTENT, true);
+                    };
+
+                    GeometryUtils.emptySphere(
+                            level,
+                            blockPos,
+                            additionalBranchesLeavesSupplier,
+                            4,
+                            4,
+                            0,
+                            0
+                    );
+                }
+            }
 
             // Leaves
 
@@ -197,13 +291,45 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
             GeometryUtils.emptySphere(level, bottomTrunkPos, leaveSupplier, radius, radius * 3 / 4, 0, 0);
 
-            GeometryUtils.cube(
-                    level,
-                    new BlockPos(origin.getX(), yThreshold + 1, origin.getZ()),
-                    (_, _, _) -> trunkBlock,
-                    1,
-                    1
-            );
+            BlockPos branchesOrigin = new BlockPos(origin.getX(), yThreshold + 1, origin.getZ());
+
+            // Better roots
+            GeometryUtils.cube(level, branchesOrigin, (_, _, _) -> trunkBlock, 1, 1);
+
+            List<BlockPos> additionalBlocks;
+            if (random.nextBoolean()) {
+                additionalBlocks = List.of(
+                        branchesOrigin.south().west().above(2),
+                        branchesOrigin.south(2).west().above(),
+                        branchesOrigin.south().west(2).above(),
+                        branchesOrigin.south(2).west(),
+                        branchesOrigin.south().west(2),
+
+                        branchesOrigin.south(-1).west(-1).above(2),
+                        branchesOrigin.south(-2).west(-1).above(),
+                        branchesOrigin.south(-1).west(-2).above(),
+                        branchesOrigin.south(-2).west(-1),
+                        branchesOrigin.south(-1).west(-2)
+                );
+            } else {
+                additionalBlocks = List.of(
+                        branchesOrigin.south(-1).west().above(2),
+                        branchesOrigin.south(-2).west().above(),
+                        branchesOrigin.south(-1).west(2).above(),
+                        branchesOrigin.south(-2).west(),
+                        branchesOrigin.south(-1).west(2),
+
+                        branchesOrigin.south().west(-1).above(2),
+                        branchesOrigin.south().west(-2).above(),
+                        branchesOrigin.south(2).west(-1).above(),
+                        branchesOrigin.south().west(-2),
+                        branchesOrigin.south(2).west(-1)
+                );
+            }
+
+            for (BlockPos block : additionalBlocks) {
+                level.setBlock(block, trunkBlock, Block.UPDATE_ALL);
+            }
         }
 
         return false;

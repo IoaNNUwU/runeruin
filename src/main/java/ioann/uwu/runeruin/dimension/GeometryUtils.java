@@ -97,15 +97,15 @@ public class GeometryUtils {
     public static void emptySphere(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height, int cropFromTop, int cropFromBottom) {
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
-                for (int y = -height + cropFromBottom; y <= height - cropFromTop; y++) {
+                for (int y = -height + cropFromBottom - 1; y <= height - cropFromTop; y++) {
 
                     int xx = origin.getX() + x;
                     int zz = origin.getZ() + z;
                     int yy = origin.getY() + y;
 
-                    float fx = xx + 0.5f - origin.getX();
-                    float fz = zz + 0.5f - origin.getZ();
-                    float fy = yy + 0.5f - origin.getY();
+                    float fx = xx - origin.getX();
+                    float fz = zz - origin.getZ();
+                    float fy = yy - origin.getY();
 
                     float fRadius = radius;
                     float fHeight = height;
@@ -114,7 +114,7 @@ public class GeometryUtils {
                             + (fz * fz) / (fRadius * fRadius)
                             + (fy * fy) / (fHeight * fHeight);
 
-                    if (0.65 < dist && dist <= 1) {
+                    if (0.55 < dist && dist < 1) {
 
                         BlockState blockState = block.apply(xx, yy, zz);
                         if (blockState.isAir()) {
