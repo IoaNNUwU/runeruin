@@ -227,7 +227,7 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                 } else {
                     // Generate additional branches on a trunk
 
-                    BlockPos blockPos = trunkBranchesOrigin.south(4).east(3);
+                    BlockPos target = trunkBranchesOrigin.south(5).east(4);
 
                     int yThresholdBranches = trunkBranchesOrigin.getY() + 1;
 
@@ -254,12 +254,19 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
                     GeometryUtils.emptySphere(
                             level,
-                            blockPos,
+                            target,
                             additionalBranchesLeavesSupplier,
                             4,
                             4,
                             0,
                             0
+                    );
+
+                    GeometryUtils.line(
+                            level,
+                            trunkBranchesOrigin.above(3),
+                            target.below(1),
+                            (_, _, _) -> trunkBlock
                     );
                 }
             }

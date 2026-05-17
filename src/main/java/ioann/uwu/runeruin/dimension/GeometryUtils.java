@@ -1,12 +1,10 @@
 package ioann.uwu.runeruin.dimension;
 
-import ioann.uwu.runeruin.RR;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class GeometryUtils {
@@ -92,6 +90,10 @@ public class GeometryUtils {
     @FunctionalInterface
     public interface BlockStateSupplier {
         BlockState apply(int x, int y, int z);
+
+        default BlockState apply(BlockPos blockPos) {
+            return this.apply(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+        }
     }
 
     public static void emptySphere(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height, int cropFromTop, int cropFromBottom) {
@@ -129,6 +131,7 @@ public class GeometryUtils {
     }
 
     public static void cube(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height) {
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
 
         for (int x = -radius / 2 - 1; x <= radius / 2 + 1; x++) {
             for (int z = -radius / 2 - 1; z <= radius / 2 + 1; z++) {
@@ -142,9 +145,49 @@ public class GeometryUtils {
                         continue;
                     }
 
-                    level.setBlock(new BlockPos(xx, yy, zz), blockState, Block.UPDATE_ALL);
+                    mutable.setX(xx);
+                    mutable.setY(yy);
+                    mutable.setZ(zz);
+
+                    level.setBlock(mutable, blockState, Block.UPDATE_ALL);
                 }
             }
+        }
+    }
+
+    public static void line(WorldGenLevel level, BlockPos origin, BlockPos target, BlockStateSupplier blockSupplier) {
+
+        BlockPos.MutableBlockPos curBlockPos = origin.mutable();
+
+        while (!curBlockPos.equals(target)) {
+            BlockState block = blockSupplier.apply(curBlockPos);
+
+            level.setBlock(curBlockPos, block, Block.UPDATE_ALL);
+
+            int dx = 0;
+            if (curBlockPos.getX() < target.getX()) {
+                dx = 1;
+            } else if (curBlockPos.getX() > target.getX()) {
+                dx = -1;
+            }
+
+            int dy = 0;
+            if (curBlockPos.getY() < target.getY()) {
+                dy = 1;
+            } else if (curBlockPos.getY() > target.getY()) {
+                dy = -1;
+            }
+
+            int dz = 0;
+            if (curBlockPos.getZ() < target.getZ()) {
+                dz = 1;
+            } else if (curBlockPos.getZ() > target.getZ()) {
+                dz = -1;
+            }
+
+            curBlockPos.move(dx, dy, dz);
+
+            level.setBlock(curBlockPos.below(), block, Block.UPDATE_ALL);
         }
     }
 }
