@@ -118,9 +118,7 @@ public class RRBiomeSource extends BiomeSource {
                         biomeRegistry.getOrThrow(RRBiomes.DEEP_INVERTED_FOREST)
                 ),
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.DEEP_DARK),
-                        // biomeRegistry.getOrThrow(Biomes.COLD_OCEAN),
-                        biomeRegistry.getOrThrow(Biomes.DRIPSTONE_CAVES)
+                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),

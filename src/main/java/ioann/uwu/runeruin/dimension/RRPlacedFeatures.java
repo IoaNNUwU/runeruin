@@ -6,9 +6,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.features.CaveFeatures;
+import net.minecraft.data.worldgen.placement.CavePlacements;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
@@ -49,6 +52,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_block_vine");
 
     public static final ResourceKey<PlacedFeature> INVERTED_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "inverted_tree");
+
+    public static final ResourceKey<PlacedFeature> MOSSY_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "mossy_spike");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -376,6 +381,18 @@ public class RRPlacedFeatures {
         ctx.register(INVERTED_TREE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.INVERTED_TREE),
                 invertedTreePlacement
+        ));
+
+        ctx.register(MOSSY_SPIKE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSSY_SPIKE),
+                List.of(
+                        CountPlacement.of(UniformInt.of(10, 48)),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(DEEP_CAVES_Y),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        )
+                )
         ));
     }
 }

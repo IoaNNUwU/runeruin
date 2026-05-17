@@ -22,4 +22,6 @@ public class RRFeatures {
     public static final DeferredHolder<Feature<?>, StoneLilyFeature> STONE_LILY = REGISTRY.register("stone_lily", StoneLilyFeature::new);
 
     public static final DeferredHolder<Feature<?>, InvertedTreeFeature> INVERTED_TREE = REGISTRY.register("inverted_tree", InvertedTreeFeature::new);
+
+    public static final DeferredHolder<Feature<?>, MossySpikeFeature> MOSSY_SPIKE = REGISTRY.register("mossy_spike", MossySpikeFeature::new);
 }

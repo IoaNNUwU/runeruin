@@ -21,10 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.configurations.BlockColumnConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.*;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.RandomizedIntStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.WeightedStateProvider;
@@ -53,6 +50,8 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_berry_bush_patch");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSSY_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "mossy_spike");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -217,6 +216,21 @@ public class RRConfiguredFeatures {
                                 BlockStateProvider.simple(Blocks.PINK_GLAZED_TERRACOTTA)
                         ),
                         ConstantInt.of(15)
+                )
+        ));
+
+        ctx.register(MOSSY_SPIKE, new ConfiguredFeature<>(
+                RRFeatures.MOSSY_SPIKE.get(),
+                new LargeDripstoneConfiguration(
+                        30,
+                        UniformInt.of(3, 19),
+                        UniformFloat.of(0.4F, 2.0F),
+                        0.33F,
+                        UniformFloat.of(0.3F, 0.9F),
+                        UniformFloat.of(0.4F, 1.0F),
+                        UniformFloat.of(0.0F, 0.3F),
+                        4,
+                        0.6F
                 )
         ));
     }

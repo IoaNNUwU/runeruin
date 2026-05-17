@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.dimension.biomes.bloomingcaves.StoneForest;
 import ioann.uwu.runeruin.dimension.biomes.bloomingcaves.SwampJungle;
 import ioann.uwu.runeruin.dimension.biomes.bloomingcavesceiling.GlowingBallsCeilingBiome;
 import ioann.uwu.runeruin.dimension.biomes.bloomingcavesceiling.GlowingRootsCeilingBiome;
+import ioann.uwu.runeruin.dimension.biomes.deepcaves.DeepDripstoneCaves;
 import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.DeepRootsCeilingBiome;
 import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.InvertedForest;
 import ioann.uwu.runeruin.dimension.biomes.toplayer.EldenGarden;
@@ -32,6 +33,9 @@ public class RRBiomes {
     public static final ResourceKey<Biome> DEEP_ROOTS = RR.resourceKey(Registries.BIOME, "deep_roots");
     public static final ResourceKey<Biome> DEEP_INVERTED_FOREST = RR.resourceKey(Registries.BIOME, "inverted_forest");
 
+    // Deep caves
+    public static final ResourceKey<Biome> DEEP_DRIPSTONE_CAVES = RR.resourceKey(Registries.BIOME, "deep_dripstone_caves");
+
     public static void bootstrap(BootstrapContext<Biome> ctx) {
 
         var placedFeatures = ctx.lookup(Registries.PLACED_FEATURE);
@@ -52,5 +56,8 @@ public class RRBiomes {
         // Deep caves ceiling
         ctx.register(DEEP_ROOTS, DeepRootsCeilingBiome.bootstrap(placedFeatures, configuredCravers));
         ctx.register(DEEP_INVERTED_FOREST, InvertedForest.bootstrap(placedFeatures, configuredCravers));
+
+        // Deep caves
+        ctx.register(DEEP_DRIPSTONE_CAVES, DeepDripstoneCaves.bootstrap(placedFeatures, configuredCravers));
     }
 }
