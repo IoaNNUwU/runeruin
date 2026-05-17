@@ -172,6 +172,8 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
             // Leaves
 
+            int yThreshold = bottomTrunkPos.getY() + radius / 2 - 1;
+
             GeometryUtils.BlockStateSupplier leaveSupplier = (_, y, _) -> {
                 int idx = random.nextInt(0, leaves.size());
 
@@ -179,21 +181,25 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                     return Blocks.AIR.defaultBlockState();
                 }
 
-                if (y == bottomTrunkPos.getY() + 3) {
+                if (y == yThreshold) {
                     return random.nextBoolean()
                             ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
                             : Blocks.AIR.defaultBlockState();
+                }
+
+                if (y > yThreshold) {
+                    return Blocks.AIR.defaultBlockState();
                 }
 
                 return leaves.get(idx)
                         .trySetValue(LeavesBlock.PERSISTENT, true);
             };
 
-            GeometryUtils.emptySphere(level, bottomTrunkPos, leaveSupplier, radius, radius * 3 / 4, radius / 2 - 1, 0);
+            GeometryUtils.emptySphere(level, bottomTrunkPos, leaveSupplier, radius, radius * 3 / 4, 0, 0);
 
             GeometryUtils.cube(
                     level,
-                    bottomTrunkPos.above(radius / 2),
+                    new BlockPos(origin.getX(), yThreshold + 1, origin.getZ()),
                     (_, _, _) -> trunkBlock,
                     1,
                     1
