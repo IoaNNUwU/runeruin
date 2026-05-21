@@ -1,18 +1,20 @@
 package ioann.uwu.runeruin.dimension.features;
 
-import com.mojang.serialization.Codec;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import net.minecraft.SharedConstants;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.FloatProvider;
+import net.minecraft.util.valueproviders.FloatProviders;
+import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.util.valueproviders.IntProviders;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Column;
@@ -20,24 +22,28 @@ import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.level.levelgen.feature.DripstoneUtils;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.LargeDripstoneConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.Tags;
 import org.jspecify.annotations.Nullable;
 
-public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
+public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfiguration> {
+
     public MossySpikeFeature() {
-        super(LargeDripstoneConfiguration.CODEC);
+        super(SpikeConfiguration.CODEC);
     }
 
-    public boolean place(FeaturePlaceContext<LargeDripstoneConfiguration> context) {
+    public boolean place(FeaturePlaceContext<SpikeConfiguration> context) {
         WorldGenLevel level = context.level();
         BlockPos origin = context.origin();
-        LargeDripstoneConfiguration config = (LargeDripstoneConfiguration)context.config();
+        SpikeConfiguration config = context.config();
         RandomSource random = context.random();
         if (!level.isStateAtPosition(origin, DripstoneUtils::isEmptyOrWater)) {
             return false;
         } else {
+
+            BlockState mainBlock = config.block.getState(level, random, origin);
 
             Predicate<BlockState> isDripstoneCapable = block -> block.is(Tags.Blocks.STONES) || block.is(Blocks.MOSS_BLOCK);
 
@@ -50,8 +56,10 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
                     int maxColumnRadiusBasedOnColumnHeight = (int)((float)columnRange.height() * config.maxColumnRadiusToCaveHeightRatio);
                     int maxColumnRadius = Mth.clamp(maxColumnRadiusBasedOnColumnHeight, config.columnRadius.minInclusive(), config.columnRadius.maxInclusive());
                     int radius = Mth.randomBetweenInclusive(random, config.columnRadius.minInclusive(), maxColumnRadius);
+
                     LargeDripstone stalactite = makeDripstone(origin.atY(columnRange.ceiling() - 1), false, random, radius, config.stalactiteBluntness, config.heightScale);
                     LargeDripstone stalagmite = makeDripstone(origin.atY(columnRange.floor() + 1), true, random, radius, config.stalagmiteBluntness, config.heightScale);
+
                     WindOffsetter wind;
                     if (stalactite.isSuitableForWind(config) && stalagmite.isSuitableForWind(config)) {
                         wind = new WindOffsetter(origin.getY(), random, config.windSpeed);
@@ -61,12 +69,13 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
 
                     boolean stalactiteBaseEmbeddedInStone = stalactite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind);
                     boolean stalagmiteBaseEmbeddedInStone = stalagmite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind);
+
                     if (stalactiteBaseEmbeddedInStone) {
-                        stalactite.placeBlocks(level, random, wind);
+                        stalactite.placeBlocks(level, random, wind, mainBlock);
                     }
 
                     if (stalagmiteBaseEmbeddedInStone) {
-                        stalagmite.placeBlocks(level, random, wind);
+                        stalagmite.placeBlocks(level, random, wind, mainBlock);
                     }
 
                     return true;
@@ -149,12 +158,14 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
             return (int)getDripstoneHeight((double)checkRadius, (double)this.radius, this.scale, this.bluntness);
         }
 
-        private void placeBlocks(WorldGenLevel level, RandomSource random, WindOffsetter wind) {
+        private void placeBlocks(WorldGenLevel level, RandomSource random, WindOffsetter wind, BlockState block) {
             for(int dx = -this.radius; dx <= this.radius; ++dx) {
                 for(int dz = -this.radius; dz <= this.radius; ++dz) {
                     float currentRadius = Mth.sqrt((float)(dx * dx + dz * dz));
                     if (!(currentRadius > (float)this.radius)) {
+
                         int height = this.getHeightAtRadius(currentRadius);
+
                         if (height > 0) {
                             if ((double)random.nextFloat() < 0.2) {
                                 height = (int)((float)height * Mth.randomBetween(random, 0.8F, 1.0F));
@@ -168,8 +179,8 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
                                 BlockPos windAdjustedPos = wind.offset(pos);
                                 if (level.isStateAtPosition(windAdjustedPos, DripstoneUtils::isEmptyOrWaterOrLava)) {
                                     hasBeenOutOfStone = true;
-                                    Block block = SharedConstants.DEBUG_LARGE_DRIPSTONE ? Blocks.GLASS : Blocks.DRIPSTONE_BLOCK;
-                                    level.setBlock(windAdjustedPos, block.defaultBlockState(), 2);
+
+                                    level.setBlock(windAdjustedPos, block, 2);
                                 } else if (hasBeenOutOfStone && level.getBlockState(windAdjustedPos).is(BlockTags.BASE_STONE_OVERWORLD)) {
                                     break;
                                 }
@@ -183,7 +194,7 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
 
         }
 
-        private boolean isSuitableForWind(LargeDripstoneConfiguration config) {
+        private boolean isSuitableForWind(SpikeConfiguration config) {
             return this.radius >= config.minRadiusForWind && this.bluntness >= (double)config.minBluntnessForWind;
         }
     }
@@ -196,7 +207,7 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
             this.originY = originY;
             float speed = windSpeedRange.sample(random);
             float direction = Mth.randomBetween(random, 0.0F, (float)Math.PI);
-            this.windSpeed = new Vec3((double)(Mth.cos((double)direction) * speed), (double)0.0F, (double)(Mth.sin((double)direction) * speed));
+            this.windSpeed = new Vec3(Mth.cos(direction) * speed, 0.0F, Mth.sin(direction) * speed);
         }
 
         private WindOffsetter() {
@@ -213,7 +224,7 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
                 return pos;
             } else {
                 int dy = this.originY - pos.getY();
-                Vec3 totalWindAdjust = this.windSpeed.scale((double)dy);
+                Vec3 totalWindAdjust = this.windSpeed.scale(dy);
                 return pos.offset(Mth.floor(totalWindAdjust.x), 0, Mth.floor(totalWindAdjust.z));
             }
         }
@@ -244,8 +255,8 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
             float angleIncrement = 6.0F / (float)xzRadius;
 
             for(float angle = 0.0F; angle < ((float)Math.PI * 2F); angle += angleIncrement) {
-                int dx = (int)(Mth.cos((double)angle) * (float)xzRadius);
-                int dz = (int)(Mth.sin((double)angle) * (float)xzRadius);
+                int dx = (int)(Mth.cos(angle) * (float)xzRadius);
+                int dz = (int)(Mth.sin(angle) * (float)xzRadius);
 
                 if (level.isStateAtPosition(center.offset(dx, 0, dz), DripstoneUtils::isEmptyOrWaterOrLava)) {
                     return false;
@@ -254,5 +265,34 @@ public class MossySpikeFeature extends Feature<LargeDripstoneConfiguration> {
 
             return true;
         }
+    }
+
+    public record SpikeConfiguration(
+            int floorToCeilingSearchRange,
+            IntProvider columnRadius,
+            FloatProvider heightScale,
+            float maxColumnRadiusToCaveHeightRatio,
+            FloatProvider stalactiteBluntness,
+            FloatProvider stalagmiteBluntness,
+            FloatProvider windSpeed,
+            int minRadiusForWind,
+            float minBluntnessForWind,
+
+            BlockStateProvider block
+    ) implements FeatureConfiguration {
+
+            public static final Codec<SpikeConfiguration> CODEC = RecordCodecBuilder.create((i) -> i.group(
+                    Codec.intRange(1, 512).fieldOf("floor_to_ceiling_search_range").orElse(30).forGetter((c) -> c.floorToCeilingSearchRange),
+                    IntProviders.codec(1, 60).fieldOf("column_radius").forGetter((c) -> c.columnRadius),
+                    FloatProviders.codec(0.0F, 20.0F).fieldOf("height_scale").forGetter((c) -> c.heightScale),
+                    Codec.floatRange(0.1F, 1.0F).fieldOf("max_column_radius_to_cave_height_ratio").forGetter((c) -> c.maxColumnRadiusToCaveHeightRatio),
+                    FloatProviders.codec(0.1F, 10.0F).fieldOf("stalactite_bluntness").forGetter((c) -> c.stalactiteBluntness),
+                    FloatProviders.codec(0.1F, 10.0F).fieldOf("stalagmite_bluntness").forGetter((c) -> c.stalagmiteBluntness),
+                    FloatProviders.codec(0.0F, 2.0F).fieldOf("wind_speed").forGetter((c) -> c.windSpeed),
+                    Codec.intRange(0, 100).fieldOf("min_radius_for_wind").forGetter((c) -> c.minRadiusForWind),
+                    Codec.floatRange(0.0F, 5.0F).fieldOf("min_bluntness_for_wind").forGetter((c) -> c.minBluntnessForWind),
+
+                    BlockStateProvider.CODEC.fieldOf("main_block").forGetter(SpikeConfiguration::block)
+            ).apply(i, SpikeConfiguration::new));
     }
 }

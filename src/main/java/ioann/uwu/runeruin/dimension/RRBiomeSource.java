@@ -123,12 +123,12 @@ public class RRBiomeSource extends BiomeSource {
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
                         // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS)
+                        biomeRegistry.getOrThrow(RRBiomes.SPARKLING_CAVES_CEILING)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
                         // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
-                        biomeRegistry.getOrThrow(Biomes.BASALT_DELTAS)
+                        biomeRegistry.getOrThrow(RRBiomes.SPARKLING_CAVES)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.THE_END),
@@ -162,6 +162,11 @@ public class RRBiomeSource extends BiomeSource {
                 (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
                 TOP_LAYER_OFFSET - 10;
 
+        float lostBaselineNoise = RRChunkGenerator.lostTopLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, y, z);
+        int lostBaseLine = LOST_CAVES_CEILING_Y +
+                (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * lostBaselineNoise) +
+                TOP_LAYER_OFFSET - 10;
+
         if (y > baseLine) {
 
             float noise = topLevelBiomesNoise.noise(x, z);
@@ -186,7 +191,7 @@ public class RRBiomeSource extends BiomeSource {
             int idx = (int) (deepCavesCeilingBiomes.size() * noise * 0.99999f);
             return this.deepCavesCeilingBiomes.get(idx);
 
-        } else if (y > DEEP_CAVES_Y) {
+        } else if (y > lostBaseLine) {
 
             float noise = deepCavesBiomesNoise.noise(x, z);
             int idx = (int) (deepCavesBiomes.size() * noise * 0.99999f);

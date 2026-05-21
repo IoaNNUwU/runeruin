@@ -6,8 +6,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
-import net.minecraft.data.worldgen.features.CaveFeatures;
-import net.minecraft.data.worldgen.placement.CavePlacements;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.valueproviders.ConstantInt;
@@ -53,7 +51,8 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> INVERTED_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "inverted_tree");
 
-    public static final ResourceKey<PlacedFeature> MOSSY_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "mossy_spike");
+    public static final ResourceKey<PlacedFeature> DRIPSTONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "dripstone_spike");
+    public static final ResourceKey<PlacedFeature> DEEPSLATE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "deepslate_spike");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -383,14 +382,26 @@ public class RRPlacedFeatures {
                 invertedTreePlacement
         ));
 
-        ctx.register(MOSSY_SPIKE, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSSY_SPIKE),
+        ctx.register(DRIPSTONE_SPIKE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.DRIPSTONE_SPIKE),
                 List.of(
                         CountPlacement.of(UniformInt.of(10, 48)),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(DEEP_CAVES_Y),
                                 VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        )
+                )
+        ));
+
+        ctx.register(DEEPSLATE_SPIKE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEPSLATE_SPIKE),
+                List.of(
+                        CountPlacement.of(UniformInt.of(10, 48)),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(LOST_CAVES_Y),
+                                VerticalAnchor.absolute(LOST_CAVES_CEILING_Y)
                         )
                 )
         ));

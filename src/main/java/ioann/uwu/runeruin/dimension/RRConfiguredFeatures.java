@@ -16,7 +16,6 @@ import net.minecraft.util.valueproviders.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVines;
 import net.minecraft.world.level.block.CaveVinesBlock;
-import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
@@ -51,7 +50,8 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
 
-    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSSY_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "mossy_spike");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DRIPSTONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dripstone_spike");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DEEPSLATE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deepslate_spike");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -215,13 +215,13 @@ public class RRConfiguredFeatures {
                                 BlockStateProvider.simple(Blocks.CHERRY_LEAVES),
                                 BlockStateProvider.simple(Blocks.PINK_GLAZED_TERRACOTTA)
                         ),
-                        ConstantInt.of(15)
+                        ConstantInt.of(18)
                 )
         ));
 
-        ctx.register(MOSSY_SPIKE, new ConfiguredFeature<>(
-                RRFeatures.MOSSY_SPIKE.get(),
-                new LargeDripstoneConfiguration(
+        ctx.register(DRIPSTONE_SPIKE, new ConfiguredFeature<>(
+                RRFeatures.GIANT_SPIKE.get(),
+                new MossySpikeFeature.SpikeConfiguration(
                         30,
                         UniformInt.of(3, 19),
                         UniformFloat.of(0.4F, 2.0F),
@@ -230,7 +230,24 @@ public class RRConfiguredFeatures {
                         UniformFloat.of(0.4F, 1.0F),
                         UniformFloat.of(0.0F, 0.3F),
                         4,
-                        0.6F
+                        0.6F,
+                        BlockStateProvider.simple(Blocks.DRIPSTONE_BLOCK)
+                )
+        ));
+
+        ctx.register(DEEPSLATE_SPIKE, new ConfiguredFeature<>(
+                RRFeatures.GIANT_SPIKE.get(),
+                new MossySpikeFeature.SpikeConfiguration(
+                        35,
+                        UniformInt.of(3, 19),
+                        UniformFloat.of(0.4F, 2.0F),
+                        0.33F,
+                        UniformFloat.of(0.3F, 0.9F),
+                        UniformFloat.of(0.4F, 1.0F),
+                        UniformFloat.of(0.0F, 0.3F),
+                        4,
+                        0.6F,
+                        BlockStateProvider.simple(Blocks.DEEPSLATE)
                 )
         ));
     }

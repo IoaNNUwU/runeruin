@@ -9,6 +9,8 @@ import ioann.uwu.runeruin.dimension.biomes.bloomingcavesceiling.GlowingRootsCeil
 import ioann.uwu.runeruin.dimension.biomes.deepcaves.DeepDripstoneCaves;
 import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.DeepRootsCeilingBiome;
 import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.InvertedForest;
+import ioann.uwu.runeruin.dimension.biomes.lostcaves.SparklingCaves;
+import ioann.uwu.runeruin.dimension.biomes.lostcavesceiling.SparklingCavesCeiling;
 import ioann.uwu.runeruin.dimension.biomes.toplayer.EldenGarden;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
@@ -36,6 +38,13 @@ public class RRBiomes {
     // Deep caves
     public static final ResourceKey<Biome> DEEP_DRIPSTONE_CAVES = RR.resourceKey(Registries.BIOME, "deep_dripstone_caves");
 
+    // Lost caves ceiling
+    public static final ResourceKey<Biome> SPARKLING_CAVES_CEILING = RR.resourceKey(Registries.BIOME, "sparkling_caves_ceiling");
+
+    // Lost caves
+    public static final ResourceKey<Biome> SPARKLING_CAVES = RR.resourceKey(Registries.BIOME, "sparkling_caves");
+
+
     public static void bootstrap(BootstrapContext<Biome> ctx) {
 
         var placedFeatures = ctx.lookup(Registries.PLACED_FEATURE);
@@ -59,5 +68,11 @@ public class RRBiomes {
 
         // Deep caves
         ctx.register(DEEP_DRIPSTONE_CAVES, DeepDripstoneCaves.bootstrap(placedFeatures, configuredCravers));
+
+        // Lost caves ceiling
+        ctx.register(SPARKLING_CAVES_CEILING, SparklingCavesCeiling.bootstrap(placedFeatures, configuredCravers));
+
+        // Lost caves
+        ctx.register(SPARKLING_CAVES, SparklingCaves.bootstrap(placedFeatures, configuredCravers));
     }
 }

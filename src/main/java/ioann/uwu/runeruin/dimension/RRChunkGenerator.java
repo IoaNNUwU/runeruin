@@ -10,7 +10,6 @@ import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -72,6 +71,39 @@ public class RRChunkGenerator extends ChunkGenerator {
         });
     }
 
+    private static void generateTerrain(ChunkAccess chunk, RandomState randomState) {
+
+        TopLayerAndBloomingCavesGen.generateTopLayerFloor(chunk, randomState);
+        TopLayerAndBloomingCavesGen.generateBloomingCavesCeiling(chunk, randomState);
+
+        TopLayerAndBloomingCavesGen.generateBloomingCavesFloor(chunk, randomState);
+
+        DeepCavesGen.generateDeepCavesCeiling(chunk, randomState);
+
+        DeepCavesAndLostCavesGen.generateDeepCavesFloor(chunk, randomState);
+        DeepCavesAndLostCavesGen.generateLostCavesCeiling(chunk, randomState);
+        DeepCavesAndLostCavesGen.generateLostCavesFloor(chunk, randomState);
+
+        /*
+        DeepCavesGen.generateDeepCavesFloor(chunk, randomState);
+        LostCavesGen.generateLostCavesCeiling(chunk, randomState);
+
+        LostCavesGen.generateLostCavesFloor(chunk, randomState);
+         */
+
+        VoidGen.generateVoidCeiling(chunk, randomState);
+    }
+
+    @Override
+    public int getSeaLevel() {
+        return BLOOMING_CAVES_CEILING_Y;
+    }
+
+    @Override
+    public int getMinY() {
+        return 0;
+    }
+
     private static final LazyNoise baseTopLevelNoise = new LazyNoise("baseTopLevelNoise", seed -> Noise.multi(
             new SingleNoise(Noise.hashString("bigNoise1" + seed), 0.5f),
             new SingleNoise(Noise.hashString("bigNoise2" + seed), 0.4f),
@@ -100,30 +132,33 @@ public class RRChunkGenerator extends ChunkGenerator {
             )
     );
 
-    private static void generateTerrain(ChunkAccess chunk, RandomState randomState) {
+    private static final LazyNoise baseLostTopLevelNoise = new LazyNoise("baseLostTopLevelNoise", seed -> Noise.multi(
+            new SingleNoise(Noise.hashString("bigLostNoise1" + seed), 0.5f),
+            new SingleNoise(Noise.hashString("bigLostNoise2" + seed), 0.4f),
+            new SingleNoise(Noise.hashString("bigLostNoise3" + seed), 0.3f)
+    ));
 
-        TopLayerAndBloomingCavesGen.generateTopLayerFloor(chunk, randomState);
-        TopLayerAndBloomingCavesGen.generateBloomingCavesCeiling(chunk, randomState);
+    public static final LazyNoise flattenedLostBaseTopLevelNoise = LazyNoise.chain(
+            "flattenedLostBaseTopLevelNoise",
+            baseLostTopLevelNoise,
+            noise -> Noise.flatten(0.152f, noise)
+    );
 
-        TopLayerAndBloomingCavesGen.generateBloomingCavesFloor(chunk, randomState);
-        DeepCavesGen.generateDeepCavesCeiling(chunk, randomState);
+    public static final LazyNoise lostTopLevelNoise = LazyNoise.chain(
+            "topLevelNoise",
+            baseLostTopLevelNoise,
+            flattenedLostBaseTopLevelNoise,
+            TopLevelNoise::new
+    );
 
-        DeepCavesGen.generateDeepCavesFloor(chunk, randomState);
-        LostCavesGen.generateLostCavesCeiling(chunk, randomState);
-
-        LostCavesGen.generateLostCavesFloor(chunk, randomState);
-        VoidGen.generateVoidCeiling(chunk, randomState);
-    }
-
-    @Override
-    public int getSeaLevel() {
-        return BLOOMING_CAVES_CEILING_Y;
-    }
-
-    @Override
-    public int getMinY() {
-        return 0;
-    }
+    public static final LazyNoise lostTopLevelBaselineNoise = new LazyNoise(
+            "topLevelBaselineNoise",
+            seed -> Noise.multi(
+                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise1" + seed), 1f),
+                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise2" + seed), 0.1f),
+                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise3" + seed), 0.4f)
+            )
+    );
 
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types types, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {

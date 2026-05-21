@@ -34,6 +34,7 @@ public class ArcaneStructureGen {
                 }
             }
         }
+        /*
         for (int y = LOST_CAVES_CEILING_Y + 1; y < DEEP_CAVES_Y; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
@@ -41,6 +42,7 @@ public class ArcaneStructureGen {
                 }
             }
         }
+         */
         for (int y = DEEP_CAVES_CEILING_Y + 1; y < BLOOMING_CAVES_Y; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {

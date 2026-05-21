@@ -1,8 +1,10 @@
-package ioann.uwu.runeruin.dimension.biomes.deepcaves;
+package ioann.uwu.runeruin.dimension.biomes.lostcavesceiling;
 
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import net.minecraft.core.HolderGetter;
+import net.minecraft.data.worldgen.BiomeDefaultFeatures;
 import net.minecraft.data.worldgen.placement.CavePlacements;
+import net.minecraft.data.worldgen.placement.NetherPlacements;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
@@ -12,8 +14,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-public class DeepDripstoneCaves {
-
+public class SparklingCavesCeiling {
     public static Biome bootstrap(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
 
         MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
@@ -24,12 +25,9 @@ public class DeepDripstoneCaves {
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CLASSIC_VINES);
+        BiomeDefaultFeatures.addExtraGold(generation);
 
-        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.DRIPSTONE_SPIKE);
 
-        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, CavePlacements.POINTED_DRIPSTONE);
-        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, CavePlacements.DRIPSTONE_CLUSTER);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
@@ -43,7 +41,7 @@ public class DeepDripstoneCaves {
                 //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
                 //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
-                .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
+                .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x608840)
                 .mobSpawnSettings(mobs.build())
                 .generationSettings(generation.build())
                 .specialEffects(effects.build());
