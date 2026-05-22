@@ -222,6 +222,8 @@ public class RRConfiguredFeatures {
         ctx.register(DRIPSTONE_SPIKE, new ConfiguredFeature<>(
                 RRFeatures.GIANT_SPIKE.get(),
                 new MossySpikeFeature.SpikeConfiguration(
+                        // This is very volatile number that prevents deepslate spikes from
+                        // generating on lower level of deep caves
                         30,
                         UniformInt.of(3, 19),
                         UniformFloat.of(0.4F, 2.0F),
