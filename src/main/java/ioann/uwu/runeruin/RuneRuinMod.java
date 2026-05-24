@@ -3,10 +3,7 @@ package ioann.uwu.runeruin;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 
 import ioann.uwu.runeruin.creativetab.RRCreativeModeTabs;
-import ioann.uwu.runeruin.dimension.RRBiomeSource;
-import ioann.uwu.runeruin.dimension.RRChunkGenerator;
-import ioann.uwu.runeruin.dimension.RRFeatures;
-import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
+import ioann.uwu.runeruin.dimension.*;
 import ioann.uwu.runeruin.items.RRItems;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -37,6 +34,8 @@ public class RuneRuinMod {
 
         RRPlacementModifierTypes.REGISTRY.register(modEventBus);
         RRFeatures.REGISTRY.register(modEventBus);
+
+        RRStructureTypes.REGISTRY.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (RuneRuin) to respond directly to events.

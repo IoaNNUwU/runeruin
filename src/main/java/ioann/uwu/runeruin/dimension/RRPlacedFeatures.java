@@ -54,6 +54,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> DRIPSTONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "dripstone_spike");
     public static final ResourceKey<PlacedFeature> DEEPSLATE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "deepslate_spike");
 
+    public static final ResourceKey<PlacedFeature> GIANT_GOBLET = RR.resourceKey(Registries.PLACED_FEATURE, "giant_goblet");
+
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
 
@@ -403,6 +405,19 @@ public class RRPlacedFeatures {
                                 VerticalAnchor.absolute(LOST_CAVES_Y),
                                 VerticalAnchor.absolute(LOST_CAVES_CEILING_Y)
                         )
+                )
+        ));
+
+        ctx.register(GIANT_GOBLET, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.GIANT_GOBLET),
+                List.of(
+                        CountPlacement.of(ConstantInt.of(1)),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(LOST_CAVES_Y),
+                                VerticalAnchor.absolute(LOST_CAVES_CEILING_Y)
+                        ),
+                        BiomeFilter.biome()
                 )
         ));
     }

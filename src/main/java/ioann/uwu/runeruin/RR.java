@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
 import org.slf4j.Logger;
 
 public class RR {
@@ -18,5 +19,9 @@ public class RR {
 
     public static <T> ResourceKey<T> resourceKey(ResourceKey<Registry<T>> registry, String path) {
         return ResourceKey.create(registry, RR.id(path));
+    }
+
+    public static <T> TagKey<T> tagKey(ResourceKey<Registry<T>> registry, String path) {
+        return TagKey.create(registry, RR.id(path));
     }
 }

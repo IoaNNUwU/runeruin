@@ -37,6 +37,8 @@ public class SparklingCaves {
 
         generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, NetherPlacements.DELTA);
 
+        // generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.GIANT_GOBLET);
+
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
         //      .grassColorOverride(0xFFAA70);

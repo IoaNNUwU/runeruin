@@ -57,11 +57,18 @@
   - [X] Divide into 2 biomes: jungle and stone forest.
   - [X] Add another type of glowing flora to glow in blooming caves under the top layer (where dark)
 - [ ] **Deep Caves** Layer
-  - [ ] Add magenta mushrooms biome with big worms
+  - [ ] Add more spike types (mossy, stone etc).
+  - [ ] Add more diversity in inverted trees buds
+    - [ ] Bird nests
+    - [ ] Mini lake?
+    - [ ] spider nest?
+  - [ ] Add magenta mushrooms biome with big worms.
+  - [ ] Add normal mushrooms biome with gnomes.
   - [ ] Add spider caves biome with giant spider boss.
 - [ ] **Lost Caves** Layer
-  - [ ] Add Lava biome
-  - [ ] Add Ice biome
+  - [ ] Add Ice biome.
+  - [ ] Add Giant Goblets extending beyond lost caves layer and with their own ecosystems inside.
+  - [X] Add Lava biome.
 - [ ] **Void** layer
   - [ ] Add stars as small blocks of stardust - a useful material hard to mine above the abyss.
   - [ ] Add radioactive flesh biome maybe

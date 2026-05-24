@@ -26,7 +26,7 @@ public class GeometryUtils {
                     BlockPos originHeight = new BlockPos(origin.getX(), yy, origin.getZ());
 
                     if (originHeight.distToCenterSqr(xx, yy, zz) < radius * radius) {
-                        level.setBlock(new BlockPos(xx, yy, zz), block, 1);
+                        level.setBlock(new BlockPos(xx, yy, zz), block, Block.UPDATE_ALL, Integer.MAX_VALUE);
                     }
                 }
             }
@@ -197,4 +197,6 @@ public class GeometryUtils {
         BlockState block = blockSupplier.apply(target.getX(), target.getY(), target.getZ());
         level.setBlock(target.below(), block, Block.UPDATE_ALL);
     }
+
+
 }
