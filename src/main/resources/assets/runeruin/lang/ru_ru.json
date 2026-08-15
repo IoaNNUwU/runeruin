@@ -1,17 +1,50 @@
 {
   "itemGroup.runeruin": "Rune Ruin",
 
-  "block.runeruin.diamond_arcane_stone": "Мистический камень с алмазным напылением",
-  "block.runeruin.rune_ruin_portal": "Портал Rune Ruin",
-
-  "block.runeruin.moss_berry_bush": "Куст моховой ягоды",
+  "item.runeruin.rune_of_space": "Руна пространства",
   "item.runeruin.moss_berry": "Моховая ягода",
 
-  "runeruin.configuration.title": "RuneRuin Configs",
-  "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",
-  "runeruin.configuration.section.runeruin.common.toml.title": "RuneRuin Configs",
-  "runeruin.configuration.items": "Item List",
-  "runeruin.configuration.logDirtBlock": "Log Dirt Block",
-  "runeruin.configuration.magicNumberIntroduction": "Magic Number Text",
-  "runeruin.configuration.magicNumber": "Magic Number"
+  "block.runeruin.arcane_stone": "Мистический камень",
+  "block.runeruin.arcane_stone_bricks": "Кирпичи из мистического камня",
+  "block.runeruin.polished_arcane_stone": "Полированный мистический камень",
+  "block.runeruin.arcane_stone_pillar": "Столб из мистического камня",
+  "block.runeruin.arcane_stone_column": "Колонна из мистического камня",
+  "block.runeruin.diamond_arcane_stone": "Мистический камень с алмазным напылением",
+  "block.runeruin.lapis_light": "Лазуритовый фонарь",
+  "block.runeruin.rune_ruin_portal": "Портал Rune Ruin",
+
+  "block.runeruin.moss_light": "Моховой фонарь",
+  "block.runeruin.glowing_moss": "Светящийся мох",
+  "block.runeruin.glowing_moss_carpet": "Ковёр из светящегося мха",
+  "block.runeruin.moss_berry_bush": "Куст моховой ягоды",
+
+  "block.runeruin.elden_sapling": "Саженец элдена",
+  "block.runeruin.potted_elden_sapling": "Саженец элдена в горшке",
+  "block.runeruin.elden_log": "Элденовое бревно",
+  "block.runeruin.elden_planks": "Элденовые доски",
+  "block.runeruin.elden_leaves": "Элденовая листва",
+
+  "biome.runeruin.elden_garden": "Элденовый сад",
+  "biome.runeruin.glowing_roots": "Светящиеся корни",
+  "biome.runeruin.glowing_balls": "Светящиеся шары",
+  "biome.runeruin.jungle_swamp": "Джунглевое болото",
+  "biome.runeruin.stone_forest": "Каменный лес",
+  "biome.runeruin.ghost_grove": "Призрачная роща",
+  "biome.runeruin.deep_roots": "Глубинные корни",
+  "biome.runeruin.inverted_forest": "Перевёрнутый лес",
+  "biome.runeruin.deep_dripstone_caves": "Глубинные пещеры с сталактитами",
+  "biome.runeruin.sparkling_caves_ceiling": "Потолок искрящихся пещер",
+  "biome.runeruin.sparkling_caves": "Искрящиеся пещеры",
+
+  "dimension.runeruin.runeruin_dimension": "Rune Ruin",
+  "structure.runeruin.giant_goblet": "Гигантский кубок",
+
+  "runeruin.configuration.title": "Настройки RuneRuin",
+  "runeruin.configuration.section.runeruin.common.toml": "Настройки RuneRuin",
+  "runeruin.configuration.section.runeruin.common.toml.title": "Настройки RuneRuin",
+  "runeruin.configuration.items": "Список предметов",
+  "runeruin.configuration.logDirtBlock": "Логировать блок земли",
+  "runeruin.configuration.magicNumberIntroduction": "Текст магического числа",
+  "runeruin.configuration.magicNumber": "Магическое число",
+  "runeruin.configuration.render_clouds_below_top_layer": "Отображать облака под верхним слоем"
 }

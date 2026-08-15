@@ -1,11 +1,43 @@
 {
   "itemGroup.runeruin": "Rune Ruin",
 
+  "item.runeruin.rune_of_space": "Rune of Space",
+  "item.runeruin.moss_berry": "Mossberry",
+
+  "block.runeruin.arcane_stone": "Arcane Stone",
+  "block.runeruin.arcane_stone_bricks": "Arcane Stone Bricks",
+  "block.runeruin.polished_arcane_stone": "Polished Arcane Stone",
+  "block.runeruin.arcane_stone_pillar": "Arcane Stone Pillar",
+  "block.runeruin.arcane_stone_column": "Arcane Stone Column",
   "block.runeruin.diamond_arcane_stone": "Diamond-coated arcane stone",
+  "block.runeruin.lapis_light": "Lapis Light",
   "block.runeruin.rune_ruin_portal": "Rune Ruin Portal",
 
+  "block.runeruin.moss_light": "Moss Light",
+  "block.runeruin.glowing_moss": "Glowing Moss",
+  "block.runeruin.glowing_moss_carpet": "Glowing Moss Carpet",
   "block.runeruin.moss_berry_bush": "Mossberry bush",
-  "item.runeruin.moss_berry": "Mossberry",
+
+  "block.runeruin.elden_sapling": "Elden Sapling",
+  "block.runeruin.potted_elden_sapling": "Potted Elden Sapling",
+  "block.runeruin.elden_log": "Elden Log",
+  "block.runeruin.elden_planks": "Elden Planks",
+  "block.runeruin.elden_leaves": "Elden Leaves",
+
+  "biome.runeruin.elden_garden": "Elden Garden",
+  "biome.runeruin.glowing_roots": "Glowing Roots",
+  "biome.runeruin.glowing_balls": "Glowing Balls",
+  "biome.runeruin.jungle_swamp": "Jungle Swamp",
+  "biome.runeruin.stone_forest": "Stone Forest",
+  "biome.runeruin.ghost_grove": "Ghost Grove",
+  "biome.runeruin.deep_roots": "Deep Roots",
+  "biome.runeruin.inverted_forest": "Inverted Forest",
+  "biome.runeruin.deep_dripstone_caves": "Deep Dripstone Caves",
+  "biome.runeruin.sparkling_caves_ceiling": "Sparkling Caves Ceiling",
+  "biome.runeruin.sparkling_caves": "Sparkling Caves",
+
+  "dimension.runeruin.runeruin_dimension": "Rune Ruin",
+  "structure.runeruin.giant_goblet": "Giant Goblet",
 
   "runeruin.configuration.title": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",
@@ -13,5 +45,6 @@
   "runeruin.configuration.items": "Item List",
   "runeruin.configuration.logDirtBlock": "Log Dirt Block",
   "runeruin.configuration.magicNumberIntroduction": "Magic Number Text",
-  "runeruin.configuration.magicNumber": "Magic Number"
+  "runeruin.configuration.magicNumber": "Magic Number",
+  "runeruin.configuration.render_clouds_below_top_layer": "Render Clouds Below Top Layer"
 }
