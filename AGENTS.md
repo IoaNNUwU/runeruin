@@ -4,6 +4,18 @@ NeoForge mod (`runeruin`), MC 26.2. Custom stacked-cave dimension. Entry: `RuneR
 
 Helpers: `RR.id` / `RR.resourceKey` / `RR.tagKey`. Dimension command: `/execute in runeruin:runeruin_dimension …`
 
+## Vanilla / NeoForge sources
+
+This mod compiles against **Minecraft 26.2.0 + NeoForge 26.2.0.59** with **official Mojang mappings**. Do not use APIs from memory.
+
+Exploded sources (after `./gradlew extractMcSources` or IDE Gradle sync) live in **`.mc-sources/`**. If there is no `.mc-sources/`, use `extractMcSources` gradle task:
+
+- `VERSION.txt` — pinned versions
+- `net/minecraft/`, `com/mojang/` — decompiled vanilla with NeoForge patches
+- `net/neoforged/` — NeoForge API
+
+**Always search `.mc-sources` for vanilla/NeoForge types** (official mappings, this version only). `.ignore` un-ignores that folder for ripgrep; do not search `~/.gradle` (multiple Minecraft versions, mostly jars). If Grep still skips it, use Shell `rg` or `rg --no-ignore-vcs`. Do not treat `.mc-sources` as mod source — never edit it, never add it to `src/`.
+
 ## Packages
 
 | Path | Role |
@@ -94,6 +106,7 @@ Note: there is also `GiantGobletFeature` / placed feature — feature vs structu
 
 | Want… | Open… |
 |-------|--------|
+| Vanilla / NeoForge API (this version) | `.mc-sources/` (run `extractMcSources`) |
 | Layer Y heights | `Const` |
 | Terrain look of a layer | matching `chunkgenerator/*Gen` |
 | Which biome at Y | `RRBiomeSource` |

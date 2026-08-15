@@ -49,7 +49,7 @@
 - **NO** AI usage for **assets of any other kind** such as music and models.
 - **100%** Agentic coding (**AI writes** + **AI reviews**) with **70%** human review. *Humans review overall architecture and important parts of the code. No guarantee every line was reviewed by humans*.
 
-### TODO:
+## TODO
 
 - [ ] **TOP** Layer
   - [ ] Add more biomes. Like a yellow one.
@@ -86,10 +86,17 @@
 
 ## Run
 
-Any JDK is enough to start Gradle; it downloads **25** for the project.
+Gradle needs some JDK installed to start; the wrapper then downloads **Java 25** for this project.
 
 ```powershell
 .\gradlew.bat runClient
 ```
+
+- `runClient` — launch the game with the mod
+- `runServer` — dedicated server (`--nogui`)
+- `runGameTestServer` — run GameTests, then exit
+- `runData` — datagen into `src/generated/resources`
+- `build` — compile and package the mod jar
+- `extractMcSources` — explode Minecraft + NeoForge Java into `.mc-sources/` for Agents to index minecraft sources (also runs on IDE Gradle sync)
 
 

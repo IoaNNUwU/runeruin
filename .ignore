@@ -1,0 +1,15 @@
+# Ripgrep (agent Grep / `rg`) reads this after .gitignore.
+# Ignore generated and cache trees so searches do not mix jars, world saves, or old builds.
+build/
+.gradle/
+run/
+src/generated/
+bin/
+out/
+repo/
+
+# Extracted Minecraft + NeoForge Java for THIS project version (see VERSION.txt).
+# Gitignores the folder so it is not committed; un-ignore here so rg searches it
+# instead of ~/.gradle (multiple game versions, mostly jars).
+!.mc-sources/
+!.mc-sources/**

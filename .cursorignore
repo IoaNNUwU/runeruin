@@ -1,0 +1,4 @@
+﻿# .mc-sources is gitignored (Mojang EULA, huge, version-specific) but agents must
+# be able to search the extracted Minecraft / NeoForge Java for this project version.
+!.mc-sources/
+!.mc-sources/**

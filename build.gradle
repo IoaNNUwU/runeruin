@@ -104,6 +104,61 @@ neoForge {
     }
 }
 
+// NeoForge sources jar (net.neoforged.*) for extractMcSources. Minecraft sources already
+// come from createMinecraftArtifacts as minecraft-patched-*-sources.jar.
+configurations {
+    neoForgeAgentSources {
+        description = 'NeoForge sources jar extracted into .mc-sources for Cursor agents'
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
+interface ExtractMcSourcesServices {
+    @javax.inject.Inject
+    org.gradle.api.file.ArchiveOperations getArchiveOperations()
+}
+
+def extractArchives = objects.newInstance(ExtractMcSourcesServices).archiveOperations
+def minecraftSourcesJar = layout.buildDirectory.file("moddev/artifacts/minecraft-patched-${neo_version}-sources.jar")
+def mcSourcesDir = layout.projectDirectory.dir('.mc-sources')
+def mcSourcesStamp = layout.buildDirectory.file('tmp/mc-sources-VERSION.txt')
+
+tasks.register('writeMcSourcesVersion') {
+    def stamp = mcSourcesStamp
+    def text = "minecraft=${minecraft_version}\nneoforge=${neo_version}\nmappings=official\n"
+    inputs.property('contents', text)
+    outputs.file(stamp)
+    doLast {
+        def f = stamp.get().asFile
+        f.parentFile.mkdirs()
+        f.setText(text, 'UTF-8')
+    }
+}
+
+tasks.register('extractMcSources', Sync) {
+    group = 'documentation'
+    description = 'Extract Minecraft and NeoForge sources into .mc-sources for Cursor agents.'
+    dependsOn 'createMinecraftArtifacts', 'writeMcSourcesVersion'
+    from(minecraftSourcesJar.map { extractArchives.zipTree(it) }) {
+        include '**/*.java'
+    }
+    from(configurations.neoForgeAgentSources.elements.map { locations ->
+        locations.collect { extractArchives.zipTree(it.asFile) }
+    }) {
+        include '**/*.java'
+    }
+    from(mcSourcesStamp) {
+        rename { 'VERSION.txt' }
+    }
+    into mcSourcesDir
+    includeEmptyDirs = false
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
+
+neoForge.ideSyncTask tasks.named('extractMcSources')
+
 // Sets up a dependency configuration called 'localRuntime'.
 // This configuration should be used instead of 'runtimeOnly' to declare
 // a dependency that will be present for runtime testing but that is
@@ -113,6 +168,8 @@ configurations {
 }
 
 dependencies {
+    neoForgeAgentSources "net.neoforged:neoforge:${project.neo_version}:sources"
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
