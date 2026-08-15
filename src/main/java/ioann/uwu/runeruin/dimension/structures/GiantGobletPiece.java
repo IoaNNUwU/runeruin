@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.dimension.structures;
 
+import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
@@ -14,21 +15,16 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 
 public class GiantGobletPiece extends StructurePiece {
 
-    protected GiantGobletPiece(StructurePieceType type, int genDepth, BoundingBox boundingBox) {
-        super(type, genDepth, boundingBox);
-    }
-
-    public GiantGobletPiece(StructurePieceType type, CompoundTag tag) {
-        super(type, tag);
-    }
-
-    @Override
-    protected void addAdditionalSaveData(StructurePieceSerializationContext structurePieceSerializationContext, CompoundTag compoundTag) {
-
+    public GiantGobletPiece(CompoundTag tag) {
+        super(RRStructurePieceTypes.GIANT_GOBLET_PIECE.get(), tag);
     }
 
     @Override
     public void postProcess(WorldGenLevel worldGenLevel, StructureManager structureManager, ChunkGenerator chunkGenerator, RandomSource randomSource, BoundingBox boundingBox, ChunkPos chunkPos, BlockPos blockPos) {
 
+    }
+
+    @Override
+    protected void addAdditionalSaveData(StructurePieceSerializationContext ctx, CompoundTag compoundTag) {
     }
 }

@@ -36,6 +36,7 @@ public class RuneRuinMod {
         RRFeatures.REGISTRY.register(modEventBus);
 
         RRStructureTypes.REGISTRY.register(modEventBus);
+        RRStructurePieceTypes.REGISTRY.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (RuneRuin) to respond directly to events.
