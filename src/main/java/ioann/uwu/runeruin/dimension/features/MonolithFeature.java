@@ -40,7 +40,7 @@ public class MonolithFeature extends Feature<MonolithFeature.Config> {
 
         GeometryUtils.smoothCyl(
                 level,
-                new BlockPos(origin.getX(), origin.getY() - 3, origin.getZ()),
+                origin.below(3),
                 block,
                 radius,
                 30

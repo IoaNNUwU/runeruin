@@ -19,6 +19,9 @@ public class TopLayerAndBloomingCavesGen {
     private static final LazyNoise floorNoise = new LazyNoise("bloomingCavesFloorNoise", SingleNoise::new);
 
     public static void generateBloomingCavesFloor(ChunkAccess chunk, RandomState randomState) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockState stone = Blocks.STONE.defaultBlockState();
+
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
 
@@ -28,7 +31,7 @@ public class TopLayerAndBloomingCavesGen {
                 int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
 
                 for (int y = BLOOMING_CAVES_Y; y < BLOOMING_CAVES_Y + biomeHeight + 1; y++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+                    chunk.setBlockState(pos.set(x, y, z), stone);
                 }
             }
         }
@@ -49,6 +52,10 @@ public class TopLayerAndBloomingCavesGen {
     private static final LazyNoise flattenedBaseTopLevelNoise = RRChunkGenerator.flattenedBaseTopLevelNoise;
 
     public static void generateBloomingCavesCeiling(ChunkAccess chunk, RandomState randomState) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockState deepslate = Blocks.DEEPSLATE.defaultBlockState();
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        BlockState moss = Blocks.MOSS_BLOCK.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -68,23 +75,25 @@ public class TopLayerAndBloomingCavesGen {
                 float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
                 float baseLine = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
 
-                BlockState blockState;
-                if (bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f) {
-                    blockState = Blocks.DEEPSLATE.defaultBlockState();
-                } else {
-                    blockState = Blocks.STONE.defaultBlockState();
-                }
-                chunk.setBlockState(new BlockPos(x, (int) baseLine, z), blockState);
+                BlockState blockState = bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f
+                        ? deepslate
+                        : stone;
+                chunk.setBlockState(pos.set(x, (int) baseLine, z), blockState);
 
                 for (int y = (int) (baseLine - ceilingHeight + 1); y < baseLine - 1; y++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), Blocks.DEEPSLATE.defaultBlockState());
+                    chunk.setBlockState(pos.set(x, y, z), deepslate);
                 }
-                chunk.setBlockState(new BlockPos(x, (int) (baseLine - ceilingHeight), z), Blocks.MOSS_BLOCK.defaultBlockState());
+                chunk.setBlockState(pos.set(x, (int) (baseLine - ceilingHeight), z), moss);
             }
         }
     }
 
     public static void generateTopLayerFloor(ChunkAccess chunk, RandomState randomState) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        BlockState dirt = Blocks.DIRT.defaultBlockState();
+        BlockState grass = Blocks.GRASS_BLOCK.defaultBlockState();
+
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
 
@@ -103,12 +112,12 @@ public class TopLayerAndBloomingCavesGen {
                 float baseLine = TOP_LAYER_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
 
                 for (int y = (int) (baseLine); y < baseLine + biomeHeight - 2; y++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+                    chunk.setBlockState(pos.set(x, y, z), stone);
                 }
                 for (int y = (int) (baseLine + biomeHeight) - 2; y < baseLine + biomeHeight; y++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState());
+                    chunk.setBlockState(pos.set(x, y, z), dirt);
                 }
-                chunk.setBlockState(new BlockPos(x, (int) (baseLine + biomeHeight), z), Blocks.GRASS_BLOCK.defaultBlockState());
+                chunk.setBlockState(pos.set(x, (int) (baseLine + biomeHeight), z), grass);
             }
         }
     }

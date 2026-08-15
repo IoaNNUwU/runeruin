@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
-import ioann.uwu.runeruin.dimension.RRChunkGenerator;
+import ioann.uwu.runeruin.dimension.GeometryUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -33,6 +33,7 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
         WorldGenLevel level = ctx.level();
         BlockPos origin = ctx.origin();
         RandomSource random = ctx.random();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
 
         BlockState ceilingBlock = config.placeOn.getState(level, random, origin);
 
@@ -41,28 +42,28 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
         float maxLength = config.maxLength.sample(random);
         int height = (int) (maxLength / 2 + (maxLength / 2) * random.nextFloat());
 
-        if (isValidPlacement(level, origin, ceilingBlock, trunkBlock, height)) {
+        if (isValidPlacement(level, origin, ceilingBlock, trunkBlock, height, mutable)) {
 
             // --- Roots ---
             for (int y = origin.getY() - 1; y <= origin.getY() + 1; y++) {
                 for (int x = origin.getX() - 1; x <= origin.getX() + 2; x++) {
                     for (int z = origin.getZ(); z <= origin.getZ() + 1; z++) {
-                        level.setBlock(new BlockPos(x, y, z), trunkBlock, 1);
+                        setTrunk(level, mutable, x, y, z, trunkBlock);
                     }
                 }
                 for (int x = origin.getX(); x <= origin.getX() + 1; x++) {
                     int z = origin.getZ() - 1;
-                    level.setBlock(new BlockPos(x, y, z), trunkBlock, 1);
+                    setTrunk(level, mutable, x, y, z, trunkBlock);
 
                     z = origin.getZ() + 2;
-                    level.setBlock(new BlockPos(x, y, z), trunkBlock, 1);
+                    setTrunk(level, mutable, x, y, z, trunkBlock);
                 }
             }
 
             for (int y = origin.getY() + 1; y < origin.getY() + 4; y++) {
                 for (int x = origin.getX(); x < origin.getX() + 2; x++) {
                     for (int z = origin.getZ(); z < origin.getZ() + 2; z++) {
-                        level.setBlock(new BlockPos(x, y, z), trunkBlock, 1);
+                        setTrunk(level, mutable, x, y, z, trunkBlock);
                     }
                 }
             }
@@ -75,9 +76,8 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
             );
 
             for (BlockPos blockPos : additionalRoots) {
-                level.setBlock(blockPos, trunkBlock, 1);
-                BlockPos upperBlockPos = new BlockPos(blockPos.getX(), blockPos.getY() + 4, blockPos.getZ());
-                level.setBlock(upperBlockPos, trunkBlock, 1);
+                setTrunk(level, mutable, blockPos.getX(), blockPos.getY(), blockPos.getZ(), trunkBlock);
+                setTrunk(level, mutable, blockPos.getX(), blockPos.getY() + 4, blockPos.getZ(), trunkBlock);
             }
 
             boolean mirror = random.nextBoolean();
@@ -102,18 +102,11 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
                 // --- Main segment body ---
                 for (int y = 1; y <= segmentHeight; y++) {
                     int yy = y + segmentHeight * nSeg;
-
-                    BlockPos blockPos = new BlockPos(origin.getX() + xOffset, origin.getY() - yy, origin.getZ() + zOffset);
-                    level.setBlock(blockPos, trunkBlock, 1);
-
-                    blockPos = new BlockPos(origin.getX() + xOffset + 1, origin.getY() - yy, origin.getZ() + zOffset);
-                    level.setBlock(blockPos, trunkBlock, 1);
-
-                    blockPos = new BlockPos(origin.getX() + xOffset, origin.getY() - yy, origin.getZ() + zOffset + 1);
-                    level.setBlock(blockPos, trunkBlock, 1);
-
-                    blockPos = new BlockPos(origin.getX() + xOffset + 1, origin.getY() - yy, origin.getZ() + zOffset + 1);
-                    level.setBlock(blockPos, trunkBlock, 1);
+                    int py = origin.getY() - yy;
+                    setTrunk(level, mutable, origin.getX() + xOffset, py, origin.getZ() + zOffset, trunkBlock);
+                    setTrunk(level, mutable, origin.getX() + xOffset + 1, py, origin.getZ() + zOffset, trunkBlock);
+                    setTrunk(level, mutable, origin.getX() + xOffset, py, origin.getZ() + zOffset + 1, trunkBlock);
+                    setTrunk(level, mutable, origin.getX() + xOffset + 1, py, origin.getZ() + zOffset + 1, trunkBlock);
                 }
 
                 // --- Additional 2 blocks on top and bottom of the segment for smoothness ---
@@ -139,8 +132,8 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
                         }
                     }
 
-                    level.setBlock(blockPos1, trunkBlock, 1);
-                    level.setBlock(blockPos2, trunkBlock, 1);
+                    level.setBlock(blockPos1, trunkBlock, GeometryUtils.BULK_FLAG);
+                    level.setBlock(blockPos2, trunkBlock, GeometryUtils.BULK_FLAG);
                 }
 
                 // --- Thorns in the middle of the segment ---
@@ -186,8 +179,8 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
                         }
                     }
 
-                    level.setBlock(blockPos1, trunkBlock, 1);
-                    level.setBlock(blockPos2, trunkBlock, 1);
+                    level.setBlock(blockPos1, trunkBlock, GeometryUtils.BULK_FLAG);
+                    level.setBlock(blockPos2, trunkBlock, GeometryUtils.BULK_FLAG);
                 }
             }
 
@@ -238,18 +231,14 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
             }
 
             for (int y = 0; y < 6; y++) {
-                BlockPos blockPos = new BlockPos(tipOrigin.getX(), tipOrigin.getY() - y, tipOrigin.getZ());
-                level.setBlock(blockPos, trunkBlock, 1);
+                setTrunk(level, mutable, tipOrigin.getX(), tipOrigin.getY() - y, tipOrigin.getZ(), trunkBlock);
             }
             for (int y = 0; y < 4; y++) {
-                BlockPos blockPos = new BlockPos(tipSide1.getX(), tipOrigin.getY() - y, tipSide1.getZ());
-                level.setBlock(blockPos, trunkBlock, 1);
-                blockPos = new BlockPos(tipSide2.getX(), tipOrigin.getY() - y, tipSide2.getZ());
-                level.setBlock(blockPos, trunkBlock, 1);
+                setTrunk(level, mutable, tipSide1.getX(), tipOrigin.getY() - y, tipSide1.getZ(), trunkBlock);
+                setTrunk(level, mutable, tipSide2.getX(), tipOrigin.getY() - y, tipSide2.getZ(), trunkBlock);
             }
             for (int y = 0; y < 2; y++) {
-                BlockPos blockPos = new BlockPos(tipThorns.getX(), tipThorns.getY() - y, tipThorns.getZ());
-                level.setBlock(blockPos, trunkBlock, 1);
+                setTrunk(level, mutable, tipThorns.getX(), tipThorns.getY() - y, tipThorns.getZ(), trunkBlock);
             }
 
             // --- Berries ---
@@ -277,15 +266,14 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
                     Direction dir = Direction.getRandom(random);
 
                     for (int i = 0; i < 5; i++) {
+                        mutable.set(
+                                origin.getX() + xOffset + dir.getStepX() * i,
+                                origin.getY() - nSeg * segmentHeight - y + dir.getStepY() * i,
+                                origin.getZ() + zOffset + dir.getStepZ() * i
+                        );
 
-                        BlockPos blockPos = new BlockPos(
-                                origin.getX() + xOffset,
-                                origin.getY() - nSeg * segmentHeight - y,
-                                origin.getZ() + zOffset
-                        ).relative(dir, i);
-
-                        if (level.getBlockState(blockPos).isAir()) {
-                            level.setBlock(blockPos, berryBlock, 1);
+                        if (level.getBlockState(mutable).isAir()) {
+                            level.setBlock(mutable, berryBlock, GeometryUtils.BULK_FLAG);
                             break;
                         }
                     }
@@ -297,36 +285,50 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
         return false;
     }
 
-    private static boolean isValidPlacement(WorldGenLevel level, BlockPos origin, BlockState ceilingBlock, BlockState trunkBlock, int height) {
+    private static void setTrunk(
+            WorldGenLevel level,
+            BlockPos.MutableBlockPos mutable,
+            int x,
+            int y,
+            int z,
+            BlockState trunkBlock
+    ) {
+        level.setBlock(mutable.set(x, y, z), trunkBlock, GeometryUtils.BULK_FLAG);
+    }
+
+    private static boolean isValidPlacement(
+            WorldGenLevel level,
+            BlockPos origin,
+            BlockState ceilingBlock,
+            BlockState trunkBlock,
+            int height,
+            BlockPos.MutableBlockPos mutable
+    ) {
         if (!level.getBlockState(origin).is(ceilingBlock.getBlock())) {
             return false;
         }
 
-        List<BlockPos> noBlocks = List.of(
-                origin.above(3).north(2),
-                origin.above(3).south(2),
-                origin.above(3).east(2),
-                origin.above(3).west(2)
-        );
+        int ox = origin.getX();
+        int oy = origin.getY();
+        int oz = origin.getZ();
 
-        for (BlockPos blockPos : noBlocks) {
-            if (level.isEmptyBlock(blockPos)) {
-                return false;
-            }
+        if (level.isEmptyBlock(mutable.set(ox, oy + 3, oz - 2))
+                || level.isEmptyBlock(mutable.set(ox, oy + 3, oz + 2))
+                || level.isEmptyBlock(mutable.set(ox + 2, oy + 3, oz))
+                || level.isEmptyBlock(mutable.set(ox - 2, oy + 3, oz))) {
+            return false;
         }
 
-        for (BlockPos blockPos : List.of(origin.north(), origin.south(), origin.west(), origin.east())) {
-            if (level.getBlockState(blockPos).is(trunkBlock.getBlock())) {
-                return false;
-            }
-            if (level.getBlockState(blockPos).is(RRBlocks.ARCANE_STONE)) {
+        int[][] cardinals = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+        for (int[] offset : cardinals) {
+            BlockState neighbor = level.getBlockState(mutable.set(ox + offset[0], oy, oz + offset[1]));
+            if (neighbor.is(trunkBlock.getBlock()) || neighbor.is(RRBlocks.ARCANE_STONE)) {
                 return false;
             }
         }
 
         for (int y = 1; y < height; y++) {
-            BlockPos blockPos = new BlockPos(origin.getX(), origin.getY() - y, origin.getZ());
-            if (!level.getBlockState(blockPos).isAir()) {
+            if (!level.getBlockState(mutable.set(ox, oy - y, oz)).isAir()) {
                 return false;
             }
         }

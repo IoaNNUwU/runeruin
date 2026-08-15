@@ -10,7 +10,9 @@ import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CrossCollisionBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
@@ -21,10 +23,77 @@ import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfigur
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
+
+    private static final int[][] CEILING_ANCHORS = {
+            {0, 3, -5},
+            {0, 3, 5},
+            {5, 3, 0},
+            {-5, 3, 0}
+    };
+
+    private static final int[][] TRUNK_CROSS = {
+            {0, 0},
+            {0, -1},
+            {0, 1},
+            {-1, 0},
+            {1, 0}
+    };
+
+    private static final int[][] EXTRA_TRUNK = {
+            {0, -2, -2},
+            {0, -2, 2},
+            {2, -2, 0},
+            {-2, -2, 0},
+            {-1, -2, -1},
+            {1, -2, -1},
+            {-1, -2, 1},
+            {1, -2, 1},
+            {-1, -3, -1},
+            {1, -3, -1},
+            {-1, -3, 1},
+            {1, -3, 1}
+    };
+
+    private static final int[][] TRUNK_BOTTOM_A = {
+            {-1, 0, -2},
+            {-2, 0, -1},
+            {-1, 2, -1},
+            {1, 0, 2},
+            {2, 0, 1},
+            {1, 2, 1}
+    };
+
+    private static final int[][] TRUNK_BOTTOM_B = {
+            {1, 0, -2},
+            {2, 0, -1},
+            {1, 2, -1},
+            {-1, 0, 2},
+            {-2, 0, 1},
+            {-1, 2, 1}
+    };
+
+    private static final int[][] THORNS_A = {
+            {-1, 0, -1},
+            {-1, 1, -1},
+            {1, 0, -1},
+            {1, -1, -1},
+            {-1, 0, 1},
+            {-1, -1, 1},
+            {1, 0, 1},
+            {1, 1, 1}
+    };
+
+    private static final int[][] THORNS_B = {
+            {-1, 0, -1},
+            {-1, -1, -1},
+            {1, 0, -1},
+            {1, 1, -1},
+            {-1, 0, 1},
+            {-1, 1, 1},
+            {1, 0, 1},
+            {1, -1, 1}
+    };
 
     public CeilingBallFeature() {
         super(Config.CODEC);
@@ -38,9 +107,13 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
         WorldGenLevel level = ctx.level();
         BlockPos origin = ctx.origin();
         RandomSource random = ctx.random();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
 
         BlockState trunkBlock = config.trunkBlock.getState(level, random, origin);
         BlockState ballBlock = config.ballBlock.getState(level, random, origin);
+        BlockState air = Blocks.AIR.defaultBlockState();
+        BlockState cobweb = Blocks.COBWEB.defaultBlockState();
+        BlockState stone = Blocks.STONE.defaultBlockState();
 
         float maxLength = config.maxTrunkLength.sample(random);
         int trunkLength = (int) (maxLength / 4 + (maxLength * 3 / 4) * random.nextFloat());
@@ -48,17 +121,12 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
         float maxRadius = config.maxRadius.sample(random);
         int radius = (int) (maxRadius / 2 + (maxRadius / 2) * random.nextFloat());
 
-        // --- Check if there is enough space ---
+        int ox = origin.getX();
+        int oy = origin.getY();
+        int oz = origin.getZ();
 
-        List<BlockPos> noBlocks = List.of(
-                origin.above(3).north(5),
-                origin.above(3).south(5),
-                origin.above(3).east(5),
-                origin.above(3).west(5)
-        );
-
-        for (BlockPos blockPos : noBlocks) {
-            if (level.isEmptyBlock(blockPos)) {
+        for (int[] offset : CEILING_ANCHORS) {
+            if (level.isEmptyBlock(mutable.set(ox + offset[0], oy + offset[1], oz + offset[2]))) {
                 return false;
             }
         }
@@ -66,11 +134,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 for (int y = -trunkLength; y < -2; y++) {
-                    int xx = origin.getX() + x;
-                    int zz = origin.getZ() + z;
-                    int yy = origin.getY() + y;
-
-                    if (!level.isEmptyBlock(new BlockPos(xx, yy, zz))) {
+                    if (!level.isEmptyBlock(mutable.set(ox + x, oy + y, oz + z))) {
                         return false;
                     }
                 }
@@ -80,11 +144,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
         for (int x = -radius; x < radius; x++) {
             for (int z = -radius; z < radius; z++) {
                 for (int y = -trunkLength - radius * 2; y < -trunkLength; y++) {
-                    int xx = origin.getX() + x;
-                    int zz = origin.getZ() + z;
-                    int yy = origin.getY() + y;
-
-                    if (!level.isEmptyBlock(new BlockPos(xx, yy, zz))) {
+                    if (!level.isEmptyBlock(mutable.set(ox + x, oy + y, oz + z))) {
                         return false;
                     }
                 }
@@ -93,210 +153,128 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
 
         int trunkDiameter = 3;
 
-        // --- Roots ---
         for (int x = -2; x < trunkDiameter; x++) {
             for (int z = -1; z < trunkDiameter - 1; z++) {
                 for (int y = 0; y < trunkDiameter; y++) {
-                    int xx = origin.getX() + x - trunkDiameter / 2 + 1;
-                    int yy = origin.getY() + y - trunkDiameter / 2;
-                    int zz = origin.getZ() + z - trunkDiameter / 2 + 1;
-
-                    level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+                    int xx = ox + x - trunkDiameter / 2 + 1;
+                    int yy = oy + y - trunkDiameter / 2;
+                    int zz = oz + z - trunkDiameter / 2 + 1;
+                    setSolid(level, mutable, xx, yy, zz, trunkBlock);
                 }
             }
         }
         for (int x = -1; x < trunkDiameter - 1; x++) {
             for (int z = -2; z < trunkDiameter; z++) {
                 for (int y = 0; y < trunkDiameter; y++) {
-                    int xx = origin.getX() + x - trunkDiameter / 2 + 1;
-                    int yy = origin.getY() + y - trunkDiameter / 2;
-                    int zz = origin.getZ() + z - trunkDiameter / 2 + 1;
-
-                    level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+                    int xx = ox + x - trunkDiameter / 2 + 1;
+                    int yy = oy + y - trunkDiameter / 2;
+                    int zz = oz + z - trunkDiameter / 2 + 1;
+                    setSolid(level, mutable, xx, yy, zz, trunkBlock);
                 }
             }
         }
         for (int z = -1; z < trunkDiameter - 1; z++) {
             for (int x = -1; x < trunkDiameter - 1; x++) {
-                int xx = origin.getX() + x - trunkDiameter / 2 + 1;
-                int zz = origin.getZ() + z - trunkDiameter / 2 + 1;
-                int yy = origin.getY() + 1;
-
-                level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+                int xx = ox + x - trunkDiameter / 2 + 1;
+                int zz = oz + z - trunkDiameter / 2 + 1;
+                setSolid(level, mutable, xx, oy + 1, zz, trunkBlock);
             }
         }
 
         for (int x = -2; x < trunkDiameter; x++) {
             for (int z = -1; z < trunkDiameter - 1; z++) {
-                int xx = origin.getX() + x - trunkDiameter / 2 + 1;
-                int zz = origin.getZ() + z - trunkDiameter / 2 + 1;
-                int yy = origin.getY() - trunkDiameter / 2 + 2;
-
                 if (random.nextBoolean()) {
-                    level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+                    int xx = ox + x - trunkDiameter / 2 + 1;
+                    int zz = oz + z - trunkDiameter / 2 + 1;
+                    int yy = oy - trunkDiameter / 2 + 2;
+                    setSolid(level, mutable, xx, yy, zz, trunkBlock);
                 }
             }
         }
         for (int x = -1; x < trunkDiameter - 1; x++) {
             for (int z = -2; z < trunkDiameter; z++) {
-                int xx = origin.getX() + x - trunkDiameter / 2 + 1;
-                int zz = origin.getZ() + z - trunkDiameter / 2 + 1;
-                int yy = origin.getY() - trunkDiameter / 2 + 2;
-
                 if (random.nextBoolean()) {
-                    level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+                    int xx = ox + x - trunkDiameter / 2 + 1;
+                    int zz = oz + z - trunkDiameter / 2 + 1;
+                    int yy = oy - trunkDiameter / 2 + 2;
+                    setSolid(level, mutable, xx, yy, zz, trunkBlock);
                 }
             }
         }
-        // --- Additional Trunk blocks ---
-        BlockPos yOrigin1 = origin.below(2);
-        BlockPos yOrigin2 = origin.below(3);
-        List<BlockPos> additionalTrunkBlocks = List.of(
-                yOrigin1.north(2),
-                yOrigin1.south(2),
-                yOrigin1.east(2),
-                yOrigin1.west(2),
-                yOrigin1.north().west(),
-                yOrigin1.north().east(),
-                yOrigin1.south().west(),
-                yOrigin1.south().east(),
-                yOrigin2.north().west(),
-                yOrigin2.north().east(),
-                yOrigin2.south().west(),
-                yOrigin2.south().east()
-        );
-        for (BlockPos block : additionalTrunkBlocks) {
-            level.setBlock(block, trunkBlock, 1);
+
+        for (int[] offset : EXTRA_TRUNK) {
+            setSolid(level, mutable, ox + offset[0], oy + offset[1], oz + offset[2], trunkBlock);
         }
 
-        // --- Additional blocks at the bottom of the Trunk ---
-        BlockPos trunkBottom = origin.below(trunkLength - 1);
+        int bx = ox;
+        int by = oy - (trunkLength - 1);
+        int bz = oz;
+
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 for (int y = -1; y <= 1; y++) {
-                    int xx = trunkBottom.getX() + x;
-                    int zz = trunkBottom.getZ() + z;
-                    int yy = trunkBottom.getY() + y;
-
-                    level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+                    setSolid(level, mutable, bx + x, by + y, bz + z, trunkBlock);
                 }
             }
         }
 
-        List<BlockPos> moreBlocks;
-        if (random.nextBoolean()) {
-            moreBlocks = List.of(
-                    trunkBottom.north(2).west(1),
-                    trunkBottom.north(1).west(2),
-                    trunkBottom.north(1).west(1).above(2),
-                    trunkBottom.north(-2).west(-1),
-                    trunkBottom.north(-1).west(-2),
-                    trunkBottom.north(-1).west(-1).above(2)
-            );
-        } else {
-            moreBlocks = List.of(
-                    trunkBottom.north(2).west(-1),
-                    trunkBottom.north(1).west(-2),
-                    trunkBottom.north(1).west(-1).above(2),
-                    trunkBottom.north(-2).west(1),
-                    trunkBottom.north(-1).west(2),
-                    trunkBottom.north(-1).west(1).above(2)
-            );
+        int[][] moreBlocks = random.nextBoolean() ? TRUNK_BOTTOM_A : TRUNK_BOTTOM_B;
+        for (int[] offset : moreBlocks) {
+            setSolid(level, mutable, bx + offset[0], by + offset[1], bz + offset[2], trunkBlock);
         }
-        for (BlockPos blockPos : moreBlocks) {
-            level.setBlock(blockPos, trunkBlock, 1);
-        }
-
-        // --- Trunk ---
 
         for (int y = 0; y < trunkLength; y++) {
-            BlockPos yOrigin = origin.below(y);
-
-            List<BlockPos> yBlocksToSet = List.of(
-                    yOrigin,
-                    yOrigin.north(),
-                    yOrigin.south(),
-                    yOrigin.west(),
-                    yOrigin.east()
-            );
-
-            for (BlockPos block : yBlocksToSet) {
-                level.setBlock(block, trunkBlock, 1);
+            int yy = oy - y;
+            for (int[] offset : TRUNK_CROSS) {
+                setSolid(level, mutable, ox + offset[0], yy, oz + offset[1], trunkBlock);
             }
         }
-
-        // --- Additional thorns in the middle of the trunk ---
 
         int segmentLength = 7;
         int segmentCount = trunkLength / segmentLength;
         for (int nSegment = 0; nSegment < segmentCount; nSegment++) {
-            BlockPos yOrigin = origin.below(nSegment * segmentLength + segmentLength / 2 - trunkLength % segmentCount);
-
-            List<BlockPos> additionalBlocks;
-            if (random.nextBoolean()) {
-                additionalBlocks = List.of(
-                        yOrigin.north().west(),
-                        yOrigin.north().west().above(),
-                        yOrigin.north().east(),
-                        yOrigin.north().east().below(),
-                        yOrigin.south().west(),
-                        yOrigin.south().west().below(),
-                        yOrigin.south().east(),
-                        yOrigin.south().east().above()
-                );
-            } else {
-                additionalBlocks = List.of(
-                        yOrigin.north().west(),
-                        yOrigin.north().west().below(),
-                        yOrigin.north().east(),
-                        yOrigin.north().east().above(),
-                        yOrigin.south().west(),
-                        yOrigin.south().west().above(),
-                        yOrigin.south().east(),
-                        yOrigin.south().east().below()
-                );
-            }
-
-            for (BlockPos blockPos : additionalBlocks) {
-                level.setBlock(blockPos, trunkBlock, 1);
+            int yy = oy - (nSegment * segmentLength + segmentLength / 2 - trunkLength % segmentCount);
+            int[][] thorns = random.nextBoolean() ? THORNS_A : THORNS_B;
+            for (int[] offset : thorns) {
+                setSolid(level, mutable, ox + offset[0], yy + offset[1], oz + offset[2], trunkBlock);
             }
         }
 
-
-        // --- Sphere ---
-
         BlockPos center = origin.below(trunkLength + radius);
-
-        GeometryUtils.sphere(
-                level,
-                center,
-                () -> random.nextBoolean() ? trunkBlock : Blocks.AIR.defaultBlockState(),
-                radius + 1
-        );
-        GeometryUtils.sphere(
-                level,
-                center,
-                () -> ballBlock,
-                radius
-        );
-
         int spawnerRand = random.nextIntBetweenInclusive(0, 4);
+
+        GeometryUtils.forEachInSphere(center, radius + 1, (x, y, z, d2) -> {
+            BlockState toPlace;
+            if (GeometryUtils.insideSphere(d2, radius - 3)) {
+                toPlace = switch (spawnerRand) {
+                    case 0, 1, 2 -> air;
+                    default -> stone;
+                };
+            } else if (GeometryUtils.insideSphere(d2, radius - 2)) {
+                toPlace = switch (spawnerRand) {
+                    case 0, 1 -> random.nextBoolean() ? cobweb : air;
+                    case 2 -> air;
+                    default -> stone;
+                };
+            } else if (GeometryUtils.insideSphere(d2, radius - 1)) {
+                toPlace = switch (spawnerRand) {
+                    case 0, 1 -> trunkBlock;
+                    case 2 -> random.nextBoolean() ? trunkBlock : air;
+                    default -> stone;
+                };
+            } else if (GeometryUtils.insideSphere(d2, radius)) {
+                toPlace = ballBlock;
+            } else {
+                toPlace = random.nextBoolean() ? trunkBlock : air;
+            }
+            int flags = toPlace.isAir() ? GeometryUtils.BULK_FLAG : GeometryUtils.SOLID_FLAG;
+            level.setBlock(mutable.set(x, y, z), toPlace, flags);
+        });
 
         switch (spawnerRand) {
             case 0, 1 -> {
-                // --- Generate spawner room ---
-                GeometryUtils.sphere(level, center, () -> trunkBlock, radius - 1);
-
-                Supplier<BlockState> cobwebToPlace = () -> random.nextBoolean()
-                        ? Blocks.COBWEB.defaultBlockState()
-                        : Blocks.AIR.defaultBlockState();
-
-                GeometryUtils.sphere(level, center, cobwebToPlace, radius - 2);
-                GeometryUtils.sphere(level, center, Blocks.AIR::defaultBlockState, radius - 3);
-
                 BlockState spawnerBlockState = Blocks.SPAWNER.defaultBlockState();
-
-                level.setBlock(center, spawnerBlockState, 1);
+                level.setBlock(center, spawnerBlockState, Block.UPDATE_ALL);
                 BlockEntity blockEntity = level.getBlockEntity(center);
                 if (blockEntity instanceof SpawnerBlockEntity spawner) {
                     spawner.setEntityId(EntityTypes.CAVE_SPIDER, random);
@@ -304,8 +282,9 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                     RR.LOGGER.warn("SpawnerBlockEntity generated in CeilingBallFeature is unaccessible");
                 }
 
+                BlockState chain = Blocks.IRON_CHAIN.defaultBlockState();
                 for (int y = 1; y < radius - 2; y++) {
-                    level.setBlock(center.above(y), Blocks.IRON_CHAIN.defaultBlockState(), Block.UPDATE_ALL);
+                    level.setBlock(mutable.set(center.getX(), center.getY() + y, center.getZ()), chain, Block.UPDATE_ALL);
                 }
 
                 BlockState bar = Blocks.IRON_BARS.defaultBlockState();
@@ -316,60 +295,50 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                 var east = CrossCollisionBlock.EAST;
 
                 if (radius > 6) {
+                    int cx = center.getX();
+                    int cy = center.getY();
+                    int cz = center.getZ();
                     for (int y = -1; y <= 1; y++) {
-                        BlockPos yCenter = center.above(y);
+                        int yy = cy + y;
+                        level.setBlock(mutable.set(cx + 1, yy, cz), bar.setValue(south, true).setValue(north, true), Block.UPDATE_ALL);
+                        level.setBlock(mutable.set(cx - 1, yy, cz), bar.setValue(south, true).setValue(north, true), Block.UPDATE_ALL);
+                        level.setBlock(mutable.set(cx, yy, cz - 1), bar.setValue(west, true).setValue(east, true), Block.UPDATE_ALL);
+                        level.setBlock(mutable.set(cx, yy, cz + 1), bar.setValue(west, true).setValue(east, true), Block.UPDATE_ALL);
 
-                        level.setBlock(yCenter.east(), bar.setValue(south, true).setValue(north, true), Block.UPDATE_ALL);
-                        level.setBlock(yCenter.west(), bar.setValue(south, true).setValue(north, true), Block.UPDATE_ALL);
-                        level.setBlock(yCenter.north(), bar.setValue(west, true).setValue(east, true), Block.UPDATE_ALL);
-                        level.setBlock(yCenter.south(), bar.setValue(west, true).setValue(east, true), Block.UPDATE_ALL);
-
-                        level.setBlock(yCenter.east().north(), bar.setValue(south, true).setValue(west, true), Block.UPDATE_ALL);
-                        level.setBlock(yCenter.east().south(), bar.setValue(north, true).setValue(west, true), Block.UPDATE_ALL);
-                        level.setBlock(yCenter.west().north(), bar.setValue(south, true).setValue(east, true), Block.UPDATE_ALL);
-                        level.setBlock(yCenter.west().south(), bar.setValue(north, true).setValue(east, true), Block.UPDATE_ALL);
+                        level.setBlock(mutable.set(cx + 1, yy, cz - 1), bar.setValue(south, true).setValue(west, true), Block.UPDATE_ALL);
+                        level.setBlock(mutable.set(cx + 1, yy, cz + 1), bar.setValue(north, true).setValue(west, true), Block.UPDATE_ALL);
+                        level.setBlock(mutable.set(cx - 1, yy, cz - 1), bar.setValue(south, true).setValue(east, true), Block.UPDATE_ALL);
+                        level.setBlock(mutable.set(cx - 1, yy, cz + 1), bar.setValue(north, true).setValue(east, true), Block.UPDATE_ALL);
                     }
 
-                    level.setBlock(center.above(), trunkBlock, Block.UPDATE_ALL);
+                    setSolid(level, mutable, cx, cy + 1, cz, trunkBlock);
 
                     BlockPos chestPos = center.below();
-
                     level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), Block.UPDATE_ALL);
                     BlockEntity chestBlockEntity = level.getBlockEntity(chestPos);
 
                     if (chestBlockEntity instanceof ChestBlockEntity chest) {
-                        // TODO: Custom loot table
                         chest.setLootTable(BuiltInLootTables.ABANDONED_MINESHAFT, random.nextLong());
                     } else {
                         RR.LOGGER.warn("ChestBlockEntity generated in CeilingBallFeature is unaccessible");
                     }
                 }
             }
-            case 2 -> {
-                // --- Generate empty room ---
-                Supplier<BlockState> blockToPlace = () -> random.nextBoolean() ? trunkBlock : Blocks.AIR.defaultBlockState();
-
-                GeometryUtils.sphere(level, center, blockToPlace, radius - 1);
-                GeometryUtils.sphere(level, center, Blocks.AIR::defaultBlockState, radius - 2);
-            }
-            case 3, 4 -> {
-                GeometryUtils.sphere(level, center, Blocks.STONE::defaultBlockState, radius - 1);
-                // TODO: Generate extensive amount of custom ores
+            default -> {
             }
         }
 
-        // --- Additional blocks at the bottom of the Trunk ---
         for (int x = -2; x <= 2; x++) {
             for (int z = -2; z <= 2; z++) {
-                int xx = trunkBottom.getX() + x;
-                int zz = trunkBottom.getZ() + z;
-                int yy = trunkBottom.getY() - 1;
-
-                level.setBlock(new BlockPos(xx, yy, zz), trunkBlock, 1);
+                setSolid(level, mutable, bx + x, by - 1, bz + z, trunkBlock);
             }
         }
 
         return true;
+    }
+
+    private static void setSolid(WorldGenLevel level, BlockPos.MutableBlockPos mutable, int x, int y, int z, BlockState state) {
+        level.setBlock(mutable.set(x, y, z), state, GeometryUtils.SOLID_FLAG);
     }
 
     public record Config(

@@ -10,6 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.RandomState;
 
@@ -26,11 +27,13 @@ import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_OFFSET;
 public class ArcaneStructureGen {
 
     public static void generateArcaneStructure(ChunkAccess chunk, RandomState randomState) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockState arcaneStone = RRBlocks.ARCANE_STONE.get().defaultBlockState();
 
         for (int y = CEILING_VOID_Y + 1; y < LOST_CAVES_Y; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
+                    chunk.setBlockState(pos.set(x, y, z), arcaneStone);
                 }
             }
         }
@@ -38,7 +41,7 @@ public class ArcaneStructureGen {
         for (int y = LOST_CAVES_CEILING_Y + 1; y < DEEP_CAVES_Y; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
+                    chunk.setBlockState(pos.set(x, y, z), arcaneStone);
                 }
             }
         }
@@ -46,7 +49,7 @@ public class ArcaneStructureGen {
         for (int y = DEEP_CAVES_CEILING_Y + 1; y < BLOOMING_CAVES_Y; y++) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
+                    chunk.setBlockState(pos.set(x, y, z), arcaneStone);
                 }
             }
         }
@@ -62,6 +65,8 @@ public class ArcaneStructureGen {
     private static final Identifier FILL_ARCANE_STRUCTURE_ID = RR.id("fill_arcane_structure");
 
     private static void generateArcaneColumn(ChunkAccess chunk, RandomState randomState) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockState arcaneStone = RRBlocks.ARCANE_STONE.get().defaultBlockState();
 
         int chX = chunk.getPos().getBlockAt(0, 0, 0).getX();
         int chZ = chunk.getPos().getBlockAt(0, 0, 0).getZ();
@@ -77,16 +82,16 @@ public class ArcaneStructureGen {
         for (int y = BLOOMING_CAVES_Y; y < baseLine; y++) {
             for (int x = 3; x < 13; x++) {
                 for (int z = 2; z < 14; z++) {
-                    chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
+                    chunk.setBlockState(pos.set(x, y, z), arcaneStone);
                 }
             }
             int x = 2;
             for (int z = 3; z < 13; z++) {
-                chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
+                chunk.setBlockState(pos.set(x, y, z), arcaneStone);
             }
             x = 13;
             for (int z = 3; z < 13; z++) {
-                chunk.setBlockState(new BlockPos(x, y, z), RRBlocks.ARCANE_STONE.get().defaultBlockState());
+                chunk.setBlockState(pos.set(x, y, z), arcaneStone);
             }
         }
 
@@ -99,6 +104,9 @@ public class ArcaneStructureGen {
     private static final List<List<List<Boolean>>> RUNES_DESCRIPTION = Runes.list();
 
     private static void addSideRunes(ChunkAccess chunk, RandomSource random) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockState air = Blocks.AIR.defaultBlockState();
+        BlockState diamondArcane = RRBlocks.DIAMOND_ARCANE_STONE.get().defaultBlockState();
 
         int idx = random.nextIntBetweenInclusive(0, RUNES_DESCRIPTION.size() - 1);
         var runeDesc = RUNES_DESCRIPTION.get(idx);
@@ -122,8 +130,8 @@ public class ArcaneStructureGen {
             for (int zz = 0; zz < 10; zz++) {
                 for (int yy = 0; yy < 16; yy++) {
                     if (runeDesc.get(yy).get(zz)) {
-                        chunk.setBlockState(new BlockPos(x, y - yy, z + zz), Blocks.AIR.defaultBlockState());
-                        chunk.setBlockState(new BlockPos(xInner, y - yy, z + zz), RRBlocks.DIAMOND_ARCANE_STONE.get().defaultBlockState());
+                        chunk.setBlockState(pos.set(x, y - yy, z + zz), air);
+                        chunk.setBlockState(pos.set(xInner, y - yy, z + zz), diamondArcane);
                     }
                 }
             }
@@ -141,8 +149,8 @@ public class ArcaneStructureGen {
             for (int xx = 0; xx < 10; xx++) {
                 for (int yy = 0; yy < 16; yy++) {
                     if (runeDesc.get(yy).get(xx)) {
-                        chunk.setBlockState(new BlockPos(x + xx, y - yy, z), Blocks.AIR.defaultBlockState());
-                        chunk.setBlockState(new BlockPos(x + xx, y - yy, zInner), RRBlocks.DIAMOND_ARCANE_STONE.get().defaultBlockState());
+                        chunk.setBlockState(pos.set(x + xx, y - yy, z), air);
+                        chunk.setBlockState(pos.set(x + xx, y - yy, zInner), diamondArcane);
                     }
                 }
             }

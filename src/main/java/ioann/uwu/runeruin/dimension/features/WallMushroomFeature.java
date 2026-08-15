@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import ioann.uwu.runeruin.dimension.GeometryUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -19,9 +20,6 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         super(Config.CODEC);
     }
 
-    // TODO: Find a flag or make properly aligned mushroom blocks
-    private static final int FLAG = 1;
-
     @Override
     public boolean place(FeaturePlaceContext<WallMushroomFeature.Config> ctx) {
 
@@ -30,75 +28,53 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         WorldGenLevel level = ctx.level();
         BlockPos origin = ctx.origin();
         RandomSource random = ctx.random();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
 
         int diameter = config.diameter().sample(random);
+        int ox = origin.getX();
+        int oy = origin.getY();
+        int oz = origin.getZ();
 
         for (int x = -diameter / 2 + 1; x < diameter / 2; x++) {
             for (int z = -diameter / 2 + 1; z < diameter / 2; z++) {
-
-                BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
-
-                BlockState blockState = config.mushroomBlock().getState(level, random, origin);
-
-                if (level.getBlockState(blockPos).isAir()) {
-                    level.setBlock(blockPos, blockState, FLAG);
-                }
+                tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
             }
         }
 
         int z = -diameter / 2;
-
         for (int x = -diameter / 2 + 1; x < diameter / 2; x++) {
-
-            BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
-
-            BlockState blockState = config.mushroomBlock().getState(level, random, origin);
-
-            if (level.getBlockState(blockPos).isAir()) {
-                level.setBlock(blockPos, blockState, FLAG);
-            }
+            tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
         }
 
         z = diameter / 2;
-
         for (int x = -diameter / 2 + 1; x < diameter / 2; x++) {
-
-            BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
-
-            BlockState blockState = config.mushroomBlock().getState(level, random, origin);
-
-            if (level.getBlockState(blockPos).isAir()) {
-                level.setBlock(blockPos, blockState, FLAG);
-            }
+            tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
         }
 
         int x = -diameter / 2;
-
         for (z = -diameter / 2 + 1; z < diameter / 2; z++) {
-
-            BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
-
-            BlockState blockState = config.mushroomBlock().getState(level, random, origin);
-
-            if (level.getBlockState(blockPos).isAir()) {
-                level.setBlock(blockPos, blockState, FLAG);
-            }
+            tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
         }
 
         x = diameter / 2;
-
         for (z = -diameter / 2 + 1; z < diameter / 2; z++) {
-
-            BlockPos blockPos = new BlockPos(origin.getX() + x, origin.getY(), origin.getZ() + z);
-
-            BlockState blockState = config.mushroomBlock().getState(level, random, origin);
-
-            if (level.getBlockState(blockPos).isAir()) {
-                level.setBlock(blockPos, blockState, FLAG);
-            }
+            tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
         }
 
         return true;
+    }
+
+    private static void tryPlace(
+            WorldGenLevel level,
+            BlockPos.MutableBlockPos pos,
+            Config config,
+            RandomSource random,
+            BlockPos origin
+    ) {
+        BlockState blockState = config.mushroomBlock().getState(level, random, origin);
+        if (level.getBlockState(pos).isAir()) {
+            level.setBlock(pos, blockState, GeometryUtils.BULK_FLAG);
+        }
     }
 
     public record Config(BlockStateProvider mushroomBlock, IntProvider diameter) implements FeatureConfiguration {

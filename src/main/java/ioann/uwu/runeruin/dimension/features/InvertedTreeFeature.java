@@ -23,6 +23,93 @@ import java.util.List;
 
 public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
+    private static final int[][] CEILING_ANCHORS = {
+            {0, 3, -2},
+            {0, 3, 2},
+            {2, 3, 0},
+            {-2, 3, 0}
+    };
+
+    private static final int[][] CARDINALS = {
+            {0, -1},
+            {0, 1},
+            {-1, 0},
+            {1, 0}
+    };
+
+    private static final int[][] TRUNK_CROSS = {
+            {0, 0},
+            {-1, 0},
+            {1, 0},
+            {0, -1},
+            {0, 1}
+    };
+
+    private static final int[][] TRUNK_CROSS_FAR = {
+            {-2, 0},
+            {2, 0},
+            {0, -2},
+            {0, 2}
+    };
+
+    private static final int[][] ROOT_EXTRA_A = {
+            {1, -4, 1},
+            {-1, -4, -1}
+    };
+
+    private static final int[][] ROOT_EXTRA_B = {
+            {1, -4, -1},
+            {-1, -4, 1}
+    };
+
+    private static final int[][] EXTENSION_A = {
+            {-1, 1, 1},
+            {-1, 0, 1},
+            {1, 1, -1},
+            {1, 0, -1},
+            {1, -1, 1},
+            {1, 0, 1},
+            {-1, -1, -1},
+            {-1, 0, -1}
+    };
+
+    private static final int[][] EXTENSION_B = {
+            {-1, 1, -1},
+            {-1, 0, -1},
+            {1, 1, 1},
+            {1, 0, 1},
+            {1, -1, -1},
+            {1, 0, -1},
+            {-1, -1, 1},
+            {-1, 0, 1}
+    };
+
+    private static final int[][] CROWN_EXTRA_A = {
+            {-1, 2, 1},
+            {-1, 1, 2},
+            {-2, 1, 1},
+            {-1, 0, 2},
+            {-2, 0, 1},
+            {1, 2, -1},
+            {1, 1, -2},
+            {2, 1, -1},
+            {1, 0, -2},
+            {2, 0, -1}
+    };
+
+    private static final int[][] CROWN_EXTRA_B = {
+            {-1, 2, -1},
+            {-1, 1, -2},
+            {-2, 1, -1},
+            {-1, 0, -2},
+            {-2, 0, -1},
+            {1, 2, 1},
+            {2, 1, 1},
+            {1, 1, 2},
+            {2, 0, 1},
+            {1, 0, 2}
+    };
+
     public InvertedTreeFeature() {
         super(Config.CODEC);
     }
@@ -35,378 +122,301 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
         WorldGenLevel level = ctx.level();
         BlockPos origin = ctx.origin();
         RandomSource random = ctx.random();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
 
         BlockState ceilingBlock = config.placeOn.getState(level, random, origin);
         BlockState trunkBlock = config.trunkBlock.getState(level, random, origin);
+        BlockState air = Blocks.AIR.defaultBlockState();
 
-        BlockPos finalOrigin = origin;
+        BlockPos ceilingOrigin = origin;
         List<BlockState> leaves = config.leavesBlock.stream()
-                .map(ski -> ski.getState(level, random, finalOrigin))
+                .map(provider -> provider.getState(level, random, ceilingOrigin))
                 .toList();
 
         float maxLength = config.maxLength.sample(random);
         int height = (int) (maxLength + (maxLength / 2) * random.nextFloat());
 
-        if (isValidPlacement(level, origin, ceilingBlock, trunkBlock, height)) {
+        if (!isValidPlacement(level, origin, ceilingBlock, trunkBlock, height, mutable)) {
+            return false;
+        }
 
-            // Roots
+        origin = origin.below();
+        int ox = origin.getX();
+        int oy = origin.getY();
+        int oz = origin.getZ();
 
-            origin = origin.below();
-
-            for (int x = -1; x <= 1; x++) {
-                for (int z = -1; z <= 1; z++) {
-                    for (int y = -3; y <= 2; y++) {
-                        int xx = origin.getX() + x;
-                        int yy = origin.getY() + y;
-                        int zz = origin.getZ() + z;
-
-                        BlockPos blockPos = new BlockPos(xx, yy, zz);
-
-                        level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
-                    }
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                for (int y = -3; y <= 2; y++) {
+                    setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
                 }
             }
+        }
 
-            List<BlockPos> additionalRootBlocks;
-            if (random.nextBoolean()) {
-                additionalRootBlocks = List.of(
-                        origin.south().east().below(4),
-                        origin.south(-1).east(-1).below(4)
-                );
+        int[][] extraRoots = random.nextBoolean() ? ROOT_EXTRA_A : ROOT_EXTRA_B;
+        for (int[] offset : extraRoots) {
+            setSolid(level, mutable, ox + offset[0], oy + offset[1], oz + offset[2], trunkBlock);
+        }
+
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -1; z <= 1; z++) {
+                for (int y = -1; y <= 1; y++) {
+                    setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
+                }
+            }
+        }
+
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -2; z <= 2; z++) {
+                for (int y = -1; y <= 1; y++) {
+                    setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
+                }
+            }
+        }
+
+        for (int[] offset : TRUNK_CROSS_FAR) {
+            setSolid(level, mutable, ox + offset[0], oy - 2, oz + offset[1], trunkBlock);
+        }
+
+        for (int y = 0; y < height; y++) {
+            int yy = oy - y;
+            for (int[] offset : TRUNK_CROSS) {
+                setSolid(level, mutable, ox + offset[0], yy, oz + offset[1], trunkBlock);
+            }
+        }
+
+        int bx = ox;
+        int by = oy - height;
+        int bz = oz;
+        BlockPos bottomTrunkPos = mutable.set(bx, by, bz).immutable();
+        int radius = height / 2;
+
+        double branchAngle = random.nextInt(0, 100) * Math.PI / 2 / 100d;
+        int branchCount = random.nextInt(4, 7);
+        double branchOffset = 2 * Math.PI / branchCount;
+
+        double[] sin = new double[branchCount];
+        double[] cos = new double[branchCount];
+        for (int i = 0; i < branchCount; i++) {
+            double angle = branchAngle + branchOffset * i;
+            sin[i] = Math.sin(angle);
+            cos[i] = Math.cos(angle);
+        }
+
+        GeometryUtils.BlockStateSupplier branchSupplier = (x, y, z) -> {
+            int dx = x - bx;
+            int dz = z - bz;
+            double len2 = (double) dx * dx + (double) dz * dz;
+
+            double threshold;
+            if ((double) radius / 1.2 > len2) {
+                threshold = 0.6;
+            } else if ((double) radius * 2 > len2) {
+                threshold = 0.45;
             } else {
-                additionalRootBlocks = List.of(
-                        origin.south(-1).east().below(4),
-                        origin.south().east(-1).below(4)
-                );
+                threshold = 0.2;
             }
+            double half = threshold * 0.5;
+            double half2 = half * half;
 
-            for (BlockPos blockPos : additionalRootBlocks) {
-                level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
-            }
-
-            for (int x = -2; x <= 2; x++) {
-                for (int z = -1; z <= 1; z++) {
-                    for (int y = -1; y <= 1; y++) {
-                        int xx = origin.getX() + x;
-                        int yy = origin.getY() + y;
-                        int zz = origin.getZ() + z;
-
-                        BlockPos blockPos = new BlockPos(xx, yy, zz);
-
-                        level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
-                    }
-                }
-            }
-
-            for (int x = -1; x <= 1; x++) {
-                for (int z = -2; z <= 2; z++) {
-                    for (int y = -1; y <= 1; y++) {
-                        int xx = origin.getX() + x;
-                        int yy = origin.getY() + y;
-                        int zz = origin.getZ() + z;
-
-                        BlockPos blockPos = new BlockPos(xx, yy, zz);
-
-                        level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
-                    }
-                }
-            }
-
-            // Trunk
-
-            BlockPos newBlockPos = origin.below(2);
-            List<BlockPos> blockPoses = List.of(
-                    newBlockPos.west(2),
-                    newBlockPos.east(2),
-                    newBlockPos.north(2),
-                    newBlockPos.south(2)
-            );
-            for (BlockPos pos : blockPoses) {
-                level.setBlock(pos, trunkBlock, Block.UPDATE_ALL);
-            }
-
-            for (int y = 0; y < height; y++) {
-                newBlockPos = origin.below(y);
-                blockPoses = List.of(newBlockPos, newBlockPos.west(), newBlockPos.east(), newBlockPos.north(), newBlockPos.south());
-
-                for (BlockPos pos : blockPoses) {
-                    level.setBlock(pos, trunkBlock, Block.UPDATE_ALL);
-                }
-            }
-
-            BlockPos bottomTrunkPos = origin.below(height);
-            int radius = height / 2;
-
-            double branchAngle = random.nextInt(0, 100) * Math.PI / 2 / 100d;
-
-            int branchCount = random.nextInt(4, 7);
-            double branchOffset = 2 * Math.PI / branchCount;
-
-            // Branches
-
-            GeometryUtils.BlockStateSupplier branchSupplier = (x, y, z) -> {
-
-                double rotation = Math.atan2(x - bottomTrunkPos.getX(), z - bottomTrunkPos.getZ());
-                if (rotation < 0) {
-                    rotation = 2 * Math.PI + rotation;
-                }
-
-                double distSqr = bottomTrunkPos.atY(y).distToLowCornerSqr(x, y, z);
-
-                double threshold;
-                if ((double) radius / 1.2 > distSqr) {
-                    threshold = 0.6;
-                } else if ((double) radius * 2 > distSqr) {
-                    threshold = 0.45;
-                } else {
-                    threshold = 0.2;
-                }
-
+            if (len2 == 0) {
                 for (int i = 0; i < branchCount; i++) {
-                    double finalBranchAngle = branchAngle + branchOffset * i % (2 * Math.PI);
-
-                    if (rotation > finalBranchAngle - threshold / 2 && rotation < finalBranchAngle + threshold / 2) {
+                    double angle = (branchAngle + branchOffset * i) % (Math.PI * 2);
+                    if (angle < 0) {
+                        angle += Math.PI * 2;
+                    }
+                    if (angle < half || angle > Math.PI * 2 - half) {
                         return trunkBlock;
                     }
                 }
-                return Blocks.AIR.defaultBlockState();
-            };
-
-            GeometryUtils.emptySphere(
-                    level,
-                    bottomTrunkPos,
-                    branchSupplier,
-                    radius - 1,
-                    radius * 3 / 4 - 1,
-                    0,
-                    0
-            );
-
-            if (height > 13) {
-                BlockPos trunkBranchesOrigin = origin.below((height - 3) / 2);
-
-                // Generate simple extension
-
-                List<BlockPos> additionalBlocks;
-                if (random.nextBoolean()) {
-                    additionalBlocks = List.of(
-                            trunkBranchesOrigin.south().west().above(),
-                            trunkBranchesOrigin.south().west(),
-
-                            trunkBranchesOrigin.south(-1).west(-1).above(),
-                            trunkBranchesOrigin.south(-1).west(-1),
-
-                            trunkBranchesOrigin.south().west(-1).below(),
-                            trunkBranchesOrigin.south().west(-1),
-
-                            trunkBranchesOrigin.south(-1).west().below(),
-                            trunkBranchesOrigin.south(-1).west()
-                    );
-                } else {
-                    additionalBlocks = List.of(
-                            trunkBranchesOrigin.south(-1).west().above(),
-                            trunkBranchesOrigin.south(-1).west(),
-
-                            trunkBranchesOrigin.south(1).west(-1).above(),
-                            trunkBranchesOrigin.south(1).west(-1),
-
-                            trunkBranchesOrigin.south(-1).west(-1).below(),
-                            trunkBranchesOrigin.south(-1).west(-1),
-
-                            trunkBranchesOrigin.south(1).west().below(),
-                            trunkBranchesOrigin.south(1).west()
-                    );
-                }
-
-                for (BlockPos blockPos : additionalBlocks) {
-                    level.setBlock(blockPos, trunkBlock, Block.UPDATE_ALL);
-                }
-
-                if (random.nextBoolean()) {
-                    // Generate additional branches on a trunk
-
-                    int randYOffset = random.nextInt(-2, 2);
-
-                    List<BlockPos> targets;
-                    int rand = random.nextInt(0, 4);
-                    if (rand == 0) {
-                        targets = List.of(
-                                trunkBranchesOrigin.south(5).east(4).above(randYOffset)
-                        );
-                    } else if (rand == 1) {
-                        targets = List.of(
-                                trunkBranchesOrigin.south(4).east(5).above(randYOffset),
-                                trunkBranchesOrigin.south(-5).east(-4).above(randYOffset)
-                        );
-                    } else if (rand == 2) {
-                        targets = List.of(
-                                trunkBranchesOrigin.south(-4).east(5).above(randYOffset),
-                                trunkBranchesOrigin.south(-5).east(4).above(randYOffset),
-                                trunkBranchesOrigin.south(5).east(4).above(randYOffset)
-                        );
-                    } else {
-                        targets = List.of(
-                                trunkBranchesOrigin.south(-4).east(-5).above(randYOffset),
-                                trunkBranchesOrigin.south(-5).east(-4).above(randYOffset)
-                        );
-                    }
-
-                    for (BlockPos target : targets) {
-
-                        int yThresholdBranches = target.above(1).getY();
-
-                        GeometryUtils.BlockStateSupplier additionalBranchesLeavesSupplier = (_, y, _) -> {
-                            int idx = random.nextInt(0, leaves.size());
-
-                            if (random.nextInt(0, 7) == 0) {
-                                return Blocks.AIR.defaultBlockState();
-                            }
-
-                            if (y == yThresholdBranches) {
-                                return random.nextBoolean()
-                                        ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
-                                        : Blocks.AIR.defaultBlockState();
-                            }
-
-                            if (y > yThresholdBranches) {
-                                return Blocks.AIR.defaultBlockState();
-                            }
-
-                            return leaves.get(idx)
-                                    .trySetValue(LeavesBlock.PERSISTENT, true);
-                        };
-
-                        GeometryUtils.emptySphere(
-                                level,
-                                target,
-                                additionalBranchesLeavesSupplier,
-                                4,
-                                4,
-                                0,
-                                0
-                        );
-
-                        GeometryUtils.curvedLine(
-                                level,
-                                trunkBranchesOrigin.above(3),
-                                target.below(1),
-                                (_, _, _) -> trunkBlock
-                        );
-                    }
-                }
+                return air;
             }
 
-            // Leaves
-
-            int yThreshold = bottomTrunkPos.getY() + radius / 2 - 1;
-
-            GeometryUtils.BlockStateSupplier leaveSupplier = (_, y, _) -> {
-                int idx = random.nextInt(0, leaves.size());
-
-                if (random.nextInt(0, 7) == 0) {
-                    return Blocks.AIR.defaultBlockState();
+            for (int i = 0; i < branchCount; i++) {
+                double cross = dx * cos[i] - dz * sin[i];
+                double dot = dx * sin[i] + dz * cos[i];
+                if (dot >= 0 && cross * cross < half2 * len2) {
+                    return trunkBlock;
                 }
+            }
+            return air;
+        };
 
-                if (y == yThreshold) {
-                    return random.nextBoolean()
-                            ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
-                            : Blocks.AIR.defaultBlockState();
-                }
+        GeometryUtils.emptySphere(
+                level,
+                bottomTrunkPos,
+                branchSupplier,
+                radius - 1,
+                radius * 3 / 4 - 1,
+                0,
+                0,
+                GeometryUtils.SOLID_FLAG
+        );
 
-                if (y > yThreshold) {
-                    return Blocks.AIR.defaultBlockState();
-                }
+        if (height > 13) {
+            int tx = ox;
+            int ty = oy - (height - 3) / 2;
+            int tz = oz;
+            BlockPos trunkBranchesOrigin = new BlockPos(tx, ty, tz);
 
-                return leaves.get(idx)
-                        .trySetValue(LeavesBlock.PERSISTENT, true);
-            };
+            int[][] extension = random.nextBoolean() ? EXTENSION_A : EXTENSION_B;
+            for (int[] offset : extension) {
+                setSolid(level, mutable, tx + offset[0], ty + offset[1], tz + offset[2], trunkBlock);
+            }
 
-            GeometryUtils.emptySphere(level, bottomTrunkPos, leaveSupplier, radius, radius * 3 / 4, 0, 0);
-
-            BlockPos branchesOrigin = new BlockPos(origin.getX(), yThreshold + 1, origin.getZ());
-
-            // Better roots
-            GeometryUtils.cube(level, branchesOrigin, (_, _, _) -> trunkBlock, 1, 1);
-
-            List<BlockPos> additionalBlocks;
             if (random.nextBoolean()) {
-                additionalBlocks = List.of(
-                        branchesOrigin.south().west().above(2),
-                        branchesOrigin.south(2).west().above(),
-                        branchesOrigin.south().west(2).above(),
-                        branchesOrigin.south(2).west(),
-                        branchesOrigin.south().west(2),
+                int randYOffset = random.nextInt(-2, 2);
+                int[][] targets = extraBranchTargets(random.nextInt(0, 4), randYOffset);
 
-                        branchesOrigin.south(-1).west(-1).above(2),
-                        branchesOrigin.south(-2).west(-1).above(),
-                        branchesOrigin.south(-1).west(-2).above(),
-                        branchesOrigin.south(-2).west(-1),
-                        branchesOrigin.south(-1).west(-2)
-                );
-            } else {
-                additionalBlocks = List.of(
-                        branchesOrigin.south(-1).west().above(2),
-                        branchesOrigin.south(-2).west().above(),
-                        branchesOrigin.south(-1).west(2).above(),
-                        branchesOrigin.south(-2).west(),
-                        branchesOrigin.south(-1).west(2),
+                for (int[] offset : targets) {
+                    int targetX = tx + offset[0];
+                    int targetY = ty + offset[1];
+                    int targetZ = tz + offset[2];
+                    int yThresholdBranches = targetY + 1;
+                    BlockPos target = new BlockPos(targetX, targetY, targetZ);
 
-                        branchesOrigin.south().west(-1).above(2),
-                        branchesOrigin.south().west(-2).above(),
-                        branchesOrigin.south(2).west(-1).above(),
-                        branchesOrigin.south().west(-2),
-                        branchesOrigin.south(2).west(-1)
-                );
+                    GeometryUtils.BlockStateSupplier additionalBranchesLeavesSupplier = (_, y, _) -> {
+                        int idx = random.nextInt(0, leaves.size());
+
+                        if (random.nextInt(0, 7) == 0) {
+                            return air;
+                        }
+
+                        if (y == yThresholdBranches) {
+                            return random.nextBoolean()
+                                    ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
+                                    : air;
+                        }
+
+                        if (y > yThresholdBranches) {
+                            return air;
+                        }
+
+                        return leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true);
+                    };
+
+                    GeometryUtils.emptySphere(
+                            level,
+                            target,
+                            additionalBranchesLeavesSupplier,
+                            4,
+                            4,
+                            0,
+                            0,
+                            Block.UPDATE_ALL
+                    );
+
+                    GeometryUtils.curvedLine(
+                            level,
+                            trunkBranchesOrigin.above(3),
+                            target.below(1),
+                            (_, _, _) -> trunkBlock
+                    );
+                }
+            }
+        }
+
+        int yThreshold = by + radius / 2 - 1;
+
+        GeometryUtils.BlockStateSupplier leaveSupplier = (_, y, _) -> {
+            int idx = random.nextInt(0, leaves.size());
+
+            if (random.nextInt(0, 7) == 0) {
+                return air;
             }
 
-            for (BlockPos block : additionalBlocks) {
-                level.setBlock(block, trunkBlock, Block.UPDATE_ALL);
+            if (y == yThreshold) {
+                return random.nextBoolean()
+                        ? leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true)
+                        : air;
             }
+
+            if (y > yThreshold) {
+                return air;
+            }
+
+            return leaves.get(idx).trySetValue(LeavesBlock.PERSISTENT, true);
+        };
+
+        GeometryUtils.emptySphere(
+                level,
+                bottomTrunkPos,
+                leaveSupplier,
+                radius,
+                radius * 3 / 4,
+                0,
+                0,
+                Block.UPDATE_ALL
+        );
+
+        int crownY = yThreshold + 1;
+        BlockPos branchesOrigin = new BlockPos(ox, crownY, oz);
+
+        GeometryUtils.cube(level, branchesOrigin, (_, _, _) -> trunkBlock, 1, 1);
+
+        int[][] crownExtra = random.nextBoolean() ? CROWN_EXTRA_A : CROWN_EXTRA_B;
+        for (int[] offset : crownExtra) {
+            setSolid(level, mutable, ox + offset[0], crownY + offset[1], oz + offset[2], trunkBlock);
         }
 
         return false;
     }
 
-    private static boolean isValidPlacement(WorldGenLevel level, BlockPos origin, BlockState ceilingBlock, BlockState trunkBlock, int height) {
+    private static int[][] extraBranchTargets(int rand, int randYOffset) {
+        return switch (rand) {
+            case 0 -> new int[][]{{4, randYOffset, 5}};
+            case 1 -> new int[][]{{5, randYOffset, 4}, {-4, randYOffset, -5}};
+            case 2 -> new int[][]{{5, randYOffset, -4}, {4, randYOffset, -5}, {4, randYOffset, 5}};
+            default -> new int[][]{{-5, randYOffset, -4}, {-4, randYOffset, -5}};
+        };
+    }
+
+    private static void setSolid(WorldGenLevel level, BlockPos.MutableBlockPos mutable, int x, int y, int z, BlockState state) {
+        level.setBlock(mutable.set(x, y, z), state, GeometryUtils.SOLID_FLAG);
+    }
+
+    private static boolean isValidPlacement(
+            WorldGenLevel level,
+            BlockPos origin,
+            BlockState ceilingBlock,
+            BlockState trunkBlock,
+            int height,
+            BlockPos.MutableBlockPos mutable
+    ) {
         if (!level.getBlockState(origin).is(ceilingBlock.getBlock())) {
             return false;
         }
 
-        List<BlockPos> noBlocks = List.of(
-                origin.above(3).north(2),
-                origin.above(3).south(2),
-                origin.above(3).east(2),
-                origin.above(3).west(2)
-        );
+        int ox = origin.getX();
+        int oy = origin.getY();
+        int oz = origin.getZ();
 
-        for (BlockPos blockPos : noBlocks) {
-            if (level.isEmptyBlock(blockPos)) {
+        for (int[] offset : CEILING_ANCHORS) {
+            if (level.isEmptyBlock(mutable.set(ox + offset[0], oy + offset[1], oz + offset[2]))) {
                 return false;
             }
         }
 
-        for (BlockPos blockPos : List.of(origin.north(), origin.south(), origin.west(), origin.east())) {
-            if (level.getBlockState(blockPos).is(trunkBlock.getBlock())) {
-                return false;
-            }
-            if (level.getBlockState(blockPos).is(RRBlocks.ARCANE_STONE)) {
+        for (int[] offset : CARDINALS) {
+            BlockState neighbor = level.getBlockState(mutable.set(ox + offset[0], oy, oz + offset[1]));
+            if (neighbor.is(trunkBlock.getBlock()) || neighbor.is(RRBlocks.ARCANE_STONE)) {
                 return false;
             }
         }
 
         int radius = height / 2;
+        int[][] probes = {
+                {0, 0},
+                {radius, 0},
+                {-radius, 0},
+                {0, radius},
+                {0, -radius}
+        };
 
         for (int y = 5; y < height * 2; y++) {
-            List<BlockPos> poses = List.of(
-                    new BlockPos(origin.getX(), origin.getY() - y, origin.getZ()),
-                    new BlockPos(origin.getX() + radius, origin.getY() - y, origin.getZ()),
-                    new BlockPos(origin.getX() - radius, origin.getY() - y, origin.getZ()),
-                    new BlockPos(origin.getX(), origin.getY() - y, origin.getZ() + radius),
-                    new BlockPos(origin.getX(), origin.getY() - y, origin.getZ() - radius)
-            );
-
-            for (BlockPos blockPos : poses) {
-                if (!level.getBlockState(blockPos).isAir()) {
+            int yy = oy - y;
+            for (int[] probe : probes) {
+                if (!level.getBlockState(mutable.set(ox + probe[0], yy, oz + probe[1])).isAir()) {
                     return false;
                 }
             }
