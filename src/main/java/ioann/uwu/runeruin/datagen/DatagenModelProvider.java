@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.datagen;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
@@ -56,12 +57,12 @@ public class DatagenModelProvider extends ModelProvider {
         // Reuse vanilla nether portal models/texture until a custom portal texture exists.
         blockModels.blockStateOutput.accept(
                 MultiVariantGenerator.dispatch(RRBlocks.RUNE_RUIN_PORTAL.get())
-                        .with(PropertyDispatch.initial(BlockStateProperties.HORIZONTAL_AXIS)
-                                .select(Direction.Axis.X, BlockModelGenerators.plainVariant(
-                                        ModelLocationUtils.getModelLocation(Blocks.NETHER_PORTAL, "_ns")
-                                ))
-                                .select(Direction.Axis.Z, BlockModelGenerators.plainVariant(
-                                        ModelLocationUtils.getModelLocation(Blocks.NETHER_PORTAL, "_ew")
+                        .with(PropertyDispatch.initial(BlockStateProperties.HORIZONTAL_AXIS, RuneRuinPortalBlock.UNSTABLE)
+                                .generate((axis, unstable) -> BlockModelGenerators.plainVariant(
+                                        ModelLocationUtils.getModelLocation(
+                                                Blocks.NETHER_PORTAL,
+                                                axis == Direction.Axis.X ? "_ns" : "_ew"
+                                        )
                                 ))
                         )
         );

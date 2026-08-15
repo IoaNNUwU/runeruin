@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.items;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRDimension;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -73,7 +74,7 @@ public class RuneOfSpaceItem extends Item {
                 PortalForcer portalForcer = runeRuin.getPortalForcer();
 
                 Vec3 playerPos = player.getPosition(0f);
-                BlockPos exitBlockPos = new BlockPos((int) playerPos.x, 330, (int) playerPos.z);
+                BlockPos exitBlockPos = new BlockPos((int) playerPos.x, Const.TOP_LAYER_PORTAL_Y, (int) playerPos.z);
 
                 Optional<BlockPos> optPortalPos = portalForcer.findClosestPortalPosition(exitBlockPos, false, runeRuin.getWorldBorder());
 

@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.portal;
 
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.MapCodec;
+import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRDimension;
 import java.util.Map;
 import java.util.Optional;
@@ -33,10 +34,12 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.portal.PortalShape;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -47,15 +50,16 @@ import org.slf4j.Logger;
 
 /**
  * Nether-portal analogue linking Overworld and {@link RRDimension#LEVEL}.
+ * Arrival / exit-portal creation in RuneRuin targets the top layer ({@link Const#TOP_LAYER_Y}+).
  */
 public class RuneRuinPortalBlock extends Block implements Portal {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final MapCodec<RuneRuinPortalBlock> CODEC = simpleCodec(RuneRuinPortalBlock::new);
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
+    /** True while showing a failed-ignition flash that will shatter (no teleport). */
+    public static final BooleanProperty UNSTABLE = BooleanProperty.create("unstable");
     private static final Map<Direction.Axis, VoxelShape> SHAPES = Shapes.rotateHorizontalAxis(Block.column(4.0, 16.0, 0.0, 16.0));
 
-    /** Preferred Y when searching / creating a portal in RuneRuin (matches {@code RuneOfSpaceItem}). */
-    public static final int RUNERUIN_PORTAL_Y = 330;
     /** Preferred Y when searching / creating a portal in the Overworld. */
     public static final int OVERWORLD_PORTAL_Y = 64;
 
@@ -66,7 +70,7 @@ public class RuneRuinPortalBlock extends Block implements Portal {
 
     public RuneRuinPortalBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(AXIS, Direction.Axis.X));
+        this.registerDefaultState(this.stateDefinition.any().setValue(AXIS, Direction.Axis.X).setValue(UNSTABLE, false));
     }
 
     @Override
@@ -94,7 +98,19 @@ public class RuneRuinPortalBlock extends Block implements Portal {
     }
 
     @Override
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!state.getValue(UNSTABLE)) {
+            return;
+        }
+        // One scheduled tick on the origin block shatters the whole unstable portal.
+        RuneRuinPortalShape.findAnyShape(level, pos, state.getValue(AXIS)).shatterPortalBlocks(level);
+    }
+
+    @Override
     protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean isPrecise) {
+        if (state.getValue(UNSTABLE)) {
+            return;
+        }
         if (entity.canUsePortal(false)) {
             entity.setAsInsidePortal(this, pos);
         }
@@ -133,7 +149,7 @@ public class RuneRuinPortalBlock extends Block implements Portal {
         boolean toRuneRuin = newLevel.dimension() == RRDimension.LEVEL;
         WorldBorder newWorldBorder = newLevel.getWorldBorder();
         double teleportationScale = DimensionType.getTeleportationScale(currentLevel.dimensionType(), newLevel.dimensionType());
-        int preferredY = toRuneRuin ? RUNERUIN_PORTAL_Y : OVERWORLD_PORTAL_Y;
+        int preferredY = toRuneRuin ? Const.TOP_LAYER_PORTAL_Y : OVERWORLD_PORTAL_Y;
         preferredY = Mth.clamp(preferredY, newLevel.getMinY(), newLevel.getMaxY());
         BlockPos approximateExitPos = newWorldBorder.clampToBounds(
                 entity.getX() * teleportationScale,
@@ -230,7 +246,8 @@ public class RuneRuinPortalBlock extends Block implements Portal {
                 bottomLeft.getY() + offsetUp,
                 bottomLeft.getZ() + (xAligned ? offsetForward : offsetRight)
         );
-        Vec3 collisionFreePos = RuneRuinPortalShape.findCollisionFreePosition(targetPos, newLevel, entity, dimensions);
+        // Reuse vanilla helper — identical to NetherPortalBlock.
+        Vec3 collisionFreePos = PortalShape.findCollisionFreePosition(targetPos, newLevel, entity, dimensions);
         return new TeleportTransition(
                 newLevel, collisionFreePos, Vec3.ZERO, outputRotation, 0.0F, Relative.union(Relative.DELTA, Relative.ROTATION), postTeleportTransition
         );
@@ -295,6 +312,6 @@ public class RuneRuinPortalBlock extends Block implements Portal {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(AXIS);
+        builder.add(AXIS, UNSTABLE);
     }
 }

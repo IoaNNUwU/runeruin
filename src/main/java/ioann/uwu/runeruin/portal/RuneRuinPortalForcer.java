@@ -1,6 +1,9 @@
 package ioann.uwu.runeruin.portal;
 
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_Y;
+
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.RRDimension;
 import java.util.Comparator;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -18,7 +21,11 @@ import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 /**
- * Creates and locates RuneRuin portals (arcane-stone frames).
+ * Locates / builds RuneRuin portals. Mirrors {@link net.minecraft.world.level.portal.PortalForcer}
+ * but uses our POI, arcane-stone frames, and (in RuneRuin) only the top layer.
+ * <p>
+ * Vanilla {@code PortalForcer} cannot be reused as-is: it hardcodes {@code PoiTypes.NETHER_PORTAL}
+ * and {@code Blocks.OBSIDIAN}/{@code NETHER_PORTAL}.
  */
 public class RuneRuinPortalForcer {
     private static final int RUNERUIN_PORTAL_RADIUS = 16;
@@ -37,7 +44,18 @@ public class RuneRuinPortalForcer {
                 .map(PoiRecord::getPos)
                 .filter(worldBorder::isWithinBounds)
                 .filter(pos -> this.level.getBlockState(pos).hasProperty(BlockStateProperties.HORIZONTAL_AXIS))
+                .filter(this::isValidExitPortalY)
                 .min(Comparator.<BlockPos>comparingDouble(p -> p.distSqr(approximateExitPos)).thenComparingInt(Vec3i::getY));
+    }
+
+    /**
+     * In RuneRuin, only top-layer portals count as exit targets (caves are ignored).
+     */
+    private boolean isValidExitPortalY(BlockPos pos) {
+        if (this.level.dimension() != RRDimension.LEVEL) {
+            return true;
+        }
+        return pos.getY() >= TOP_LAYER_Y;
     }
 
     public Optional<BlockUtil.FoundRectangle> createPortal(BlockPos origin, Direction.Axis portalAxis) {
@@ -48,6 +66,7 @@ public class RuneRuinPortalForcer {
         BlockPos closestPartialPosition = null;
         WorldBorder worldBorder = this.level.getWorldBorder();
         int maxPlaceableY = Math.min(this.level.getMaxY(), this.level.getMinY() + this.level.getLogicalHeight() - 1);
+        int minSearchY = this.minPortalSearchY();
         BlockPos.MutableBlockPos mutable = origin.mutable();
 
         for (BlockPos.MutableBlockPos columnPos : BlockPos.spiralAround(origin, 16, Direction.EAST, Direction.SOUTH)) {
@@ -55,12 +74,12 @@ public class RuneRuinPortalForcer {
             if (worldBorder.isWithinBounds(columnPos) && worldBorder.isWithinBounds(columnPos.move(direction, 1))) {
                 columnPos.move(direction.getOpposite(), 1);
 
-                for (int y = height; y >= this.level.getMinY(); y--) {
+                for (int y = height; y >= minSearchY; y--) {
                     columnPos.setY(y);
                     if (this.canPortalReplaceBlock(columnPos)) {
                         int firstEmptyY = y;
 
-                        while (y > this.level.getMinY() && this.canPortalReplaceBlock(columnPos.move(Direction.DOWN))) {
+                        while (y > minSearchY && this.canPortalReplaceBlock(columnPos.move(Direction.DOWN))) {
                             y--;
                         }
 
@@ -95,7 +114,7 @@ public class RuneRuinPortalForcer {
         }
 
         if (closestFullDistanceSqr == -1.0) {
-            int minStartY = Math.max(this.level.getMinY() - -1, 70);
+            int minStartY = Math.max(minSearchY, this.level.dimension() == RRDimension.LEVEL ? TOP_LAYER_Y : 70);
             int maxStartY = maxPlaceableY - 9;
             if (maxStartY < minStartY) {
                 return Optional.empty();
@@ -146,6 +165,13 @@ public class RuneRuinPortalForcer {
         }
 
         return Optional.of(new BlockUtil.FoundRectangle(closestFullPosition.immutable(), 2, 3));
+    }
+
+    private int minPortalSearchY() {
+        if (this.level.dimension() == RRDimension.LEVEL) {
+            return TOP_LAYER_Y;
+        }
+        return this.level.getMinY();
     }
 
     private boolean canPortalReplaceBlock(BlockPos.MutableBlockPos pos) {

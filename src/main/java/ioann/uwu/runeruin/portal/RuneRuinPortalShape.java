@@ -5,25 +5,27 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.util.BlockUtil;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Arcane-stone frame variant of {@link net.minecraft.world.level.portal.PortalShape}.
+ * Arcane-stone frame detector. Cannot reuse {@link net.minecraft.world.level.portal.PortalShape} for
+ * find/fill: vanilla hardcodes {@code isPortalFrame} + {@code Blocks.NETHER_PORTAL}. Public helpers
+ * like {@link net.minecraft.world.level.portal.PortalShape#findCollisionFreePosition} are reused from
+ * {@link RuneRuinPortalBlock} instead.
  */
 public class RuneRuinPortalShape {
     private static final int MIN_WIDTH = 2;
@@ -32,7 +34,6 @@ public class RuneRuinPortalShape {
     public static final int MAX_HEIGHT = 21;
     private static final BlockBehaviour.StatePredicate FRAME =
             (state, level, pos) -> state.is(RRBlocks.ARCANE_STONE);
-    private static final float SAFE_TRAVEL_MAX_ENTITY_XY = 4.0F;
     private final Direction.Axis axis;
     private final Direction rightDir;
     private final int numPortalBlocks;
@@ -177,55 +178,70 @@ public class RuneRuinPortalShape {
     }
 
     public void createPortalBlocks(LevelAccessor level) {
-        BlockState portalState = RRBlocks.RUNE_RUIN_PORTAL.get().defaultBlockState().setValue(RuneRuinPortalBlock.AXIS, this.axis);
+        this.placePortalBlocks(level, false);
+    }
+
+    /**
+     * Lights the portal briefly as {@code unstable}, then schedules a shatter (invalid location feedback).
+     * No explosion and no player damage.
+     */
+    public void createUnstablePortalBlocks(Level level, int shatterDelayTicks) {
+        this.placePortalBlocks(level, true);
+        level.scheduleTick(this.bottomLeft.immutable(), RRBlocks.RUNE_RUIN_PORTAL.get(), shatterDelayTicks);
+        level.playSound(
+                null,
+                this.bottomLeft,
+                SoundEvents.PORTAL_TRIGGER,
+                SoundSource.BLOCKS,
+                0.85F,
+                0.45F
+        );
+    }
+
+    private void placePortalBlocks(LevelAccessor level, boolean unstable) {
+        BlockState portalState = RRBlocks.RUNE_RUIN_PORTAL.get().defaultBlockState()
+                .setValue(RuneRuinPortalBlock.AXIS, this.axis)
+                .setValue(RuneRuinPortalBlock.UNSTABLE, unstable);
         BlockPos.betweenClosed(this.bottomLeft, this.bottomLeft.relative(Direction.UP, this.height - 1).relative(this.rightDir, this.width - 1))
                 .forEach(pos -> level.setBlock(pos, portalState, 18));
     }
 
+    /**
+     * Breaks every portal block in this shape with destroy particles and glass sounds — no explosion/damage.
+     */
+    public void shatterPortalBlocks(Level level) {
+        BlockPos max = this.bottomLeft.relative(Direction.UP, this.height - 1).relative(this.rightDir, this.width - 1);
+        boolean playedBreakSound = false;
+        for (BlockPos pos : BlockPos.betweenClosed(this.bottomLeft, max)) {
+            BlockPos immutable = pos.immutable();
+            BlockState state = level.getBlockState(immutable);
+            if (!state.is(RRBlocks.RUNE_RUIN_PORTAL)) {
+                continue;
+            }
+            level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, immutable, Block.getId(state));
+            // Client update only — avoid neighbor cascades mid-shatter.
+            level.setBlock(immutable, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            if (level instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(
+                        ParticleTypes.PORTAL,
+                        immutable.getX() + 0.5,
+                        immutable.getY() + 0.5,
+                        immutable.getZ() + 0.5,
+                        8,
+                        0.3,
+                        0.4,
+                        0.3,
+                        0.5
+                );
+            }
+            if (!playedBreakSound) {
+                level.playSound(null, immutable, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 0.9F, 0.9F);
+                playedBreakSound = true;
+            }
+        }
+    }
+
     public boolean isComplete() {
         return this.isValid() && this.numPortalBlocks == this.width * this.height;
-    }
-
-    public static Vec3 findCollisionFreePosition(Vec3 bottomCenter, ServerLevel serverLevel, Entity entity, EntityDimensions dimensions) {
-        if (!(dimensions.width() > SAFE_TRAVEL_MAX_ENTITY_XY) && !(dimensions.height() > SAFE_TRAVEL_MAX_ENTITY_XY)) {
-            double halfHeight = dimensions.height() / 2.0;
-            Vec3 center = bottomCenter.add(0.0, halfHeight, 0.0);
-            VoxelShape allowedCenters = Shapes.create(
-                    AABB.ofSize(center, dimensions.width(), 0.0, dimensions.width()).expandTowards(0.0, 1.0, 0.0).inflate(1.0E-6)
-            );
-            Optional<Vec3> collisionFreePosition = serverLevel.findFreePosition(
-                    entity, allowedCenters, center, dimensions.width(), dimensions.height(), dimensions.width()
-            );
-            Optional<Vec3> collisionFreeBottomCenter = collisionFreePosition.map(vec -> vec.subtract(0.0, halfHeight, 0.0));
-            return collisionFreeBottomCenter.orElse(bottomCenter);
-        } else {
-            return bottomCenter;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static Vec3 getRelativePosition(BlockUtil.FoundRectangle largestRectangleAround, Direction.Axis axis, Vec3 position, EntityDimensions dimensions) {
-        double width = (double) largestRectangleAround.axis1Size - dimensions.width();
-        double height = (double) largestRectangleAround.axis2Size - dimensions.height();
-        BlockPos bottomMin = largestRectangleAround.minCorner;
-        double relativeRight;
-        if (width > 0.0) {
-            double bottomStart = bottomMin.get(axis) + dimensions.width() / 2.0;
-            relativeRight = Mth.clamp(Mth.inverseLerp(position.get(axis) - bottomStart, 0.0, width), 0.0, 1.0);
-        } else {
-            relativeRight = 0.5;
-        }
-
-        double relativeUp;
-        if (height > 0.0) {
-            Direction.Axis heightAxis = Direction.Axis.Y;
-            relativeUp = Mth.clamp(Mth.inverseLerp(position.get(heightAxis) - bottomMin.get(heightAxis), 0.0, height), 0.0, 1.0);
-        } else {
-            relativeUp = 0.0;
-        }
-
-        Direction.Axis forwardAxis = axis == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
-        double relativeForward = position.get(forwardAxis) - (bottomMin.get(forwardAxis) + 0.5);
-        return new Vec3(relativeRight, relativeUp, relativeForward);
     }
 }

@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.mixin;
 
+import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRDimension;
 import ioann.uwu.runeruin.portal.RuneRuinPortalShape;
 import java.util.Optional;
@@ -16,6 +17,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BaseFireBlock.class)
 public class BaseFireBlockMixin {
 
+    private static final int FAILED_IGNITION_SHATTER_DELAY = 4;
+
     @Inject(method = "onPlace", at = @At("HEAD"), cancellable = true)
     private void runeruin$trySpawnRuneRuinPortal(
             BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston, CallbackInfo ci
@@ -29,9 +32,20 @@ public class BaseFireBlockMixin {
         }
 
         Optional<RuneRuinPortalShape> shape = RuneRuinPortalShape.findEmptyPortalShape(level, pos, Direction.Axis.X);
-        if (shape.isPresent()) {
-            shape.get().createPortalBlocks(level);
-            ci.cancel();
+        if (shape.isEmpty()) {
+            return;
         }
+
+        // In RuneRuin below the top layer: brief portal flash, then shatter (no explosion / damage).
+        if (level.dimension() == RRDimension.LEVEL && pos.getY() < Const.TOP_LAYER_Y) {
+            if (!level.isClientSide()) {
+                shape.get().createUnstablePortalBlocks(level, FAILED_IGNITION_SHATTER_DELAY);
+            }
+            ci.cancel();
+            return;
+        }
+
+        shape.get().createPortalBlocks(level);
+        ci.cancel();
     }
 }

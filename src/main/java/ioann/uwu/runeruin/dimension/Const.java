@@ -23,4 +23,7 @@ public class Const {
     public static final int BLOOMING_CAVES_Y = DEEP_CAVES_CEILING_Y + ARCANE_PLATE_HEIGHT + 1;
     public static final int BLOOMING_CAVES_CEILING_Y = BLOOMING_CAVES_Y + UNDERGROUND_LEVEL_HEIGHT;
     public static final int TOP_LAYER_Y = BLOOMING_CAVES_CEILING_Y + 1;
+
+    /** Preferred portal / entry height within the open top layer (above the blooming ceiling plate). */
+    public static final int TOP_LAYER_PORTAL_Y = TOP_LAYER_Y + TOP_LAYER_MAX_BASELINE_HEIGHT;
 }
