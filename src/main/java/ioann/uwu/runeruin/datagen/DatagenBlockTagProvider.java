@@ -52,5 +52,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 BlockItemIds.MOSSY_COBBLESTONE_SLAB.block(),
                 BlockItemIds.PALE_OAK_WOOD.block()
         );
+
+        tag(BlockTags.PORTALS).add(RRBlocks.RUNE_RUIN_PORTAL.getKey());
     }
 }

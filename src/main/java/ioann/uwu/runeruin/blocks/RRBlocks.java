@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.blocks;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.grower.TreeGrower;
@@ -62,6 +63,13 @@ public class RRBlocks {
             MossBerryBushBlock::new,
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
                     .lightLevel(MossBerryBushBlock::getLightLevel)
+    );
+
+    /** Interior portal block; no BlockItem (like nether portal). */
+    public static final DeferredBlock<Block> RUNE_RUIN_PORTAL = REGISTRY.registerBlock(
+            "rune_ruin_portal",
+            RuneRuinPortalBlock::new,
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL)
     );
 
     private static DeferredBlock<Block> register(String name, UnaryOperator<BlockBehaviour.Properties> props) {

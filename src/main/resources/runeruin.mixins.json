@@ -3,7 +3,8 @@
   "package": "ioann.uwu.runeruin.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "SlimeMixin"
+    "SlimeMixin",
+    "BaseFireBlockMixin"
   ],
   "client": [
   ],

@@ -8,10 +8,13 @@ import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.client.data.models.blockstates.PropertyDispatch;
+import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TexturedModel;
+import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jspecify.annotations.NonNull;
 
@@ -45,7 +48,23 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
         blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
 
+        createRuneRuinPortal(blockModels);
         createMossBerry(blockModels, itemModels);
+    }
+
+    private static void createRuneRuinPortal(@NonNull BlockModelGenerators blockModels) {
+        // Reuse vanilla nether portal models/texture until a custom portal texture exists.
+        blockModels.blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(RRBlocks.RUNE_RUIN_PORTAL.get())
+                        .with(PropertyDispatch.initial(BlockStateProperties.HORIZONTAL_AXIS)
+                                .select(Direction.Axis.X, BlockModelGenerators.plainVariant(
+                                        ModelLocationUtils.getModelLocation(Blocks.NETHER_PORTAL, "_ns")
+                                ))
+                                .select(Direction.Axis.Z, BlockModelGenerators.plainVariant(
+                                        ModelLocationUtils.getModelLocation(Blocks.NETHER_PORTAL, "_ew")
+                                ))
+                        )
+        );
     }
 
     private static void createMossBerry(@NonNull BlockModelGenerators blockModels, @NonNull ItemModelGenerators itemModels) {

@@ -5,6 +5,7 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.creativetab.RRCreativeModeTabs;
 import ioann.uwu.runeruin.dimension.*;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.portal.RRPoiTypes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -27,6 +28,7 @@ public class RuneRuinMod {
 
         RRBlocks.REGISTRY.register(modEventBus);
         RRItems.REGISTRY.register(modEventBus);
+        RRPoiTypes.REGISTRY.register(modEventBus);
         RRCreativeModeTabs.REGISTRY.register(modEventBus);
 
         RRBiomeSource.REGISTRY.register(modEventBus);
