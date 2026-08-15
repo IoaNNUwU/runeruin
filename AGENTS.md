@@ -96,6 +96,18 @@ For large/jigsaw-style pieces (e.g. Giant Goblet):
 
 Note: there is also `GiantGobletFeature` / placed feature — feature vs structure are different paths; prefer structure for sparse large builds.
 
+## Datagen
+
+After changing Java bootstrap (`datagen/*`, worldgen registries, block models/tags/loot), the agent must run datagen itself — do not wait for the user:
+
+```
+.\gradlew runData
+```
+
+Reuse caches: never `clean`, `--rerun-tasks`, `--refresh-dependencies`, or `--offline`. Do not delete `src/generated/` (Minecraft’s incremental cache is `src/generated/resources/.cache`). Do not hand-write generated JSON to skip datagen.
+
+NFRT (Minecraft assets + decompile) is pinned to `%USERPROFILE%\.gradle\caches\neoformruntime` in `build.gradle` so Cursor sandbox cannot force a full redownload. If `downloadAssets` still starts thousands of downloads, stop — the pin failed.
+
 ## Content outside worldgen
 
 - Blocks/items: `RRBlocks`, `RRItems` (+ lang under `resources/assets/runeruin/lang/`)

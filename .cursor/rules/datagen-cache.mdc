@@ -1,0 +1,19 @@
+---
+description: Reuse Gradle/NFRT caches when running Minecraft datagen
+alwaysApply: true
+---
+
+# Datagen cache
+
+Run datagen with `.\gradlew runData` from the repo root (never `clean` / `--rerun-tasks` / `--refresh-dependencies` / `--offline`). A running `runClient` locks the build folder — stop the client, run datagen, then start `.\gradlew runClient` yourself. See AGENTS.md.
+
+Do not:
+
+- `gradlew clean` / `clean runData`
+- `--rerun-tasks`, `--refresh-dependencies`, `--offline`
+- delete `src/generated/` or `src/generated/resources/.cache`
+- hand-write `src/generated/**` JSON to avoid running datagen
+
+`build.gradle` pins NeoForm Runtime to `%USERPROFILE%\.gradle\caches\neoformruntime` so a Cursor sandbox (temp `GRADLE_USER_HOME`) still reuses Minecraft assets and decompiles.
+
+Abort if logs show `cursor-sandbox-cache` **and** `downloadAssets` counting thousands of files — that is a cache miss. Fix the pin or rerun so NFRT uses the user Gradle cache; do not wait out a full asset download.

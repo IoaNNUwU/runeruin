@@ -58,6 +58,9 @@ public class RRBlocks {
             MossLightBlock::new
     );
 
+    public static final DeferredBlock<Block> GLOWING_MOSS = registerGlowingMoss("glowing_moss", MapColor.COLOR_CYAN);
+    public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = registerGlowingMossCarpet("glowing_moss_carpet", MapColor.COLOR_CYAN);
+
     public static final DeferredBlock<Block> MOSS_BERRY_BUSH = REGISTRY.registerBlock(
             "moss_berry_bush",
             MossBerryBushBlock::new,
@@ -71,6 +74,24 @@ public class RRBlocks {
             RuneRuinPortalBlock::new,
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL)
     );
+
+    private static DeferredBlock<Block> registerGlowingMoss(String name, MapColor color) {
+        return register(name,
+                _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)
+                        .mapColor(color)
+                        .lightLevel(GlowingMossBlock::getLightLevel)
+                        .randomTicks(),
+                GlowingMossBlock::new);
+    }
+
+    private static DeferredBlock<Block> registerGlowingMossCarpet(String name, MapColor color) {
+        return register(name,
+                _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_CARPET)
+                        .mapColor(color)
+                        .lightLevel(GlowingMossBlock::getLightLevel)
+                        .randomTicks(),
+                GlowingMossCarpetBlock::new);
+    }
 
     private static DeferredBlock<Block> register(String name, UnaryOperator<BlockBehaviour.Properties> props) {
         DeferredBlock<Block> blockRecord = REGISTRY.registerSimpleBlock(name, props);

@@ -104,6 +104,17 @@ neoForge {
     }
 }
 
+// Cursor's agent sandbox remaps GRADLE_USER_HOME to a temp dir, which would make
+// downloadAssets / createMinecraftArtifacts re-fetch and re-decompile Minecraft.
+// Pin NFRT to the real user Gradle cache so datagen reuses client jars, assets, and decompiles.
+def persistentNfrtHome = new File(
+        System.getenv('USERPROFILE') ?: System.getenv('HOME'),
+        '.gradle/caches/neoformruntime'
+)
+tasks.withType(net.neoforged.nfrtgradle.NeoFormRuntimeTask).configureEach {
+    homeDirectory.set(persistentNfrtHome)
+}
+
 // NeoForge sources jar (net.neoforged.*) for extractMcSources. Minecraft sources already
 // come from createMinecraftArtifacts as minecraft-patched-*-sources.jar.
 configurations {

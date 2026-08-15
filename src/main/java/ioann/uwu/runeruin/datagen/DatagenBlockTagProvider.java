@@ -42,8 +42,12 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
         tag(BlockTags.MINEABLE_WITH_HOE).add(
                 RRBlocks.ELDEN_LEAVES.getKey(),
                 RRBlocks.MOSS_LIGHT.getKey(),
+                RRBlocks.GLOWING_MOSS.getKey(),
+                RRBlocks.GLOWING_MOSS_CARPET.getKey(),
                 RRBlocks.LAPIS_LIGHT.getKey()
         );
+
+        tag(BlockTags.MOSS_BLOCKS).add(RRBlocks.GLOWING_MOSS.getKey());
 
 
         tag(RRTags.VEGETABLES_NON_REPLACEABLE).add(

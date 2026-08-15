@@ -47,6 +47,7 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ELDEN_LOG.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
 
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
+        blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
         blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
 
         createRuneRuinPortal(blockModels);
