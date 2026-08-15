@@ -52,7 +52,7 @@ public class RuneOfSpaceItem extends Item {
 
                 TeleportTransition transition = new TeleportTransition(
                         overworld,
-                        portalPos.getCenter(),
+                        Vec3.atCenterOf(portalPos),
                         Vec3.ZERO,
                         player.getYHeadRot(),
                         player.getXRot(),
@@ -87,7 +87,7 @@ public class RuneOfSpaceItem extends Item {
 
                 TeleportTransition transition = new TeleportTransition(
                         runeRuin,
-                        portalPos.getCenter(),
+                        Vec3.atCenterOf(portalPos),
                         Vec3.ZERO,
                         player.getYHeadRot(),
                         player.getXRot(),

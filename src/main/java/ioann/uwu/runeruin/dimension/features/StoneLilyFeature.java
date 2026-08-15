@@ -12,7 +12,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.entity.animal.frog.FrogVariant;
 import net.minecraft.world.entity.animal.frog.FrogVariants;
@@ -121,7 +121,9 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
         int rand = random.nextIntBetweenInclusive(0, Mirror.values().length - 1);
         Mirror mirror = Mirror.values()[rand];
 
-        var blockProcessor = new ProtectedBlockProcessor(RRTags.VEGETABLES_NON_REPLACEABLE);
+        var blockProcessor = new ProtectedBlockProcessor(
+                level.registryAccess().lookupOrThrow(Registries.BLOCK).getOrThrow(RRTags.VEGETABLES_NON_REPLACEABLE)
+        );
 
         structureTemplate.placeInWorld(
                 level,
@@ -155,7 +157,7 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
         Holder<FrogVariant> greenFrogVariant = frogVariants.get(FrogVariants.COLD).orElseThrow();
 
         for (int i = 0; i < nFrogs; i++) {
-            Frog frog = new Frog(EntityType.FROG, level.getLevel());
+            Frog frog = new Frog(EntityTypes.FROG, level.getLevel());
             frog.setComponent(DataComponents.FROG_VARIANT, greenFrogVariant);
             frog.setPos(Vec3.atCenterOf(currentBlockState));
 

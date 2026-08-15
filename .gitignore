@@ -27,7 +27,8 @@ bin/
 !**/src/**/bin/
 
 ### VS Code ###
-.vscode/
+.vscode/*
+!.vscode/settings.json
 
 ### Mac OS ###
 .DS_Store

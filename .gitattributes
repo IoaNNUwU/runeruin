@@ -1,5 +1,7 @@
-# Disable autocrlf on generated files, they always generate with LF
-# Add any extra files or paths here to make git stop saying they
-# are changed when only line endings change.
+# Normalize text to LF in the repo. Checkout uses the OS native ending
+# (CRLF on Windows, LF on Linux/macOS). Commit always stores LF.
+* text=auto
+
+# Generated files always emit LF; keep checkout as LF so they never look dirty.
 src/generated/**/.cache/* text eol=lf
 src/generated/**/*.json text eol=lf

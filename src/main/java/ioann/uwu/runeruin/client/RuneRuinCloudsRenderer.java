@@ -16,7 +16,7 @@ public class RuneRuinCloudsRenderer implements CustomCloudsRenderer {
     public boolean renderClouds(LevelRenderState levelRenderState, Vec3 camPos, CloudStatus cloudStatus, int cloudColor, float cloudHeight, int cloudRange, Matrix4fc modelViewMatrix) {
 
         if (levelRenderState.customCloudsRenderer != null) {
-            CloudRenderer cloudRenderer = Minecraft.getInstance().levelRenderer.getCloudRenderer();
+            CloudRenderer cloudRenderer = Minecraft.getInstance().levelRenderer.cloudRenderer();
 
             cloudRenderer.render(
                     cloudColor,

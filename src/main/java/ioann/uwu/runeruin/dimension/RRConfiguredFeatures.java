@@ -5,6 +5,7 @@ import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.features.*;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.features.CaveFeatures;
@@ -13,6 +14,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.util.valueproviders.*;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVines;
 import net.minecraft.world.level.block.CaveVinesBlock;
@@ -58,6 +61,7 @@ public class RRConfiguredFeatures {
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
         var otherConfiguredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
+        HolderGetter<Block> blocks = ctx.lookup(Registries.BLOCK);
 
         ctx.register(SMALL_RED_WALL_MUSHROOM, new ConfiguredFeature<>(
                 RRFeatures.WALL_MUSHROOM.get(),
@@ -174,7 +178,7 @@ public class RRConfiguredFeatures {
         ctx.register(MOSS_POOL_WITH_DRIPLEAVES, new ConfiguredFeature<>(
                 Feature.WATERLOGGED_VEGETATION_PATCH,
                 new VegetationPatchConfiguration(
-                        BlockTags.LUSH_GROUND_REPLACEABLE,
+                        blocks.getOrThrow(BlockTags.LUSH_GROUND_REPLACEABLE),
                         BlockStateProvider.simple(Blocks.MOSS_BLOCK),
                         PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.DRIPLEAF)),
                         CaveSurface.FLOOR,
@@ -215,7 +219,7 @@ public class RRConfiguredFeatures {
                         BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
                         List.of(
                                 BlockStateProvider.simple(Blocks.CHERRY_LEAVES),
-                                BlockStateProvider.simple(Blocks.PINK_GLAZED_TERRACOTTA)
+                                BlockStateProvider.simple(Blocks.GLAZED_TERRACOTTA.pick(DyeColor.PINK))
                         ),
                         ConstantInt.of(18)
                 )

@@ -4,14 +4,11 @@ import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRStructureTypes;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
-import net.minecraft.world.level.levelgen.structure.structures.OceanMonumentPieces;
 
 import java.util.List;
 import java.util.Optional;
@@ -54,9 +51,7 @@ public class GiantGobletStructure extends Structure {
         for (ChunkPos chunk : chunks) {
             BoundingBox boundingBox = getBoundingBox(chunk);
 
-            var piece = new GiantGobletPiece(new CompoundTag());
-
-            builder.addPiece(piece);
+            builder.addPiece(new GiantGobletPiece(0, boundingBox));
         }
     }
 

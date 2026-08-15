@@ -37,6 +37,7 @@ public class RRDimension {
 
         var clocks = ctx.lookup(Registries.WORLD_CLOCK);
         var timelines = ctx.lookup(Registries.TIMELINE);
+        var blocks = ctx.lookup(Registries.BLOCK);
 
         EnvironmentAttributeMap environmentAttributeMap = EnvironmentAttributeMap.builder()
                 .set(EnvironmentAttributes.CLOUD_COLOR, 0xDDDDDDDD)
@@ -55,7 +56,7 @@ public class RRDimension {
                 0,
                 512,
                 512,
-                BlockTags.INFINIBURN_OVERWORLD,
+                blocks.getOrThrow(BlockTags.INFINIBURN_OVERWORLD),
                 0.0f,
                 new DimensionType.MonsterSettings(UniformInt.of(0, 7), 0),
                 DimensionType.Skybox.OVERWORLD,

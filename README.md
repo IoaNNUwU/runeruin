@@ -1,6 +1,6 @@
 # Rune Ruin
 
-**Rune Ruin** is WIP mod for **Minecraft 26.1.1**
+**Rune Ruin** is a WIP NeoForge mod for **Minecraft 26.2.0** (NeoForge `26.2.0.59`).
 
 ![](.github/assets/preview.png)
 
@@ -43,6 +43,12 @@
      VOID LAYER          `                + Y = 0
 ```
 
+## AI Disclosure - 100% Agentic coding with full human review. No AI for assets.
+
+- **NO** AI usage for **textures** with exception for **temporary** ones during development. *No AI assets should be even in beta releases*.
+- **NO** AI usage for **assets of any other kind** such as music and models.
+- **100%** Agentic coding (**AI writes** + **AI reviews**) with **70%** human review. *Humans review overall architecture and important parts of the code. No guarantee every line was reviewed by humans*.
+
 ### TODO:
 
 - [ ] **TOP** Layer
@@ -77,3 +83,13 @@
   - [ ] Add `ring` that makes every tool deal x2 damage on poisoned enemies to work with `blowpipe` or a `sword`
   - [ ] Add `Grappling hook`
   - [ ] Add other rock climbing equipment.
+
+## Run
+
+Any JDK is enough to start Gradle; it downloads **25** for the project.
+
+```powershell
+.\gradlew.bat runClient
+```
+
+

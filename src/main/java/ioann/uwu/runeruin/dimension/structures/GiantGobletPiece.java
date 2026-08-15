@@ -11,9 +11,12 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
-import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 
 public class GiantGobletPiece extends StructurePiece {
+
+    public GiantGobletPiece(int genDepth, BoundingBox boundingBox) {
+        super(RRStructurePieceTypes.GIANT_GOBLET_PIECE.get(), genDepth, boundingBox);
+    }
 
     public GiantGobletPiece(CompoundTag tag) {
         super(RRStructurePieceTypes.GIANT_GOBLET_PIECE.get(), tag);

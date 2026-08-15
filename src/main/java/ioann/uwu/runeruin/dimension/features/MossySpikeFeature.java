@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Column;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
-import net.minecraft.world.level.levelgen.feature.DripstoneUtils;
+import net.minecraft.world.level.levelgen.feature.SpeleothemUtils;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
@@ -39,7 +39,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
         BlockPos origin = context.origin();
         SpikeConfiguration config = context.config();
         RandomSource random = context.random();
-        if (!level.isStateAtPosition(origin, DripstoneUtils::isEmptyOrWater)) {
+        if (!level.isStateAtPosition(origin, SpeleothemUtils::isEmptyOrWater)) {
             return false;
         } else {
 
@@ -47,7 +47,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
             Predicate<BlockState> isDripstoneCapable = block -> block.is(Tags.Blocks.STONES) || block.is(Blocks.MOSS_BLOCK);
 
-            Optional<Column> column = Column.scan(level, origin, config.floorToCeilingSearchRange, DripstoneUtils::isEmptyOrWater, isDripstoneCapable);
+            Optional<Column> column = Column.scan(level, origin, config.floorToCeilingSearchRange, SpeleothemUtils::isEmptyOrWater, isDripstoneCapable);
 
             if (column.isPresent() && column.get() instanceof Column.Range columnRange) {
 
@@ -167,7 +167,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
                             for(int i = 0; i < height && pos.getY() < maxY; ++i) {
                                 BlockPos windAdjustedPos = wind.offset(pos);
-                                if (level.isStateAtPosition(windAdjustedPos, DripstoneUtils::isEmptyOrWaterOrLava)) {
+                                if (level.isStateAtPosition(windAdjustedPos, SpeleothemUtils::isEmptyOrWaterOrLava)) {
                                     hasBeenOutOfStone = true;
 
                                     level.setBlock(windAdjustedPos, block, 2);
@@ -237,7 +237,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
     static boolean isCircleMostlyEmbeddedInStone(WorldGenLevel level, BlockPos center, int xzRadius) {
 
-        if (level.isStateAtPosition(center, DripstoneUtils::isEmptyOrWaterOrLava)) {
+        if (level.isStateAtPosition(center, SpeleothemUtils::isEmptyOrWaterOrLava)) {
             return false;
         } else {
 
@@ -248,7 +248,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                 int dx = (int)(Mth.cos(angle) * (float)xzRadius);
                 int dz = (int)(Mth.sin(angle) * (float)xzRadius);
 
-                if (level.isStateAtPosition(center.offset(dx, 0, dz), DripstoneUtils::isEmptyOrWaterOrLava)) {
+                if (level.isStateAtPosition(center.offset(dx, 0, dz), SpeleothemUtils::isEmptyOrWaterOrLava)) {
                     return false;
                 }
             }

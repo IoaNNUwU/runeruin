@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -299,7 +299,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                 level.setBlock(center, spawnerBlockState, 1);
                 BlockEntity blockEntity = level.getBlockEntity(center);
                 if (blockEntity instanceof SpawnerBlockEntity spawner) {
-                    spawner.setEntityId(EntityType.CAVE_SPIDER, random);
+                    spawner.setEntityId(EntityTypes.CAVE_SPIDER, random);
                 } else {
                     RR.LOGGER.warn("SpawnerBlockEntity generated in CeilingBallFeature is unaccessible");
                 }

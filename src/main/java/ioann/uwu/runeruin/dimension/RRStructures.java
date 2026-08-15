@@ -6,7 +6,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.random.WeightedList;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -28,11 +28,11 @@ public class RRStructures {
                                 Map.of(
                                         MobCategory.MONSTER,
                                         new StructureSpawnOverride(
-                                                StructureSpawnOverride.BoundingBoxType.PIECE, WeightedList.of(new MobSpawnSettings.SpawnerData(EntityType.WITCH, 1, 1))
+                                                StructureSpawnOverride.BoundingBoxType.PIECE, WeightedList.of(new MobSpawnSettings.SpawnerData(EntityTypes.WITCH, 1, 1))
                                         ),
                                         MobCategory.CREATURE,
                                         new StructureSpawnOverride(
-                                                StructureSpawnOverride.BoundingBoxType.PIECE, WeightedList.of(new MobSpawnSettings.SpawnerData(EntityType.CAT, 1, 1))
+                                                StructureSpawnOverride.BoundingBoxType.PIECE, WeightedList.of(new MobSpawnSettings.SpawnerData(EntityTypes.CAT, 1, 1))
                                         )
                                 )
                         )

@@ -14,7 +14,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -93,7 +93,7 @@ public class MossBerryBushBlock extends VegetationBlock implements BonemealableB
     @Override
     protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean isPrecise) {
 
-        if (entity instanceof LivingEntity livingEntity && !entity.is(EntityType.FROG) && !entity.is(EntityType.BOGGED)) {
+        if (entity instanceof LivingEntity livingEntity && !entity.is(EntityTypes.FROG) && !entity.is(EntityTypes.BOGGED)) {
 
             entity.makeStuckInBlock(state, new Vec3(0.8F, 0.75F, 0.8F));
 
