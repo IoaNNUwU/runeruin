@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.GlowingMossBlock;
 import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.features.*;
@@ -50,6 +51,9 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_lily");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_berry_bush_patch");
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_patch");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
 
@@ -209,6 +213,40 @@ public class RRConfiguredFeatures {
                                 MossBerryBushBlock.AGE,
                                 new UniformInt(0, 3)
                         )
+                )
+        ));
+
+        ctx.register(GLOWING_MOSS_VEGETATION, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(
+                        new RandomizedIntStateProvider(
+                                BlockStateProvider.simple(RRBlocks.GLOWING_MOSS_CARPET.get()),
+                                GlowingMossBlock.LIGHT,
+                                UniformInt.of(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.MAX_LIGHT)
+                        )
+                )
+        ));
+
+        ctx.register(GLOWING_MOSS_PATCH, new ConfiguredFeature<>(
+                Feature.VEGETATION_PATCH,
+                new VegetationPatchConfiguration(
+                        blocks.getOrThrow(BlockTags.MOSS_REPLACEABLE),
+                        new WeightedStateProvider(
+                                WeightedList.<BlockState>builder()
+                                        .add(RRBlocks.GLOWING_MOSS.get().defaultBlockState()
+                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.MIN_LIGHT), 20)
+                                        .add(RRBlocks.GLOWING_MOSS.get().defaultBlockState()
+                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.MAX_LIGHT), 20)
+                                        .add(RRBlocks.MOSS_LIGHT.get().defaultBlockState(), 1)
+                        ),
+                        PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(GLOWING_MOSS_VEGETATION)),
+                        CaveSurface.FLOOR,
+                        ConstantInt.of(1),
+                        0.0F,
+                        5,
+                        0.8F,
+                        UniformInt.of(4, 7),
+                        0.3F
                 )
         ));
 

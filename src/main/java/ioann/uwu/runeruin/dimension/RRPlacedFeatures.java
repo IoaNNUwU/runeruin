@@ -46,6 +46,8 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "moss_berry_bush_patch");
 
+    public static final ResourceKey<PlacedFeature> GLOWING_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_moss_patch");
+
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_vine");
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_block_vine");
 
@@ -382,6 +384,26 @@ public class RRPlacedFeatures {
         ctx.register(INVERTED_TREE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.INVERTED_TREE),
                 invertedTreePlacement
+        ));
+
+        ctx.register(GLOWING_MOSS_PATCH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.GLOWING_MOSS_PATCH),
+                List.of(
+                        CountPlacement.of(125),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(DEEP_CAVES_Y),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.solid(),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                12
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                        BiomeFilter.biome()
+                )
         ));
 
         ctx.register(DRIPSTONE_SPIKE, new PlacedFeature(

@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
@@ -45,9 +46,10 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
             BlockState mainBlock = config.block.getState(level, random, origin);
 
-            Predicate<BlockState> isDripstoneCapable = block -> block.is(Tags.Blocks.STONES) || block.is(Blocks.MOSS_BLOCK);
+            Predicate<BlockState> insideColumn = MossySpikeFeature::isInsideColumn;
+            Predicate<BlockState> isDripstoneCapable = MossySpikeFeature::isSpikeBase;
 
-            Optional<Column> column = Column.scan(level, origin, config.floorToCeilingSearchRange, SpeleothemUtils::isEmptyOrWater, isDripstoneCapable);
+            Optional<Column> column = Column.scan(level, origin, config.floorToCeilingSearchRange, insideColumn, isDripstoneCapable);
 
             if (column.isPresent() && column.get() instanceof Column.Range columnRange) {
 
@@ -86,6 +88,26 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                 return false;
             }
         }
+    }
+
+    private static boolean isInsideColumn(BlockState state) {
+        return SpeleothemUtils.isEmptyOrWater(state) || isMossCarpet(state);
+    }
+
+    private static boolean isMossCarpet(BlockState state) {
+        return state.is(RRBlocks.GLOWING_MOSS_CARPET.get())
+                || state.is(Blocks.MOSS_CARPET)
+                || state.is(Blocks.PALE_MOSS_CARPET);
+    }
+
+    private static boolean canReplaceWithSpike(BlockState state) {
+        return SpeleothemUtils.isEmptyOrWaterOrLava(state) || isMossCarpet(state);
+    }
+
+    private static boolean isSpikeBase(BlockState state) {
+        return state.is(Tags.Blocks.STONES)
+                || state.is(BlockTags.MOSS_BLOCKS)
+                || state.is(RRBlocks.MOSS_LIGHT.get());
     }
 
     private static LargeDripstone makeDripstone(BlockPos root, boolean pointingUp, RandomSource random, int radius, FloatProvider bluntness, FloatProvider heightScale) {
@@ -167,7 +189,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
                             for(int i = 0; i < height && pos.getY() < maxY; ++i) {
                                 BlockPos windAdjustedPos = wind.offset(pos);
-                                if (level.isStateAtPosition(windAdjustedPos, SpeleothemUtils::isEmptyOrWaterOrLava)) {
+                                if (level.isStateAtPosition(windAdjustedPos, MossySpikeFeature::canReplaceWithSpike)) {
                                     hasBeenOutOfStone = true;
 
                                     level.setBlock(windAdjustedPos, block, 2);
@@ -237,7 +259,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
     static boolean isCircleMostlyEmbeddedInStone(WorldGenLevel level, BlockPos center, int xzRadius) {
 
-        if (level.isStateAtPosition(center, SpeleothemUtils::isEmptyOrWaterOrLava)) {
+        if (level.isStateAtPosition(center, MossySpikeFeature::canReplaceWithSpike)) {
             return false;
         } else {
 
@@ -248,7 +270,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                 int dx = (int)(Mth.cos(angle) * (float)xzRadius);
                 int dz = (int)(Mth.sin(angle) * (float)xzRadius);
 
-                if (level.isStateAtPosition(center.offset(dx, 0, dz), SpeleothemUtils::isEmptyOrWaterOrLava)) {
+                if (level.isStateAtPosition(center.offset(dx, 0, dz), MossySpikeFeature::canReplaceWithSpike)) {
                     return false;
                 }
             }
