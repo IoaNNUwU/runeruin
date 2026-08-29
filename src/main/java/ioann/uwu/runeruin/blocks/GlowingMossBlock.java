@@ -86,9 +86,12 @@ public class GlowingMossBlock extends Block implements BonemealableBlock {
 
         if (light < target) {
             nextLight = light + 1;
-        } else if (light == target) {
-            nextLight = Math.max(light - 1, minLight);
             nextTarget = Math.max(target - 1, minLight);
+        } else {
+            nextLight = Math.max(light - 1, minLight);
+            if (light == target) {
+                nextTarget = Math.max(target - 1, minLight);
+            }
         }
 
         if (nextLight != light || nextTarget != target) {
