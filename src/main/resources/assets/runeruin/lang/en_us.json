@@ -22,6 +22,7 @@
   "block.runeruin.potted_elden_sapling": "Potted Elden Sapling",
   "block.runeruin.elden_log": "Elden Log",
   "block.runeruin.elden_planks": "Elden Planks",
+  "block.runeruin.giant_goblet_piece": "Giant Goblet Piece",
   "block.runeruin.elden_leaves": "Elden Leaves",
 
   "biome.runeruin.elden_garden": "Elden Garden",
@@ -48,5 +49,23 @@
   "runeruin.configuration.magicNumberIntroduction": "Magic Number Text",
   "runeruin.configuration.magicNumber": "Magic Number",
   "runeruin.configuration.render_clouds_below_top_layer": "Render Clouds Below Top Layer",
-  "runeruin.configuration.glowing_moss_dynamic_light": "Glowing Moss Dynamic Light"
+  "runeruin.configuration.glowing_moss_dynamic_light": "Glowing Moss Dynamic Light",
+
+  "commands.runeruin.region.pos1": "Pos1 set to %s %s %s",
+  "commands.runeruin.region.pos2": "Pos2 set to %s %s %s",
+  "commands.runeruin.region.incomplete": "  (need both corners)",
+  "commands.runeruin.region.size": "  [%sx%sx%s, %s blocks]",
+  "commands.runeruin.region.need_both": "Select both corners first (//rrpos1 and //rrpos2)",
+  "commands.runeruin.region.wrong_dimension": "Selection is in another dimension",
+  "commands.runeruin.region.too_big": "Selection is too large (%s blocks, max %s). Export a thinner slice.",
+  "commands.runeruin.region.unloaded": "Chunk at %s %s %s is not loaded",
+  "commands.runeruin.region.io_error": "Failed to write export: %s",
+  "commands.runeruin.region.export": "Exported %sx%sx%s grid to %s",
+  "commands.runeruin.region.export_projection": "2D projection (paste this to an agent): %s",
+  "commands.runeruin.region.export_3d_hint": "For agent review, re-export a 1-block-thick slice (XZ / XY / YZ).",
+  "commands.runeruin.region.open_file": "Click to open",
+  "commands.runeruin.region.clear": "Selection cleared",
+
+  "commands.runeruin.preview.done": "Preview %s seed=%s (%s blocks) -> %s",
+  "commands.runeruin.preview.io_error": "Failed to write preview: %s"
 }

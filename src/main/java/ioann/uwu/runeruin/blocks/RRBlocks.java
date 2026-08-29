@@ -7,6 +7,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -46,6 +47,14 @@ public class RRBlocks {
 
     public static final DeferredBlock<Block> ELDEN_PLANKS = register("elden_planks",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS));
+
+    /** Gray pale-oak look; planks recipes, not tagged as logs/wood. */
+    public static final DeferredBlock<Block> GIANT_GOBLET_PIECE = register("giant_goblet_piece",
+            _ -> BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .instrument(NoteBlockInstrument.BASS)
+                    .strength(2.0F, 3.0F)
+                    .sound(SoundType.WOOD));
 
     public static final DeferredBlock<Block> ELDEN_LEAVES = register("elden_leaves",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES).mapColor(MapColor.COLOR_YELLOW),

@@ -22,6 +22,7 @@
   "block.runeruin.potted_elden_sapling": "Саженец элдена в горшке",
   "block.runeruin.elden_log": "Элденовое бревно",
   "block.runeruin.elden_planks": "Элденовые доски",
+  "block.runeruin.giant_goblet_piece": "Фрагмент гигантского кубка",
   "block.runeruin.elden_leaves": "Элденовая листва",
 
   "biome.runeruin.elden_garden": "Элденовый сад",
@@ -48,5 +49,23 @@
   "runeruin.configuration.magicNumberIntroduction": "Текст магического числа",
   "runeruin.configuration.magicNumber": "Магическое число",
   "runeruin.configuration.render_clouds_below_top_layer": "Отображать облака под верхним слоем",
-  "runeruin.configuration.glowing_moss_dynamic_light": "Динамический свет светящегося мха"
+  "runeruin.configuration.glowing_moss_dynamic_light": "Динамический свет светящегося мха",
+
+  "commands.runeruin.region.pos1": "Pos1: %s %s %s",
+  "commands.runeruin.region.pos2": "Pos2: %s %s %s",
+  "commands.runeruin.region.incomplete": "  (нужны оба угла)",
+  "commands.runeruin.region.size": "  [%sx%sx%s, %s блоков]",
+  "commands.runeruin.region.need_both": "Сначала выдели оба угла (//rrpos1 и //rrpos2)",
+  "commands.runeruin.region.wrong_dimension": "Выделение в другом измерении",
+  "commands.runeruin.region.too_big": "Область слишком большая (%s блоков, максимум %s). Экспортируй более тонкий срез.",
+  "commands.runeruin.region.unloaded": "Чанк в %s %s %s не загружен",
+  "commands.runeruin.region.io_error": "Не удалось записать экспорт: %s",
+  "commands.runeruin.region.export": "Сетка %sx%sx%s записана в %s",
+  "commands.runeruin.region.export_projection": "2D-проекция (её удобно дать агенту): %s",
+  "commands.runeruin.region.export_3d_hint": "Для агента лучше переэкспортировать срез толщиной 1 блок (XZ / XY / YZ).",
+  "commands.runeruin.region.open_file": "Нажми, чтобы открыть",
+  "commands.runeruin.region.clear": "Выделение снято",
+
+  "commands.runeruin.preview.done": "Превью %s seed=%s (%s блоков) -> %s",
+  "commands.runeruin.preview.io_error": "Не удалось записать превью: %s"
 }

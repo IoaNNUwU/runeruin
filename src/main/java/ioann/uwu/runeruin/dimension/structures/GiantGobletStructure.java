@@ -41,24 +41,26 @@ public class GiantGobletStructure extends Structure {
             return Optional.empty();
         }
 
+        long seed = ctx.random().nextLong();
         int biomeY = LOST_CAVES_Y + 8;
         return Optional.of(new GenerationStub(
                 new BlockPos(centerX, biomeY, centerZ),
-                builder -> builder.addPiece(new GiantGobletPiece(centerX, centerZ, height, bowlRadius))
+                builder -> builder.addPiece(new GiantGobletPiece(centerX, centerZ, height, bowlRadius, seed))
         ));
     }
 
     private static boolean hasRoomForBowl(RandomState randomState, int centerX, int centerZ, int height, int bowlRadius) {
         int bowlMinY = GiantGobletPiece.bowlBottomY(height);
         int bowlMaxY = GiantGobletPiece.bowlTopY(height);
-        int r2 = bowlRadius * bowlRadius;
+        int extent = GiantGobletPiece.generationRadius(bowlRadius);
+        int r2 = extent * extent;
 
         if (DeepCavesAndLostCavesGen.interLayerTerrainOverlaps(centerX, centerZ, bowlMinY, bowlMaxY, randomState)) {
             return false;
         }
 
-        for (int dx = -bowlRadius; dx <= bowlRadius; dx += SAMPLE_STEP) {
-            for (int dz = -bowlRadius; dz <= bowlRadius; dz += SAMPLE_STEP) {
+        for (int dx = -extent; dx <= extent; dx += SAMPLE_STEP) {
+            for (int dz = -extent; dz <= extent; dz += SAMPLE_STEP) {
                 if (dx * dx + dz * dz > r2) {
                     continue;
                 }
@@ -70,8 +72,8 @@ public class GiantGobletStructure extends Structure {
 
         for (int i = 0; i < RIM_SAMPLES; i++) {
             double angle = (Math.PI * 2 * i) / RIM_SAMPLES;
-            int x = centerX + (int) Math.round(Math.cos(angle) * bowlRadius);
-            int z = centerZ + (int) Math.round(Math.sin(angle) * bowlRadius);
+            int x = centerX + (int) Math.round(Math.cos(angle) * extent);
+            int z = centerZ + (int) Math.round(Math.sin(angle) * extent);
             if (DeepCavesAndLostCavesGen.interLayerTerrainOverlaps(x, z, bowlMinY, bowlMaxY, randomState)) {
                 return false;
             }

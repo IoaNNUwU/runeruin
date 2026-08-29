@@ -43,6 +43,7 @@ public class RRCreativeModeTabs {
                     RRBlocks.ELDEN_SAPLING.toStack(),
                     RRBlocks.ELDEN_LOG.toStack(),
                     RRBlocks.ELDEN_PLANKS.toStack(),
+                    RRBlocks.GIANT_GOBLET_PIECE.toStack(),
                     RRBlocks.ELDEN_LEAVES.toStack()
             ))).build());
 }

@@ -13,6 +13,7 @@ import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TexturedModel;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.level.block.Blocks;
@@ -44,6 +45,7 @@ public class DatagenModelProvider extends ModelProvider {
 
         blockModels.createTrivialCube(RRBlocks.ELDEN_LEAVES.get());
         blockModels.createTrivialCube(RRBlocks.ELDEN_PLANKS.get());
+        createGiantGobletPiece(blockModels);
         blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ELDEN_LOG.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
 
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
@@ -52,6 +54,14 @@ public class DatagenModelProvider extends ModelProvider {
 
         createRuneRuinPortal(blockModels);
         createMossBerry(blockModels, itemModels);
+    }
+
+    private static void createGiantGobletPiece(@NonNull BlockModelGenerators blockModels) {
+        Material paleOakBark = TextureMapping.getBlockTexture(Blocks.PALE_OAK_LOG);
+        blockModels.createTrivialBlock(
+                RRBlocks.GIANT_GOBLET_PIECE.get(),
+                _ -> TexturedModel.createAllSame(paleOakBark)
+        );
     }
 
     private static void createRuneRuinPortal(@NonNull BlockModelGenerators blockModels) {

@@ -15,6 +15,7 @@ Gradle needs some JDK installed to start; the wrapper then downloads **Java 25**
 - `runClient` — launch the game with the mod
 - `runServer` — dedicated server (`--nogui`)
 - `runGameTestServer` — run GameTests, then exit
+- `runPreview` — headless structure/feature dump into `exports/` (no client)
 - `runData` — datagen into `src/generated/resources`
 - `build` — compile and package the mod jar
 - `extractMcSources` — explode Minecraft + NeoForge Java into `.mc-sources/` for Agents to index minecraft sources (also runs on IDE Gradle sync)
@@ -161,6 +162,35 @@ NFRT (Minecraft assets + decompile) is pinned to `%USERPROFILE%\.gradle\caches\n
 - Blocks/items: `RRBlocks`, `RRItems` (+ lang under `resources/assets/runeruin/lang/`)
 - Models/loot/recipes/tags: `datagen/*`
 - Teleport item: `items/RuneOfSpaceItem`
+- Region export commands: `region/RegionCommands` → `exports/`
+- Headless preview: `preview/PreviewJobs` → `exports/preview_*.txt` (same `runeruin.region/1` format)
+
+## Headless structure / feature preview
+
+Generates a **named job** into an in-memory world (no terrain, no client) and writes `exports/` in the same format as `/rrexport`. The job is chosen at launch — do not hardcode Giant Goblet when testing something else.
+
+```
+.\gradlew.bat runPreview -Ppreview=list
+.\gradlew.bat runPreview -Ppreview=giant_goblet
+.\gradlew.bat runPreview -Ppreview=giant_goblet -Pseed=42 -Pheight=75 -Pradius=40
+.\gradlew.bat runPreview -Ppreview=boulder -Pseed=3 -Pradius=10
+.\gradlew.bat runPreview -Ppreview=monolith -Pradius=6
+```
+
+Default job is `giant_goblet` if `-Ppreview` is omitted. Extra params: `-Pheight` `-Pradius` `-Pseed` `-PpreviewName=…`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`).
+
+Outputs (name defaults to `preview_<job>`):
+
+- `exports/preview_<job>.json` — full volume
+- `exports/preview_<job>_yz.txt` — midplane looking +X
+- `exports/preview_<job>_xy.txt` / `_xz.txt` — the other midplanes
+- `exports/preview_<job>_info.txt` — seed, params, block counts
+
+In-game: `/rrpreview list` or `/rrpreview <job> [seed] [name] [k=v]…` (e.g. `/rrpreview boulder 3 radius=10`).
+
+`runPreview` / `runGameTestServer` lock `build/` — do not run them while the client is open. If the lock fails, ask the user to close the game; do not kill Java.
+
+To add a new testable shape: class in `preview/jobs/` implementing `PreviewJob`, then `PreviewCatalog.register(...)`. For write-only features, construct config and call `PreviewJobs.placeFeature`. If the feature scans terrain, `PreviewWorld.fillBox` a floor/ceiling first.
 
 ## Quick “where?”
 

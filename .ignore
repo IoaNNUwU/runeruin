@@ -4,6 +4,7 @@ build/
 .gradle/
 run/
 src/generated/
+exports/
 bin/
 out/
 repo/

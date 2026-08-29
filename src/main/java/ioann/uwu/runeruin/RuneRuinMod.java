@@ -5,6 +5,7 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.creativetab.RRCreativeModeTabs;
 import ioann.uwu.runeruin.dimension.*;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.preview.RRGameTests;
 import ioann.uwu.runeruin.portal.RRPoiTypes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -39,6 +40,7 @@ public class RuneRuinMod {
 
         RRStructureTypes.REGISTRY.register(modEventBus);
         RRStructurePieceTypes.REGISTRY.register(modEventBus);
+        RRGameTests.TEST_FUNCTIONS.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (RuneRuin) to respond directly to events.

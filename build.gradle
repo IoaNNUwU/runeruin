@@ -68,6 +68,30 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // Headless preview: pick a job with -Ppreview=<id> (or list).
+        //   .\gradlew.bat runPreview
+        //   .\gradlew.bat runPreview -Ppreview=boulder -Pseed=3 -Pradius=10
+        //   .\gradlew.bat runPreview -Ppreview=list
+        preview {
+            server()
+            programArgument '--nogui'
+            systemProperty 'runeruin.preview', project.findProperty('preview') ?: 'giant_goblet'
+            systemProperty 'runeruin.preview.seed', project.findProperty('seed') ?: '1'
+            if (findProperty('previewName') != null) {
+                systemProperty 'runeruin.preview.name', findProperty('previewName')
+            }
+            ['height', 'radius', 'minRadius', 'maxRadius'].each { key ->
+                if (findProperty(key) != null) {
+                    systemProperty "runeruin.preview.${key}", findProperty(key)
+                }
+            }
+            project.properties.each { key, value ->
+                if (key instanceof String && key.startsWith('arg.')) {
+                    systemProperty "runeruin.preview.${key.substring(4)}", value
+                }
+            }
+        }
+
         data {
             clientData()
 

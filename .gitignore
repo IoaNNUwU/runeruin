@@ -45,6 +45,9 @@ repo/
 
 src/generated
 
+### In-game region dumps for agents (//rrexport)
+exports/
+
 internal/*
 !internal/OffsetNbt.java
 !internal/RemoveAir.java

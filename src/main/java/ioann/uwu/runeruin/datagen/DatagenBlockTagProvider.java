@@ -41,11 +41,14 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.MINEABLE_WITH_HOE).add(
                 RRBlocks.ELDEN_LEAVES.getKey(),
+                RRBlocks.GIANT_GOBLET_PIECE.getKey(),
                 RRBlocks.MOSS_LIGHT.getKey(),
                 RRBlocks.GLOWING_MOSS.getKey(),
                 RRBlocks.GLOWING_MOSS_CARPET.getKey(),
                 RRBlocks.LAPIS_LIGHT.getKey()
         );
+
+        tag(BlockTags.PLANKS).add(RRBlocks.GIANT_GOBLET_PIECE.getKey());
 
         tag(BlockTags.MOSS_BLOCKS).add(RRBlocks.GLOWING_MOSS.getKey());
 
@@ -54,7 +57,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.ARCANE_STONE.getKey(),
                 BlockItemIds.MOSSY_COBBLESTONE_WALL.block(),
                 BlockItemIds.MOSSY_COBBLESTONE_SLAB.block(),
-                BlockItemIds.PALE_OAK_WOOD.block()
+                RRBlocks.GIANT_GOBLET_PIECE.getKey()
         );
 
         tag(BlockTags.PORTALS).add(RRBlocks.RUNE_RUIN_PORTAL.getKey());
