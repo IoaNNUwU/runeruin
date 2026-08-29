@@ -1,17 +1,11 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
-import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.blocks.GlowingMossBlock;
-import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.dimension.RRBiomes;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.QuartPos;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -95,7 +89,6 @@ public class DeepCavesAndLostCavesGen {
     public static void generateDeepCavesFloor(ChunkAccess chunk, RandomState randomState) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         BlockState stone = Blocks.STONE.defaultBlockState();
-        BlockState glowingMossBase = RRBlocks.GLOWING_MOSS.get().defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -122,13 +115,7 @@ public class DeepCavesAndLostCavesGen {
                     chunk.setBlockState(pos.set(x, y, z), stone);
                 }
 
-                BlockState top = stone;
-                if (chunk.getNoiseBiome(QuartPos.fromBlock(xx), QuartPos.fromBlock(topY), QuartPos.fromBlock(zz))
-                        .is(RRBiomes.GLOWING_MOSS_CAVES)) {
-                    RandomSource random = randomState.getOrCreateRandomFactory(RR.id("glowing_moss")).at(xx, topY, zz);
-                    top = GlowingMossBlock.stateForPlacement(glowingMossBase, random);
-                }
-                chunk.setBlockState(pos.set(x, topY, z), top);
+                chunk.setBlockState(pos.set(x, topY, z), RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState));
             }
         }
     }

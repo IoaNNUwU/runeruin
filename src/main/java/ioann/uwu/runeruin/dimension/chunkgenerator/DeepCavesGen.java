@@ -45,20 +45,22 @@ public class DeepCavesGen {
     public static void generateDeepCavesCeiling(ChunkAccess chunk, RandomState randomState) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         BlockState stone = Blocks.STONE.defaultBlockState();
-        BlockState moss = Blocks.MOSS_BLOCK.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
 
-                float noise = ceilingNoise.getOrCreateNoise(randomState)
-                        .noise(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z);
+                int xx = chunk.getPos().getMiddleBlockX() + x;
+                int zz = chunk.getPos().getMiddleBlockZ() + z;
+
+                float noise = ceilingNoise.getOrCreateNoise(randomState).noise(xx, zz);
 
                 int biomeHeight = (int) (CEILING_TERRAIN_MIN_HEIGHT + noise * (CEILING_TERRAIN_HEIGHT - CEILING_TERRAIN_MIN_HEIGHT));
+                int ceilingSurfaceY = DEEP_CAVES_CEILING_Y - biomeHeight;
 
                 for (int y = 0; y < biomeHeight; y++) {
                     chunk.setBlockState(pos.set(x, DEEP_CAVES_CEILING_Y - y, z), stone);
-                    chunk.setBlockState(pos.set(x, DEEP_CAVES_CEILING_Y - biomeHeight, z), moss);
                 }
+                chunk.setBlockState(pos.set(x, ceilingSurfaceY, z), RRTerrainSurfaces.ceilingAt(chunk, xx, ceilingSurfaceY, zz, randomState));
             }
         }
     }
