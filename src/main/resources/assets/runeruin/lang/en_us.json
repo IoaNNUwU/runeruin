@@ -47,5 +47,6 @@
   "runeruin.configuration.logDirtBlock": "Log Dirt Block",
   "runeruin.configuration.magicNumberIntroduction": "Magic Number Text",
   "runeruin.configuration.magicNumber": "Magic Number",
-  "runeruin.configuration.render_clouds_below_top_layer": "Render Clouds Below Top Layer"
+  "runeruin.configuration.render_clouds_below_top_layer": "Render Clouds Below Top Layer",
+  "runeruin.configuration.glowing_moss_dynamic_light": "Glowing Moss Dynamic Light"
 }

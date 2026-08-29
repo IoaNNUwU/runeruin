@@ -19,6 +19,32 @@ Gradle needs some JDK installed to start; the wrapper then downloads **Java 25**
 - `build` — compile and package the mod jar
 - `extractMcSources` — explode Minecraft + NeoForge Java into `.mc-sources/` for Agents to index minecraft sources (also runs on IDE Gradle sync)
 
+# Datagen cache and game lock
+
+Run datagen with `.\gradlew runData` from the repo root (never `clean` / `--rerun-tasks` / `--refresh-dependencies` / `--offline`).
+
+A running `runClient` / `runServer` locks `build/`. Datagen cannot run in parallel.
+
+**Do not** kill Java/Gradle, `gradlew --stop`, or start/restart the client. Do not wait for the game to close.
+
+If `runData` fails because the client is still running (file-in-use / lock / unable to delete): tell the user Minecraft is locking `build/`, ask them to close the game, and have them run datagen and the client themselves. Give these exact commands:
+
+```
+.\gradlew.bat runData
+.\gradlew.bat runClient
+```
+
+Do not:
+
+- `gradlew clean` / `clean runData`
+- `--rerun-tasks`, `--refresh-dependencies`, `--offline`
+- delete `src/generated/` or `src/generated/resources/.cache`
+- hand-write `src/generated/**` JSON to avoid running datagen
+
+`build.gradle` pins NeoForm Runtime to `%USERPROFILE%\.gradle\caches\neoformruntime` so a Cursor sandbox (temp `GRADLE_USER_HOME`) still reuses Minecraft assets and decompiles.
+
+Abort if logs show `cursor-sandbox-cache` **and** `downloadAssets` counting thousands of files — that is a cache miss. Fix the pin or rerun so NFRT uses the user Gradle cache; do not wait out a full asset download.
+
 ## Vanilla / NeoForge sources
 
 This mod compiles against **Minecraft 26.2.0 + NeoForge 26.2.0.59** with **official Mojang mappings**. Do not use APIs from memory.
@@ -113,23 +139,18 @@ Note: there is also `GiantGobletFeature` / placed feature — feature vs structu
 
 ## Datagen
 
-After changing Java bootstrap (`datagen/*`, worldgen registries, block models/tags/loot), the agent must run datagen itself. Do not skip it and do not ask the user to type `gradlew`.
+After changing Java bootstrap (`datagen/*`, worldgen registries, block models/tags/loot), the agent must run datagen itself. Do not skip it and do not ask the user to type `gradlew` unless datagen cannot run.
 
 `runClient` / `runServer` lock `build/` — datagen cannot run in parallel. **Never** kill Java/Gradle, never `gradlew --stop`, never start or restart the game.
 
-If a game run is active:
-
-1. Tell the user to close Minecraft; datagen will start after that. The agent will not restart the client.
-2. Run `.\scripts\wait-until-game-closed.ps1` with a long wait (`block_until_ms` 600000, then `AwaitShell` until it prints `Ready for datagen` / exit 0).
-3. Then `.\gradlew runData`. Stay until it finishes successfully. Do not declare the task done without that.
-
-If the client is already closed, skip the wait (the script exits immediately):
+If `runData` fails because the client is still running (file-in-use / unable to delete / lock timeout): tell the user Minecraft is locking `build/`, ask them to close the game, and have them run datagen and the client themselves. Give these exact commands:
 
 ```
-.\scripts\wait-until-game-closed.ps1; .\gradlew.bat runData
+.\gradlew.bat runData
+.\gradlew.bat runClient
 ```
 
-If `runData` fails with file-in-use / unable to delete / lock timeout, the game is still locking `build/` — wait and retry; do not hand-write `src/generated/**`.
+Do not wait for the game to close. Do not hand-write `src/generated/**`.
 
 Reuse caches: never `clean`, `--rerun-tasks`, `--refresh-dependencies`, or `--offline`. Do not delete `src/generated/` (Minecraft’s incremental cache is `src/generated/resources/.cache`).
 

@@ -47,5 +47,6 @@
   "runeruin.configuration.logDirtBlock": "Логировать блок земли",
   "runeruin.configuration.magicNumberIntroduction": "Текст магического числа",
   "runeruin.configuration.magicNumber": "Магическое число",
-  "runeruin.configuration.render_clouds_below_top_layer": "Отображать облака под верхним слоем"
+  "runeruin.configuration.render_clouds_below_top_layer": "Отображать облака под верхним слоем",
+  "runeruin.configuration.glowing_moss_dynamic_light": "Динамический свет светящегося мха"
 }

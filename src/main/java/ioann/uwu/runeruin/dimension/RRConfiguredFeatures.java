@@ -219,10 +219,16 @@ public class RRConfiguredFeatures {
         ctx.register(GLOWING_MOSS_VEGETATION, new ConfiguredFeature<>(
                 Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(
-                        new RandomizedIntStateProvider(
-                                BlockStateProvider.simple(RRBlocks.GLOWING_MOSS_CARPET.get()),
-                                GlowingMossBlock.LIGHT,
-                                UniformInt.of(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.MAX_LIGHT)
+                        new WeightedStateProvider(
+                                WeightedList.<BlockState>builder()
+                                        .add(RRBlocks.GLOWING_MOSS_CARPET.get().defaultBlockState()
+                                                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MIN)
+                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MIN)
+                                                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MIN), 20)
+                                        .add(RRBlocks.GLOWING_MOSS_CARPET.get().defaultBlockState()
+                                                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MAX)
+                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MAX)
+                                                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MAX), 20)
                         )
                 )
         ));
@@ -234,9 +240,13 @@ public class RRConfiguredFeatures {
                         new WeightedStateProvider(
                                 WeightedList.<BlockState>builder()
                                         .add(RRBlocks.GLOWING_MOSS.get().defaultBlockState()
-                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.MIN_LIGHT), 20)
+                                                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MIN)
+                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MIN)
+                                                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MIN), 20)
                                         .add(RRBlocks.GLOWING_MOSS.get().defaultBlockState()
-                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.MAX_LIGHT), 20)
+                                                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MAX)
+                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MAX)
+                                                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MAX), 20)
                         ),
                         PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(GLOWING_MOSS_VEGETATION)),
                         CaveSurface.FLOOR,

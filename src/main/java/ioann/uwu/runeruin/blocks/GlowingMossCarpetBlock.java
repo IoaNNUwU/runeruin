@@ -16,7 +16,10 @@ public class GlowingMossCarpetBlock extends CarpetBlock {
 
     public GlowingMossCarpetBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.MIN_LIGHT));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.DEFAULT_MIN_LIGHT)
+                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.DEFAULT_MIN_LIGHT)
+                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.DEFAULT_MIN_LIGHT));
     }
 
     @Override
@@ -26,16 +29,16 @@ public class GlowingMossCarpetBlock extends CarpetBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(GlowingMossBlock.LIGHT);
+        builder.add(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.LIGHT, GlowingMossBlock.TARGET_LIGHT_LEVEL);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.randomLight(context.getLevel().getRandom()));
+        return GlowingMossBlock.stateForPlacement(this.defaultBlockState(), context.getLevel().getRandom());
     }
 
     @Override
     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        GlowingMossBlock.tickLight(state, level, pos, random);
+        GlowingMossBlock.tickLight(state, level, pos);
     }
 }
