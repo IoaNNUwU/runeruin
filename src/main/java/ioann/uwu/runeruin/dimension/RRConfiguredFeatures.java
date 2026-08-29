@@ -237,7 +237,6 @@ public class RRConfiguredFeatures {
                                                 .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.MIN_LIGHT), 20)
                                         .add(RRBlocks.GLOWING_MOSS.get().defaultBlockState()
                                                 .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.MAX_LIGHT), 20)
-                                        .add(RRBlocks.MOSS_LIGHT.get().defaultBlockState(), 1)
                         ),
                         PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(GLOWING_MOSS_VEGETATION)),
                         CaveSurface.FLOOR,

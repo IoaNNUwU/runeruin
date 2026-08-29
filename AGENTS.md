@@ -4,6 +4,21 @@ NeoForge mod (`runeruin`), MC 26.2. Custom stacked-cave dimension. Entry: `RuneR
 
 Helpers: `RR.id` / `RR.resourceKey` / `RR.tagKey`. Dimension command: `/execute in runeruin:runeruin_dimension …`
 
+## Run
+
+Gradle needs some JDK installed to start; the wrapper then downloads **Java 25** for this project.
+
+```powershell
+.\gradlew.bat runClient
+```
+
+- `runClient` — launch the game with the mod
+- `runServer` — dedicated server (`--nogui`)
+- `runGameTestServer` — run GameTests, then exit
+- `runData` — datagen into `src/generated/resources`
+- `build` — compile and package the mod jar
+- `extractMcSources` — explode Minecraft + NeoForge Java into `.mc-sources/` for Agents to index minecraft sources (also runs on IDE Gradle sync)
+
 ## Vanilla / NeoForge sources
 
 This mod compiles against **Minecraft 26.2.0 + NeoForge 26.2.0.59** with **official Mojang mappings**. Do not use APIs from memory.
@@ -98,13 +113,25 @@ Note: there is also `GiantGobletFeature` / placed feature — feature vs structu
 
 ## Datagen
 
-After changing Java bootstrap (`datagen/*`, worldgen registries, block models/tags/loot), the agent must run datagen itself — do not wait for the user:
+After changing Java bootstrap (`datagen/*`, worldgen registries, block models/tags/loot), the agent must run datagen itself. Do not skip it and do not ask the user to type `gradlew`.
+
+`runClient` / `runServer` lock `build/` — datagen cannot run in parallel. **Never** kill Java/Gradle, never `gradlew --stop`, never start or restart the game.
+
+If a game run is active:
+
+1. Tell the user to close Minecraft; datagen will start after that. The agent will not restart the client.
+2. Run `.\scripts\wait-until-game-closed.ps1` with a long wait (`block_until_ms` 600000, then `AwaitShell` until it prints `Ready for datagen` / exit 0).
+3. Then `.\gradlew runData`. Stay until it finishes successfully. Do not declare the task done without that.
+
+If the client is already closed, skip the wait (the script exits immediately):
 
 ```
-.\gradlew runData
+.\scripts\wait-until-game-closed.ps1; .\gradlew.bat runData
 ```
 
-Reuse caches: never `clean`, `--rerun-tasks`, `--refresh-dependencies`, or `--offline`. Do not delete `src/generated/` (Minecraft’s incremental cache is `src/generated/resources/.cache`). Do not hand-write generated JSON to skip datagen.
+If `runData` fails with file-in-use / unable to delete / lock timeout, the game is still locking `build/` — wait and retry; do not hand-write `src/generated/**`.
+
+Reuse caches: never `clean`, `--rerun-tasks`, `--refresh-dependencies`, or `--offline`. Do not delete `src/generated/` (Minecraft’s incremental cache is `src/generated/resources/.cache`).
 
 NFRT (Minecraft assets + decompile) is pinned to `%USERPROFILE%\.gradle\caches\neoformruntime` in `build.gradle` so Cursor sandbox cannot force a full redownload. If `downloadAssets` still starts thousands of downloads, stop — the pin failed.
 

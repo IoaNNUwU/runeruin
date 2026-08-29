@@ -84,19 +84,3 @@
   - [ ] Add `Grappling hook`
   - [ ] Add other rock climbing equipment.
 
-## Run
-
-Gradle needs some JDK installed to start; the wrapper then downloads **Java 25** for this project.
-
-```powershell
-.\gradlew.bat runClient
-```
-
-- `runClient` — launch the game with the mod
-- `runServer` — dedicated server (`--nogui`)
-- `runGameTestServer` — run GameTests, then exit
-- `runData` — datagen into `src/generated/resources`
-- `build` — compile and package the mod jar
-- `extractMcSources` — explode Minecraft + NeoForge Java into `.mc-sources/` for Agents to index minecraft sources (also runs on IDE Gradle sync)
-
-

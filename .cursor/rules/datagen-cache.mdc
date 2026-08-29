@@ -1,11 +1,21 @@
 ---
-description: Reuse Gradle/NFRT caches when running Minecraft datagen
+description: Reuse Gradle/NFRT caches; wait for the user to close the game before datagen
 alwaysApply: true
 ---
 
-# Datagen cache
+# Datagen cache and game lock
 
-Run datagen with `.\gradlew runData` from the repo root (never `clean` / `--rerun-tasks` / `--refresh-dependencies` / `--offline`). A running `runClient` locks the build folder — stop the client, run datagen, then start `.\gradlew runClient` yourself. See AGENTS.md.
+Run datagen with `.\gradlew runData` from the repo root (never `clean` / `--rerun-tasks` / `--refresh-dependencies` / `--offline`). See AGENTS.md.
+
+A running `runClient` / `runServer` locks `build/`. Datagen cannot run at the same time.
+
+**Do not** kill Java/Gradle, `gradlew --stop`, or start/restart the client. Tell the user to close Minecraft, then wait:
+
+```
+.\scripts\wait-until-game-closed.ps1; .\gradlew.bat runData
+```
+
+Use a long `block_until_ms` (600000) and `AwaitShell` until the wait script exits 0, then until `runData` succeeds. You are not done until datagen finishes. If `runData` fails with file-in-use / lock / unable to delete, wait and retry.
 
 Do not:
 
