@@ -39,6 +39,6 @@ public class GlowingMossCarpetBlock extends CarpetBlock {
 
     @Override
     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        GlowingMossBlock.tickLight(state, level, pos);
+        GlowingMossBlock.tickLight(state, level, pos, random);
     }
 }
