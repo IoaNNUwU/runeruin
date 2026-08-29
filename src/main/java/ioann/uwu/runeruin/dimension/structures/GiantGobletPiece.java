@@ -3,12 +3,14 @@ package ioann.uwu.runeruin.dimension.structures;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -18,9 +20,10 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSeriali
 public class GiantGobletPiece extends StructurePiece {
 
     public static final int PILLAR_RADIUS = 5;
-    public static final int RIM_HEIGHT = 3;
-    public static final int FLOOR_HEIGHT = 2;
-    public static final int RIM_THICKNESS = 2;
+    public static final int FLOOR_STEPS = 6;
+    public static final int FLOOR_THICKNESS = 2;
+    public static final int RIM_THICKNESS = 3;
+    public static final int MIN_FLOOR_RADIUS = 4;
 
     private final int centerX;
     private final int centerZ;
@@ -32,7 +35,12 @@ public class GiantGobletPiece extends StructurePiece {
     }
 
     public static int bowlBottomY(int height) {
-        return bowlTopY(height) - RIM_HEIGHT - FLOOR_HEIGHT + 1;
+        return outerFloorY(height) - FLOOR_STEPS - (FLOOR_THICKNESS - 1);
+    }
+
+    /** Top of the outermost floor step: one water block sits on it under the rim. */
+    public static int outerFloorY(int height) {
+        return bowlTopY(height) - 2;
     }
 
     public GiantGobletPiece(int centerX, int centerZ, int height, int bowlRadius) {
@@ -80,22 +88,19 @@ public class GiantGobletPiece extends StructurePiece {
             ChunkPos chunkPos,
             BlockPos referencePos
     ) {
-        BlockState pillar = Blocks.POLISHED_DEEPSLATE.defaultBlockState();
-        BlockState floor = Blocks.DEEPSLATE_BRICKS.defaultBlockState();
-        BlockState rim = Blocks.DEEPSLATE_TILES.defaultBlockState();
+        BlockState stem = Blocks.PALE_OAK_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
+        BlockState cup = Blocks.PALE_OAK_WOOD.defaultBlockState();
         BlockState water = Blocks.WATER.defaultBlockState();
 
         int baseY = Const.LOST_CAVES_Y;
         int rimTopY = bowlTopY(this.height);
-        int rimBottomY = rimTopY - RIM_HEIGHT + 1;
-        int floorTopY = rimBottomY - 1;
-        int floorBottomY = floorTopY - FLOOR_HEIGHT + 1;
-        int pillarTopY = floorBottomY - 1;
-
-        int pillarR2 = PILLAR_RADIUS * PILLAR_RADIUS;
-        int bowlR2 = this.bowlRadius * this.bowlRadius;
+        int waterTopY = rimTopY - 1;
+        int floorTopY = outerFloorY(this.height);
+        int floorBottomY = floorTopY - FLOOR_STEPS;
+        int pillarTopY = floorBottomY - FLOOR_THICKNESS;
         int innerRim = Math.max(this.bowlRadius - RIM_THICKNESS, 0);
-        int innerRim2 = innerRim * innerRim;
+        int floorRim = Math.max(innerRim - 1, 0);
+        int lastCircle = Math.max(this.bowlRadius - 1, 0);
 
         int minX = Math.max(chunkBB.minX(), this.centerX - this.bowlRadius);
         int maxX = Math.min(chunkBB.maxX(), this.centerX + this.bowlRadius);
@@ -109,31 +114,71 @@ public class GiantGobletPiece extends StructurePiece {
             for (int z = minZ; z <= maxZ; z++) {
                 int d2 = dx2 + (z - this.centerZ) * (z - this.centerZ);
 
-                if (d2 <= pillarR2) {
-                    for (int y = baseY; y <= pillarTopY; y++) {
-                        set(level, pos.set(x, y, z), pillar, chunkBB);
-                    }
-                }
-
-                if (d2 > bowlR2) {
+                if (!insideSmooth(d2, this.bowlRadius)) {
                     continue;
                 }
 
-                for (int y = floorBottomY; y <= floorTopY; y++) {
-                    set(level, pos.set(x, y, z), floor, chunkBB);
+                for (int y = baseY; y <= pillarTopY; y++) {
+                    if (insideSmooth(d2, stemRadiusAt(y, baseY, pillarTopY))) {
+                        set(level, pos.set(x, y, z), stem, chunkBB);
+                    }
                 }
 
-                if (d2 > innerRim2) {
-                    for (int y = rimBottomY; y <= rimTopY; y++) {
-                        set(level, pos.set(x, y, z), rim, chunkBB);
+                if (!insideSmooth(d2, innerRim)) {
+                    int wallBottomY = insideSmooth(d2, lastCircle)
+                            ? floorTopY - FLOOR_THICKNESS + 1
+                            : floorTopY;
+                    for (int y = wallBottomY; y <= rimTopY; y++) {
+                        set(level, pos.set(x, y, z), cup, chunkBB);
                     }
-                } else {
-                    for (int y = floorTopY + 1; y < rimTopY; y++) {
-                        set(level, pos.set(x, y, z), water, chunkBB);
-                    }
+                    continue;
+                }
+
+                int floorY = floorYForDist(d2, floorRim, floorBottomY, floorTopY);
+                for (int y = floorY - FLOOR_THICKNESS + 1; y <= floorY; y++) {
+                    set(level, pos.set(x, y, z), cup, chunkBB);
+                }
+                for (int y = floorY + 1; y <= waterTopY; y++) {
+                    set(level, pos.set(x, y, z), water, chunkBB);
                 }
             }
         }
+    }
+
+    private static int stemRadiusAt(int y, int baseY, int pillarTopY) {
+        if (pillarTopY <= baseY) {
+            return PILLAR_RADIUS;
+        }
+        float t = (y - baseY) / (float) (pillarTopY - baseY);
+        return PILLAR_RADIUS + Math.round(t * 2f);
+    }
+
+    /**
+     * Concentric floor disks up to {@code floorRim} (one block inside the wall).
+     * The leftover 1-block ring under the wall sits at {@code floorTopY}.
+     */
+    private static int floorYForDist(int d2, int floorRim, int floorBottomY, int floorTopY) {
+        for (int step = 0; step < FLOOR_STEPS; step++) {
+            if (insideSmooth(d2, stepRadius(step, floorRim))) {
+                return floorBottomY + step;
+            }
+        }
+        return floorTopY;
+    }
+
+    private static int stepRadius(int step, int floorRim) {
+        if (FLOOR_STEPS <= 1) {
+            return floorRim;
+        }
+        int minR = Math.min(MIN_FLOOR_RADIUS, floorRim);
+        return minR + (floorRim - minR) * step / (FLOOR_STEPS - 1);
+    }
+
+    private static boolean insideSmooth(int d2, int radius) {
+        if (radius <= 0) {
+            return false;
+        }
+        return d2 * 20 < radius * radius * 19;
     }
 
     private static void set(WorldGenLevel level, BlockPos pos, BlockState state, BoundingBox chunkBB) {
