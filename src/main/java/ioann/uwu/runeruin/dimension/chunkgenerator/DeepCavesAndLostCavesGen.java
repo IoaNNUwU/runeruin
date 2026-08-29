@@ -119,4 +119,40 @@ public class DeepCavesAndLostCavesGen {
             }
         }
     }
+
+    /**
+     * True if lost-caves ceiling or deep-caves floor stone occupies any Y in {@code [minY, maxY]} at this column.
+     */
+    public static boolean interLayerTerrainOverlaps(int x, int z, int minY, int maxY, RandomState randomState) {
+        float baselineNoise = lostTopLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
+
+        float floorNoise = lostTopLevelNoise.getOrCreateNoise(randomState).noise(x, z);
+        if (floorNoise >= 0.01f) {
+            float biomeHeight = floorNoise * TOP_LAYER_TERRAIN_HEIGHT - ARCANE_PLATE_HEIGHT;
+            float baseLine = DEEP_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET - ARCANE_PLATE_HEIGHT;
+            int floorMin = (int) baseLine;
+            int floorMax = (int) (baseLine + biomeHeight);
+            if (rangesOverlap(floorMin, floorMax, minY, maxY)) {
+                return true;
+            }
+        }
+
+        float ceilingNoise = lostCavesCeilingNoise.getOrCreateNoise(randomState).noise(x, z);
+        ceilingNoise = ceilingNoise * flattenedBaseLostTopLevelNoise.getOrCreateNoise(randomState).noise(x, z);
+        if (ceilingNoise >= 0.01f) {
+            float ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
+            float baseLine = LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
+            int ceilMin = (int) (baseLine - ceilingHeight);
+            int ceilMax = (int) baseLine;
+            if (rangesOverlap(ceilMin, ceilMax, minY, maxY)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean rangesOverlap(int a0, int a1, int b0, int b1) {
+        return a1 >= b0 && a0 <= b1;
+    }
 }

@@ -59,8 +59,6 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> DRIPSTONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dripstone_spike");
     public static final ResourceKey<ConfiguredFeature<?, ?>> DEEPSLATE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deepslate_spike");
 
-    public static final ResourceKey<ConfiguredFeature<?, ?>> GIANT_GOBLET = RR.resourceKey(Registries.CONFIGURED_FEATURE, "giant_goblet");
-
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
         var otherConfiguredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -276,16 +274,6 @@ public class RRConfiguredFeatures {
                         4,
                         0.6F,
                         BlockStateProvider.simple(Blocks.DEEPSLATE)
-                )
-        ));
-
-        ctx.register(GIANT_GOBLET, new ConfiguredFeature<>(
-                RRFeatures.GIANT_GOBLET.get(),
-                new GiantGobletFeature.Config(
-                        BlockStateProvider.simple(Blocks.DEEPSLATE),
-                        BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
-                        BlockStateProvider.simple(Blocks.WARPED_WART_BLOCK),
-                        ConstantInt.of(75)
                 )
         ));
     }

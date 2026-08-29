@@ -14,13 +14,12 @@ public class RRStructureSets {
 
     public static void bootstrap(BootstrapContext<StructureSet> ctx) {
         var structures = ctx.lookup(Registries.STRUCTURE);
-        var biomes = ctx.lookup(Registries.BIOME);
 
         ctx.register(
                 GIANT_GOBLETS,
                 new StructureSet(
                         structures.getOrThrow(RRStructures.GIANT_GOBLET),
-                        new RandomSpreadStructurePlacement(4, 2, RandomSpreadType.LINEAR, 2892828)
+                        new RandomSpreadStructurePlacement(8, 5, RandomSpreadType.LINEAR, 2892828)
                 )
         );
     }

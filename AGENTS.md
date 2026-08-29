@@ -135,7 +135,7 @@ For large/jigsaw-style pieces (e.g. Giant Goblet):
 - Datapack: `RRStructures` + `RRStructureSets`
 - Biome filter via tag (`RRBiomeTags.HAS_GIANT_GOBLET`)
 
-Note: there is also `GiantGobletFeature` / placed feature — feature vs structure are different paths; prefer structure for sparse large builds.
+Giant Goblet is a structure (`GiantGobletStructure` / `GiantGobletPiece`), not a feature.
 
 ## Datagen
 
