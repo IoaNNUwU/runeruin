@@ -19,7 +19,7 @@ public class RRStructureSets {
                 GIANT_GOBLETS,
                 new StructureSet(
                         structures.getOrThrow(RRStructures.GIANT_GOBLET),
-                        new RandomSpreadStructurePlacement(8, 5, RandomSpreadType.LINEAR, 2892828)
+                        new RandomSpreadStructurePlacement(5, 3, RandomSpreadType.LINEAR, 2892828)
                 )
         );
     }

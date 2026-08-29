@@ -19,11 +19,11 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSeriali
 
 public class GiantGobletPiece extends StructurePiece {
 
-    public static final int PILLAR_RADIUS = 5;
+    public static final int PILLAR_RADIUS = 8;
+    public static final int STEM_PINCH = 2;
     public static final int FLOOR_STEPS = 6;
     public static final int FLOOR_THICKNESS = 2;
     public static final int RIM_THICKNESS = 3;
-    public static final int MIN_FLOOR_RADIUS = 4;
 
     private final int centerX;
     private final int centerZ;
@@ -97,7 +97,7 @@ public class GiantGobletPiece extends StructurePiece {
         int waterTopY = rimTopY - 1;
         int floorTopY = outerFloorY(this.height);
         int floorBottomY = floorTopY - FLOOR_STEPS;
-        int pillarTopY = floorBottomY - FLOOR_THICKNESS;
+        int pillarTopY = floorBottomY - FLOOR_THICKNESS + 1;
         int innerRim = Math.max(this.bowlRadius - RIM_THICKNESS, 0);
         int floorRim = Math.max(innerRim - 1, 0);
         int lastCircle = Math.max(this.bowlRadius - 1, 0);
@@ -118,12 +118,6 @@ public class GiantGobletPiece extends StructurePiece {
                     continue;
                 }
 
-                for (int y = baseY; y <= pillarTopY; y++) {
-                    if (insideSmooth(d2, stemRadiusAt(y, baseY, pillarTopY))) {
-                        set(level, pos.set(x, y, z), stem, chunkBB);
-                    }
-                }
-
                 if (!insideSmooth(d2, innerRim)) {
                     int wallBottomY = insideSmooth(d2, lastCircle)
                             ? floorTopY - FLOOR_THICKNESS + 1
@@ -131,51 +125,61 @@ public class GiantGobletPiece extends StructurePiece {
                     for (int y = wallBottomY; y <= rimTopY; y++) {
                         set(level, pos.set(x, y, z), cup, chunkBB);
                     }
-                    continue;
+                } else {
+                    int floorY = floorYForDist(d2, floorRim, floorBottomY, floorTopY);
+                    for (int y = floorY - FLOOR_THICKNESS + 1; y <= floorY; y++) {
+                        set(level, pos.set(x, y, z), cup, chunkBB);
+                    }
+                    for (int y = floorY + 1; y <= waterTopY; y++) {
+                        set(level, pos.set(x, y, z), water, chunkBB);
+                    }
                 }
 
-                int floorY = floorYForDist(d2, floorRim, floorBottomY, floorTopY);
-                for (int y = floorY - FLOOR_THICKNESS + 1; y <= floorY; y++) {
-                    set(level, pos.set(x, y, z), cup, chunkBB);
-                }
-                for (int y = floorY + 1; y <= waterTopY; y++) {
-                    set(level, pos.set(x, y, z), water, chunkBB);
+                float stemJitter = columnJitter(x - this.centerX, z - this.centerZ);
+                for (int y = baseY; y <= pillarTopY; y++) {
+                    if (insideSmooth(d2, stemRadiusAt(y, baseY, pillarTopY) + stemJitter)) {
+                        set(level, pos.set(x, y, z), stem, chunkBB);
+                    }
                 }
             }
         }
     }
 
-    private static int stemRadiusAt(int y, int baseY, int pillarTopY) {
+    private static float stemRadiusAt(int y, int baseY, int pillarTopY) {
         if (pillarTopY <= baseY) {
             return PILLAR_RADIUS;
         }
         float t = (y - baseY) / (float) (pillarTopY - baseY);
-        return PILLAR_RADIUS + Math.round(t * 2f);
+        float pinch = 4f * t * (1f - t);
+        return Math.max(1f, PILLAR_RADIUS - pinch * STEM_PINCH);
     }
 
     /**
-     * Concentric floor disks up to {@code floorRim} (one block inside the wall).
-     * The leftover 1-block ring under the wall sits at {@code floorTopY}.
+     * Smooth concave bowl: deepest at the center, one water block at {@code floorRim}.
+     * The leftover ring under the wall sits at {@code floorTopY}.
      */
     private static int floorYForDist(int d2, int floorRim, int floorBottomY, int floorTopY) {
-        for (int step = 0; step < FLOOR_STEPS; step++) {
-            if (insideSmooth(d2, stepRadius(step, floorRim))) {
-                return floorBottomY + step;
-            }
+        if (floorRim <= 0) {
+            return floorTopY;
         }
-        return floorTopY;
+        float dist = (float) Math.sqrt(d2);
+        if (dist >= floorRim) {
+            return floorTopY;
+        }
+        float t = dist / floorRim;
+        float rise = t * t * (3f - 2f * t);
+        int span = (floorTopY - 1) - floorBottomY;
+        return floorBottomY + Math.round(rise * span);
     }
 
-    private static int stepRadius(int step, int floorRim) {
-        if (FLOOR_STEPS <= 1) {
-            return floorRim;
-        }
-        int minR = Math.min(MIN_FLOOR_RADIUS, floorRim);
-        return minR + (floorRim - minR) * step / (FLOOR_STEPS - 1);
+    private static float columnJitter(int dx, int dz) {
+        int h = dx * 374761393 + dz * 668265263;
+        h = (h ^ (h >> 13)) * 1274126177;
+        return ((h >>> 8) & 255) / 255f * 0.7f - 0.35f;
     }
 
-    private static boolean insideSmooth(int d2, int radius) {
-        if (radius <= 0) {
+    private static boolean insideSmooth(int d2, float radius) {
+        if (radius <= 0f) {
             return false;
         }
         return d2 * 20 < radius * radius * 19;
