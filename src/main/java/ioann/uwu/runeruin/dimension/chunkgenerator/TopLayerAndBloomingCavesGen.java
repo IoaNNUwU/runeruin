@@ -21,6 +21,7 @@ public class TopLayerAndBloomingCavesGen {
     public static void generateBloomingCavesFloor(ChunkAccess chunk, RandomState randomState) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         BlockState stone = Blocks.STONE.defaultBlockState();
+        BlockState moss = Blocks.MOSS_BLOCK.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -29,10 +30,12 @@ public class TopLayerAndBloomingCavesGen {
                         .noise(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z);
 
                 int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
+                int topY = BLOOMING_CAVES_Y + biomeHeight;
 
-                for (int y = BLOOMING_CAVES_Y; y < BLOOMING_CAVES_Y + biomeHeight + 1; y++) {
+                for (int y = BLOOMING_CAVES_Y; y < topY; y++) {
                     chunk.setBlockState(pos.set(x, y, z), stone);
                 }
+                chunk.setBlockState(pos.set(x, topY, z), moss);
             }
         }
     }

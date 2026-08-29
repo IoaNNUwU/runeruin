@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.valueproviders.ConstantInt;
@@ -46,7 +47,8 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "moss_berry_bush_patch");
 
-    public static final ResourceKey<PlacedFeature> GLOWING_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_moss_patch");
+    public static final ResourceKey<PlacedFeature> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_moss_vegetation");
+    public static final ResourceKey<PlacedFeature> MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "moss_vegetation");
 
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_vine");
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_block_vine");
@@ -386,14 +388,34 @@ public class RRPlacedFeatures {
                 invertedTreePlacement
         ));
 
-        ctx.register(GLOWING_MOSS_PATCH, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.GLOWING_MOSS_PATCH),
+        ctx.register(GLOWING_MOSS_VEGETATION, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.GLOWING_MOSS_VEGETATION),
                 List.of(
-                        CountPlacement.of(125),
+                        CountPlacement.of(128),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(DEEP_CAVES_Y),
                                 VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.solid(),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                12
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                        BiomeFilter.biome()
+                )
+        ));
+
+        ctx.register(MOSS_VEGETATION, new PlacedFeature(
+                configuredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION),
+                List.of(
+                        CountPlacement.of(200),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(BLOOMING_CAVES_Y),
+                                VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y)
                         ),
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,

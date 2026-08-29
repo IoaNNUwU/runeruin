@@ -53,7 +53,6 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_berry_bush_patch");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
-    public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_patch");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
 
@@ -230,32 +229,6 @@ public class RRConfiguredFeatures {
                                                 .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MAX)
                                                 .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MAX), 20)
                         )
-                )
-        ));
-
-        ctx.register(GLOWING_MOSS_PATCH, new ConfiguredFeature<>(
-                Feature.VEGETATION_PATCH,
-                new VegetationPatchConfiguration(
-                        blocks.getOrThrow(BlockTags.MOSS_REPLACEABLE),
-                        new WeightedStateProvider(
-                                WeightedList.<BlockState>builder()
-                                        .add(RRBlocks.GLOWING_MOSS.get().defaultBlockState()
-                                                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MIN)
-                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MIN)
-                                                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MIN), 20)
-                                        .add(RRBlocks.GLOWING_MOSS.get().defaultBlockState()
-                                                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MAX)
-                                                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MAX)
-                                                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MAX), 20)
-                        ),
-                        PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(GLOWING_MOSS_VEGETATION)),
-                        CaveSurface.FLOOR,
-                        ConstantInt.of(1),
-                        0.0F,
-                        5,
-                        0.8F,
-                        UniformInt.of(4, 7),
-                        0.3F
                 )
         ));
 
