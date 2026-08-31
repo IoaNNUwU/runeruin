@@ -3,6 +3,11 @@ package ioann.uwu.runeruin.dimension.structures;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
@@ -26,8 +31,9 @@ public class GiantGobletPiece extends StructurePiece {
     public static final int RIM_THICKNESS = 5;
 
     private static final int MINI_FLOOR_STEPS = 3;
-    private static final int MINI_FLOOR_THICKNESS = 2;
     private static final int MINI_RIM_THICKNESS = 3;
+    /** Neck radius of a side cup — matches the arm tip so the hull meets the arm. */
+    private static final float MINI_NECK_RADIUS = 2.0f;
     private static final float MINI_DISTANCE_SCALE = 1.5f;
     private static final int FALL_GAP = 3;
     private static final float ARM_RISE_SCALE = 0.32f;
@@ -41,6 +47,9 @@ public class GiantGobletPiece extends StructurePiece {
     private final int height;
     private final int bowlRadius;
     private final long seed;
+    /** Packed (dx, dz) vein cells; filled on first chunk so later chunks reuse them. */
+    private int[] mainVeins;
+    private int[][] miniVeins;
 
     public static int bowlTopY(int height) {
         return Const.LOST_CAVES_Y + height;
@@ -122,7 +131,8 @@ public class GiantGobletPiece extends StructurePiece {
             ChunkPos chunkPos,
             BlockPos referencePos
     ) {
-        BlockState piece = RRBlocks.GIANT_GOBLET_PIECE.get().defaultBlockState();
+        BlockState stem = RRBlocks.GIANT_GOBLET_STEM.get().defaultBlockState();
+        BlockState bud = RRBlocks.GIANT_GOBLET_BUD.get().defaultBlockState();
         BlockState water = Blocks.WATER.defaultBlockState();
 
         int baseY = Const.LOST_CAVES_Y;
@@ -138,19 +148,25 @@ public class GiantGobletPiece extends StructurePiece {
 
         Arms arms = Arms.create(this.seed, this.bowlRadius, baseY, pillarTopY);
 
+        float hullMinR = mainHullMinR();
         placeMainGoblet(
-                level, chunkBB, piece, water,
+                level, chunkBB, stem, bud, water,
                 baseY, rimTopY, waterTopY, floorTopY, floorBottomY, hullBottomY, pillarTopY,
-                innerRim, floorRim, spillInner, arms
+                innerRim, floorRim, spillInner, hullMinR, arms
         );
-        placeArms(level, chunkBB, piece, arms);
-        placeMiniBowls(level, chunkBB, piece, water, arms);
+        placeVeins(
+                level, chunkBB, stem, this.centerX, this.centerZ, mainVeins(),
+                this.bowlRadius, floorTopY, hullMinR, OUTER_HULL_STEPS
+        );
+        placeArms(level, chunkBB, stem, arms);
+        placeMiniBowls(level, chunkBB, stem, bud, water, arms);
     }
 
     private void placeMainGoblet(
             WorldGenLevel level,
             BoundingBox chunkBB,
-            BlockState piece,
+            BlockState stem,
+            BlockState bud,
             BlockState water,
             int baseY,
             int rimTopY,
@@ -162,6 +178,7 @@ public class GiantGobletPiece extends StructurePiece {
             int innerRim,
             int floorRim,
             int spillInner,
+            float hullMinR,
             Arms arms
     ) {
         int minX = Math.max(chunkBB.minX(), this.centerX - this.bowlRadius);
@@ -185,20 +202,20 @@ public class GiantGobletPiece extends StructurePiece {
 
                 if (!insideSmooth(d2, innerRim) || spillway) {
                     if (spillway) {
-                        set(level, pos.set(x, floorTopY, z), piece, chunkBB);
+                        set(level, pos.set(x, floorTopY, z), bud, chunkBB);
                     } else {
                         placeLipColumn(
                                 level, chunkBB, pos, x, z, d2,
-                                innerRim, this.bowlRadius, floorTopY, floorBottomY, hullBottomY, floorRim,
-                                waterTopY, rimTopY, piece
+                                innerRim, this.bowlRadius, floorTopY, hullBottomY,
+                                waterTopY, rimTopY, hullMinR, OUTER_HULL_STEPS, bud
                         );
                     }
                 } else {
                     float r = (float) Math.sqrt(d2);
                     int floorY = floorYForDist(d2, floorRim, floorBottomY, floorTopY);
                     for (int y = hullBottomY; y <= floorY; y++) {
-                        if (r <= outerRadiusAtY(y, floorRim, floorBottomY, floorTopY, this.bowlRadius)) {
-                            set(level, pos.set(x, y, z), piece, chunkBB);
+                        if (r <= outerRadiusAtY(y, floorTopY, this.bowlRadius, hullMinR, OUTER_HULL_STEPS)) {
+                            set(level, pos.set(x, y, z), bud, chunkBB);
                         }
                     }
                     for (int y = floorY + 1; y <= waterTopY; y++) {
@@ -209,10 +226,82 @@ public class GiantGobletPiece extends StructurePiece {
                 float stemJitter = columnJitter(x - this.centerX, z - this.centerZ);
                 for (int y = baseY; y <= pillarTopY; y++) {
                     if (insideSmooth(d2, stemRadiusAt(y, baseY, pillarTopY) + stemJitter)) {
-                        set(level, pos.set(x, y, z), piece, chunkBB);
+                        set(level, pos.set(x, y, z), stem, chunkBB);
                     }
                 }
             }
+        }
+    }
+
+    private int[] mainVeins() {
+        if (this.mainVeins == null) {
+            float radius = this.bowlRadius * Mth.sqrt(19f / 20f) - 0.35f;
+            this.mainVeins = WigglyDendrites.grow(this.seed, Math.max(6f, radius));
+        }
+        return this.mainVeins;
+    }
+
+    private int[] miniVeins(int index, int miniRadius) {
+        if (this.miniVeins == null) {
+            this.miniVeins = new int[8][];
+        }
+        if (this.miniVeins[index] == null) {
+            float radius = miniRadius * Mth.sqrt(19f / 20f) - 0.35f;
+            this.miniVeins[index] = WigglyDendrites.grow(this.seed + 17L * (index + 1), Math.max(5f, radius));
+        }
+        return this.miniVeins[index];
+    }
+
+    /**
+     * Stamp sc_v4_wiggly cells onto the underside of a cup. One block per occupied
+     * pixel, hanging one below the hull so the 1–2 px veins stay readable.
+     */
+    private void placeVeins(
+            WorldGenLevel level,
+            BoundingBox chunkBB,
+            BlockState stem,
+            int cx,
+            int cz,
+            int[] packed,
+            int bowlRadius,
+            int floorTopY,
+            float hullMinR,
+            int hullSteps
+    ) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int p : packed) {
+            int x = cx + WigglyDendrites.unpackDx(p);
+            int z = cz + WigglyDendrites.unpackDz(p);
+            if (x < chunkBB.minX() || x > chunkBB.maxX() || z < chunkBB.minZ() || z > chunkBB.maxZ()) {
+                continue;
+            }
+            int d2 = (x - cx) * (x - cx) + (z - cz) * (z - cz);
+            if (!insideSmooth(d2, bowlRadius)) {
+                continue;
+            }
+            float r = Mth.sqrt(d2);
+            int y = cupUndersideY(r, floorTopY, bowlRadius, hullMinR, hullSteps) - 1;
+            setWeb(level, pos.set(x, y, z), stem, chunkBB);
+        }
+    }
+
+    private static int cupUndersideY(float r, int floorTopY, int bowlRadius, float minR, int hullSteps) {
+        int hullBottomY = floorTopY - hullSteps;
+        for (int y = hullBottomY; y <= floorTopY; y++) {
+            if (r <= outerRadiusAtY(y, floorTopY, bowlRadius, minR, hullSteps)) {
+                return y;
+            }
+        }
+        return floorTopY;
+    }
+
+    private static void setWeb(WorldGenLevel level, BlockPos pos, BlockState stem, BoundingBox chunkBB) {
+        if (!chunkBB.isInside(pos)) {
+            return;
+        }
+        BlockState existing = level.getBlockState(pos);
+        if (existing.isAir() || existing.is(stem.getBlock())) {
+            level.setBlock(pos, stem, 2);
         }
     }
 
@@ -250,16 +339,30 @@ public class GiantGobletPiece extends StructurePiece {
         }
     }
 
-    private void placeMiniBowls(WorldGenLevel level, BoundingBox chunkBB, BlockState piece, BlockState water, Arms arms) {
+    private void placeMiniBowls(
+            WorldGenLevel level,
+            BoundingBox chunkBB,
+            BlockState stem,
+            BlockState bud,
+            BlockState water,
+            Arms arms
+    ) {
+        int hullSteps = miniHullSteps(arms.miniRadius);
+        float hullMinR = miniHullMinR();
         for (int i = 0; i < arms.count; i++) {
             int cupX = this.centerX + Math.round(arms.cos[i] * (PILLAR_RADIUS + arms.reach));
             int cupZ = this.centerZ + Math.round(arms.sin[i] * (PILLAR_RADIUS + arms.reach));
+            int rimTopY = arms.miniRimTopY[i];
+            int floorTopY = rimTopY - RIM_PEAK_ABOVE_WATER - 1;
             placeBowl(
-                    level, chunkBB, cupX, cupZ,
-                    arms.miniRimTopY[i], arms.miniRadius,
-                    MINI_FLOOR_STEPS, MINI_FLOOR_THICKNESS, MINI_RIM_THICKNESS,
-                    piece, water,
+                    level, chunkBB, cupX, cupZ, rimTopY, arms.miniRadius,
+                    MINI_FLOOR_STEPS, MINI_RIM_THICKNESS, hullMinR, hullSteps,
+                    bud, water,
                     arms.miniSpillAngles[i], arms.miniSpillHalf[i]
+            );
+            placeVeins(
+                    level, chunkBB, stem, cupX, cupZ, miniVeins(i, arms.miniRadius),
+                    arms.miniRadius, floorTopY, hullMinR, hullSteps
             );
         }
     }
@@ -272,8 +375,9 @@ public class GiantGobletPiece extends StructurePiece {
             int rimTopY,
             int radius,
             int floorSteps,
-            int floorThickness,
             int rimThickness,
+            float hullMinR,
+            int hullSteps,
             BlockState piece,
             BlockState water,
             float[] spillAngles,
@@ -282,7 +386,7 @@ public class GiantGobletPiece extends StructurePiece {
         int waterTopY = rimTopY - RIM_PEAK_ABOVE_WATER;
         int floorTopY = rimTopY - RIM_PEAK_ABOVE_WATER - 1;
         int floorBottomY = floorTopY - floorSteps;
-        int hullBottomY = floorBottomY - floorThickness + 1;
+        int hullBottomY = floorTopY - hullSteps;
         int innerRim = Math.max(radius - rimThickness, 0);
         int floorRim = innerRim;
         int spillInner = Math.max(innerRim - 1, 0);
@@ -309,14 +413,17 @@ public class GiantGobletPiece extends StructurePiece {
                     } else {
                         placeLipColumn(
                                 level, chunkBB, pos, x, z, d2,
-                                innerRim, radius, floorTopY, floorBottomY, hullBottomY, floorRim,
-                                waterTopY, rimTopY, piece
+                                innerRim, radius, floorTopY, hullBottomY,
+                                waterTopY, rimTopY, hullMinR, hullSteps, piece
                         );
                     }
                 } else {
+                    float r = (float) Math.sqrt(d2);
                     int floorY = floorYForDist(d2, floorRim, floorBottomY, floorTopY);
-                    for (int y = floorY - floorThickness + 1; y <= floorY; y++) {
-                        set(level, pos.set(x, y, z), piece, chunkBB);
+                    for (int y = hullBottomY; y <= floorY; y++) {
+                        if (r <= outerRadiusAtY(y, floorTopY, radius, hullMinR, hullSteps)) {
+                            set(level, pos.set(x, y, z), piece, chunkBB);
+                        }
                     }
                     for (int y = floorY + 1; y <= waterTopY; y++) {
                         set(level, pos.set(x, y, z), water, chunkBB);
@@ -340,17 +447,17 @@ public class GiantGobletPiece extends StructurePiece {
             int innerRim,
             int radius,
             int floorTopY,
-            int floorBottomY,
             int hullBottomY,
-            int floorRim,
             int waterTopY,
             int peakY,
+            float hullMinR,
+            int hullSteps,
             BlockState piece
     ) {
         float r = (float) Math.sqrt(d2);
         int top = lipTopY(r, innerRim, radius, waterTopY, peakY);
         for (int y = hullBottomY; y <= top; y++) {
-            if (y < waterTopY && r > outerRadiusAtY(y, floorRim, floorBottomY, floorTopY, radius)) {
+            if (y < waterTopY && r > outerRadiusAtY(y, floorTopY, radius, hullMinR, hullSteps)) {
                 continue;
             }
             if (insideSmooth(d2, radius)) {
@@ -375,64 +482,45 @@ public class GiantGobletPiece extends StructurePiece {
         return waterTopY + Math.round(h);
     }
 
-    /** Inner water/floor edge at {@code y} (smallest r whose floor is at least y). */
-    private static float innerRadiusAtY(int y, int floorRim, int floorBottomY, int floorTopY) {
-        int span = floorTopY - floorBottomY;
-        if (span <= 0 || y <= floorBottomY) {
-            return 0f;
-        }
-        float sm = (y - floorBottomY - 0.5f) / (float) span;
-        if (sm >= 1f) {
-            return floorRim;
-        }
-        if (sm <= 0f) {
-            return 0f;
-        }
-        return inverseSmoothstep(sm) * floorRim;
-    }
-
     /**
-     * Outer silhouette of the main bowl: stem-width at the hull bottom, then a
-     * delayed smoothstep flare to the visible rim (preview_giant_goblet_yz_expected).
-     * Mini cups keep the old inner-dish-raised-by-2 hull.
+     * Outer silhouette: neck-width at the hull bottom, then a delayed smoothstep
+     * flare to the visible rim (preview_giant_goblet_yz_expected). Used by both
+     * the main cup and the side cups.
      */
-    private static float outerRadiusAtY(int y, int floorRim, int floorBottomY, int floorTopY, int bowlRadius) {
+    private static float outerRadiusAtY(int y, int floorTopY, int bowlRadius, float minR, int hullSteps) {
         float maxR = bowlRadius * Mth.sqrt(19f / 20f);
-        if (bowlRadius <= 20) {
-            if (y >= floorTopY) {
-                return maxR - 1.01f;
-            }
-            return innerRadiusAtY(y + 2, floorRim, floorBottomY, floorTopY);
-        }
         if (y >= floorTopY) {
             return maxR;
         }
         if (y == floorTopY - 1) {
             return maxR - 1.01f;
         }
-        int hullBottomY = floorTopY - OUTER_HULL_STEPS;
+        int hullBottomY = floorTopY - hullSteps;
         if (y < hullBottomY) {
             return 0f;
         }
-        float t = (y - hullBottomY) / (float) OUTER_HULL_STEPS;
-        float u = Mth.clamp((t - 1f / OUTER_HULL_STEPS) / (1f - 1f / OUTER_HULL_STEPS), 0f, 1f);
+        float t = (y - hullBottomY) / (float) hullSteps;
+        float u = Mth.clamp((t - 1f / hullSteps) / (1f - 1f / hullSteps), 0f, 1f);
         float rise = u * u * (3f - 2f * u);
-        float minR = PILLAR_RADIUS * Mth.sqrt(19f / 20f) - 0.5f;
-        float pad = t <= 0.01f ? 0f : 0.75f;
-        return minR + (maxR - minR) * rise + 1.25f * rise + pad;
+        float pad = t <= 0.01f ? 0f : 0.75f * Math.min(1f, (maxR - minR) / 28f);
+        float extra = 1.25f * rise * Math.min(1f, (maxR - minR) / 28f);
+        return minR + (maxR - minR) * rise + extra + pad;
     }
 
-    private static float inverseSmoothstep(float s) {
-        float t = s;
-        for (int i = 0; i < 6; i++) {
-            float f = t * t * (3f - 2f * t) - s;
-            float df = 6f * t * (1f - t);
-            if (Math.abs(df) < 1e-5f) {
-                break;
-            }
-            t = Mth.clamp(t - f / df, 0f, 1f);
-        }
-        return t;
+    private static float mainHullMinR() {
+        return PILLAR_RADIUS * Mth.sqrt(19f / 20f) - 0.5f;
+    }
+
+    private static float miniHullMinR() {
+        return MINI_NECK_RADIUS * Mth.sqrt(19f / 20f) - 0.25f;
+    }
+
+    private static int miniHullSteps(int miniRadius) {
+        return Math.max(5, Math.round(OUTER_HULL_STEPS * miniRadius / 24f));
+    }
+
+    private static int miniStackHeight(int miniRadius) {
+        return miniHullSteps(miniRadius) + RIM_PEAK_ABOVE_WATER + 1;
     }
 
     private static boolean hitsSpill(int dx, int dz, float[] angles, float[] half) {
@@ -570,7 +658,7 @@ public class GiantGobletPiece extends StructurePiece {
             float arcAngle = 2f * (float) Math.atan(rise / (float) reach);
             float arcR = reach / Mth.sin(arcAngle);
 
-            int miniStack = MINI_FLOOR_STEPS + MINI_FLOOR_THICKNESS + RIM_PEAK_ABOVE_WATER;
+            int miniStack = miniStackHeight(miniRadius);
             int highAttach = Math.max(baseY + 8, pillarTopY - rise - miniStack - FALL_GAP);
             int lowAttach = baseY + 8 + Math.max(0, (highAttach - (baseY + 8)) / 4);
 
@@ -699,5 +787,392 @@ public class GiantGobletPiece extends StructurePiece {
             d = Mth.TWO_PI - d;
         }
         return d;
+    }
+
+    /**
+     * Runions space colonization matching {@code scripts/dla_ascii.py} {@code sc_v4_wiggly}
+     * / {@code wiggly_kwargs}. Occupied cells are packed (dx, dz) from the cluster center.
+     */
+    private static final class WigglyDendrites {
+        static final float STEP = 1.0f;
+        static final float JITTER = 0.70f;
+        static final float KILL = 1.42f;
+        static final float INFLUENCE = 5.0f;
+        static final float REF_RADIUS = 20.0f;
+        static final float REF_ATTRACTORS = 680f;
+        static final float REF_TARGET = 387f;
+        static final float CENTER_MIX = 0.42f;
+        static final float CORE_BOOST = 1.55f;
+        static final float RIM_BOOST = 0.22f;
+        static final float NEIGHBOR_POW = 2.0f;
+        static final int[][] N4 = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+        static int unpackDx(int packed) {
+            return packed >> 16;
+        }
+
+        static int unpackDz(int packed) {
+            return (short) packed;
+        }
+
+        static int pack(int dx, int dz) {
+            return (dx << 16) | (dz & 0xffff);
+        }
+
+        static int[] grow(long seed, float radius) {
+            RandomSource rng = RandomSource.create(seed);
+            float s = Math.max(0.25f, radius / REF_RADIUS);
+            int nAttractors = Math.max(24, Math.round(REF_ATTRACTORS * s * s));
+            int target = Math.max(16, Math.round(REF_TARGET * s * s));
+            int size = Math.max(8, 2 * Mth.ceil(radius + 3f));
+            float cx = size / 2.0f;
+            float cz = size / 2.0f;
+
+            float[] ax = new float[nAttractors];
+            float[] az = new float[nAttractors];
+            for (int i = 0; i < nAttractors; i++) {
+                float ang = rng.nextFloat() * Mth.TWO_PI;
+                float r;
+                if (rng.nextFloat() < CENTER_MIX) {
+                    r = radius * (float) Math.pow(rng.nextFloat(), 1.2);
+                } else {
+                    r = radius * Mth.sqrt(rng.nextFloat());
+                }
+                ax[i] = cx + r * Mth.cos(ang);
+                az[i] = cz + r * Mth.sin(ang);
+            }
+            int nAtt = nAttractors;
+
+            int nodeCap = Math.max(64, target * 3);
+            float[] nx = new float[nodeCap];
+            float[] nz = new float[nodeCap];
+            int nNodes = 1;
+            nx[0] = cx;
+            nz[0] = cz;
+
+            boolean[][] occ = new boolean[size][size];
+            int nOcc = raster(occ, size, cx, cz, cx, cz);
+
+            float influence = Math.max(2.0f, INFLUENCE * (radius / 40.0f));
+            float kill = Math.max(1.0f, KILL * (radius / 40.0f));
+            float inf = influence;
+            NodeIndex index = new NodeIndex(Math.max(inf, 2.0f));
+            index.add(0, cx, cz);
+            nAtt = killNear(ax, az, nAtt, nx, nz, 0, nNodes, kill);
+
+            int maxIters = s <= 1.0f ? 1200 : 2500;
+            for (int iter = 0; iter < maxIters; iter++) {
+                if (nAtt == 0 || nOcc >= target) {
+                    break;
+                }
+                int[] assignedCount = new int[nNodes];
+                float[] vx = new float[nNodes];
+                float[] vz = new float[nNodes];
+                for (int a = 0; a < nAtt; a++) {
+                    int best = -1;
+                    float bestD = inf;
+                    for (int n : index.query(ax[a], az[a], inf)) {
+                        float d = Mth.sqrt((ax[a] - nx[n]) * (ax[a] - nx[n]) + (az[a] - nz[n]) * (az[a] - nz[n]));
+                        if (d < bestD) {
+                            bestD = d;
+                            best = n;
+                        }
+                    }
+                    if (best >= 0) {
+                        vx[best] += ax[a] - nx[best];
+                        vz[best] += az[a] - nz[best];
+                        assignedCount[best]++;
+                    }
+                }
+                int oldNodes = nNodes;
+                boolean grew = false;
+                boolean hitTarget = false;
+                for (int n = 0; n < oldNodes; n++) {
+                    if (assignedCount[n] == 0) {
+                        continue;
+                    }
+                    float avx = vx[n] / assignedCount[n];
+                    float avz = vz[n] / assignedCount[n];
+                    float ang = (float) Math.atan2(avz, avx) + (rng.nextFloat() * 2f - 1f) * JITTER;
+                    if (nNodes >= nodeCap) {
+                        break;
+                    }
+                    float nnx = nx[n] + STEP * Mth.cos(ang);
+                    float nnz = nz[n] + STEP * Mth.sin(ang);
+                    nOcc += raster(occ, size, nx[n], nz[n], nnx, nnz);
+                    nx[nNodes] = nnx;
+                    nz[nNodes] = nnz;
+                    nNodes++;
+                    grew = true;
+                    if (nOcc >= target) {
+                        hitTarget = true;
+                        break;
+                    }
+                }
+                if (!grew) {
+                    inf = Math.max(influence * 0.55f, inf * 0.90f);
+                    if (inf <= influence * 0.56f) {
+                        break;
+                    }
+                    continue;
+                }
+                for (int n = oldNodes; n < nNodes; n++) {
+                    index.add(n, nx[n], nz[n]);
+                }
+                nAtt = killNear(ax, az, nAtt, nx, nz, oldNodes, nNodes, kill);
+                if (hitTarget) {
+                    break;
+                }
+            }
+
+            fattenTo(occ, size, target, cx, cz, rng, radius + 1.2f, nOcc);
+            trimTo(occ, size, target, rng);
+
+            ArrayList<Integer> cells = new ArrayList<>();
+            int icx = Math.round(cx);
+            int icz = Math.round(cz);
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    if (occ[x][z]) {
+                        cells.add(pack(x - icx, z - icz));
+                    }
+                }
+            }
+            int[] packed = new int[cells.size()];
+            for (int i = 0; i < packed.length; i++) {
+                packed[i] = cells.get(i);
+            }
+            return packed;
+        }
+
+        private static int countOcc(boolean[][] occ, int size) {
+            int n = 0;
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    if (occ[x][z]) {
+                        n++;
+                    }
+                }
+            }
+            return n;
+        }
+
+        private static int raster(boolean[][] occ, int size, float x0, float z0, float x1, float z1) {
+            int ax = Math.round(x0);
+            int az = Math.round(z0);
+            int bx = Math.round(x1);
+            int bz = Math.round(z1);
+            int dx = Math.abs(bx - ax);
+            int dz = -Math.abs(bz - az);
+            int sx = ax < bx ? 1 : -1;
+            int sz = az < bz ? 1 : -1;
+            int err = dx + dz;
+            int x = ax;
+            int z = az;
+            int added = 0;
+            while (true) {
+                if (x >= 0 && x < size && z >= 0 && z < size && !occ[x][z]) {
+                    occ[x][z] = true;
+                    added++;
+                }
+                if (x == bx && z == bz) {
+                    break;
+                }
+                int e2 = 2 * err;
+                if (e2 >= dz) {
+                    err += dz;
+                    x += sx;
+                }
+                if (e2 <= dx) {
+                    err += dx;
+                    z += sz;
+                }
+            }
+            return added;
+        }
+
+        private static int killNear(
+                float[] ax, float[] az, int nAtt,
+                float[] nx, float[] nz, int from, int to,
+                float kill
+        ) {
+            float r2 = kill * kill;
+            int w = 0;
+            for (int a = 0; a < nAtt; a++) {
+                boolean dead = false;
+                for (int n = from; n < to; n++) {
+                    float dx = ax[a] - nx[n];
+                    float dz = az[a] - nz[n];
+                    if (dx * dx + dz * dz <= r2) {
+                        dead = true;
+                        break;
+                    }
+                }
+                if (!dead) {
+                    ax[w] = ax[a];
+                    az[w] = az[a];
+                    w++;
+                }
+            }
+            return w;
+        }
+
+        private static void fattenTo(
+                boolean[][] occ,
+                int size,
+                int target,
+                float cx,
+                float cz,
+                RandomSource rng,
+                float maxR,
+                int nOcc
+        ) {
+            HashSet<Integer> peri = new HashSet<>();
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    if (!occ[x][z]) {
+                        continue;
+                    }
+                    for (int[] d : N4) {
+                        int nx = x + d[0];
+                        int nz = z + d[1];
+                        if (nx >= 0 && nx < size && nz >= 0 && nz < size && !occ[nx][nz]) {
+                            peri.add(nx * size + nz);
+                        }
+                    }
+                }
+            }
+            ArrayList<Integer> cells = new ArrayList<>();
+            ArrayList<Float> weights = new ArrayList<>();
+            while (nOcc < target && !peri.isEmpty()) {
+                cells.clear();
+                weights.clear();
+                float total = 0f;
+                for (int packed : peri) {
+                    int x = packed / size;
+                    int z = packed % size;
+                    int nOccN = 0;
+                    for (int[] d : N4) {
+                        int nx = x + d[0];
+                        int nz = z + d[1];
+                        if (nx >= 0 && nx < size && nz >= 0 && nz < size && occ[nx][nz]) {
+                            nOccN++;
+                        }
+                    }
+                    float r = Mth.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
+                    float w = 0f;
+                    if (r <= maxR) {
+                        float t = Math.min(1f, r / Math.max(maxR, 1f));
+                        float radial = CORE_BOOST * (1f - t) + RIM_BOOST * t;
+                        w = (0.28f + (float) Math.pow(nOccN, NEIGHBOR_POW)) * radial;
+                    }
+                    cells.add(packed);
+                    weights.add(w);
+                    total += w;
+                }
+                if (total <= 0f) {
+                    break;
+                }
+                float pick = rng.nextFloat() * total;
+                float acc = 0f;
+                int chosen = cells.get(0);
+                for (int i = 0; i < cells.size(); i++) {
+                    acc += weights.get(i);
+                    if (pick <= acc) {
+                        chosen = cells.get(i);
+                        break;
+                    }
+                }
+                peri.remove(chosen);
+                int x = chosen / size;
+                int z = chosen % size;
+                occ[x][z] = true;
+                nOcc++;
+                for (int[] d : N4) {
+                    int nx = x + d[0];
+                    int nz = z + d[1];
+                    if (nx >= 0 && nx < size && nz >= 0 && nz < size && !occ[nx][nz]) {
+                        peri.add(nx * size + nz);
+                    }
+                }
+            }
+        }
+
+        private static void trimTo(boolean[][] occ, int size, int target, RandomSource rng) {
+            int nOcc = countOcc(occ, size);
+            ArrayList<Integer> tips = new ArrayList<>();
+            while (nOcc > target) {
+                tips.clear();
+                for (int x = 0; x < size; x++) {
+                    for (int z = 0; z < size; z++) {
+                        if (!occ[x][z]) {
+                            continue;
+                        }
+                        int n = 0;
+                        for (int[] d : N4) {
+                            int nx = x + d[0];
+                            int nz = z + d[1];
+                            if (nx >= 0 && nx < size && nz >= 0 && nz < size && occ[nx][nz]) {
+                                n++;
+                            }
+                        }
+                        if (n <= 1) {
+                            tips.add(x * size + z);
+                        }
+                    }
+                }
+                if (tips.isEmpty()) {
+                    for (int x = 0; x < size; x++) {
+                        for (int z = 0; z < size; z++) {
+                            if (occ[x][z]) {
+                                tips.add(x * size + z);
+                            }
+                        }
+                    }
+                }
+                if (tips.isEmpty()) {
+                    break;
+                }
+                int chosen = tips.get(rng.nextInt(tips.size()));
+                occ[chosen / size][chosen % size] = false;
+                nOcc--;
+            }
+        }
+
+        private static final class NodeIndex {
+            final float cell;
+            final Map<Long, List<Integer>> buckets = new HashMap<>();
+            final ArrayList<Integer> scratch = new ArrayList<>(64);
+
+            NodeIndex(float cell) {
+                this.cell = Math.max(cell, 1f);
+            }
+
+            private long key(float x, float z) {
+                int gx = Mth.floor(x / this.cell);
+                int gz = Mth.floor(z / this.cell);
+                return ((long) gx << 32) | (gz & 0xffffffffL);
+            }
+
+            void add(int i, float x, float z) {
+                this.buckets.computeIfAbsent(key(x, z), k -> new ArrayList<>()).add(i);
+            }
+
+            List<Integer> query(float x, float z, float radius) {
+                int gx = Mth.floor(x / this.cell);
+                int gz = Mth.floor(z / this.cell);
+                int r = (int) (radius / this.cell) + 1;
+                this.scratch.clear();
+                for (int ix = gx - r; ix <= gx + r; ix++) {
+                    for (int iz = gz - r; iz <= gz + r; iz++) {
+                        List<Integer> bucket = this.buckets.get(((long) ix << 32) | (iz & 0xffffffffL));
+                        if (bucket != null) {
+                            this.scratch.addAll(bucket);
+                        }
+                    }
+                }
+                return this.scratch;
+            }
+        }
     }
 }

@@ -49,12 +49,16 @@ public class RRBlocks {
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS));
 
     /** Gray pale-oak look; planks recipes, not tagged as logs/wood. */
-    public static final DeferredBlock<Block> GIANT_GOBLET_PIECE = register("giant_goblet_piece",
+    public static final DeferredBlock<Block> GIANT_GOBLET_STEM = register("giant_goblet_stem",
             _ -> BlockBehaviour.Properties.of()
                     .mapColor(MapColor.STONE)
                     .instrument(NoteBlockInstrument.BASS)
                     .strength(2.0F, 3.0F)
                     .sound(SoundType.WOOD));
+
+    /** Bowl / rim of the giant goblet; warped-wart look. */
+    public static final DeferredBlock<Block> GIANT_GOBLET_BUD = register("giant_goblet_bud",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.WARPED_WART_BLOCK));
 
     public static final DeferredBlock<Block> ELDEN_LEAVES = register("elden_leaves",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES).mapColor(MapColor.COLOR_YELLOW),

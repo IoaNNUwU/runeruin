@@ -43,7 +43,8 @@ public final class RRGameTests {
             PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(helper.getLevel().getServer()), java.util.Map.of())
                 .with("seed", "1");
             PreviewJobs.Result result = PreviewCatalog.require("giant_goblet").run(args);
-            helper.assertTrue(result.count("runeruin:giant_goblet_piece") > 100, "giant goblet placed too few piece blocks");
+            helper.assertTrue(result.count("runeruin:giant_goblet_stem") > 100, "giant goblet placed too few stem blocks");
+            helper.assertTrue(result.count("runeruin:giant_goblet_bud") > 50, "giant goblet placed too few bud blocks");
             helper.assertTrue(result.count("minecraft:water") > 100, "giant goblet placed too little water");
             helper.succeed();
         } catch (Exception e) {

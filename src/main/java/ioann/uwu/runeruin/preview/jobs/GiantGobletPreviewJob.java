@@ -17,7 +17,7 @@ public final class GiantGobletPreviewJob implements PreviewJob {
 
     @Override
     public String description() {
-        return "GiantGobletPiece (bowl + stem + arms). params: height, radius";
+        return "GiantGobletPiece (bud bowl + stem + wiggly veins + arms + mini goblets). params: height, radius";
     }
 
     @Override

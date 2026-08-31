@@ -45,7 +45,7 @@ public class DatagenModelProvider extends ModelProvider {
 
         blockModels.createTrivialCube(RRBlocks.ELDEN_LEAVES.get());
         blockModels.createTrivialCube(RRBlocks.ELDEN_PLANKS.get());
-        createGiantGobletPiece(blockModels);
+        createGiantGobletBlocks(blockModels);
         blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ELDEN_LOG.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
 
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
@@ -56,11 +56,16 @@ public class DatagenModelProvider extends ModelProvider {
         createMossBerry(blockModels, itemModels);
     }
 
-    private static void createGiantGobletPiece(@NonNull BlockModelGenerators blockModels) {
+    private static void createGiantGobletBlocks(@NonNull BlockModelGenerators blockModels) {
         Material paleOakBark = TextureMapping.getBlockTexture(Blocks.PALE_OAK_LOG);
         blockModels.createTrivialBlock(
-                RRBlocks.GIANT_GOBLET_PIECE.get(),
+                RRBlocks.GIANT_GOBLET_STEM.get(),
                 _ -> TexturedModel.createAllSame(paleOakBark)
+        );
+        Material warpedWart = TextureMapping.getBlockTexture(Blocks.WARPED_WART_BLOCK);
+        blockModels.createTrivialBlock(
+                RRBlocks.GIANT_GOBLET_BUD.get(),
+                _ -> TexturedModel.createAllSame(warpedWart)
         );
     }
 
