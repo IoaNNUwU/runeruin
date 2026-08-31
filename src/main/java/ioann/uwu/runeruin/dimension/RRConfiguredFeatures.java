@@ -280,13 +280,13 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(GOBLET_MOSS_PATCH, new ConfiguredFeature<>(
-                Feature.VEGETATION_PATCH,
+                RRFeatures.GOBLET_MOSS_PATCH.get(),
                 new VegetationPatchConfiguration(
                         blocks.getOrThrow(RRTags.GOBLET_MOSS_REPLACEABLE),
                         BlockStateProvider.simple(Blocks.MOSS_BLOCK),
                         PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION)),
                         CaveSurface.FLOOR,
-                        ConstantInt.of(1),
+                        ConstantInt.of(32),
                         0.0F,
                         5,
                         0.8F,

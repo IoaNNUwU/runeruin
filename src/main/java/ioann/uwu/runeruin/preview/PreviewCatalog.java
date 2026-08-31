@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.preview;
 
 import ioann.uwu.runeruin.preview.jobs.BoulderPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GiantGobletPreviewJob;
+import ioann.uwu.runeruin.preview.jobs.GobletMossPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.MonolithPreviewJob;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +19,7 @@ public final class PreviewCatalog {
 
     static {
         register(new GiantGobletPreviewJob());
+        register(new GobletMossPreviewJob());
         register(new BoulderPreviewJob());
         register(new MonolithPreviewJob());
     }
