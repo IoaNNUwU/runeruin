@@ -260,6 +260,7 @@ public class GiantGobletPiece extends StructurePiece {
     /**
      * Stamp sc_v4_wiggly cells onto the underside of a cup. One block per occupied
      * pixel, hanging one below the hull so the 1–2 px veins stay readable.
+     * Branch-tip cells are 50% two blocks tall; the extra block replaces hull bud.
      */
     private void placeVeins(
             WorldGenLevel level,
@@ -277,9 +278,15 @@ public class GiantGobletPiece extends StructurePiece {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         float fatJoin = coreRadius + 3.6f;
         float denseJoin = coreRadius + 1.6f;
+        HashSet<Integer> occ = new HashSet<>(Math.max(16, packed.length * 2));
         for (int p : packed) {
-            int x = cx + WigglyDendrites.unpackDx(p);
-            int z = cz + WigglyDendrites.unpackDz(p);
+            occ.add(p);
+        }
+        for (int p : packed) {
+            int dx = WigglyDendrites.unpackDx(p);
+            int dz = WigglyDendrites.unpackDz(p);
+            int x = cx + dx;
+            int z = cz + dz;
             if (x < chunkBB.minX() - 1 || x > chunkBB.maxX() + 1 || z < chunkBB.minZ() - 1 || z > chunkBB.maxZ() + 1) {
                 continue;
             }
@@ -289,20 +296,66 @@ public class GiantGobletPiece extends StructurePiece {
             }
             float r = Mth.sqrt(d2);
             int y = cupUndersideY(r, floorTopY, bowlRadius, hullMinR, hullSteps) - 1;
-            setWeb(level, pos.set(x, y, z), stem, chunkBB);
+            setWeb(level, pos.set(x, y, z), stem, chunkBB, false);
+            if (isVeinTip(occ, dx, dz) && veinTipDoubles(x, z)) {
+                setWeb(level, pos.set(x, y + 1, z), stem, chunkBB, true);
+            }
             if (r < fatJoin) {
-                setWeb(level, pos.set(x + 1, y, z), stem, chunkBB);
-                setWeb(level, pos.set(x - 1, y, z), stem, chunkBB);
-                setWeb(level, pos.set(x, y, z + 1), stem, chunkBB);
-                setWeb(level, pos.set(x, y, z - 1), stem, chunkBB);
+                setWeb(level, pos.set(x + 1, y, z), stem, chunkBB, false);
+                setWeb(level, pos.set(x - 1, y, z), stem, chunkBB, false);
+                setWeb(level, pos.set(x, y, z + 1), stem, chunkBB, false);
+                setWeb(level, pos.set(x, y, z - 1), stem, chunkBB, false);
             }
             if (r < denseJoin) {
-                setWeb(level, pos.set(x + 1, y, z + 1), stem, chunkBB);
-                setWeb(level, pos.set(x + 1, y, z - 1), stem, chunkBB);
-                setWeb(level, pos.set(x - 1, y, z + 1), stem, chunkBB);
-                setWeb(level, pos.set(x - 1, y, z - 1), stem, chunkBB);
+                setWeb(level, pos.set(x + 1, y, z + 1), stem, chunkBB, false);
+                setWeb(level, pos.set(x + 1, y, z - 1), stem, chunkBB, false);
+                setWeb(level, pos.set(x - 1, y, z + 1), stem, chunkBB, false);
+                setWeb(level, pos.set(x - 1, y, z - 1), stem, chunkBB, false);
             }
         }
+    }
+
+    /** True endpoint, or the outer cells of a 2×2 tip on a 1–2 px vein. */
+    private static boolean isVeinTip(HashSet<Integer> occ, int dx, int dz) {
+        int n0x = 0;
+        int n0z = 0;
+        int n1x = 0;
+        int n1z = 0;
+        int n4 = 0;
+        for (int[] d : WigglyDendrites.N4) {
+            int nx = dx + d[0];
+            int nz = dz + d[1];
+            if (!occ.contains(WigglyDendrites.pack(nx, nz))) {
+                continue;
+            }
+            if (n4 == 0) {
+                n0x = nx;
+                n0z = nz;
+            } else if (n4 == 1) {
+                n1x = nx;
+                n1z = nz;
+            }
+            n4++;
+        }
+        if (n4 <= 1) {
+            return true;
+        }
+        if (n4 != 2 || n0x == n1x || n0z == n1z) {
+            return false;
+        }
+        int diagx = n0x + n1x - dx;
+        int diagz = n0z + n1z - dz;
+        if (!occ.contains(WigglyDendrites.pack(diagx, diagz))) {
+            return false;
+        }
+        int r2 = dx * dx + dz * dz;
+        return r2 >= n0x * n0x + n0z * n0z && r2 >= n1x * n1x + n1z * n1z;
+    }
+
+    private boolean veinTipDoubles(int x, int z) {
+        int h = x * 374761393 + z * 668265263 + (int) this.seed;
+        h = (h ^ (h >> 13)) * 1274126177;
+        return (h & 1) == 0;
     }
 
     private static int cupUndersideY(float r, int floorTopY, int bowlRadius, float minR, int hullSteps) {
@@ -315,12 +368,20 @@ public class GiantGobletPiece extends StructurePiece {
         return floorTopY;
     }
 
-    private static void setWeb(WorldGenLevel level, BlockPos pos, BlockState stem, BoundingBox chunkBB) {
+    private static void setWeb(
+            WorldGenLevel level,
+            BlockPos pos,
+            BlockState stem,
+            BoundingBox chunkBB,
+            boolean replaceBud
+    ) {
         if (!chunkBB.isInside(pos)) {
             return;
         }
         BlockState existing = level.getBlockState(pos);
-        if (existing.isAir() || existing.is(stem.getBlock())) {
+        if (existing.isAir()
+                || existing.is(stem.getBlock())
+                || (replaceBud && existing.is(RRBlocks.GIANT_GOBLET_BUD.get()))) {
             level.setBlock(pos, stem, 2);
         }
     }
