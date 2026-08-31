@@ -27,6 +27,8 @@ public class SparklingCavesCeiling {
 
         BiomeDefaultFeatures.addExtraGold(generation);
 
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_MOSS_PATCH);
+
 
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()

@@ -29,6 +29,7 @@ public class SparklingCaves {
         BiomeDefaultFeatures.addExtraGold(generation);
 
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_DECORATION, RRPlacedFeatures.DEEPSLATE_SPIKE);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_MOSS_PATCH);
 
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_DECORATION, NetherPlacements.BASALT_BLOBS);
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_DECORATION, NetherPlacements.BASALT_PILLAR);

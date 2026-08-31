@@ -25,6 +25,7 @@ public class DeepDripstoneCaves {
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CLASSIC_VINES);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_MOSS_PATCH);
 
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.DRIPSTONE_SPIKE);
 

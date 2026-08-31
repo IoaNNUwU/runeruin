@@ -62,6 +62,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.GIANT_GOBLET_BUD.getKey()
         );
 
+        tag(RRTags.GOBLET_MOSS_REPLACEABLE).add(RRBlocks.GIANT_GOBLET_BUD.getKey());
+
         tag(BlockTags.PORTALS).add(RRBlocks.RUNE_RUIN_PORTAL.getKey());
     }
 }

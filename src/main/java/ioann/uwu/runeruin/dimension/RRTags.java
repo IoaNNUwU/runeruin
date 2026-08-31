@@ -7,4 +7,7 @@ import net.minecraft.world.level.block.Block;
 
 public class RRTags {
     public static final TagKey<Block> VEGETABLES_NON_REPLACEABLE = BlockTags.create(RR.id("vegetable_non_replaceable"));
+
+    /** Surface the goblet moss patch may replace — only giant goblet bud. */
+    public static final TagKey<Block> GOBLET_MOSS_REPLACEABLE = BlockTags.create(RR.id("goblet_moss_replaceable"));
 }

@@ -59,6 +59,8 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> DRIPSTONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dripstone_spike");
     public static final ResourceKey<ConfiguredFeature<?, ?>> DEEPSLATE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deepslate_spike");
 
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch");
+
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
         var otherConfiguredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -274,6 +276,22 @@ public class RRConfiguredFeatures {
                         4,
                         0.6F,
                         BlockStateProvider.simple(Blocks.DEEPSLATE)
+                )
+        ));
+
+        ctx.register(GOBLET_MOSS_PATCH, new ConfiguredFeature<>(
+                Feature.VEGETATION_PATCH,
+                new VegetationPatchConfiguration(
+                        blocks.getOrThrow(RRTags.GOBLET_MOSS_REPLACEABLE),
+                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION)),
+                        CaveSurface.FLOOR,
+                        ConstantInt.of(1),
+                        0.0F,
+                        5,
+                        0.8F,
+                        UniformInt.of(4, 7),
+                        0.3F
                 )
         ));
     }
