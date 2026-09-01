@@ -1,5 +1,7 @@
 package ioann.uwu.runeruin.dimension.features;
 
+import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +32,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     private static final IntProvider CLOUD_HEIGHT = UniformInt.of(3, 9);
     private static final IntProvider CLUMP_HEIGHT = UniformInt.of(4, 8);
     private static final IntProvider CLUMP_RADIUS = UniformInt.of(1, 3);
+    private static final float MOSS_BERRY_CHANCE = 0.3F;
 
     public GobletMossPatchFeature() {
         super(VegetationPatchConfiguration.CODEC);
@@ -59,6 +62,47 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
             placeHangingMoss(level, ceiling, random, config, underwater, replaceable);
         }
         return true;
+    }
+
+    @Override
+    protected void distributeVegetation(
+            FeaturePlaceContext<VegetationPatchConfiguration> context,
+            WorldGenLevel level,
+            VegetationPatchConfiguration config,
+            RandomSource random,
+            Set<BlockPos> surface,
+            int xRadius,
+            int zRadius
+    ) {
+        super.distributeVegetation(context, level, config, random, surface, xRadius, zRadius);
+        if (config.vegetationChance() > 0.0F) {
+            placeMossBerryBushes(level, config, random, surface);
+        }
+    }
+
+    private static void placeMossBerryBushes(
+            WorldGenLevel level,
+            VegetationPatchConfiguration config,
+            RandomSource random,
+            Set<BlockPos> surface
+    ) {
+        Direction above = config.surface().getDirection().getOpposite();
+
+        for (BlockPos ground : surface) {
+            if (random.nextFloat() >= MOSS_BERRY_CHANCE) {
+                continue;
+            }
+            BlockPos bushPos = ground.relative(above);
+            if (!level.isEmptyBlock(bushPos) || !level.getBlockState(ground).is(Blocks.MOSS_BLOCK)) {
+                continue;
+            }
+            int age = random.nextInt(4);
+            level.setBlock(
+                    bushPos,
+                    RRBlocks.MOSS_BERRY_BUSH.get().defaultBlockState().setValue(MossBerryBushBlock.AGE, age),
+                    2
+            );
+        }
     }
 
     private Set<BlockPos> placeGroundPatchUnderwater(
