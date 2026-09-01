@@ -12,7 +12,9 @@ import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.feature.SpeleothemUtils;
 import net.minecraft.world.level.levelgen.feature.VegetationPatchFeature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration;
@@ -42,16 +44,73 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
         Predicate<BlockState> replaceable = state -> state.is(config.replaceable());
         int xRadius = config.xzRadius().sample(random) + 1;
         int zRadius = config.xzRadius().sample(random) + 1;
-        Set<BlockPos> surface = this.placeGroundPatch(level, config, random, origin, replaceable, xRadius, zRadius);
-        this.distributeVegetation(context, level, config, random, surface, xRadius, zRadius);
+        boolean underwater = config.vegetationChance() <= 0.0F;
+        Set<BlockPos> surface = underwater
+                ? this.placeGroundPatchUnderwater(level, config, random, origin, replaceable, xRadius, zRadius)
+                : super.placeGroundPatch(level, config, random, origin, replaceable, xRadius, zRadius);
+        if (!underwater) {
+            this.distributeVegetation(context, level, config, random, surface, xRadius, zRadius);
+        }
         if (surface.isEmpty()) {
             return false;
         }
-        Set<BlockPos> ceiling = findMossCeiling(level, origin, config, replaceable, xRadius, zRadius);
+        Set<BlockPos> ceiling = findMossCeiling(level, origin, config, replaceable, xRadius, zRadius, underwater);
         if (!ceiling.isEmpty()) {
-            placeHangingMoss(level, ceiling, random, config);
+            placeHangingMoss(level, ceiling, random, config, underwater, replaceable);
         }
         return true;
+    }
+
+    private Set<BlockPos> placeGroundPatchUnderwater(
+            WorldGenLevel level,
+            VegetationPatchConfiguration config,
+            RandomSource random,
+            BlockPos origin,
+            Predicate<BlockState> replaceable,
+            int xRadius,
+            int zRadius
+    ) {
+        BlockPos.MutableBlockPos pos = origin.mutable();
+        BlockPos.MutableBlockPos belowPos = pos.mutable();
+        Direction inwards = config.surface().getDirection();
+        Direction outwards = inwards.getOpposite();
+        Set<BlockPos> surface = new HashSet<>();
+        Predicate<BlockState> passable = SpeleothemUtils::isEmptyOrWater;
+        Predicate<BlockState> solid = SpeleothemUtils::isNeitherEmptyNorWater;
+
+        for (int dx = -xRadius; dx <= xRadius; dx++) {
+            boolean isXEdge = dx == -xRadius || dx == xRadius;
+
+            for (int dz = -zRadius; dz <= zRadius; dz++) {
+                boolean isZEdge = dz == -zRadius || dz == zRadius;
+                boolean isEdge = isXEdge || isZEdge;
+                boolean isCorner = isXEdge && isZEdge;
+                boolean isEdgeButNotCorner = isEdge && !isCorner;
+                if (!isCorner && (!isEdgeButNotCorner || config.extraEdgeColumnChance() != 0.0F && !(random.nextFloat() > config.extraEdgeColumnChance()))) {
+                    pos.setWithOffset(origin, dx, 0, dz);
+
+                    for (int offset = 0; level.isStateAtPosition(pos, passable) && offset < config.verticalRange(); offset++) {
+                        pos.move(inwards);
+                    }
+
+                    for (int steps = 0; level.isStateAtPosition(pos, solid) && steps < config.verticalRange(); steps++) {
+                        pos.move(outwards);
+                    }
+
+                    belowPos.setWithOffset(pos, config.surface().getDirection());
+                    BlockState belowState = level.getBlockState(belowPos);
+                    if (level.isStateAtPosition(pos, passable)
+                            && belowState.isFaceSturdy(level, belowPos, config.surface().getDirection().getOpposite())) {
+                        // Underwater: не заменяем goblet_bud мхом, только собираем поверхность для hanging moss
+                        if (replaceable.test(belowState) || belowState.is(Blocks.MOSS_BLOCK)) {
+                            surface.add(belowPos.immutable());
+                        }
+                    }
+                }
+            }
+        }
+
+        return surface;
     }
 
     private static Set<BlockPos> findMossCeiling(
@@ -60,8 +119,10 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
             VegetationPatchConfiguration config,
             Predicate<BlockState> replaceable,
             int xRadius,
-            int zRadius
+            int zRadius,
+            boolean underwater
     ) {
+        Predicate<BlockState> passable = underwater ? SpeleothemUtils::isEmptyOrWater : BlockBehaviour.BlockStateBase::isAir;
         Set<BlockPos> ceiling = new HashSet<>();
         BlockPos.MutableBlockPos cursor = origin.mutable();
         int maxSteps = config.verticalRange() + config.depth().maxInclusive() + 8;
@@ -70,7 +131,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
             for (int dz = -zRadius; dz <= zRadius; dz++) {
                 cursor.set(origin.getX() + dx, origin.getY(), origin.getZ() + dz);
                 int steps = 0;
-                while (steps < maxSteps && level.getBlockState(cursor).isAir()) {
+                while (steps < maxSteps && passable.test(level.getBlockState(cursor))) {
                     cursor.move(Direction.DOWN);
                     steps++;
                 }
@@ -81,7 +142,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                     cursor.move(Direction.DOWN);
                     steps++;
                 }
-                if (level.getBlockState(cursor.below()).isAir()) {
+                if (passable.test(level.getBlockState(cursor.below()))) {
                     ceiling.add(cursor.immutable());
                 }
             }
@@ -97,7 +158,9 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
             WorldGenLevel level,
             Set<BlockPos> ceiling,
             RandomSource random,
-            VegetationPatchConfiguration config
+            VegetationPatchConfiguration config,
+            boolean underwater,
+            Predicate<BlockState> replaceable
     ) {
         BlockState moss = config.groundState().getState(level, random, ceiling.iterator().next());
         List<BlockPos> candidates = new ArrayList<>(ceiling);
@@ -111,22 +174,26 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                 continue;
             }
             if (placed < targetStrands || random.nextFloat() < 0.3F) {
-                placeRandomStrand(level, attach, random, moss);
+                placeRandomStrand(level, attach, random, moss, underwater, replaceable);
                 placed++;
             }
         }
     }
 
-    private static void placeRandomStrand(WorldGenLevel level, BlockPos attach, RandomSource random, BlockState moss) {
+    private static void placeRandomStrand(WorldGenLevel level, BlockPos attach, RandomSource random, BlockState moss, boolean underwater, Predicate<BlockState> replaceable) {
         switch (random.nextInt(3)) {
-            case 0 -> placeDripStrand(level, attach, random, moss);
-            case 1 -> placeCloudStrand(level, attach, random, moss);
-            default -> placeTaperedClump(level, attach, random, moss);
+            case 0 -> placeDripStrand(level, attach, random, moss, underwater, replaceable);
+            case 1 -> placeCloudStrand(level, attach, random, moss, underwater, replaceable);
+            default -> placeTaperedClump(level, attach, random, moss, underwater, replaceable);
         }
     }
 
+    private static boolean isPassable(BlockState state, boolean underwater) {
+        return underwater ? SpeleothemUtils.isEmptyOrWater(state) : state.isAir();
+    }
+
     /** Thin strand that wanders slightly sideways while descending. */
-    private static void placeDripStrand(WorldGenLevel level, BlockPos attach, RandomSource random, BlockState moss) {
+    private static void placeDripStrand(WorldGenLevel level, BlockPos attach, RandomSource random, BlockState moss, boolean underwater, Predicate<BlockState> replaceable) {
         int height = DRIP_HEIGHT.sample(random);
         BlockPos.MutableBlockPos pos = attach.mutable();
 
@@ -138,10 +205,10 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
             if (random.nextFloat() < 0.4F) {
                 pos.move(random.nextBoolean() ? Direction.NORTH : Direction.SOUTH);
             }
-            if (!level.getBlockState(pos).isAir()) {
+            if (!isPassable(level.getBlockState(pos), underwater)) {
                 break;
             }
-            if (!canHangFrom(level, pos, moss)) {
+            if (!canHangFrom(level, pos, moss, replaceable)) {
                 break;
             }
             level.setBlock(pos, moss, 2);
@@ -149,7 +216,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     }
 
     /** Irregular blob per layer — sparse and uneven edges. */
-    private static void placeCloudStrand(WorldGenLevel level, BlockPos attach, RandomSource random, BlockState moss) {
+    private static void placeCloudStrand(WorldGenLevel level, BlockPos attach, RandomSource random, BlockState moss, boolean underwater, Predicate<BlockState> replaceable) {
         int height = CLOUD_HEIGHT.sample(random);
         int baseSpread = UniformInt.of(1, 2).sample(random);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -166,7 +233,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                         continue;
                     }
                     pos.set(attach.getX() + dx, y, attach.getZ() + dz);
-                    if (!level.getBlockState(pos).isAir() || !canHangFrom(level, pos, moss)) {
+                    if (!isPassable(level.getBlockState(pos), underwater) || !canHangFrom(level, pos, moss, replaceable)) {
                         continue;
                     }
                     level.setBlock(pos, moss, 2);
@@ -176,7 +243,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     }
 
     /** Small tapering clump with noisy radius per layer. */
-    private static void placeTaperedClump(WorldGenLevel level, BlockPos attach, RandomSource random, BlockState moss) {
+    private static void placeTaperedClump(WorldGenLevel level, BlockPos attach, RandomSource random, BlockState moss, boolean underwater, Predicate<BlockState> replaceable) {
         int radius = CLUMP_RADIUS.sample(random);
         int height = CLUMP_HEIGHT.sample(random);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -196,7 +263,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                         continue;
                     }
                     pos.set(attach.getX() + dx, y, attach.getZ() + dz);
-                    if (!level.getBlockState(pos).isAir() || !canHangFrom(level, pos, moss)) {
+                    if (!isPassable(level.getBlockState(pos), underwater) || !canHangFrom(level, pos, moss, replaceable)) {
                         continue;
                     }
                     level.setBlock(pos, moss, 2);
@@ -206,9 +273,9 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     }
 
     /** Only hang blocks that have moss directly above — avoids floating edges on the bowl rim. */
-    private static boolean canHangFrom(WorldGenLevel level, BlockPos pos, BlockState moss) {
+    private static boolean canHangFrom(WorldGenLevel level, BlockPos pos, BlockState moss, Predicate<BlockState> replaceable) {
         BlockState above = level.getBlockState(pos.above());
-        return above.is(moss.getBlock());
+        return above.is(moss.getBlock()) || replaceable.test(above);
     }
 
     private static void shuffle(List<BlockPos> list, RandomSource random) {

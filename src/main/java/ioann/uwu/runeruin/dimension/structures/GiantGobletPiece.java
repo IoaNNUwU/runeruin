@@ -219,7 +219,7 @@ public class GiantGobletPiece extends StructurePiece {
                         }
                     }
                     for (int y = floorY + 1; y <= waterTopY; y++) {
-                        set(level, pos.set(x, y, z), water, chunkBB);
+                        setWaterIfAir(level, pos.set(x, y, z), water, chunkBB);
                     }
                 }
 
@@ -507,7 +507,7 @@ public class GiantGobletPiece extends StructurePiece {
                         }
                     }
                     for (int y = floorY + 1; y <= waterTopY; y++) {
-                        set(level, pos.set(x, y, z), water, chunkBB);
+                        setWaterIfAir(level, pos.set(x, y, z), water, chunkBB);
                     }
                 }
             }
@@ -708,6 +708,13 @@ public class GiantGobletPiece extends StructurePiece {
             if (!fluid.isEmpty()) {
                 level.scheduleTick(pos, fluid.getType(), 0);
             }
+        }
+    }
+
+    private static void setWaterIfAir(WorldGenLevel level, BlockPos pos, BlockState water, BoundingBox chunkBB) {
+        if (chunkBB.isInside(pos) && level.getBlockState(pos).isAir()) {
+            level.setBlock(pos, water, 2);
+            level.scheduleTick(pos, water.getFluidState().getType(), 0);
         }
     }
 

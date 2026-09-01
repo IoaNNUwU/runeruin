@@ -59,6 +59,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> DEEPSLATE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "deepslate_spike");
 
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch");
+    public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch_underwater");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -465,6 +466,26 @@ public class RRPlacedFeatures {
                                 Direction.DOWN,
                                 BlockPredicate.matchesTag(RRTags.GOBLET_MOSS_REPLACEABLE),
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                32
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                        BiomeFilter.biome()
+                )
+        ));
+
+        ctx.register(GOBLET_MOSS_PATCH_UNDERWATER, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_MOSS_PATCH_UNDERWATER),
+                List.of(
+                        CountPlacement.of(88),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(LOST_CAVES_Y),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.matchesTag(RRTags.GOBLET_MOSS_REPLACEABLE),
+                                BlockPredicate.matchesBlocks(Blocks.WATER),
                                 32
                         ),
                         RandomOffsetPlacement.vertical(ConstantInt.of(1)),

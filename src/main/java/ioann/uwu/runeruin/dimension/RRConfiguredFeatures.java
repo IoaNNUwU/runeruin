@@ -60,6 +60,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> DEEPSLATE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deepslate_spike");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch_underwater");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -281,18 +282,31 @@ public class RRConfiguredFeatures {
 
         ctx.register(GOBLET_MOSS_PATCH, new ConfiguredFeature<>(
                 RRFeatures.GOBLET_MOSS_PATCH.get(),
-                new VegetationPatchConfiguration(
-                        blocks.getOrThrow(RRTags.GOBLET_MOSS_REPLACEABLE),
-                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
-                        PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION)),
-                        CaveSurface.FLOOR,
-                        ConstantInt.of(32),
-                        0.0F,
-                        5,
-                        0.8F,
-                        UniformInt.of(4, 7),
-                        0.3F
-                )
+                gobletMossPatchConfig(blocks, otherConfiguredFeatures, 0.8F)
         ));
+
+        ctx.register(GOBLET_MOSS_PATCH_UNDERWATER, new ConfiguredFeature<>(
+                RRFeatures.GOBLET_MOSS_PATCH.get(),
+                gobletMossPatchConfig(blocks, otherConfiguredFeatures, 0.0F)
+        ));
+    }
+
+    private static VegetationPatchConfiguration gobletMossPatchConfig(
+            HolderGetter<Block> blocks,
+            HolderGetter<ConfiguredFeature<?, ?>> otherConfiguredFeatures,
+            float vegetationChance
+    ) {
+        return new VegetationPatchConfiguration(
+                blocks.getOrThrow(RRTags.GOBLET_MOSS_REPLACEABLE),
+                BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION)),
+                CaveSurface.FLOOR,
+                ConstantInt.of(32),
+                0.0F,
+                5,
+                vegetationChance,
+                UniformInt.of(4, 7),
+                0.3F
+        );
     }
 }
