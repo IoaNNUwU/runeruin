@@ -10,4 +10,7 @@ public class RRTags {
 
     /** Surface the goblet moss patch may replace — only giant goblet bud. */
     public static final TagKey<Block> GOBLET_MOSS_REPLACEABLE = BlockTags.create(RR.id("goblet_moss_replaceable"));
+
+    /** Blocks that may support the custom deep roots block. */
+    public static final TagKey<Block> SUPPORTS_DEEP_ROOTS = BlockTags.create(RR.id("supports_deep_roots"));
 }

@@ -65,6 +65,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.LAPIS_LIGHT.getKey()
         );
 
+        tag(BlockTags.INSIDE_STEP_SOUND_BLOCKS).add(RRBlocks.DEEP_ROOTS.getKey());
+
         tag(BlockTags.LOGS).add(RRBlocks.INVERTED_TREE_WOOD.getKey());
         tag(BlockTags.LEAVES).add(
                 RRBlocks.INVERTED_LEAVES_1.getKey(),
@@ -114,6 +116,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
         );
 
         tag(RRTags.GOBLET_MOSS_REPLACEABLE).add(RRBlocks.GIANT_GOBLET_BUD.getKey());
+        tag(RRTags.SUPPORTS_DEEP_ROOTS).add(RRBlocks.GIANT_GOBLET_BUD.getKey());
 
         tag(BlockTags.PORTALS).add(RRBlocks.RUNE_RUIN_PORTAL.getKey());
     }

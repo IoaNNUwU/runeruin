@@ -60,6 +60,7 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch_underwater");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_deep_roots");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -287,6 +288,11 @@ public class RRConfiguredFeatures {
         ctx.register(GOBLET_MOSS_PATCH_UNDERWATER, new ConfiguredFeature<>(
                 RRFeatures.GOBLET_MOSS_PATCH.get(),
                 gobletMossPatchConfig(blocks, otherConfiguredFeatures, 0.0F)
+        ));
+
+        ctx.register(GOBLET_DEEP_ROOTS, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DEEP_ROOTS.get()))
         ));
     }
 

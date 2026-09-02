@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.blocks;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.RRTags;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.core.particles.ParticleTypes;
@@ -66,6 +67,11 @@ public class RRBlocks {
     /** Bowl / rim of the giant goblet; warped-wart look. */
     public static final DeferredBlock<Block> GIANT_GOBLET_BUD = register("giant_goblet_bud",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.WARPED_WART_BLOCK));
+
+    /** Nether-roots-like decoration that can only grow on giant goblet buds. */
+    public static final DeferredBlock<Block> DEEP_ROOTS = register("deep_roots",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.WARPED_ROOTS),
+            p -> new NetherRootsBlock(RRTags.SUPPORTS_DEEP_ROOTS, p));
 
     public static final DeferredBlock<Block> ELDEN_LEAVES = register("elden_leaves",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES).mapColor(MapColor.COLOR_YELLOW),

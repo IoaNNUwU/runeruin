@@ -56,6 +56,16 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
         blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
 
+        blockModels.registerSimpleItemModel(
+                RRBlocks.DEEP_ROOTS.get().asItem(),
+                ModelLocationUtils.getModelLocation(Blocks.WARPED_ROOTS.asItem())
+        );
+        blockModels.createCrossBlock(
+                RRBlocks.DEEP_ROOTS.get(),
+                BlockModelGenerators.PlantType.NOT_TINTED,
+                TextureMapping.cross(TextureMapping.getBlockTexture(Blocks.WARPED_ROOTS))
+        );
+
         createRuneRuinPortal(blockModels);
         createMossBerry(blockModels, itemModels);
     }
@@ -87,7 +97,9 @@ public class DatagenModelProvider extends ModelProvider {
                 _ -> TexturedModel.createAllSame(pinkGlazedTerracotta)
         );
 
-        blockModels.woodProvider(Blocks.PALE_OAK_LOG).wood(RRBlocks.INVERTED_TREE_WOOD.get());
+        Material invertedWood = new Material(RR.id("block/inverted_tree_wood"));
+        blockModels.new WoodProvider(TextureMapping.column(invertedWood, invertedWood))
+                .wood(RRBlocks.INVERTED_TREE_WOOD.get());
 
         BlockFamily blockFamily = new BlockFamily.Builder(RRBlocks.INVERTED_TREE_PLANKS.get())
                 .button(RRBlocks.INVERTED_TREE_BUTTON.get())

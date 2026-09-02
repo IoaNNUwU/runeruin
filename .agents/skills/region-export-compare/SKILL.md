@@ -26,9 +26,9 @@ Pick one, in this order:
 From the repo root (Python stdlib only):
 
 ```powershell
-python .cursor/skills/region-export-compare/scripts/compare_region.py
-python .cursor/skills/region-export-compare/scripts/compare_region.py exports/actual.txt exports/region_should_be.txt
-python .cursor/skills/region-export-compare/scripts/compare_region.py --profile --actual exports/actual.txt
+python .agents/skills/region-export-compare/scripts/compare_region.py
+python .agents/skills/region-export-compare/scripts/compare_region.py exports/actual.txt exports/region_should_be.txt
+python .agents/skills/region-export-compare/scripts/compare_region.py --profile --actual exports/actual.txt
 ```
 
 Read the whole stdout. Overlay legend:

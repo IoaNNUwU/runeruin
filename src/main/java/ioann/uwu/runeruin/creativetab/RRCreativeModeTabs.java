@@ -45,6 +45,7 @@ public class RRCreativeModeTabs {
                     RRBlocks.ELDEN_PLANKS.toStack(),
                     RRBlocks.GIANT_GOBLET_STEM.toStack(),
                     RRBlocks.GIANT_GOBLET_BUD.toStack(),
+                    RRBlocks.DEEP_ROOTS.toStack(),
                     RRBlocks.ELDEN_LEAVES.toStack(),
 
                     RRBlocks.INVERTED_LEAVES_1.toStack(),
