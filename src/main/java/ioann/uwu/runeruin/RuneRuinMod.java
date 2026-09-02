@@ -7,6 +7,7 @@ import ioann.uwu.runeruin.dimension.*;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.preview.RRGameTests;
 import ioann.uwu.runeruin.portal.RRPoiTypes;
+import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -15,6 +16,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.data.internal.*;
+import net.neoforged.neoforge.event.BlockEntityTypeAddBlocksEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
@@ -26,6 +28,7 @@ public class RuneRuinMod {
     public RuneRuinMod(IEventBus modEventBus, ModContainer modContainer) {
 
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::addBlockEntityTypes);
 
         RRBlocks.REGISTRY.register(modEventBus);
         RRItems.REGISTRY.register(modEventBus);
@@ -52,6 +55,19 @@ public class RuneRuinMod {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
+    }
+
+    private void addBlockEntityTypes(BlockEntityTypeAddBlocksEvent event) {
+        event.modify(
+                BlockEntityTypes.SIGN,
+                RRBlocks.INVERTED_TREE_SIGN.get(),
+                RRBlocks.INVERTED_TREE_WALL_SIGN.get()
+        );
+        event.modify(
+                BlockEntityTypes.HANGING_SIGN,
+                RRBlocks.INVERTED_TREE_HANGING_SIGN.get(),
+                RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.get()
+        );
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

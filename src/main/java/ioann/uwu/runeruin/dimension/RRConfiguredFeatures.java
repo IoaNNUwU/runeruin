@@ -15,7 +15,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.util.valueproviders.*;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVines;
@@ -237,10 +236,10 @@ public class RRConfiguredFeatures {
                 RRFeatures.INVERTED_TREE.get(),
                 new InvertedTreeFeature.Config(
                         BlockStateProvider.simple(Blocks.MOSS_BLOCK),
-                        BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
+                        BlockStateProvider.simple(RRBlocks.INVERTED_TREE_WOOD.get()),
                         List.of(
-                                BlockStateProvider.simple(Blocks.CHERRY_LEAVES),
-                                BlockStateProvider.simple(Blocks.GLAZED_TERRACOTTA.pick(DyeColor.PINK))
+                                BlockStateProvider.simple(RRBlocks.INVERTED_LEAVES_1.get()),
+                                BlockStateProvider.simple(RRBlocks.INVERTED_LEAVES_2.get())
                         ),
                         ConstantInt.of(18)
                 )

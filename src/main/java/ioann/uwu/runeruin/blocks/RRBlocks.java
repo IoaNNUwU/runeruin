@@ -4,10 +4,14 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.item.HangingSignItem;
+import net.minecraft.world.item.SignItem;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -20,6 +24,9 @@ public class RRBlocks {
     public static final DeferredRegister.Blocks REGISTRY = DeferredRegister.createBlocks(RR.MODID);
 
     private static final UnaryOperator<BlockBehaviour.Properties> ARCANE_STONE_PROPS = _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.DEEPSLATE);
+
+    private static final BlockSetType INVERTED_TREE_BLOCK_SET = BlockSetType.register(new BlockSetType("inverted_tree"));
+    private static final WoodType INVERTED_TREE_WOOD_TYPE = WoodType.register(new WoodType("inverted_tree", INVERTED_TREE_BLOCK_SET));
 
     public static final DeferredBlock<Block> ARCANE_STONE = register("arcane_stone", ARCANE_STONE_PROPS);
     public static final DeferredBlock<Block> ARCANE_STONE_BRICKS = register("arcane_stone_bricks", ARCANE_STONE_PROPS);
@@ -64,6 +71,98 @@ public class RRBlocks {
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES).mapColor(MapColor.COLOR_YELLOW),
             p -> new UntintedParticleLeavesBlock(0.1f, ParticleTypes.CLOUD, p) // TODO: ParticleType
     );
+
+    /** Temporary inverted-tree leaves: Cherry Leaves for the first variant. */
+    public static final DeferredBlock<Block> INVERTED_LEAVES_1 = register("inverted_leaves_1",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES),
+            p -> new UntintedParticleLeavesBlock(0.1F, ParticleTypes.CHERRY_LEAVES, p)
+    );
+
+    /** Temporary inverted-tree leaves: Pink Glazed Terracotta texture with leaf behavior. */
+    public static final DeferredBlock<Block> INVERTED_LEAVES_2 = register("inverted_leaves_2",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES),
+            p -> new UntintedParticleLeavesBlock(0.1F, ParticleTypes.CHERRY_LEAVES, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_WOOD = register("inverted_tree_wood",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_WOOD),
+            RotatedPillarBlock::new
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_PLANKS = register("inverted_tree_planks",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_PLANKS)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_STAIRS = register("inverted_tree_stairs",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_STAIRS),
+            p -> new StairBlock(INVERTED_TREE_PLANKS.get().defaultBlockState(), p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_SLAB = register("inverted_tree_slab",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_SLAB),
+            SlabBlock::new
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_FENCE = register("inverted_tree_fence",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_FENCE),
+            FenceBlock::new
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_FENCE_GATE = register("inverted_tree_fence_gate",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_FENCE_GATE),
+            p -> new FenceGateBlock(INVERTED_TREE_WOOD_TYPE, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_DOOR = register("inverted_tree_door",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_DOOR),
+            p -> new DoorBlock(INVERTED_TREE_BLOCK_SET, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_TRAPDOOR = register("inverted_tree_trapdoor",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_TRAPDOOR),
+            p -> new TrapDoorBlock(INVERTED_TREE_BLOCK_SET, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_PRESSURE_PLATE = register("inverted_tree_pressure_plate",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_PRESSURE_PLATE),
+            p -> new PressurePlateBlock(INVERTED_TREE_BLOCK_SET, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_BUTTON = register("inverted_tree_button",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_BUTTON),
+            p -> new ButtonBlock(INVERTED_TREE_BLOCK_SET, 30, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_SIGN = registerNoItem("inverted_tree_sign",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_SIGN),
+            p -> new StandingSignBlock(INVERTED_TREE_WOOD_TYPE, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_WALL_SIGN = registerNoItem("inverted_tree_wall_sign",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_WALL_SIGN),
+            p -> new WallSignBlock(INVERTED_TREE_WOOD_TYPE, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_HANGING_SIGN = registerNoItem("inverted_tree_hanging_sign",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_HANGING_SIGN),
+            p -> new CeilingHangingSignBlock(INVERTED_TREE_WOOD_TYPE, p)
+    );
+
+    public static final DeferredBlock<Block> INVERTED_TREE_WALL_HANGING_SIGN = registerNoItem("inverted_tree_wall_hanging_sign",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_WALL_HANGING_SIGN),
+            p -> new WallHangingSignBlock(INVERTED_TREE_WOOD_TYPE, p)
+    );
+
+    static {
+        RRItems.REGISTRY.registerItem("inverted_tree_sign",
+                p -> new SignItem(INVERTED_TREE_SIGN.get(), INVERTED_TREE_WALL_SIGN.get(), p),
+                p -> p.stacksTo(16).useBlockDescriptionPrefix()
+        );
+        RRItems.REGISTRY.registerItem("inverted_tree_hanging_sign",
+                p -> new HangingSignItem(INVERTED_TREE_HANGING_SIGN.get(), INVERTED_TREE_WALL_HANGING_SIGN.get(), p),
+                p -> p.stacksTo(16).useBlockDescriptionPrefix()
+        );
+    }
 
     public static final DeferredBlock<Block> MOSS_LIGHT = register("moss_light",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSSY_COBBLESTONE)
@@ -118,5 +217,9 @@ public class RRBlocks {
         RRItems.REGISTRY.registerSimpleBlockItem(name, blockRecord);
 
         return blockRecord;
+    }
+
+    private static DeferredBlock<Block> registerNoItem(String name, UnaryOperator<BlockBehaviour.Properties> props, Function<BlockBehaviour.Properties, ? extends Block> block) {
+        return REGISTRY.registerBlock(name, block, props);
     }
 }

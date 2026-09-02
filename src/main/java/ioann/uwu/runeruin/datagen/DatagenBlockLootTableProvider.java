@@ -48,6 +48,23 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
 
         dropSelf(RRBlocks.ELDEN_LEAVES.get());
 
+        dropSelf(RRBlocks.INVERTED_LEAVES_1.get());
+        dropSelf(RRBlocks.INVERTED_LEAVES_2.get());
+        dropSelf(RRBlocks.INVERTED_TREE_WOOD.get());
+        dropSelf(RRBlocks.INVERTED_TREE_PLANKS.get());
+        dropSelf(RRBlocks.INVERTED_TREE_STAIRS.get());
+        dropSelf(RRBlocks.INVERTED_TREE_SLAB.get());
+        dropSelf(RRBlocks.INVERTED_TREE_FENCE.get());
+        dropSelf(RRBlocks.INVERTED_TREE_FENCE_GATE.get());
+        dropSelf(RRBlocks.INVERTED_TREE_DOOR.get());
+        dropSelf(RRBlocks.INVERTED_TREE_TRAPDOOR.get());
+        dropSelf(RRBlocks.INVERTED_TREE_PRESSURE_PLATE.get());
+        dropSelf(RRBlocks.INVERTED_TREE_BUTTON.get());
+        dropSelf(RRBlocks.INVERTED_TREE_SIGN.get());
+        dropSelf(RRBlocks.INVERTED_TREE_HANGING_SIGN.get());
+        add(RRBlocks.INVERTED_TREE_WALL_SIGN.get(), block -> createSingleItemTable(RRBlocks.INVERTED_TREE_SIGN.get()));
+        add(RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.get(), block -> createSingleItemTable(RRBlocks.INVERTED_TREE_HANGING_SIGN.get()));
+
         dropPottedContents(RRBlocks.POTTED_ELDEN_SAPLING.get());
 
         dropSelf(RRBlocks.MOSS_LIGHT.get());

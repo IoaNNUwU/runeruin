@@ -36,17 +36,68 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.MINEABLE_WITH_AXE).add(
                 RRBlocks.ELDEN_LOG.getKey(),
-                RRBlocks.ELDEN_PLANKS.getKey()
+                RRBlocks.ELDEN_PLANKS.getKey(),
+                RRBlocks.INVERTED_TREE_WOOD.getKey(),
+                RRBlocks.INVERTED_TREE_PLANKS.getKey(),
+                RRBlocks.INVERTED_TREE_STAIRS.getKey(),
+                RRBlocks.INVERTED_TREE_SLAB.getKey(),
+                RRBlocks.INVERTED_TREE_FENCE.getKey(),
+                RRBlocks.INVERTED_TREE_FENCE_GATE.getKey(),
+                RRBlocks.INVERTED_TREE_DOOR.getKey(),
+                RRBlocks.INVERTED_TREE_TRAPDOOR.getKey(),
+                RRBlocks.INVERTED_TREE_PRESSURE_PLATE.getKey(),
+                RRBlocks.INVERTED_TREE_BUTTON.getKey(),
+                RRBlocks.INVERTED_TREE_SIGN.getKey(),
+                RRBlocks.INVERTED_TREE_WALL_SIGN.getKey(),
+                RRBlocks.INVERTED_TREE_HANGING_SIGN.getKey(),
+                RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.getKey()
         );
 
         tag(BlockTags.MINEABLE_WITH_HOE).add(
                 RRBlocks.ELDEN_LEAVES.getKey(),
+                RRBlocks.INVERTED_LEAVES_1.getKey(),
+                RRBlocks.INVERTED_LEAVES_2.getKey(),
                 RRBlocks.GIANT_GOBLET_STEM.getKey(),
                 RRBlocks.GIANT_GOBLET_BUD.getKey(),
                 RRBlocks.MOSS_LIGHT.getKey(),
                 RRBlocks.GLOWING_MOSS.getKey(),
                 RRBlocks.GLOWING_MOSS_CARPET.getKey(),
                 RRBlocks.LAPIS_LIGHT.getKey()
+        );
+
+        tag(BlockTags.LOGS).add(RRBlocks.INVERTED_TREE_WOOD.getKey());
+        tag(BlockTags.LEAVES).add(
+                RRBlocks.INVERTED_LEAVES_1.getKey(),
+                RRBlocks.INVERTED_LEAVES_2.getKey()
+        );
+        tag(BlockTags.PLANKS).add(RRBlocks.INVERTED_TREE_PLANKS.getKey());
+        tag(BlockTags.WOODEN_STAIRS).add(RRBlocks.INVERTED_TREE_STAIRS.getKey());
+        tag(BlockTags.WOODEN_SLABS).add(RRBlocks.INVERTED_TREE_SLAB.getKey());
+        tag(BlockTags.WOODEN_FENCES).add(RRBlocks.INVERTED_TREE_FENCE.getKey());
+        tag(BlockTags.FENCES).add(RRBlocks.INVERTED_TREE_FENCE.getKey());
+        tag(BlockTags.FENCE_GATES).add(RRBlocks.INVERTED_TREE_FENCE_GATE.getKey());
+        tag(BlockTags.WOODEN_DOORS).add(RRBlocks.INVERTED_TREE_DOOR.getKey());
+        tag(BlockTags.DOORS).add(RRBlocks.INVERTED_TREE_DOOR.getKey());
+        tag(BlockTags.WOODEN_TRAPDOORS).add(RRBlocks.INVERTED_TREE_TRAPDOOR.getKey());
+        tag(BlockTags.TRAPDOORS).add(RRBlocks.INVERTED_TREE_TRAPDOOR.getKey());
+        tag(BlockTags.WOODEN_PRESSURE_PLATES).add(RRBlocks.INVERTED_TREE_PRESSURE_PLATE.getKey());
+        tag(BlockTags.PRESSURE_PLATES).add(RRBlocks.INVERTED_TREE_PRESSURE_PLATE.getKey());
+        tag(BlockTags.WOODEN_BUTTONS).add(RRBlocks.INVERTED_TREE_BUTTON.getKey());
+        tag(BlockTags.BUTTONS).add(RRBlocks.INVERTED_TREE_BUTTON.getKey());
+        tag(BlockTags.STANDING_SIGNS).add(RRBlocks.INVERTED_TREE_SIGN.getKey());
+        tag(BlockTags.WALL_SIGNS).add(RRBlocks.INVERTED_TREE_WALL_SIGN.getKey());
+        tag(BlockTags.SIGNS).add(RRBlocks.INVERTED_TREE_SIGN.getKey(), RRBlocks.INVERTED_TREE_WALL_SIGN.getKey());
+        tag(BlockTags.CEILING_HANGING_SIGNS).add(RRBlocks.INVERTED_TREE_HANGING_SIGN.getKey());
+        tag(BlockTags.WALL_HANGING_SIGNS).add(RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.getKey());
+        tag(BlockTags.ALL_HANGING_SIGNS).add(
+                RRBlocks.INVERTED_TREE_HANGING_SIGN.getKey(),
+                RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.getKey()
+        );
+        tag(BlockTags.ALL_SIGNS).add(
+                RRBlocks.INVERTED_TREE_SIGN.getKey(),
+                RRBlocks.INVERTED_TREE_WALL_SIGN.getKey(),
+                RRBlocks.INVERTED_TREE_HANGING_SIGN.getKey(),
+                RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.getKey()
         );
 
         tag(BlockTags.PLANKS).add(RRBlocks.GIANT_GOBLET_STEM.getKey());

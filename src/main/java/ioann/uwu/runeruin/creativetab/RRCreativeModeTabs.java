@@ -45,6 +45,21 @@ public class RRCreativeModeTabs {
                     RRBlocks.ELDEN_PLANKS.toStack(),
                     RRBlocks.GIANT_GOBLET_STEM.toStack(),
                     RRBlocks.GIANT_GOBLET_BUD.toStack(),
-                    RRBlocks.ELDEN_LEAVES.toStack()
+                    RRBlocks.ELDEN_LEAVES.toStack(),
+
+                    RRBlocks.INVERTED_LEAVES_1.toStack(),
+                    RRBlocks.INVERTED_LEAVES_2.toStack(),
+                    RRBlocks.INVERTED_TREE_WOOD.toStack(),
+                    RRBlocks.INVERTED_TREE_PLANKS.toStack(),
+                    RRBlocks.INVERTED_TREE_STAIRS.toStack(),
+                    RRBlocks.INVERTED_TREE_SLAB.toStack(),
+                    RRBlocks.INVERTED_TREE_FENCE.toStack(),
+                    RRBlocks.INVERTED_TREE_FENCE_GATE.toStack(),
+                    RRBlocks.INVERTED_TREE_DOOR.toStack(),
+                    RRBlocks.INVERTED_TREE_TRAPDOOR.toStack(),
+                    RRBlocks.INVERTED_TREE_PRESSURE_PLATE.toStack(),
+                    RRBlocks.INVERTED_TREE_BUTTON.toStack(),
+                    RRBlocks.INVERTED_TREE_SIGN.toStack(),
+                    RRBlocks.INVERTED_TREE_HANGING_SIGN.toStack()
             ))).build());
 }
