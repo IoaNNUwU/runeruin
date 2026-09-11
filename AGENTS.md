@@ -1,5 +1,14 @@
 # RuneRuin — agent map
 
+## Development branches
+
+For every substantial change, create a separate branch and do all work for the feature or bug in that branch. Never merge branches except when explicitly asked.
+
+The following exceptions do not require creating a branch: editing `README` files, `AGENTS.md`, `.json` files, or only changing text inside a string literal in a code file.
+
+- New functionality: use `feature/<name>`, for example `feature/giant_goblet`. Do not include `add_` in the name; use just the feature name.
+- Bug fixes: use `bug/<name>`, for example `bug/giant_goblet_spawns_in_wrong_biome`.
+
 NeoForge mod (`runeruin`), MC 26.2. Custom stacked-cave dimension. Entry: `RuneRuinMod` → registers DeferredRegisters; datapack registries come from `DatagenMain`.
 
 Helpers: `RR.id` / `RR.resourceKey` / `RR.tagKey`. Dimension command: `/execute in runeruin:runeruin_dimension …`
