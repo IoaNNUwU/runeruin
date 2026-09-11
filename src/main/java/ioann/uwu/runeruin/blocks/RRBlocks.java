@@ -42,6 +42,13 @@ public class RRBlocks {
                     .lightLevel(_ -> 6)
     );
 
+    public static final DeferredBlock<Block> FIREFLY_IN_A_JAR = register("firefly_in_a_jar",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS)
+                    .mapColor(MapColor.COLOR_YELLOW)
+                    .noOcclusion()
+                    .lightLevel(_ -> 15)
+    );
+
     public static final DeferredBlock<Block> ELDEN_SAPLING = register("elden_sapling",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_SAPLING).mapColor(MapColor.COLOR_YELLOW),
             p -> new SaplingBlock(TreeGrower.CHERRY, p));
