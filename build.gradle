@@ -46,9 +46,15 @@ neoForge {
 
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
+    def persistentGameDirectory = project.file(
+            System.getenv('RUNERUIN_GAME_DIR')
+                    ?: new File(System.getProperty('user.home'), '.runeruin/game').absolutePath
+    )
+
     runs {
         client {
             client()
+            gameDirectory = persistentGameDirectory
 
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
@@ -132,7 +138,7 @@ neoForge {
 // downloadAssets / createMinecraftArtifacts re-fetch and re-decompile Minecraft.
 // Pin NFRT to the real user Gradle cache so datagen reuses client jars, assets, and decompiles.
 def persistentNfrtHome = new File(
-        System.getenv('USERPROFILE') ?: System.getenv('HOME'),
+        System.getenv('USERPROFILE') ?: System.getenv('HOME') ?: System.getProperty('user.home'),
         '.gradle/caches/neoformruntime'
 )
 tasks.withType(net.neoforged.nfrtgradle.NeoFormRuntimeTask).configureEach {
@@ -159,10 +165,11 @@ def extractArchives = objects.newInstance(ExtractMcSourcesServices).archiveOpera
 def minecraftSourcesJar = layout.buildDirectory.file("moddev/artifacts/minecraft-patched-${neo_version}-sources.jar")
 def mcSourcesDir = layout.projectDirectory.dir('.mc-sources')
 def mcSourcesStamp = layout.buildDirectory.file('tmp/mc-sources-VERSION.txt')
+def mcSourcesVersionText = "minecraft=${minecraft_version}\nneoforge=${neo_version}\nmappings=official\n"
 
 tasks.register('writeMcSourcesVersion') {
     def stamp = mcSourcesStamp
-    def text = "minecraft=${minecraft_version}\nneoforge=${neo_version}\nmappings=official\n"
+    def text = mcSourcesVersionText
     inputs.property('contents', text)
     outputs.file(stamp)
     doLast {
@@ -176,6 +183,21 @@ tasks.register('extractMcSources', Sync) {
     group = 'documentation'
     description = 'Extract Minecraft and NeoForge sources into .mc-sources for Cursor agents.'
     dependsOn 'createMinecraftArtifacts', 'writeMcSourcesVersion'
+    onlyIf {
+        def versionFile = mcSourcesDir.file('VERSION.txt').asFile
+        def hasExpectedVersion = versionFile.isFile() && versionFile.getText('UTF-8').trim() == mcSourcesVersionText.trim()
+        if (versionFile.isFile() && !hasExpectedVersion) {
+            def sourcePath = mcSourcesDir.asFile.toPath()
+            def realPath = sourcePath.toRealPath().toString()
+            def absolutePath = sourcePath.toAbsolutePath().normalize().toString()
+            if (!realPath.equalsIgnoreCase(absolutePath)) {
+                throw new GradleException(
+                        "'.mc-sources' points to a cache for another version. Run scripts/setup-codex-worktree.ps1 before extractMcSources."
+                )
+            }
+        }
+        !hasExpectedVersion
+    }
     from(minecraftSourcesJar.map { extractArchives.zipTree(it) }) {
         include '**/*.java'
     }

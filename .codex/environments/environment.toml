@@ -1,0 +1,11 @@
+# Project-local Codex environment configuration.
+version = 1
+name = "RuneRuin"
+
+[setup]
+script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\setup-codex-worktree.ps1"
+
+[[actions]]
+name = "Run Client"
+icon = "run"
+command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\run-client.ps1"
