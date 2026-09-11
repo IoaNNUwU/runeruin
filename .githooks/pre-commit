@@ -1,0 +1,11 @@
+#!/bin/sh
+
+branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+
+if [ -z "$branch" ]; then
+    echo "ERROR: commits are not allowed from a detached HEAD." >&2
+    echo "Create a task branch first, for example: git switch -c feature/<name>" >&2
+    exit 1
+fi
+
+exit 0

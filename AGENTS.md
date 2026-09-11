@@ -9,11 +9,24 @@ The following exceptions do not require creating a branch: editing `README` file
 - New functionality: use `feature/<name>`, for example `feature/giant_goblet`. Do not include `add_` in the name; use just the feature name.
 - Bug fixes: use `bug/<name>`, for example `bug/giant_goblet_spawns_in_wrong_biome`.
 
+At the beginning of every coding task, before editing files, run `git branch --show-current`.
+If it returns an empty string, Codex is in a newly created detached worktree and must create
+an aptly named task branch before continuing:
+
+- New functionality: `git switch -c feature/<short-kebab-case-name>`
+- Bug fixes: `git switch -c bug/<short-kebab-case-name>`
+
+Choose the short name from the user's request, then verify the result with
+`git status --short --branch`. Never continue coding while `HEAD` is detached.
+
 ## Parallel agent worktrees
 
 Codex provides each parallel task with its own worktree. Work only in the current assigned checkout; never create or manage another worktree from inside the task.
 
-Codex-managed worktrees may initially use a detached `HEAD`. Treat that as normal. Do not run `git switch`, `git checkout`, or `git worktree add` to change the task's checkout, and do not check out a branch that may be used by another worktree.
+Codex-managed worktrees may initially use a detached `HEAD`. In a newly created detached
+worktree, the branch-initialization procedure above is the required exception that allows
+one `git switch -c` command. Do not switch to another existing branch, check out a branch
+that may be used by another worktree, or create another worktree from inside the task.
 
 Keep changes isolated to the current task. Do not manually copy files or uncommitted changes between worktrees. Tracked files are available automatically; ignored local files are available only when explicitly provided by the environment (for example through `.worktreeinclude`).
 
