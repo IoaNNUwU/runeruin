@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.HangingSignItem;
+import net.minecraft.world.item.PlaceOnWaterBlockItem;
 import net.minecraft.world.item.SignItem;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.grower.TreeGrower;
@@ -186,6 +187,12 @@ public class RRBlocks {
                     .lightLevel(MossBerryBushBlock::getLightLevel)
     );
 
+    /** One registered block; the 2x2/3x3 shapes are represented by BigLilyPadBlock.PART. */
+    public static final DeferredBlock<Block> BIG_LILY_PAD = registerWaterLily("big_lily_pad",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
+            BigLilyPadBlock::new
+    );
+
     /** Interior portal block; no BlockItem (like nether portal). */
     public static final DeferredBlock<Block> RUNE_RUIN_PORTAL = REGISTRY.registerBlock(
             "rune_ruin_portal",
@@ -209,6 +216,19 @@ public class RRBlocks {
                         .lightLevel(GlowingMossBlock::getLightLevel)
                         .randomTicks(),
                 GlowingMossCarpetBlock::new);
+    }
+
+    private static DeferredBlock<Block> registerWaterLily(
+            String name,
+            UnaryOperator<BlockBehaviour.Properties> props,
+            Function<BlockBehaviour.Properties, ? extends Block> block
+    ) {
+        DeferredBlock<Block> blockRecord = REGISTRY.registerBlock(name, block, props);
+        RRItems.REGISTRY.registerItem(name,
+                p -> new PlaceOnWaterBlockItem(blockRecord.get(), p),
+                p -> p.useBlockDescriptionPrefix()
+        );
+        return blockRecord;
     }
 
     private static DeferredBlock<Block> register(String name, UnaryOperator<BlockBehaviour.Properties> props) {

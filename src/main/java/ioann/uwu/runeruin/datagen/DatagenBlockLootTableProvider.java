@@ -72,6 +72,7 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.GLOWING_MOSS.get());
         dropSelf(RRBlocks.GLOWING_MOSS_CARPET.get());
         dropSelf(RRBlocks.LAPIS_LIGHT.get());
+        dropSelf(RRBlocks.BIG_LILY_PAD.get());
 
         add(RRBlocks.RUNE_RUIN_PORTAL.get(), noDrop());
 

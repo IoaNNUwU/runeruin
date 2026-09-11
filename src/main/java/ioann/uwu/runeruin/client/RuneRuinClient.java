@@ -1,7 +1,10 @@
 package ioann.uwu.runeruin.client;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.datagen.DatagenBiomeTagProvider;
+import java.util.List;
+import net.minecraft.client.color.block.BlockTintSources;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -9,6 +12,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRendererEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
@@ -32,5 +36,12 @@ public class RuneRuinClient {
     @SubscribeEvent
     static void registerCustomEnvironmentEffectRenderer(RegisterCustomEnvironmentEffectRendererEvent event) {
         event.registerCloudRenderer(Renderers.RUNE_RUIN_CLOUDS_ID, new RuneRuinCloudsRenderer());
+    }
+
+    @SubscribeEvent
+    static void registerBlockTintSources(RegisterColorHandlersEvent.BlockTintSources event) {
+        // Use the biome foliage color for every part, including the item model's
+        // in-hand tint via the matching datagen tint source.
+        event.register(List.of(BlockTintSources.foliage()), RRBlocks.BIG_LILY_PAD.get());
     }
 }

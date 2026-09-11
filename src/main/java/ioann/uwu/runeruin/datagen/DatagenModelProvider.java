@@ -1,6 +1,9 @@
 package ioann.uwu.runeruin.datagen;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.BigLilyPadBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
@@ -11,6 +14,7 @@ import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.ModelLocationUtils;
+import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TexturedModel;
@@ -18,6 +22,7 @@ import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.data.BlockFamily;
 import net.minecraft.data.PackOutput;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jspecify.annotations.NonNull;
@@ -55,6 +60,7 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
         blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
+        createBigLilyPad(blockModels);
 
         blockModels.registerSimpleItemModel(
                 RRBlocks.DEEP_ROOTS.get().asItem(),
@@ -68,6 +74,155 @@ public class DatagenModelProvider extends ModelProvider {
 
         createRuneRuinPortal(blockModels);
         createMossBerry(blockModels, itemModels);
+    }
+
+    private static void createBigLilyPad(@NonNull BlockModelGenerators blockModels) {
+        for (BigLilyPadBlock.Part part : BigLilyPadBlock.Part.values()) {
+            if (part != BigLilyPadBlock.Part.SINGLE) {
+                createBigLilyPartModel(blockModels, part);
+            }
+        }
+
+        blockModels.blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(RRBlocks.BIG_LILY_PAD.get())
+                        .with(PropertyDispatch.initial(BigLilyPadBlock.PART, BigLilyPadBlock.FACING)
+                                .generate(DatagenModelProvider::orientedBigLilyVariant)
+                        )
+        );
+
+        // The item is always the ordinary/single form. Its tint is the
+        // default foliage color; the placed block is tinted from its biome.
+        Identifier itemModel = blockModels.createFlatItemModelWithBlockTexture(
+                RRBlocks.BIG_LILY_PAD.get().asItem(),
+                Blocks.LILY_PAD
+        );
+        blockModels.registerSimpleTintedItemModel(
+                RRBlocks.BIG_LILY_PAD.get(),
+                itemModel,
+                ItemModelUtils.constantTint(-12012264)
+        );
+    }
+
+    private static Identifier modelFor(BigLilyPadBlock.Part part) {
+        return part == BigLilyPadBlock.Part.SINGLE
+                ? ModelLocationUtils.getModelLocation(Blocks.LILY_PAD)
+                : RR.id("block/big_lily_pad_" + part.getSerializedName());
+    }
+
+    private static MultiVariant orientedBigLilyVariant(
+            BigLilyPadBlock.Part targetPart,
+            Direction facing
+    ) {
+        // Rotating a cell model alone rotates its texture inside the same
+        // world cell. Select the inverse-rotated source cell first so that
+        // the complete 2x2/3x3 texture rotates as one connected pad.
+        BigLilyPadBlock.Part sourcePart = sourcePartFor(targetPart, facing);
+        MultiVariant variant = BlockModelGenerators.plainVariant(modelFor(sourcePart));
+        return switch (facing) {
+            case NORTH -> variant;
+            case EAST -> variant.with(BlockModelGenerators.Y_ROT_90);
+            case SOUTH -> variant.with(BlockModelGenerators.Y_ROT_180);
+            case WEST -> variant.with(BlockModelGenerators.Y_ROT_270);
+            default -> throw new IllegalArgumentException("Big lily pad facing must be horizontal");
+        };
+    }
+
+    private static BigLilyPadBlock.Part sourcePartFor(
+            BigLilyPadBlock.Part targetPart,
+            Direction facing
+    ) {
+        int size = targetPart.gridSize();
+        int sourceX;
+        int sourceZ;
+        switch (facing) {
+            case NORTH -> {
+                sourceX = targetPart.x();
+                sourceZ = targetPart.z();
+            }
+            case EAST -> {
+                sourceX = targetPart.z();
+                sourceZ = size - 1 - targetPart.x();
+            }
+            case SOUTH -> {
+                sourceX = size - 1 - targetPart.x();
+                sourceZ = size - 1 - targetPart.z();
+            }
+            case WEST -> {
+                sourceX = size - 1 - targetPart.z();
+                sourceZ = targetPart.x();
+            }
+            default -> throw new IllegalArgumentException("Big lily pad facing must be horizontal");
+        }
+
+        for (BigLilyPadBlock.Part candidate : BigLilyPadBlock.Part.values()) {
+            if (candidate.gridSize() == size && candidate.x() == sourceX && candidate.z() == sourceZ) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("No big lily pad part at " + size + "x" + size + " coordinates " + sourceX + "," + sourceZ);
+    }
+
+    /**
+     * Generates a transparent plane whose UVs are one cell of a stretched
+     * vanilla lily-pad texture. The cells therefore form one seamless pad,
+     * while the 2x2 and 3x3 states use separate geometry/model definitions.
+     */
+    private static void createBigLilyPartModel(
+            @NonNull BlockModelGenerators blockModels,
+            BigLilyPadBlock.Part part
+    ) {
+        int size = part.gridSize();
+        double u0 = 16.0 * part.x() / size;
+        double u1 = 16.0 * (part.x() + 1) / size;
+        double v0 = 16.0 * part.z() / size;
+        double v1 = 16.0 * (part.z() + 1) / size;
+
+        JsonObject model = new JsonObject();
+        model.addProperty("ambientocclusion", false);
+
+        JsonObject textures = new JsonObject();
+        textures.addProperty("particle", "minecraft:block/lily_pad");
+        textures.addProperty("texture", "minecraft:block/lily_pad");
+        model.add("textures", textures);
+
+        JsonObject element = new JsonObject();
+        element.add("from", array(0.0, 0.25, 0.0));
+        element.add("to", array(16.0, 0.25, 16.0));
+
+        JsonObject faces = new JsonObject();
+        faces.add("down", planeFace(u0, v1, u1, v0));
+        faces.add("up", planeFace(u0, v0, u1, v1));
+        element.add("faces", faces);
+
+        JsonArray elements = new JsonArray();
+        elements.add(element);
+        model.add("elements", elements);
+
+        blockModels.modelOutput.accept(
+                RR.id("block/big_lily_pad_" + part.getSerializedName()),
+                () -> model
+        );
+    }
+
+    private static JsonArray array(double x, double y, double z) {
+        JsonArray result = new JsonArray();
+        result.add(x);
+        result.add(y);
+        result.add(z);
+        return result;
+    }
+
+    private static JsonObject planeFace(double u0, double v0, double u1, double v1) {
+        JsonObject face = new JsonObject();
+        JsonArray uv = new JsonArray();
+        uv.add(u0);
+        uv.add(v0);
+        uv.add(u1);
+        uv.add(v1);
+        face.add("uv", uv);
+        face.addProperty("texture", "#texture");
+        face.addProperty("tintindex", 0);
+        return face;
     }
 
     private static void createGiantGobletBlocks(@NonNull BlockModelGenerators blockModels) {

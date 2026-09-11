@@ -65,7 +65,12 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.LAPIS_LIGHT.getKey()
         );
 
-        tag(BlockTags.INSIDE_STEP_SOUND_BLOCKS).add(RRBlocks.DEEP_ROOTS.getKey());
+        tag(BlockTags.INSIDE_STEP_SOUND_BLOCKS).add(
+                RRBlocks.DEEP_ROOTS.getKey(),
+                RRBlocks.BIG_LILY_PAD.getKey()
+        );
+
+        tag(BlockTags.FROG_PREFER_JUMP_TO).add(RRBlocks.BIG_LILY_PAD.getKey());
 
         tag(BlockTags.LOGS).add(RRBlocks.INVERTED_TREE_WOOD.getKey());
         tag(BlockTags.LEAVES).add(
