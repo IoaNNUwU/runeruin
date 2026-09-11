@@ -9,6 +9,16 @@ The following exceptions do not require creating a branch: editing `README` file
 - New functionality: use `feature/<name>`, for example `feature/giant_goblet`. Do not include `add_` in the name; use just the feature name.
 - Bug fixes: use `bug/<name>`, for example `bug/giant_goblet_spawns_in_wrong_biome`.
 
+## Parallel agent worktrees
+
+Codex provides each parallel task with its own worktree. Work only in the current assigned checkout; never create or manage another worktree from inside the task.
+
+Codex-managed worktrees may initially use a detached `HEAD`. Treat that as normal. Do not run `git switch`, `git checkout`, or `git worktree add` to change the task's checkout, and do not check out a branch that may be used by another worktree.
+
+Keep changes isolated to the current task. Do not manually copy files or uncommitted changes between worktrees. Tracked files are available automatically; ignored local files are available only when explicitly provided by the environment (for example through `.worktreeinclude`).
+
+Before finishing, report the current worktree state and leave branch creation, handoff, merge, cherry-pick, or other cross-worktree operations to the user/Codex orchestration. Never merge branches unless explicitly asked.
+
 NeoForge mod (`runeruin`), MC 26.2. Custom stacked-cave dimension. Entry: `RuneRuinMod` → registers DeferredRegisters; datapack registries come from `DatagenMain`.
 
 Helpers: `RR.id` / `RR.resourceKey` / `RR.tagKey`. Dimension command: `/execute in runeruin:runeruin_dimension …`

@@ -26,4 +26,7 @@ public class RRFeatures {
     public static final DeferredHolder<Feature<?>, MossySpikeFeature> GIANT_SPIKE = REGISTRY.register("giant_spike", MossySpikeFeature::new);
 
     public static final DeferredHolder<Feature<?>, GobletMossPatchFeature> GOBLET_MOSS_PATCH = REGISTRY.register("goblet_moss_patch", GobletMossPatchFeature::new);
+
+    public static final DeferredHolder<Feature<?>, LilyPadPatchFeature> SMALL_LILY_PAD_PATCH = REGISTRY.register("small_lily_pad_patch", LilyPadPatchFeature::new);
+    public static final DeferredHolder<Feature<?>, LilyPadPatchFeature> BIG_LILY_PAD_PATCH = REGISTRY.register("big_lily_pad_patch", LilyPadPatchFeature::new);
 }

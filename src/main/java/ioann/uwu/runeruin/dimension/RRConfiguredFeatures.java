@@ -61,6 +61,8 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch_underwater");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_deep_roots");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_lily_pad_patch");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_lily_pad_patch");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -293,6 +295,28 @@ public class RRConfiguredFeatures {
         ctx.register(GOBLET_DEEP_ROOTS, new ConfiguredFeature<>(
                 Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DEEP_ROOTS.get()))
+        ));
+
+        ctx.register(SMALL_LILY_PAD_PATCH, new ConfiguredFeature<>(
+                RRFeatures.SMALL_LILY_PAD_PATCH.get(),
+                new LilyPadPatchFeature.Config(
+                        UniformInt.of(0, 1),
+                        UniformInt.of(1, 2),
+                        UniformInt.of(3, 4),
+                        UniformInt.of(4, 7),
+                        32
+                )
+        ));
+
+        ctx.register(BIG_LILY_PAD_PATCH, new ConfiguredFeature<>(
+                RRFeatures.BIG_LILY_PAD_PATCH.get(),
+                new LilyPadPatchFeature.Config(
+                        UniformInt.of(1, 3),
+                        UniformInt.of(2, 4),
+                        UniformInt.of(4, 8),
+                        UniformInt.of(6, 9),
+                        32
+                )
         ));
     }
 

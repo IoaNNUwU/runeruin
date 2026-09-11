@@ -48,6 +48,16 @@ public class BigLilyPadBlock extends VegetationBlock {
         this.registerDefaultState(this.stateDefinition.any().setValue(PART, Part.SINGLE).setValue(FACING, Direction.NORTH));
     }
 
+    /** Returns the state part for a world-generated pad cell of the given size. */
+    public static Part partAt(int size, int x, int z) {
+        return switch (size) {
+            case 1 -> Part.SINGLE;
+            case 2 -> Part.smallAt(x, z);
+            case 3 -> Part.largeAt(x, z);
+            default -> throw new IllegalArgumentException("Lily pad size must be 1, 2, or 3");
+        };
+    }
+
     @Override
     public MapCodec<BigLilyPadBlock> codec() {
         return CODEC;

@@ -62,6 +62,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch_underwater");
     public static final ResourceKey<PlacedFeature> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_deep_roots");
+    public static final ResourceKey<PlacedFeature> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "small_lily_pad_patch");
+    public static final ResourceKey<PlacedFeature> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "big_lily_pad_patch");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -514,5 +516,34 @@ public class RRPlacedFeatures {
                         BiomeFilter.biome()
                 )
         ));
+
+        ctx.register(SMALL_LILY_PAD_PATCH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_LILY_PAD_PATCH),
+                lilyPadPatchPlacement(2)
+        ));
+
+        ctx.register(BIG_LILY_PAD_PATCH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.BIG_LILY_PAD_PATCH),
+                lilyPadPatchPlacement(1)
+        ));
+    }
+
+    private static List<PlacementModifier> lilyPadPatchPlacement(int count) {
+        return List.of(
+                CountPlacement.of(count),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(
+                        VerticalAnchor.absolute(LOST_CAVES_Y),
+                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                ),
+                EnvironmentScanPlacement.scanningFor(
+                        Direction.DOWN,
+                        BlockPredicate.matchesBlocks(Blocks.WATER),
+                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                        32
+                ),
+                RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                BiomeFilter.biome()
+        );
     }
 }
