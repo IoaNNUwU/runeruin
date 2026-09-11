@@ -56,6 +56,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> DRIPSTONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dripstone_spike");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_spike");
     public static final ResourceKey<ConfiguredFeature<?, ?>> DEEPSLATE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deepslate_spike");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch");
@@ -263,6 +264,22 @@ public class RRConfiguredFeatures {
                         4,
                         0.6F,
                         BlockStateProvider.simple(Blocks.DRIPSTONE_BLOCK)
+                )
+        ));
+
+        ctx.register(STONE_SPIKE, new ConfiguredFeature<>(
+                RRFeatures.GIANT_SPIKE.get(),
+                new MossySpikeFeature.SpikeConfiguration(
+                        35,
+                        UniformInt.of(3, 19),
+                        UniformFloat.of(0.4F, 2.0F),
+                        0.33F,
+                        UniformFloat.of(0.3F, 0.9F),
+                        UniformFloat.of(0.4F, 1.0F),
+                        UniformFloat.of(0.0F, 0.3F),
+                        4,
+                        0.6F,
+                        BlockStateProvider.simple(Blocks.STONE)
                 )
         ));
 

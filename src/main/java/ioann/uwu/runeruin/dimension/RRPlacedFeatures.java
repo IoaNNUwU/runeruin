@@ -57,7 +57,9 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> INVERTED_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "inverted_tree");
 
     public static final ResourceKey<PlacedFeature> DRIPSTONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "dripstone_spike");
+    public static final ResourceKey<PlacedFeature> STONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "stone_spike");
     public static final ResourceKey<PlacedFeature> DEEPSLATE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "deepslate_spike");
+    public static final ResourceKey<PlacedFeature> DEEP_DEEPSLATE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_deepslate_spike");
 
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch_underwater");
@@ -445,6 +447,19 @@ public class RRPlacedFeatures {
                 )
         ));
 
+        ctx.register(STONE_SPIKE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_SPIKE),
+                List.of(
+                        CountPlacement.of(UniformInt.of(10, 48)),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(DEEP_CAVES_Y),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        ),
+                        BiomeFilter.biome()
+                )
+        ));
+
         ctx.register(DEEPSLATE_SPIKE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEPSLATE_SPIKE),
                 List.of(
@@ -454,6 +469,19 @@ public class RRPlacedFeatures {
                                 VerticalAnchor.absolute(LOST_CAVES_Y),
                                 VerticalAnchor.absolute(LOST_CAVES_CEILING_Y)
                         )
+                )
+        ));
+
+        ctx.register(DEEP_DEEPSLATE_SPIKE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEPSLATE_SPIKE),
+                List.of(
+                        CountPlacement.of(UniformInt.of(10, 48)),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(DEEP_CAVES_Y),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        ),
+                        BiomeFilter.biome()
                 )
         ));
 

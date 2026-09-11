@@ -7,7 +7,9 @@ import ioann.uwu.runeruin.dimension.biomes.bloomingcaves.SwampJungle;
 import ioann.uwu.runeruin.dimension.biomes.bloomingcavesceiling.GlowingBallsCeilingBiome;
 import ioann.uwu.runeruin.dimension.biomes.bloomingcavesceiling.GlowingRootsCeilingBiome;
 import ioann.uwu.runeruin.dimension.biomes.deepcaves.DeepDripstoneCaves;
+import ioann.uwu.runeruin.dimension.biomes.deepcaves.DeepslateSpikeCaves;
 import ioann.uwu.runeruin.dimension.biomes.deepcaves.GlowingMossCaves;
+import ioann.uwu.runeruin.dimension.biomes.deepcaves.StoneSpikeCaves;
 import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.DeepRootsCeilingBiome;
 import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.InvertedForest;
 import ioann.uwu.runeruin.dimension.biomes.lostcaves.SparklingCaves;
@@ -39,6 +41,8 @@ public class RRBiomes {
     // Deep caves
     public static final ResourceKey<Biome> DEEP_DRIPSTONE_CAVES = RR.resourceKey(Registries.BIOME, "deep_dripstone_caves");
     public static final ResourceKey<Biome> GLOWING_MOSS_CAVES = RR.resourceKey(Registries.BIOME, "glowing_moss_caves");
+    public static final ResourceKey<Biome> STONE_SPIKE_CAVES = RR.resourceKey(Registries.BIOME, "stone_spike_caves");
+    public static final ResourceKey<Biome> DEEPSLATE_SPIKE_CAVES = RR.resourceKey(Registries.BIOME, "deepslate_spike_caves");
 
     // Lost caves ceiling
     public static final ResourceKey<Biome> SPARKLING_CAVES_CEILING = RR.resourceKey(Registries.BIOME, "sparkling_caves_ceiling");
@@ -71,6 +75,8 @@ public class RRBiomes {
         // Deep caves
         ctx.register(DEEP_DRIPSTONE_CAVES, DeepDripstoneCaves.bootstrap(placedFeatures, configuredCravers));
         ctx.register(GLOWING_MOSS_CAVES, GlowingMossCaves.bootstrap(placedFeatures, configuredCravers));
+        ctx.register(STONE_SPIKE_CAVES, StoneSpikeCaves.bootstrap(placedFeatures, configuredCravers));
+        ctx.register(DEEPSLATE_SPIKE_CAVES, DeepslateSpikeCaves.bootstrap(placedFeatures, configuredCravers));
 
         // Lost caves ceiling
         ctx.register(SPARKLING_CAVES_CEILING, SparklingCavesCeiling.bootstrap(placedFeatures, configuredCravers));

@@ -118,8 +118,21 @@ public class RRBiomeSource extends BiomeSource {
                         biomeRegistry.getOrThrow(RRBiomes.DEEP_INVERTED_FOREST)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES)
+                        // The old two-biome distribution gave glowing moss half of the level.
+                        // Keep one sixth for it and split the remaining five sixths evenly:
+                        // 2/12 glowing moss, 5/12 stone spikes, 5/12 deepslate spikes.
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
