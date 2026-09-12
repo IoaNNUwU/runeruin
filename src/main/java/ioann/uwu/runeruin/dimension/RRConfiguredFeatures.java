@@ -61,6 +61,7 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch_underwater");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_SEAGRASS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_deep_roots");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_lily_pad_patch");
@@ -307,6 +308,11 @@ public class RRConfiguredFeatures {
         ctx.register(GOBLET_MOSS_PATCH_UNDERWATER, new ConfiguredFeature<>(
                 RRFeatures.GOBLET_MOSS_PATCH.get(),
                 gobletMossPatchConfig(blocks, otherConfiguredFeatures, 0.0F)
+        ));
+
+        ctx.register(GOBLET_SEAGRASS, new ConfiguredFeature<>(
+                RRFeatures.GOBLET_SEAGRASS.get(),
+                new ProbabilityFeatureConfiguration(0.8F)
         ));
 
         ctx.register(GOBLET_DEEP_ROOTS, new ConfiguredFeature<>(
