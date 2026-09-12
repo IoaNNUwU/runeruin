@@ -442,6 +442,7 @@ public final class RegionExport {
             map.put("runeruin:glowing_moss", 'M');
             map.put("runeruin:glowing_moss_carpet", 'c');
             map.put("runeruin:elden_log", 'E');
+            map.put("runeruin:elden_wood", 'w');
             map.put("runeruin:elden_leaves", 'F');
             map.put("runeruin:elden_planks", 'e');
             map.put("runeruin:moss_light", 'T');

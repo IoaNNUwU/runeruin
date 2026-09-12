@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
@@ -57,6 +58,8 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_block_vine");
 
     public static final ResourceKey<PlacedFeature> INVERTED_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "inverted_tree");
+
+    public static final ResourceKey<PlacedFeature> ELDEN_GIANT_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "elden_giant_tree");
 
     public static final ResourceKey<PlacedFeature> DRIPSTONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "dripstone_spike");
     public static final ResourceKey<PlacedFeature> STONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "stone_spike");
@@ -399,6 +402,20 @@ public class RRPlacedFeatures {
         ctx.register(INVERTED_TREE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.INVERTED_TREE),
                 invertedTreePlacement
+        ));
+
+        ctx.register(ELDEN_GIANT_TREE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.ELDEN_GIANT_TREE),
+                List.of(
+                        RarityFilter.onAverageOnceEvery(2),
+                        InSquarePlacement.spread(),
+                        PlacementUtils.HEIGHTMAP_OCEAN_FLOOR,
+                        BiomeFilter.biome(),
+                        BlockPredicateFilter.forPredicate(BlockPredicate.wouldSurvive(
+                                RRBlocks.ELDEN_SAPLING.get().defaultBlockState(),
+                                BlockPos.ZERO
+                        ))
+                )
         ));
 
         ctx.register(GLOWING_MOSS_VEGETATION, new PlacedFeature(

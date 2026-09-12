@@ -53,10 +53,13 @@ public class DatagenModelProvider extends ModelProvider {
 
         blockModels.createPlantWithDefaultItem(RRBlocks.ELDEN_SAPLING.get(), RRBlocks.POTTED_ELDEN_SAPLING.get(), BlockModelGenerators.PlantType.NOT_TINTED);
 
-        blockModels.createTrivialCube(RRBlocks.ELDEN_LEAVES.get());
+        blockModels.createTrivialBlock(RRBlocks.ELDEN_LEAVES.get(), TexturedModel.LEAVES);
         blockModels.createTrivialCube(RRBlocks.ELDEN_PLANKS.get());
+        Material eldenLogBark = TextureMapping.getBlockTexture(RRBlocks.ELDEN_LOG.get());
+        blockModels.createTrivialBlock(RRBlocks.ELDEN_WOOD.get(), _ -> TexturedModel.createAllSame(eldenLogBark));
         createGiantGobletBlocks(blockModels);
-        blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.ELDEN_LOG.get(), TexturedModel.COLUMN_ALT, TexturedModel.COLUMN_HORIZONTAL_ALT);
+        blockModels.new WoodProvider(TextureMapping.column(eldenLogBark, eldenLogBark))
+                .wood(RRBlocks.ELDEN_LOG.get());
 
         createInvertedTreeBlocks(blockModels);
 

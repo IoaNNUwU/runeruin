@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.blocks;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.RRConfiguredFeatures;
 import ioann.uwu.runeruin.dimension.RRTags;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -29,6 +31,13 @@ public class RRBlocks {
 
     private static final BlockSetType INVERTED_TREE_BLOCK_SET = BlockSetType.register(new BlockSetType("inverted_tree"));
     private static final WoodType INVERTED_TREE_WOOD_TYPE = WoodType.register(new WoodType("inverted_tree", INVERTED_TREE_BLOCK_SET));
+
+    private static final TreeGrower ELDEN_TREE_GROWER = new TreeGrower(
+            "elden",
+            Optional.of(RRConfiguredFeatures.ELDEN_GIANT_TREE),
+            Optional.empty(),
+            Optional.empty()
+    );
 
     public static final DeferredBlock<Block> ARCANE_STONE = register("arcane_stone", ARCANE_STONE_PROPS);
     public static final DeferredBlock<Block> ARCANE_STONE_BRICKS = register("arcane_stone_bricks", ARCANE_STONE_PROPS);
@@ -52,7 +61,7 @@ public class RRBlocks {
 
     public static final DeferredBlock<Block> ELDEN_SAPLING = register("elden_sapling",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_SAPLING).mapColor(MapColor.COLOR_YELLOW),
-            p -> new SaplingBlock(TreeGrower.CHERRY, p));
+            p -> new SaplingBlock(ELDEN_TREE_GROWER, p));
 
     public static final DeferredBlock<Block> POTTED_ELDEN_SAPLING = register("potted_elden_sapling",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.POTTED_CHERRY_SAPLING).mapColor(MapColor.COLOR_YELLOW),
@@ -61,6 +70,10 @@ public class RRBlocks {
     public static final DeferredBlock<Block> ELDEN_LOG = register("elden_log",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG),
             RotatedPillarBlock::new);
+
+    /** Bark on every side, used for the wide core of giant Elden tree trunks. */
+    public static final DeferredBlock<Block> ELDEN_WOOD = register("elden_wood",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_WOOD));
 
     public static final DeferredBlock<Block> ELDEN_PLANKS = register("elden_planks",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS));

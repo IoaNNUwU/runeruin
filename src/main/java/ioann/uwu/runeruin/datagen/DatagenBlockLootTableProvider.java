@@ -43,6 +43,7 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
 
         dropSelf(RRBlocks.ELDEN_SAPLING.get());
         dropSelf(RRBlocks.ELDEN_LOG.get());
+        dropSelf(RRBlocks.ELDEN_WOOD.get());
         dropSelf(RRBlocks.ELDEN_PLANKS.get());
         dropSelf(RRBlocks.GIANT_GOBLET_STEM.get());
         dropSelf(RRBlocks.GIANT_GOBLET_BUD.get());
@@ -80,7 +81,11 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
 
         createMossBerry();
 
-        // createLeavesDrops(RRBlocks.ELDEN_LEAVES.get(), RRBlocks.ELDEN_SAPLING.get(), BlockLootSubProvider.NORMAL_LEAVES_SAPLING_CHANCES);
+        add(RRBlocks.ELDEN_LEAVES.get(), block -> createLeavesDrops(
+                block,
+                RRBlocks.ELDEN_SAPLING.get(),
+                BlockLootSubProvider.NORMAL_LEAVES_SAPLING_CHANCES
+        ));
     }
 
     private void createMossBerry() {

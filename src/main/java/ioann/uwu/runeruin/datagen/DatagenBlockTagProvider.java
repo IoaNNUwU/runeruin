@@ -34,10 +34,9 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.FIREFLY_IN_A_JAR.getKey()
         );
 
-        // TODO: ELDEN_SAPLING
-
         tag(BlockTags.MINEABLE_WITH_AXE).add(
                 RRBlocks.ELDEN_LOG.getKey(),
+                RRBlocks.ELDEN_WOOD.getKey(),
                 RRBlocks.ELDEN_PLANKS.getKey(),
                 RRBlocks.INVERTED_TREE_WOOD.getKey(),
                 RRBlocks.INVERTED_TREE_PLANKS.getKey(),
@@ -66,6 +65,12 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.GLOWING_MOSS_CARPET.getKey(),
                 RRBlocks.LAPIS_LIGHT.getKey()
         );
+
+        tag(BlockTags.LOGS).add(
+                RRBlocks.ELDEN_LOG.getKey(),
+                RRBlocks.ELDEN_WOOD.getKey()
+        );
+        tag(BlockTags.LEAVES).add(RRBlocks.ELDEN_LEAVES.getKey());
 
         tag(BlockTags.INSIDE_STEP_SOUND_BLOCKS).add(
                 RRBlocks.DEEP_ROOTS.getKey(),
