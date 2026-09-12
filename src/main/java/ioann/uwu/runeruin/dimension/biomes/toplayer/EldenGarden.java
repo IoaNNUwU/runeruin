@@ -41,6 +41,7 @@ public class EldenGarden {
         BiomeDefaultFeatures.addDefaultSoftDisks(generation);
 
         BiomeDefaultFeatures.addCherryGroveVegetation(generation);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.ELDEN_GIANT_TREE);
         BiomeDefaultFeatures.addExtraEmeralds(generation);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()

@@ -55,6 +55,8 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
 
+    public static final ResourceKey<ConfiguredFeature<?, ?>> ELDEN_GIANT_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "elden_giant_tree");
+
     public static final ResourceKey<ConfiguredFeature<?, ?>> DRIPSTONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dripstone_spike");
     public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_spike");
     public static final ResourceKey<ConfiguredFeature<?, ?>> DEEPSLATE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deepslate_spike");
@@ -248,6 +250,11 @@ public class RRConfiguredFeatures {
                         ),
                         ConstantInt.of(18)
                 )
+        ));
+
+        ctx.register(ELDEN_GIANT_TREE, new ConfiguredFeature<>(
+                RRFeatures.ELDEN_GIANT_TREE.get(),
+                NoneFeatureConfiguration.INSTANCE
         ));
 
         ctx.register(DRIPSTONE_SPIKE, new ConfiguredFeature<>(

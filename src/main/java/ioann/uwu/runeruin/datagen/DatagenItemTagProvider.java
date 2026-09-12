@@ -21,6 +21,18 @@ public class DatagenItemTagProvider extends ItemTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.@NonNull Provider provider) {
+        tag(ItemTags.PLANKS).add(itemKey(RRBlocks.ELDEN_PLANKS.get()));
+        tag(ItemTags.LOGS).add(
+                itemKey(RRBlocks.ELDEN_LOG.get()),
+                itemKey(RRBlocks.ELDEN_WOOD.get())
+        );
+        tag(ItemTags.LOGS_THAT_BURN).add(
+                itemKey(RRBlocks.ELDEN_LOG.get()),
+                itemKey(RRBlocks.ELDEN_WOOD.get())
+        );
+        tag(ItemTags.LEAVES).add(itemKey(RRBlocks.ELDEN_LEAVES.get()));
+        tag(ItemTags.SAPLINGS).add(itemKey(RRBlocks.ELDEN_SAPLING.get()));
+
         tag(ItemTags.PLANKS).add(itemKey(RRBlocks.INVERTED_TREE_PLANKS.get()));
         tag(ItemTags.LOGS).add(itemKey(RRBlocks.INVERTED_TREE_WOOD.get()));
         tag(ItemTags.LOGS_THAT_BURN).add(itemKey(RRBlocks.INVERTED_TREE_WOOD.get()));

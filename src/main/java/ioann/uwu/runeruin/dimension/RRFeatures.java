@@ -23,6 +23,8 @@ public class RRFeatures {
 
     public static final DeferredHolder<Feature<?>, InvertedTreeFeature> INVERTED_TREE = REGISTRY.register("inverted_tree", InvertedTreeFeature::new);
 
+    public static final DeferredHolder<Feature<?>, EldenGiantTreeFeature> ELDEN_GIANT_TREE = REGISTRY.register("elden_giant_tree", EldenGiantTreeFeature::new);
+
     public static final DeferredHolder<Feature<?>, MossySpikeFeature> GIANT_SPIKE = REGISTRY.register("giant_spike", MossySpikeFeature::new);
 
     public static final DeferredHolder<Feature<?>, GobletMossPatchFeature> GOBLET_MOSS_PATCH = REGISTRY.register("goblet_moss_patch", GobletMossPatchFeature::new);
