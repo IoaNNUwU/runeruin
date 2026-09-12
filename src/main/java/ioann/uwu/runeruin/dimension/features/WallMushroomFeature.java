@@ -34,31 +34,27 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         int ox = origin.getX();
         int oy = origin.getY();
         int oz = origin.getZ();
+        int minOffset = -(diameter / 2);
+        int maxOffset = minOffset + diameter - 1;
+        double centerOffset = (minOffset + maxOffset) / 2.0;
+        double radius = (diameter - 1) / 2.0;
+        double radiusSquared = radius * radius;
+        int capHeight = 2 + random.nextInt(2);
 
-        for (int x = -diameter / 2 + 1; x < diameter / 2; x++) {
-            for (int z = -diameter / 2 + 1; z < diameter / 2; z++) {
-                tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
+        // Place only the curved upper shell of a flattened sphere, leaving its underside hollow.
+        for (int x = minOffset; x <= maxOffset; x++) {
+            for (int z = minOffset; z <= maxOffset; z++) {
+                double dx = x - centerOffset;
+                double dz = z - centerOffset;
+                double distanceSquared = dx * dx + dz * dz;
+                if (distanceSquared > radiusSquared) {
+                    continue;
+                }
+
+                double domeProfile = Math.sqrt(1.0 - distanceSquared / radiusSquared);
+                int yOffset = (int) Math.floor(capHeight * domeProfile);
+                tryPlace(level, mutable.set(ox + x, oy + yOffset, oz + z), config, random, origin);
             }
-        }
-
-        int z = -diameter / 2;
-        for (int x = -diameter / 2 + 1; x < diameter / 2; x++) {
-            tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
-        }
-
-        z = diameter / 2;
-        for (int x = -diameter / 2 + 1; x < diameter / 2; x++) {
-            tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
-        }
-
-        int x = -diameter / 2;
-        for (z = -diameter / 2 + 1; z < diameter / 2; z++) {
-            tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
-        }
-
-        x = diameter / 2;
-        for (z = -diameter / 2 + 1; z < diameter / 2; z++) {
-            tryPlace(level, mutable.set(ox + x, oy, oz + z), config, random, origin);
         }
 
         return true;
@@ -79,6 +75,9 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
     public record Config(BlockStateProvider mushroomBlock, IntProvider diameter) implements FeatureConfiguration {
 
-        public static final Codec<Config> CODEC = RecordCodecBuilder.create(codec -> codec.group(BlockStateProvider.CODEC.fieldOf("mushroom_block").forGetter(Config::mushroomBlock), IntProviders.codec(3, 7).fieldOf("diameter").forGetter(Config::diameter)).apply(codec, Config::new));
+        public static final Codec<Config> CODEC = RecordCodecBuilder.create(codec -> codec.group(
+                BlockStateProvider.CODEC.fieldOf("mushroom_block").forGetter(Config::mushroomBlock),
+                IntProviders.codec(3, 15).fieldOf("diameter").forGetter(Config::diameter)
+        ).apply(codec, Config::new));
     }
 }
