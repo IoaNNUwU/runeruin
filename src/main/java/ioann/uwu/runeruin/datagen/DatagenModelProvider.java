@@ -96,6 +96,11 @@ public class DatagenModelProvider extends ModelProvider {
 
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
+        blockModels.createTrivialBlock(
+                RRBlocks.GLOWING_MUSHROOM_CAP.get(),
+                TexturedModel.CUBE.updateTexture(TextureMapping::forceAllTranslucent)
+        );
+        blockModels.createTrivialCube(RRBlocks.GLOWING_MUSHROOM_STEM.get());
         blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
         createFireflyInJar(blockModels);
         createBigLilyPad(blockModels);
