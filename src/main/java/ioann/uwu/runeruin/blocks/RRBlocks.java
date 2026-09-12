@@ -52,6 +52,9 @@ public class RRBlocks {
                     .lightLevel(_ -> 6)
     );
 
+    public static final DeferredBlock<Block> ASHEN_MUSHROOM_BLOCK = register("ashen_mushroom_block",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.BROWN_MUSHROOM_BLOCK));
+
     public static final DeferredBlock<Block> FIREFLY_IN_A_JAR = register("firefly_in_a_jar",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS)
                     .mapColor(MapColor.COLOR_YELLOW)

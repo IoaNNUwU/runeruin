@@ -52,6 +52,7 @@ public class DatagenModelProvider extends ModelProvider {
         createArcaneStonePortal(blockModels);
 
         blockModels.createTrivialCube(RRBlocks.DIAMOND_ARCANE_STONE.get());
+        createAshenMushroomBlock(blockModels);
 
         blockModels.createPlantWithDefaultItem(RRBlocks.ELDEN_SAPLING.get(), RRBlocks.POTTED_ELDEN_SAPLING.get(), BlockModelGenerators.PlantType.NOT_TINTED);
 
@@ -145,6 +146,26 @@ public class DatagenModelProvider extends ModelProvider {
                 itemModel,
                 ItemModelUtils.constantTint(-12012264)
         );
+    }
+
+    private static void createAshenMushroomBlock(@NonNull BlockModelGenerators blockModels) {
+        var block = RRBlocks.ASHEN_MUSHROOM_BLOCK.get();
+        Material cap = new Material(RR.id("block/ashen_mushroom_cap"));
+        Material underside = new Material(RR.id("block/ashen_mushroom_underside"));
+        TextureMapping textures = new TextureMapping()
+                .put(TextureSlot.PARTICLE, cap)
+                .put(TextureSlot.NORTH, cap)
+                .put(TextureSlot.SOUTH, cap)
+                .put(TextureSlot.EAST, cap)
+                .put(TextureSlot.WEST, cap)
+                .put(TextureSlot.UP, cap)
+                .put(TextureSlot.DOWN, underside);
+
+        Identifier model = ModelTemplates.CUBE.create(block, textures, blockModels.modelOutput);
+        blockModels.blockStateOutput.accept(
+                BlockModelGenerators.createSimpleBlock(block, BlockModelGenerators.plainVariant(model))
+        );
+        blockModels.registerSimpleItemModel(block, model);
     }
 
     private static void createFireflyInJar(@NonNull BlockModelGenerators blockModels) {

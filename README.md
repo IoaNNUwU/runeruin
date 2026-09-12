@@ -43,13 +43,6 @@
      VOID LAYER          `                + Y = 0
 ```
 
-## AI Disclaimer - 100% agentic coding with partial human review. No AI for assets.
-
-- **NO AI** for **textures**.
-- Some AI was used to edit **models**.
-- **NO AI** for any other assets, such as music.
-- **100%** agentic coding (**AI writes** + **AI reviews**) with **partial human review**. *Humans review the overall architecture and important parts of the code. There is no guarantee that humans reviewed every line*.
-
 ## TODO
 
 - [ ] **TOP** Layer

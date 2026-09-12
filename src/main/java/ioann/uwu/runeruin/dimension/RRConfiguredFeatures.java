@@ -37,6 +37,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_RED_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_red_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_brown_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_brown_mushroom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> ASHEN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ashen_wall_mushroom");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> CEILING_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ceiling_vine");
     public static final ResourceKey<ConfiguredFeature<?, ?>> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "long_ceiling_block_vine");
@@ -101,6 +102,13 @@ public class RRConfiguredFeatures {
                 new WallMushroomFeature.Config(
                         BlockStateProvider.simple(Blocks.BROWN_MUSHROOM_BLOCK),
                         ConstantInt.of(7)
+                )
+        ));
+        ctx.register(ASHEN_WALL_MUSHROOM, new ConfiguredFeature<>(
+                RRFeatures.WALL_MUSHROOM.get(),
+                new WallMushroomFeature.Config(
+                        BlockStateProvider.simple(RRBlocks.ASHEN_MUSHROOM_BLOCK.get()),
+                        UniformInt.of(5, 15)
                 )
         ));
 
