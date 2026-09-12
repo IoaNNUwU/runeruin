@@ -29,7 +29,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.DIAMOND_ARCANE_STONE.getKey(),
 
                 RRBlocks.MOSS_LIGHT.getKey(),
-                RRBlocks.LAPIS_LIGHT.getKey()
+                RRBlocks.LAPIS_LIGHT.getKey(),
+                RRBlocks.FIREFLY_IN_A_JAR.getKey()
         );
 
         // TODO: ELDEN_SAPLING

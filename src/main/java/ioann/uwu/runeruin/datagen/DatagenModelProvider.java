@@ -60,6 +60,7 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
         blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
+        createFireflyInJar(blockModels);
         createBigLilyPad(blockModels);
 
         blockModels.registerSimpleItemModel(
@@ -101,6 +102,76 @@ public class DatagenModelProvider extends ModelProvider {
                 itemModel,
                 ItemModelUtils.constantTint(-12012264)
         );
+    }
+
+    private static void createFireflyInJar(@NonNull BlockModelGenerators blockModels) {
+        JsonObject model = new JsonObject();
+        model.addProperty("ambientocclusion", false);
+
+        JsonObject textures = new JsonObject();
+        textures.addProperty("particle", "runeruin:block/firefly_jar_glass");
+        textures.addProperty("glass", "runeruin:block/firefly_jar_glass");
+        textures.addProperty("butterfly", "runeruin:block/firefly_butterfly");
+        textures.addProperty("wood", "minecraft:block/oak_planks");
+        model.add("textures", textures);
+
+        JsonArray elements = new JsonArray();
+        addJarElement(elements, new double[]{1, 0, 1}, new double[]{15, 13, 15}, "glass", 0,
+                "north", "south", "east", "west", "up", "down");
+        addJarElement(elements, new double[]{1, 13, 1}, new double[]{15, 14, 15}, "wood", 0,
+                "north", "south", "east", "west", "up", "down");
+        addJarElement(elements, new double[]{0.5, 14, 0.5}, new double[]{15.5, 16, 15.5}, "wood", 0,
+                "north", "south", "east", "west", "up", "down");
+
+        // Two thin, crossed planes keep the tiny 8x8 butterfly visible from every side.
+        addJarElement(elements, new double[]{4, 4, 7.9}, new double[]{12, 12, 8.1}, "butterfly", 15,
+                "north", "south");
+        addJarElement(elements, new double[]{7.9, 4, 4}, new double[]{8.1, 12, 12}, "butterfly", 15,
+                "east", "west");
+        model.add("elements", elements);
+
+        Identifier modelId = RR.id("block/firefly_in_a_jar");
+        blockModels.modelOutput.accept(modelId, () -> model);
+        blockModels.blockStateOutput.accept(
+                BlockModelGenerators.createSimpleBlock(
+                        RRBlocks.FIREFLY_IN_A_JAR.get(),
+                        BlockModelGenerators.plainVariant(modelId)
+                )
+        );
+        blockModels.registerSimpleItemModel(RRBlocks.FIREFLY_IN_A_JAR.get(), modelId);
+    }
+
+    private static void addJarElement(
+            JsonArray elements,
+            double[] from,
+            double[] to,
+            String texture,
+            int lightEmission,
+            String... directions
+    ) {
+        JsonObject element = new JsonObject();
+        element.add("from", vector(from));
+        element.add("to", vector(to));
+        if (lightEmission > 0) {
+            element.addProperty("light_emission", lightEmission);
+        }
+
+        JsonObject faces = new JsonObject();
+        for (String direction : directions) {
+            JsonObject face = new JsonObject();
+            face.addProperty("texture", "#" + texture);
+            faces.add(direction, face);
+        }
+        element.add("faces", faces);
+        elements.add(element);
+    }
+
+    private static JsonArray vector(double[] coordinates) {
+        JsonArray result = new JsonArray();
+        for (double coordinate : coordinates) {
+            result.add(coordinate);
+        }
+        return result;
     }
 
     private static Identifier modelFor(BigLilyPadBlock.Part part) {
