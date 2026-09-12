@@ -2,12 +2,13 @@ package ioann.uwu.runeruin.items;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.entities.RREntityTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.Consumable;
 import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
 import net.minecraft.world.item.consume_effects.ConsumeEffect;
@@ -46,5 +47,11 @@ public class RRItems {
                                     )
                             ))
                             .build())
+    );
+
+    public static final DeferredItem<Item> SNAIL_SPAWN_EGG = REGISTRY.registerItem(
+            "snail_spawn_egg",
+            SpawnEggItem::new,
+            properties -> properties.spawnEgg(RREntityTypes.SNAIL.get())
     );
 }

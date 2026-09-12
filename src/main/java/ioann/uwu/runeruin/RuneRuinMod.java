@@ -4,6 +4,8 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 
 import ioann.uwu.runeruin.creativetab.RRCreativeModeTabs;
 import ioann.uwu.runeruin.dimension.*;
+import ioann.uwu.runeruin.entities.RREntityTypes;
+import ioann.uwu.runeruin.entities.Snail;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.preview.RRGameTests;
 import ioann.uwu.runeruin.portal.RRPoiTypes;
@@ -29,9 +31,12 @@ public class RuneRuinMod {
 
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::addBlockEntityTypes);
+        modEventBus.addListener(Snail::registerAttributes);
+        modEventBus.addListener(Snail::registerSpawnPlacements);
 
         RRBlocks.REGISTRY.register(modEventBus);
         RRItems.REGISTRY.register(modEventBus);
+        RREntityTypes.REGISTRY.register(modEventBus);
         RRPoiTypes.REGISTRY.register(modEventBus);
         RRCreativeModeTabs.REGISTRY.register(modEventBus);
 
