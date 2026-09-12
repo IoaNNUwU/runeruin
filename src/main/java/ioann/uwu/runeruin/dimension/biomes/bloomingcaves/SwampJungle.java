@@ -1,10 +1,12 @@
 package ioann.uwu.runeruin.dimension.biomes.bloomingcaves;
 
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
+import ioann.uwu.runeruin.entities.RREntityTypes;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
 import net.minecraft.data.worldgen.placement.CavePlacements;
 import net.minecraft.world.attribute.EnvironmentAttributes;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
 import net.minecraft.world.level.biome.BiomeSpecialEffects;
@@ -17,6 +19,7 @@ public class SwampJungle {
 
     public static Biome bootstrap(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
         MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
+        mobs.addSpawn(MobCategory.CREATURE, 8, new MobSpawnSettings.SpawnerData(RREntityTypes.SNAIL.get(), 1, 3));
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 

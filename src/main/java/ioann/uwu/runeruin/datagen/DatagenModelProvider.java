@@ -41,6 +41,7 @@ public class DatagenModelProvider extends ModelProvider {
 
         // --- Items ---
         itemModels.generateFlatItem(RRItems.RUNE_OF_SPACE.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(RRItems.SNAIL_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
 
         // --- Blocks ---
         blockModels.createTrivialCube(RRBlocks.ARCANE_STONE.get());

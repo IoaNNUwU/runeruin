@@ -2,7 +2,9 @@ package ioann.uwu.runeruin.client;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.client.model.SnailModel;
 import ioann.uwu.runeruin.datagen.DatagenBiomeTagProvider;
+import ioann.uwu.runeruin.entities.RREntityTypes;
 import java.util.List;
 import net.minecraft.client.color.block.BlockTintSources;
 import net.neoforged.api.distmarker.Dist;
@@ -13,6 +15,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRendererEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
@@ -36,6 +39,16 @@ public class RuneRuinClient {
     @SubscribeEvent
     static void registerCustomEnvironmentEffectRenderer(RegisterCustomEnvironmentEffectRendererEvent event) {
         event.registerCloudRenderer(Renderers.RUNE_RUIN_CLOUDS_ID, new RuneRuinCloudsRenderer());
+    }
+
+    @SubscribeEvent
+    static void registerEntityLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(SnailModel.LAYER_LOCATION, SnailModel::createBodyLayer);
+    }
+
+    @SubscribeEvent
+    static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(RREntityTypes.SNAIL.get(), SnailRenderer::new);
     }
 
     @SubscribeEvent

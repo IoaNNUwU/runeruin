@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension.biomes.bloomingcaves;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
+import ioann.uwu.runeruin.entities.RREntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
@@ -35,6 +36,7 @@ public class StoneForest {
         mobs.addSpawn(MobCategory.MONSTER, 10, new MobSpawnSettings.SpawnerData(EntityTypes.SLIME, 1, 1));
         mobs.addSpawn(MobCategory.MONSTER, 30, new MobSpawnSettings.SpawnerData(EntityTypes.BOGGED, 4, 4));
         mobs.addSpawn(MobCategory.CREATURE, 10, new MobSpawnSettings.SpawnerData(EntityTypes.FROG, 2, 5));
+        mobs.addSpawn(MobCategory.CREATURE, 6, new MobSpawnSettings.SpawnerData(RREntityTypes.SNAIL.get(), 1, 3));
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
