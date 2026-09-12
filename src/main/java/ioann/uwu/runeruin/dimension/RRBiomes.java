@@ -15,6 +15,7 @@ import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.InvertedForest;
 import ioann.uwu.runeruin.dimension.biomes.lostcaves.SparklingCaves;
 import ioann.uwu.runeruin.dimension.biomes.lostcavesceiling.SparklingCavesCeiling;
 import ioann.uwu.runeruin.dimension.biomes.toplayer.EldenGarden;
+import ioann.uwu.runeruin.dimension.biomes.toplayer.SimilarForest;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
@@ -24,6 +25,7 @@ public class RRBiomes {
 
     // Top Layer
     public static final ResourceKey<Biome> ELDEN_GARDEN = RR.resourceKey(Registries.BIOME, "elden_garden");
+    public static final ResourceKey<Biome> SIMILAR_FOREST = RR.resourceKey(Registries.BIOME, "similar_forest");
 
     // Blooming caves ceiling
     public static final ResourceKey<Biome> GLOWING_ROOTS = RR.resourceKey(Registries.BIOME, "glowing_roots");
@@ -58,6 +60,7 @@ public class RRBiomes {
 
         // --- Top Layer ---
         ctx.register(ELDEN_GARDEN, EldenGarden.bootstrap(placedFeatures, configuredCravers));
+        ctx.register(SIMILAR_FOREST, SimilarForest.bootstrap(placedFeatures, configuredCravers));
 
         // --- Blooming caves ceiling ---
         ctx.register(GLOWING_ROOTS, GlowingRootsCeilingBiome.bootstrap(placedFeatures, configuredCravers));

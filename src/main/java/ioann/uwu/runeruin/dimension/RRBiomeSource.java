@@ -102,7 +102,7 @@ public class RRBiomeSource extends BiomeSource {
         return new RRBiomeSource(
                 HolderSet.direct(
                         biomeRegistry.getOrThrow(RRBiomes.ELDEN_GARDEN),
-                        biomeRegistry.getOrThrow(Biomes.FOREST)
+                        biomeRegistry.getOrThrow(RRBiomes.SIMILAR_FOREST)
                 ),
                 HolderSet.direct(
                         biomeRegistry.getOrThrow(RRBiomes.GLOWING_ROOTS),

@@ -85,7 +85,8 @@ public class RRPlacedFeatures {
                 new WallPlacementFilter(
                         List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
                         List.of(Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(), Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState())
-                )
+                ),
+                BiomeFilter.biome()
         );
 
         ctx.register(SMALL_RED_WALL_MUSHROOM, new PlacedFeature(
@@ -108,7 +109,8 @@ public class RRPlacedFeatures {
                 new WallPlacementFilter(
                         List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
                         List.of(Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(), Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState())
-                )
+                ),
+                BiomeFilter.biome()
         );
 
         ctx.register(BIG_RED_WALL_MUSHROOM, new PlacedFeature(
