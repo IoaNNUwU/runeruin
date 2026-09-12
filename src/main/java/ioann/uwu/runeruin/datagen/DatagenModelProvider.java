@@ -116,17 +116,16 @@ public class DatagenModelProvider extends ModelProvider {
         model.add("textures", textures);
 
         JsonArray elements = new JsonArray();
-        addJarElement(elements, new double[]{1, 0, 1}, new double[]{15, 13, 15}, "glass", 0,
+        addJarGlassElement(elements);
+        addJarElement(elements, "jar_wood_neck", new double[]{1, 13, 1}, new double[]{15, 14, 15}, "wood", 0,
                 "north", "south", "east", "west", "up", "down");
-        addJarElement(elements, new double[]{1, 13, 1}, new double[]{15, 14, 15}, "wood", 0,
-                "north", "south", "east", "west", "up", "down");
-        addJarElement(elements, new double[]{0.5, 14, 0.5}, new double[]{15.5, 16, 15.5}, "wood", 0,
+        addJarElement(elements, "jar_wood_lid", new double[]{0.5, 14, 0.5}, new double[]{15.5, 16, 15.5}, "wood", 0,
                 "north", "south", "east", "west", "up", "down");
 
         // Two thin, crossed planes keep the tiny 8x8 butterfly visible from every side.
-        addJarElement(elements, new double[]{4, 4, 7.9}, new double[]{12, 12, 8.1}, "butterfly", 15,
+        addJarElement(elements, "firefly_plane_north_south", new double[]{4, 4, 7.9}, new double[]{12, 12, 8.1}, "butterfly", 15,
                 "north", "south");
-        addJarElement(elements, new double[]{7.9, 4, 4}, new double[]{8.1, 12, 12}, "butterfly", 15,
+        addJarElement(elements, "firefly_plane_east_west", new double[]{7.9, 4, 4}, new double[]{8.1, 12, 12}, "butterfly", 15,
                 "east", "west");
         model.add("elements", elements);
 
@@ -141,8 +140,31 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.registerSimpleItemModel(RRBlocks.FIREFLY_IN_A_JAR.get(), modelId);
     }
 
+    private static void addJarGlassElement(JsonArray elements) {
+        JsonObject element = new JsonObject();
+        element.addProperty("name", "jar_glass_body");
+        element.add("from", vector(new double[]{1, 0, 1}));
+        element.add("to", vector(new double[]{15, 13, 15}));
+
+        JsonObject faces = new JsonObject();
+        double[] sideUv = {1, 1.5, 15, 14.5};
+        for (String direction : new String[]{"north", "south", "east", "west"}) {
+            addJarGlassFace(faces, direction, sideUv);
+        }
+        element.add("faces", faces);
+        elements.add(element);
+    }
+
+    private static void addJarGlassFace(JsonObject faces, String direction, double[] uv) {
+        JsonObject face = new JsonObject();
+        face.addProperty("texture", "#glass");
+        face.add("uv", vector(uv));
+        faces.add(direction, face);
+    }
+
     private static void addJarElement(
             JsonArray elements,
+            String name,
             double[] from,
             double[] to,
             String texture,
@@ -150,6 +172,8 @@ public class DatagenModelProvider extends ModelProvider {
             String... directions
     ) {
         JsonObject element = new JsonObject();
+        // Minecraft ignores unknown element fields; the analysis skill uses this stable label.
+        element.addProperty("name", name);
         element.add("from", vector(from));
         element.add("to", vector(to));
         if (lightEmission > 0) {
