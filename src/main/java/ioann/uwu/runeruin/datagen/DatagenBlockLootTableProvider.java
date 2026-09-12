@@ -49,6 +49,9 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.DEEP_ROOTS.get());
 
         dropSelf(RRBlocks.ELDEN_LEAVES.get());
+        dropSelf(RRBlocks.BAOBAB_LOG.get());
+        dropSelf(RRBlocks.BAOBAB_WOOD.get());
+        dropSelf(RRBlocks.BAOBAB_LEAVES.get());
 
         dropSelf(RRBlocks.INVERTED_LEAVES_1.get());
         dropSelf(RRBlocks.INVERTED_LEAVES_2.get());

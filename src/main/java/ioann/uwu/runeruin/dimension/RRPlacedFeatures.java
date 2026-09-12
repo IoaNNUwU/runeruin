@@ -12,6 +12,7 @@ import net.minecraft.data.worldgen.features.AquaticFeatures;
 import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Blocks;
@@ -57,6 +58,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_block_vine");
 
     public static final ResourceKey<PlacedFeature> INVERTED_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "inverted_tree");
+    public static final ResourceKey<PlacedFeature> BAOBAB = RR.resourceKey(Registries.PLACED_FEATURE, "baobab");
 
     public static final ResourceKey<PlacedFeature> DRIPSTONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "dripstone_spike");
     public static final ResourceKey<PlacedFeature> STONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "stone_spike");
@@ -399,6 +401,32 @@ public class RRPlacedFeatures {
         ctx.register(INVERTED_TREE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.INVERTED_TREE),
                 invertedTreePlacement
+        ));
+
+        ctx.register(BAOBAB, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.BAOBAB),
+                List.of(
+                        RarityFilter.onAverageOnceEvery(4),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(BLOOMING_CAVES_Y + TERRAIN_HEIGHT + 1),
+                                VerticalAnchor.absolute(BLOOMING_CAVES_Y + TERRAIN_MIN_HEIGHT + 31)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.anyOf(
+                                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                        BlockPredicate.replaceable(),
+                                        BlockPredicate.matchesTag(BlockTags.REPLACEABLE_BY_TREES),
+                                        BlockPredicate.matchesTag(BlockTags.FLOWERS),
+                                        BlockPredicate.matchesTag(BlockTags.SMALL_FLOWERS)
+                                ),
+                                32
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                        BiomeFilter.biome()
+                )
         ));
 
         ctx.register(GLOWING_MOSS_VEGETATION, new PlacedFeature(

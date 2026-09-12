@@ -54,6 +54,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> BAOBAB = RR.resourceKey(Registries.CONFIGURED_FEATURE, "baobab");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> DRIPSTONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dripstone_spike");
     public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_spike");
@@ -247,6 +248,15 @@ public class RRConfiguredFeatures {
                                 BlockStateProvider.simple(RRBlocks.INVERTED_LEAVES_2.get())
                         ),
                         ConstantInt.of(18)
+                )
+        ));
+
+        ctx.register(BAOBAB, new ConfiguredFeature<>(
+                RRFeatures.BAOBAB.get(),
+                new BaobabFeature.Config(
+                        BlockStateProvider.simple(RRBlocks.BAOBAB_WOOD.get()),
+                        BlockStateProvider.simple(RRBlocks.BAOBAB_LEAVES.get()),
+                        UniformInt.of(20, 40)
                 )
         ));
 

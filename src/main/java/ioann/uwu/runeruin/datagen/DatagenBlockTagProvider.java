@@ -38,6 +38,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.MINEABLE_WITH_AXE).add(
                 RRBlocks.ELDEN_LOG.getKey(),
+                RRBlocks.BAOBAB_LOG.getKey(),
+                RRBlocks.BAOBAB_WOOD.getKey(),
                 RRBlocks.ELDEN_PLANKS.getKey(),
                 RRBlocks.INVERTED_TREE_WOOD.getKey(),
                 RRBlocks.INVERTED_TREE_PLANKS.getKey(),
@@ -57,6 +59,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.MINEABLE_WITH_HOE).add(
                 RRBlocks.ELDEN_LEAVES.getKey(),
+                RRBlocks.BAOBAB_LEAVES.getKey(),
                 RRBlocks.INVERTED_LEAVES_1.getKey(),
                 RRBlocks.INVERTED_LEAVES_2.getKey(),
                 RRBlocks.GIANT_GOBLET_STEM.getKey(),
@@ -74,10 +77,15 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.FROG_PREFER_JUMP_TO).add(RRBlocks.BIG_LILY_PAD.getKey());
 
-        tag(BlockTags.LOGS).add(RRBlocks.INVERTED_TREE_WOOD.getKey());
+        tag(BlockTags.LOGS).add(
+                RRBlocks.INVERTED_TREE_WOOD.getKey(),
+                RRBlocks.BAOBAB_LOG.getKey(),
+                RRBlocks.BAOBAB_WOOD.getKey()
+        );
         tag(BlockTags.LEAVES).add(
                 RRBlocks.INVERTED_LEAVES_1.getKey(),
-                RRBlocks.INVERTED_LEAVES_2.getKey()
+                RRBlocks.INVERTED_LEAVES_2.getKey(),
+                RRBlocks.BAOBAB_LEAVES.getKey()
         );
         tag(BlockTags.PLANKS).add(RRBlocks.INVERTED_TREE_PLANKS.getKey());
         tag(BlockTags.WOODEN_STAIRS).add(RRBlocks.INVERTED_TREE_STAIRS.getKey());
