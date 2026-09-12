@@ -63,6 +63,35 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.new WoodProvider(TextureMapping.column(eldenLogBark, eldenLogBark))
                 .wood(RRBlocks.ELDEN_LOG.get());
 
+        var acaciaLogSide = TextureMapping.getBlockTexture(Blocks.ACACIA_LOG);
+        var acaciaLogTop = TextureMapping.getBlockTexture(Blocks.ACACIA_LOG, "_top");
+        TexturedModel.Provider baobabLog = TexturedModel.COLUMN_ALT.updateTexture(mapping -> mapping
+                .put(TextureSlot.SIDE, acaciaLogSide)
+                .put(TextureSlot.END, acaciaLogTop)
+                .put(TextureSlot.PARTICLE, acaciaLogSide));
+        TexturedModel.Provider baobabLogHorizontal = TexturedModel.COLUMN_HORIZONTAL_ALT.updateTexture(mapping -> mapping
+                .put(TextureSlot.SIDE, acaciaLogSide)
+                .put(TextureSlot.END, acaciaLogTop)
+                .put(TextureSlot.PARTICLE, acaciaLogSide));
+        blockModels.createRotatedPillarWithHorizontalVariant(RRBlocks.BAOBAB_LOG.get(), baobabLog, baobabLogHorizontal);
+        TexturedModel.Provider baobabWood = TexturedModel.CUBE.updateTexture(mapping -> mapping.put(
+                TextureSlot.ALL,
+                acaciaLogSide
+        ));
+        blockModels.createTrivialBlock(RRBlocks.BAOBAB_WOOD.get(), baobabWood);
+        blockModels.registerSimpleItemModel(
+                RRBlocks.BAOBAB_WOOD.get(),
+                ModelLocationUtils.getModelLocation(RRBlocks.BAOBAB_WOOD.get())
+        );
+        blockModels.createTintedLeaves(
+                RRBlocks.BAOBAB_LEAVES.get(),
+                TexturedModel.LEAVES.updateTexture(mapping -> mapping.put(
+                        TextureSlot.ALL,
+                        TextureMapping.getBlockTexture(Blocks.ACACIA_LEAVES)
+                )),
+                0x6B9C3C
+        );
+
         createInvertedTreeBlocks(blockModels);
 
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());

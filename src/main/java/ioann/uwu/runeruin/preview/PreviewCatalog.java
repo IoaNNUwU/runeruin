@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.preview;
 
 import ioann.uwu.runeruin.preview.jobs.BoulderPreviewJob;
+import ioann.uwu.runeruin.preview.jobs.BaobabPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GiantGobletPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GlowingBallPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GobletMossPreviewJob;
@@ -24,6 +25,7 @@ public final class PreviewCatalog {
         register(new GobletMossPreviewJob());
         register(new BoulderPreviewJob());
         register(new MonolithPreviewJob());
+        register(new BaobabPreviewJob());
     }
 
     private PreviewCatalog() {}

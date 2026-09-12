@@ -125,6 +125,20 @@ public class RRBlocks {
             RotatedPillarBlock::new
     );
 
+    public static final DeferredBlock<Block> BAOBAB_LOG = register("baobab_log",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.ACACIA_LOG),
+            RotatedPillarBlock::new
+    );
+
+    public static final DeferredBlock<Block> BAOBAB_WOOD = register("baobab_wood",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.ACACIA_WOOD)
+    );
+
+    public static final DeferredBlock<Block> BAOBAB_LEAVES = register("baobab_leaves",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.ACACIA_LEAVES),
+            p -> new TintedParticleLeavesBlock(0.01F, p)
+    );
+
     public static final DeferredBlock<Block> INVERTED_TREE_PLANKS = register("inverted_tree_planks",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_PLANKS)
     );

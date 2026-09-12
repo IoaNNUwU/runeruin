@@ -42,6 +42,10 @@ public class RuneRuinClient {
     static void registerBlockTintSources(RegisterColorHandlersEvent.BlockTintSources event) {
         // Use the biome foliage color for every part, including the item model's
         // in-hand tint via the matching datagen tint source.
-        event.register(List.of(BlockTintSources.foliage()), RRBlocks.BIG_LILY_PAD.get());
+        event.register(
+                List.of(BlockTintSources.foliage()),
+                RRBlocks.BIG_LILY_PAD.get(),
+                RRBlocks.BAOBAB_LEAVES.get()
+        );
     }
 }

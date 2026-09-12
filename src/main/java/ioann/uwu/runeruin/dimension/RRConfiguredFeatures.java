@@ -54,6 +54,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> BAOBAB = RR.resourceKey(Registries.CONFIGURED_FEATURE, "baobab");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> ELDEN_GIANT_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "elden_giant_tree");
 
@@ -255,6 +256,15 @@ public class RRConfiguredFeatures {
         ctx.register(ELDEN_GIANT_TREE, new ConfiguredFeature<>(
                 RRFeatures.ELDEN_GIANT_TREE.get(),
                 NoneFeatureConfiguration.INSTANCE
+        ));
+
+        ctx.register(BAOBAB, new ConfiguredFeature<>(
+                RRFeatures.BAOBAB.get(),
+                new BaobabFeature.Config(
+                        BlockStateProvider.simple(RRBlocks.BAOBAB_WOOD.get()),
+                        BlockStateProvider.simple(RRBlocks.BAOBAB_LEAVES.get()),
+                        UniformInt.of(20, 40)
+                )
         ));
 
         ctx.register(DRIPSTONE_SPIKE, new ConfiguredFeature<>(

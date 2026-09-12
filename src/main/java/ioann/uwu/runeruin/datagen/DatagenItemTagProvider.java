@@ -36,9 +36,14 @@ public class DatagenItemTagProvider extends ItemTagsProvider {
         tag(ItemTags.PLANKS).add(itemKey(RRBlocks.INVERTED_TREE_PLANKS.get()));
         tag(ItemTags.LOGS).add(itemKey(RRBlocks.INVERTED_TREE_WOOD.get()));
         tag(ItemTags.LOGS_THAT_BURN).add(itemKey(RRBlocks.INVERTED_TREE_WOOD.get()));
+        tag(ItemTags.LOGS).add(itemKey(RRBlocks.BAOBAB_LOG.get()));
+        tag(ItemTags.LOGS).add(itemKey(RRBlocks.BAOBAB_WOOD.get()));
+        tag(ItemTags.LOGS_THAT_BURN).add(itemKey(RRBlocks.BAOBAB_LOG.get()));
+        tag(ItemTags.LOGS_THAT_BURN).add(itemKey(RRBlocks.BAOBAB_WOOD.get()));
         tag(ItemTags.LEAVES).add(
                 itemKey(RRBlocks.INVERTED_LEAVES_1.get()),
-                itemKey(RRBlocks.INVERTED_LEAVES_2.get())
+                itemKey(RRBlocks.INVERTED_LEAVES_2.get()),
+                itemKey(RRBlocks.BAOBAB_LEAVES.get())
         );
 
         tag(ItemTags.WOODEN_BUTTONS).add(itemKey(RRBlocks.INVERTED_TREE_BUTTON.get()));
