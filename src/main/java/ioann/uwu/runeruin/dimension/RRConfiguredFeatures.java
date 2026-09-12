@@ -52,6 +52,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_berry_bush_patch");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_mushroom");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BAOBAB = RR.resourceKey(Registries.CONFIGURED_FEATURE, "baobab");
@@ -237,6 +238,17 @@ public class RRConfiguredFeatures {
                                                 .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MAX)
                                                 .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MAX), 20)
                         )
+                )
+        ));
+
+        ctx.register(GLOWING_MUSHROOM, new ConfiguredFeature<>(
+                RRFeatures.GLOWING_MUSHROOM.get(),
+                new GlowingMushroomFeature.Config(
+                        BlockStateProvider.simple(RRBlocks.GLOWING_MUSHROOM_CAP.get()),
+                        BlockStateProvider.simple(RRBlocks.GLOWING_MUSHROOM_STEM.get()),
+                        UniformInt.of(12, 16),
+                        UniformInt.of(4, 9),
+                        UniformInt.of(2, 3)
                 )
         ));
 

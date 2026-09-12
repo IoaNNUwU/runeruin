@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.preview.jobs.BoulderPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.BaobabPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GiantGobletPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GlowingBallPreviewJob;
+import ioann.uwu.runeruin.preview.jobs.GlowingMushroomPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GobletMossPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.MonolithPreviewJob;
 import java.io.IOException;
@@ -26,6 +27,7 @@ public final class PreviewCatalog {
         register(new BoulderPreviewJob());
         register(new MonolithPreviewJob());
         register(new BaobabPreviewJob());
+        register(new GlowingMushroomPreviewJob());
     }
 
     private PreviewCatalog() {}

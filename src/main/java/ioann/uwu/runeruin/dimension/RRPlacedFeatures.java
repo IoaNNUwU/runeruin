@@ -54,6 +54,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "moss_berry_bush_patch");
 
     public static final ResourceKey<PlacedFeature> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_moss_vegetation");
+    public static final ResourceKey<PlacedFeature> GLOWING_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_mushroom");
     public static final ResourceKey<PlacedFeature> MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "moss_vegetation");
 
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_vine");
@@ -461,6 +462,28 @@ public class RRPlacedFeatures {
                                 BlockPredicate.solid(),
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 12
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                        BiomeFilter.biome()
+                )
+        ));
+
+        ctx.register(GLOWING_MUSHROOM, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.GLOWING_MUSHROOM),
+                List.of(
+                        // Five independent one-in-six trials raise the average rate fivefold.
+                        CountPlacement.of(5),
+                        RarityFilter.onAverageOnceEvery(6),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(DEEP_CAVES_Y),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                32
                         ),
                         RandomOffsetPlacement.vertical(ConstantInt.of(1)),
                         BiomeFilter.biome()
