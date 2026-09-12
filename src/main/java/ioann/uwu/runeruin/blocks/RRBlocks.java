@@ -100,6 +100,12 @@ public class RRBlocks {
             p -> new UntintedParticleLeavesBlock(0.1f, ParticleTypes.CLOUD, p) // TODO: ParticleType
     );
 
+    public static final DeferredBlock<Block> ELDEN_BERRY_VINE = register("elden_berry_vine",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CAVE_VINES_PLANT)
+                    .mapColor(MapColor.COLOR_BROWN),
+            EldenBerryVineBlock::new
+    );
+
     /** Temporary inverted-tree leaves: Cherry Leaves for the first variant. */
     public static final DeferredBlock<Block> INVERTED_LEAVES_1 = register("inverted_leaves_1",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES),

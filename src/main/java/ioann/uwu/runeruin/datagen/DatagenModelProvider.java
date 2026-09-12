@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.ArcaneStonePortalBlock;
 import ioann.uwu.runeruin.blocks.BigLilyPadBlock;
+import ioann.uwu.runeruin.blocks.EldenBerryVineBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
@@ -55,6 +56,7 @@ public class DatagenModelProvider extends ModelProvider {
 
         blockModels.createTrivialBlock(RRBlocks.ELDEN_LEAVES.get(), TexturedModel.LEAVES);
         blockModels.createTrivialCube(RRBlocks.ELDEN_PLANKS.get());
+        createEldenBerryVine(blockModels);
         Material eldenLogBark = TextureMapping.getBlockTexture(RRBlocks.ELDEN_LOG.get());
         blockModels.createTrivialBlock(RRBlocks.ELDEN_WOOD.get(), _ -> TexturedModel.createAllSame(eldenLogBark));
         createGiantGobletBlocks(blockModels);
@@ -602,5 +604,33 @@ public class DatagenModelProvider extends ModelProvider {
                                 ))
                         )
         );
+    }
+
+    private static void createEldenBerryVine(@NonNull BlockModelGenerators blockModels) {
+        var block = RRBlocks.ELDEN_BERRY_VINE.get();
+        var stemTexture = new Material(RR.id("block/elden_berry_vine"));
+        var berriesTexture = new Material(RR.id("block/elden_berry_vine_berries"));
+        var stemModel = blockModels.createSuffixedVariant(
+                block,
+                "",
+                ModelTemplates.CROSS,
+                _ -> TextureMapping.cross(stemTexture)
+        );
+        var berriesModel = blockModels.createSuffixedVariant(
+                block,
+                "_berries",
+                ModelTemplates.CROSS,
+                _ -> TextureMapping.cross(berriesTexture)
+        );
+
+        blockModels.blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(block)
+                        .with(BlockModelGenerators.createBooleanModelDispatch(
+                                EldenBerryVineBlock.BERRIES,
+                                BlockModelGenerators.plainVariant(berriesModel),
+                                BlockModelGenerators.plainVariant(stemModel)
+                        ))
+        );
+        blockModels.registerSimpleItemModel(block, stemModel);
     }
 }
