@@ -1,7 +1,7 @@
 package ioann.uwu.runeruin.dimension.features;
 
+import ioann.uwu.runeruin.blocks.EldenVinesBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.blocks.EldenBerryVineBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
@@ -169,12 +169,12 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
             level.setBlock(leafPos, leafState, 19);
         }
 
-        placeBerryVines(level, placeableLeaves, random);
+        placeEldenVines(level, placeableLeaves, random);
 
         return true;
     }
 
-    private static void placeBerryVines(WorldGenLevel level, Set<BlockPos> leaves, RandomSource random) {
+    private static void placeEldenVines(WorldGenLevel level, Set<BlockPos> leaves, RandomSource random) {
         for (BlockPos leafPos : leaves) {
             if (random.nextFloat() >= 0.08F) {
                 continue;
@@ -186,15 +186,14 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
             }
 
             int length = 1 + random.nextInt(4);
-            int berryIndex = random.nextInt(length);
             for (int segment = 0; segment < length && vinePos.getY() >= level.getMinY(); segment++) {
                 if (!level.getBlockState(vinePos).isAir()) {
                     break;
                 }
 
-                boolean hasBerries = segment == berryIndex || random.nextInt(4) == 0;
-                BlockState vineState = RRBlocks.ELDEN_BERRY_VINE.get().defaultBlockState()
-                        .setValue(EldenBerryVineBlock.BERRIES, hasBerries);
+                boolean hasOrb = segment == 0 || random.nextInt(4) == 0;
+                BlockState vineState = RRBlocks.ELDEN_VINES.get().defaultBlockState()
+                        .setValue(EldenVinesBlock.ORB, hasOrb);
                 level.setBlock(vinePos, vineState, 19);
                 vinePos = vinePos.below();
             }
