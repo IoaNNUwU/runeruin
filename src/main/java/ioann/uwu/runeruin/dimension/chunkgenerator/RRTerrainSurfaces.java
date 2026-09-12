@@ -43,6 +43,7 @@ public final class RRTerrainSurfaces {
 
     static {
         register(RRBiomes.ELDEN_GARDEN, GRASS, MOSS);
+        register(RRBiomes.SIMILAR_FOREST, GRASS, MOSS);
         register(Biomes.FOREST, GRASS, MOSS);
 
         register(RRBiomes.GLOWING_ROOTS, MOSS, MOSS);
@@ -102,7 +103,9 @@ public final class RRTerrainSurfaces {
     }
 
     public static boolean usesGrassySubfloor(Holder<Biome> biome) {
-        return biome.is(RRBiomes.ELDEN_GARDEN) || biome.is(Biomes.FOREST);
+        return biome.is(RRBiomes.ELDEN_GARDEN)
+                || biome.is(RRBiomes.SIMILAR_FOREST)
+                || biome.is(Biomes.FOREST);
     }
 
     private static Profile profile(Holder<Biome> biome) {
