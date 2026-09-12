@@ -37,6 +37,7 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.POLISHED_ARCANE_STONE.get());
         dropSelf(RRBlocks.ARCANE_STONE_PILLAR.get());
         dropSelf(RRBlocks.ARCANE_STONE_COLUMN.get());
+        dropOther(RRBlocks.ARCANE_STONE_PORTAL.get(), RRBlocks.ARCANE_STONE.get());
 
         dropSelf(RRBlocks.DIAMOND_ARCANE_STONE.get());
 

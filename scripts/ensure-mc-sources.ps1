@@ -156,7 +156,17 @@ try {
         throw "The shared Minecraft sources cache path is not a directory: $sharedSources"
     }
     if ($sharedSourcesExists -and $sharedVersion -ne $expectedVersion) {
-        throw "The shared Minecraft sources cache exists with the wrong or missing version: $sharedSources"
+        $hasEntries = Get-ChildItem -LiteralPath $sharedSources -Force | Select-Object -First 1
+        if ($null -eq $sharedVersion -and $null -eq $hasEntries) {
+            # A prior interrupted setup can leave behind only the cache directory.
+            # Remove that empty placeholder so extraction can initialize it cleanly.
+            Remove-Item -LiteralPath $sharedSources -Force
+            $sharedSourcesExists = $false
+            Write-Host "Removed empty incomplete shared Minecraft sources cache directory: $sharedSources"
+        }
+        else {
+            throw "The shared Minecraft sources cache exists with the wrong or missing version: $sharedSources"
+        }
     }
 
     if ($sharedVersion -eq $expectedVersion) {

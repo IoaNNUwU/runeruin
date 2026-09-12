@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.portal;
 
+import ioann.uwu.runeruin.blocks.ArcaneStonePortalBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -33,7 +34,7 @@ public class RuneRuinPortalShape {
     private static final int MIN_HEIGHT = 3;
     public static final int MAX_HEIGHT = 21;
     private static final BlockBehaviour.StatePredicate FRAME =
-            (state, level, pos) -> state.is(RRBlocks.ARCANE_STONE);
+            (state, level, pos) -> state.is(RRBlocks.ARCANE_STONE) || state.is(RRBlocks.ARCANE_STONE_PORTAL);
     private final Direction.Axis axis;
     private final Direction rightDir;
     private final int numPortalBlocks;
@@ -199,11 +200,77 @@ public class RuneRuinPortalShape {
     }
 
     private void placePortalBlocks(LevelAccessor level, boolean unstable) {
+        markPortalFrameParts(level, this.bottomLeft, this.rightDir, this.width, this.height, this.axis);
         BlockState portalState = RRBlocks.RUNE_RUIN_PORTAL.get().defaultBlockState()
                 .setValue(RuneRuinPortalBlock.AXIS, this.axis)
                 .setValue(RuneRuinPortalBlock.UNSTABLE, unstable);
         BlockPos.betweenClosed(this.bottomLeft, this.bottomLeft.relative(Direction.UP, this.height - 1).relative(this.rightDir, this.width - 1))
                 .forEach(pos -> level.setBlock(pos, portalState, 18));
+    }
+
+    /** Replaces portal frame positions with their matching decorative part. */
+    public static void markPortalFrameParts(
+            LevelAccessor level,
+            BlockPos bottomLeft,
+            Direction rightDir,
+            int width,
+            int height,
+            Direction.Axis axis
+    ) {
+        BlockPos.MutableBlockPos framePos = new BlockPos.MutableBlockPos();
+        int rowWidth = width + 2;
+        int firstMiddle = (rowWidth - 1) / 2;
+        int lastMiddle = rowWidth / 2;
+
+        for (int offset = -1; offset <= width; offset++) {
+            int rowIndex = offset + 1;
+            ArcaneStonePortalBlock.Part part;
+            ArcaneStonePortalBlock.MiddleSide middleSide = ArcaneStonePortalBlock.MiddleSide.SINGLE;
+            if (rowIndex == 0 || rowIndex == rowWidth - 1) {
+                part = ArcaneStonePortalBlock.Part.CORNER;
+            } else if (rowIndex == firstMiddle) {
+                part = ArcaneStonePortalBlock.Part.MIDDLE;
+                if (rowWidth % 2 == 0) {
+                    middleSide = ArcaneStonePortalBlock.MiddleSide.LEFT;
+                }
+            } else if (rowWidth % 2 == 0 && rowIndex == lastMiddle) {
+                part = ArcaneStonePortalBlock.Part.MIDDLE;
+                middleSide = ArcaneStonePortalBlock.MiddleSide.RIGHT;
+            } else {
+                part = ArcaneStonePortalBlock.Part.VERT_COLUMN;
+            }
+
+            framePos.set(bottomLeft).move(rightDir, offset).move(Direction.DOWN);
+            markPortalFrameBlock(level, framePos, part, middleSide, axis);
+
+            framePos.set(bottomLeft).move(rightDir, offset).move(Direction.UP, height);
+            markPortalFrameBlock(level, framePos, part, middleSide, axis);
+        }
+
+        for (int y = 0; y < height; y++) {
+            framePos.set(bottomLeft).move(rightDir, -1).move(Direction.UP, y);
+            markPortalFrameBlock(level, framePos, ArcaneStonePortalBlock.Part.COLUMN, ArcaneStonePortalBlock.MiddleSide.SINGLE, axis);
+
+            framePos.set(bottomLeft).move(rightDir, width).move(Direction.UP, y);
+            markPortalFrameBlock(level, framePos, ArcaneStonePortalBlock.Part.COLUMN, ArcaneStonePortalBlock.MiddleSide.SINGLE, axis);
+        }
+    }
+
+    private static void markPortalFrameBlock(
+            LevelAccessor level,
+            BlockPos pos,
+            ArcaneStonePortalBlock.Part part,
+            ArcaneStonePortalBlock.MiddleSide middleSide,
+            Direction.Axis axis
+    ) {
+        BlockState state = level.getBlockState(pos);
+        if (state.is(RRBlocks.ARCANE_STONE) || state.is(RRBlocks.ARCANE_STONE_PORTAL)) {
+            BlockState frameState = RRBlocks.ARCANE_STONE_PORTAL.get().defaultBlockState()
+                    .setValue(ArcaneStonePortalBlock.PART, part)
+                    .setValue(ArcaneStonePortalBlock.MIDDLE_SIDE, middleSide)
+                    .setValue(ArcaneStonePortalBlock.AXIS, axis);
+            level.setBlock(pos.immutable(), frameState, Block.UPDATE_ALL);
+        }
     }
 
     /**

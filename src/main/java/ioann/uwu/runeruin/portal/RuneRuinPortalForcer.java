@@ -155,6 +155,12 @@ public class RuneRuinPortalForcer {
             }
         }
 
+        Direction frameRightDir = portalAxis == Direction.Axis.X ? Direction.WEST : Direction.SOUTH;
+        BlockPos frameBottomLeft = portalAxis == Direction.Axis.X
+                ? closestFullPosition.relative(Direction.EAST)
+                : closestFullPosition;
+        RuneRuinPortalShape.markPortalFrameParts(this.level, frameBottomLeft, frameRightDir, 2, 3, portalAxis);
+
         BlockState portalBlockState = RRBlocks.RUNE_RUIN_PORTAL.get().defaultBlockState().setValue(RuneRuinPortalBlock.AXIS, portalAxis);
 
         for (int width = 0; width < 2; width++) {

@@ -26,6 +26,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.POLISHED_ARCANE_STONE.getKey(),
                 RRBlocks.ARCANE_STONE_PILLAR.getKey(),
                 RRBlocks.ARCANE_STONE_COLUMN.getKey(),
+                RRBlocks.ARCANE_STONE_PORTAL.getKey(),
                 RRBlocks.DIAMOND_ARCANE_STONE.getKey(),
 
                 RRBlocks.MOSS_LIGHT.getKey(),
