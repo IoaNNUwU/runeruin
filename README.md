@@ -9,78 +9,78 @@
 ```
                                           + Y = 512
              /````\                       | 
- TOP LAYER   \_  _/  /````\        .__.   | - - - 217 blocks below build limit
+ TOP LAYER   \_  _/  /````\        .__.   | - - - 217 blocks below the build limit
                ||    \_  _/        |  |   |
-           ..****...___||         _|__| --|-- ~25 blocks of height - dripstone/deep/dark
-        __`             ``''~~''``        |                          caves biomes
-       /############################### --+ ↓ Y = 293  ↑ Y = 299 (5 blocks of height)
-       || ##`''***~'```''```''***~'```' --|-- ~10 blocks height - blooming caves ceiling
+           ..****...___||         _|__| --|-- ~25 blocks high - dripstone/deep/dark
+       _..`             ``''~~''``        |                          caves biomes
+      `|| __                              | Y = 296
+       || ##`''***~'```''```''***~'```' --|-- ~10 blocks high - blooming caves ceiling
        || ##      BLOOMING CAVES          |                                     biomes
-       || ##         LAYER   /````\       | - - - 75 blocks of height
+       || ##         LAYER   /````\       | - - - 75 blocks high
        || ##   /``\          \_  _/       |
-       || ##.****./.____       ||  _..* --|-- ~25 blocks of height - blooming caves biomes
+       || ##.****./.____       ||  _..* --|-- ~25 blocks high - blooming caves biomes
 ~~''``` ``##            ``''~~''``        |
-####################################### --+ ↓ Y = 212  ↑ Y = 218
-```''~*~''```''***~'```''```''***~'```' --|-- ~10 blocks height - dripstone/deep/dark
+                                          | Y = 215
+```''~*~''```''***~'```''```''***~'```' --|-- ~10 blocks high - dripstone/deep/dark
         |     *| |       DEEP CAVES   |   |                       caves ceiling biomes
        *\        /         LAYER      /   |
-         |*     |*                  *|    | - - - 75 blocks of height
+         |*     |*                  *|    | - - - 75 blocks high
                       /                   |
-   /\      ..****..._/ \           _..* --|-- ~25 blocks of height - dripstone/deep/dark
-~~''``` ```             ``''~~''``        |                          caves biomes
-####################################### --+ ↓ Y = 131  ↑ Y = 137
-```''~*~''```''***~'```''```''***~'```' --|-- ~10 blocks height - hot/ice/lost caves
+   /\      ..****..._/ \           _..* --|-- ~25 blocks high - dripstone/deep/dark
+~~''``` ```             ``''.    |       |                          caves biomes
+                            ||    `|      | Y = 134
+```''~*~''```''***~'```''```||     ``' --|-- ~10 blocks high - hot/ice/lost caves
  LOST CAVES    ||           ||            |                       ceiling biomes
    LAYER       ||     *     ||         *  |
-        ___    ||     **    ||       ***  | - - - 75 blocks of height
+        ___    ||     **    ||       ***  | - - - 75 blocks high
  / / / /0 0\   |**   **     ||**    **    |
- \ \ \ \___/.****.../\__   *|**    /\.* --|-- ~25 blocks of height - hot/ice/lost caves
+ \ \ \ \___/.****.../\__   *|**    /\.* --|-- ~25 blocks high - hot/ice/lost caves
 ~~''``` ^^^             ``''~~''``        |                          biomes
-####################################### --+ ↓ Y = 50  ↑ Y = 56
-```''~*~''```''***~'```''```''***~'```' --|-- ~10 blocks height - void ceiling biomes
+                                          | Y = 53
+```''~*~''```''***~'```''```''***~'```' --|-- ~10 blocks high - void ceiling biomes
                          <>               |
- <>    `         `                <>      | - - - 50 blocks of height
+ <>    `         `                <>      | - - - 50 blocks high
      VOID LAYER          `                + Y = 0
 ```
 
-## AI Disclosure - 100% Agentic coding with full human review. No AI for assets.
+## AI Disclaimer - 100% agentic coding with partial human review. No AI for assets.
 
-- **NO** AI usage for **textures** with exception for **temporary** ones during development. *No AI assets should be even in beta releases*.
-- **NO** AI usage for **assets of any other kind** such as music and models.
-- **100%** Agentic coding (**AI writes** + **AI reviews**) with **70%** human review. *Humans review overall architecture and important parts of the code. No guarantee every line was reviewed by humans*.
+- **NO AI** for **textures**.
+- Some AI was used to edit **models**.
+- **NO AI** for any other assets, such as music.
+- **100%** agentic coding (**AI writes** + **AI reviews**) with **partial human review**. *Humans review the overall architecture and important parts of the code. There is no guarantee that humans reviewed every line*.
 
 ## TODO
 
 - [ ] **TOP** Layer
-  - [ ] Add more biomes. Like a yellow one.
+  - [ ] Add more biomes, such as a yellow one.
   - [X] Improve generation of the top layer so it isn't too flat.
-  - [X] Improve pillars generation and put runes on them.
-  - [X] Improve runes design.
+  - [X] Improve pillar generation and put runes on them.
+  - [X] Improve rune designs.
 - [ ] **Blooming Caves** Layer
-  - [ ] Add `Hive` biome as large stone hanging from the top layer and other types of hanging stones
-  - [ ] Add `Frog` boss and magic abilities
-  - [ ] Add `Pirates Ship` boss/invasion and crew
-  - [X] Divide into 2 biomes: jungle and stone forest.
-  - [X] Add another type of glowing flora to glow in blooming caves under the top layer (where dark)
+  - [ ] Add a `Hive` biome consisting of a large stone hanging from the top layer, and add other types of hanging stones.
+  - [ ] Add a `Frog` boss and magical abilities.
+  - [ ] Add a `Pirate Ship` boss, a related invasion, and its crew.
+  - [X] Divide into two biomes: jungle and stone forest.
+  - [X] Add another type of glowing flora to the dark parts of the Blooming Caves beneath the top layer.
 - [ ] **Deep Caves** Layer
-  - [ ] Add more spike types (mossy, stone etc).
-  - [ ] Add more diversity in inverted trees buds
+  - [ ] Add more spike types (mossy, stone, etc.).
+  - [ ] Add more variety to buds on inverted trees.
     - [ ] Bird nests
-    - [ ] Mini lake?
-    - [ ] spider nest?
-  - [ ] Add magenta mushrooms biome with big worms.
-  - [ ] Add normal mushrooms biome with gnomes.
-  - [ ] Add spider caves biome with giant spider boss.
+    - [ ] Mini-lake?
+    - [ ] Spider nests?
+  - [ ] Add a magenta mushroom biome with giant worms.
+  - [ ] Add a regular mushroom biome with gnomes.
+  - [ ] Add a spider cave biome with a giant spider boss.
 - [ ] **Lost Caves** Layer
-  - [ ] Add Ice biome.
-  - [ ] Add Giant Goblets extending beyond lost caves layer and with their own ecosystems inside.
-  - [X] Add Lava biome.
-- [ ] **Void** layer
-  - [ ] Add stars as small blocks of stardust - a useful material hard to mine above the abyss.
-  - [ ] Add radioactive flesh biome maybe
+  - [ ] Add an ice biome.
+  - [ ] Add Giant Goblets that extend beyond the Lost Caves layer and contain their own ecosystems.
+  - [X] Add a lava biome.
+- [ ] **Void** Layer
+  - [ ] Add stars made of stardust blocks. Stardust is a useful material that is difficult to mine above the abyss.
+  - [ ] Maybe add a radioactive flesh biome.
 - [ ] **Equipment**
-  - [ ] Add `Blowpipe` - shoots `mossberries` / `glowberries`. applies effect on the enemy
-  - [ ] Add `ring` that makes every tool deal x2 damage on poisoned enemies to work with `blowpipe` or a `sword`
-  - [ ] Add `Grappling hook`
-  - [ ] Add other rock climbing equipment.
-
+  - [ ] Add a `Blowpipe` that shoots `mossberries` or `glowberries` and applies an effect to enemies.
+  - [ ] Add a `ring` that doubles the damage all tools deal to poisoned enemies, so it can be used with the `blowpipe` or a `sword`.
+  - [ ] Add a `Grappling Hook`.
+  - [ ] Add other rock-climbing equipment.
