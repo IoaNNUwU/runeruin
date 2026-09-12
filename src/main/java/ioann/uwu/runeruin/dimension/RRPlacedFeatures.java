@@ -2,11 +2,13 @@ package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.features.AquaticFeatures;
 import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
@@ -61,6 +63,8 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch_underwater");
+    public static final ResourceKey<PlacedFeature> GOBLET_SEAGRASS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_seagrass");
+    public static final ResourceKey<PlacedFeature> GOBLET_KELP = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_kelp");
     public static final ResourceKey<PlacedFeature> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_deep_roots");
     public static final ResourceKey<PlacedFeature> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<PlacedFeature> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "big_lily_pad_patch");
@@ -497,6 +501,16 @@ public class RRPlacedFeatures {
                 )
         ));
 
+        ctx.register(GOBLET_SEAGRASS, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_SEAGRASS),
+                gobletUnderwaterPlacement(CountPlacement.of(48))
+        ));
+
+        ctx.register(GOBLET_KELP, new PlacedFeature(
+                configuredFeatures.getOrThrow(AquaticFeatures.KELP),
+                gobletUnderwaterPlacement(NoiseBasedCountPlacement.of(120, 80.0, 0.0))
+        ));
+
         ctx.register(GOBLET_DEEP_ROOTS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_DEEP_ROOTS),
                 List.of(
@@ -543,6 +557,15 @@ public class RRPlacedFeatures {
                         32
                 ),
                 RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                BiomeFilter.biome()
+        );
+    }
+
+    private static List<PlacementModifier> gobletUnderwaterPlacement(PlacementModifier count) {
+        return List.of(
+                count,
+                InSquarePlacement.spread(),
+                new GobletUnderwaterPlacement(),
                 BiomeFilter.biome()
         );
     }
