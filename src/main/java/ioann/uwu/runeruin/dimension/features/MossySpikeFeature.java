@@ -38,9 +38,11 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
     public boolean place(FeaturePlaceContext<SpikeConfiguration> context) {
         WorldGenLevel level = context.level();
         BlockPos origin = context.origin();
+        FeatureChunkBounds chunkBounds = new FeatureChunkBounds(origin);
         SpikeConfiguration config = context.config();
         RandomSource random = context.random();
-        if (!level.isStateAtPosition(origin, SpeleothemUtils::isEmptyOrWater)) {
+        if (!chunkBounds.contains(origin)
+                || !level.isStateAtPosition(origin, SpeleothemUtils::isEmptyOrWater)) {
             return false;
         } else {
 
@@ -71,15 +73,15 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                         wind = WindOffsetter.noWind();
                     }
 
-                    boolean stalactiteBaseEmbeddedInStone = stalactite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind);
-                    boolean stalagmiteBaseEmbeddedInStone = stalagmite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind);
+                    boolean stalactiteBaseEmbeddedInStone = stalactite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind, chunkBounds);
+                    boolean stalagmiteBaseEmbeddedInStone = stalagmite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind, chunkBounds);
 
                     if (stalactiteBaseEmbeddedInStone) {
-                        stalactite.placeBlocks(level, random, wind, mainBlock, columnRange);
+                        stalactite.placeBlocks(level, random, wind, mainBlock, columnRange, chunkBounds);
                     }
 
                     if (stalagmiteBaseEmbeddedInStone) {
-                        stalagmite.placeBlocks(level, random, wind, mainBlock, columnRange);
+                        stalagmite.placeBlocks(level, random, wind, mainBlock, columnRange, chunkBounds);
                     }
 
                     return true;
@@ -141,17 +143,21 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
             return !this.pointingUp ? this.root.getY() : this.root.getY() + this.getHeight();
         }
 
-        private boolean moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(WorldGenLevel level, WindOffsetter wind) {
+        private boolean moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(
+                WorldGenLevel level,
+                WindOffsetter wind,
+                FeatureChunkBounds chunkBounds
+        ) {
             while(this.radius > 1) {
                 BlockPos.MutableBlockPos newRoot = this.root.mutable();
                 int maxTries = Math.min(10, this.getHeight());
 
                 for(int i = 0; i < maxTries; ++i) {
-                    if (level.getBlockState(newRoot).is(Blocks.LAVA)) {
+                    if (!chunkBounds.contains(newRoot) || level.getBlockState(newRoot).is(Blocks.LAVA)) {
                         return false;
                     }
 
-                    if (isCircleMostlyEmbeddedInStone(level, wind.offset(newRoot), this.radius)) {
+                    if (isCircleMostlyEmbeddedInStone(level, wind.offset(newRoot), this.radius, chunkBounds)) {
                         this.root = newRoot;
                         return true;
                     }
@@ -169,7 +175,14 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
             return (int)getDripstoneHeight((double)checkRadius, (double)this.radius, this.scale, this.bluntness);
         }
 
-        private void placeBlocks(WorldGenLevel level, RandomSource random, WindOffsetter wind, BlockState block, Column.Range columnRange) {
+        private void placeBlocks(
+                WorldGenLevel level,
+                RandomSource random,
+                WindOffsetter wind,
+                BlockState block,
+                Column.Range columnRange,
+                FeatureChunkBounds chunkBounds
+        ) {
             for(int dx = -this.radius; dx <= this.radius; ++dx) {
                 for(int dz = -this.radius; dz <= this.radius; ++dz) {
                     float currentRadius = Mth.sqrt((float)(dx * dx + dz * dz));
@@ -189,6 +202,10 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
                             for(int i = 0; i < height && pos.getY() < maxY; ++i) {
                                 BlockPos windAdjustedPos = wind.offset(pos);
+                                if (!chunkBounds.contains(windAdjustedPos)) {
+                                    break;
+                                }
+
                                 if (level.isStateAtPosition(windAdjustedPos, MossySpikeFeature::canReplaceWithSpike)) {
                                     hasBeenOutOfStone = true;
 
@@ -257,7 +274,15 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
         return heightRelativeToMaxRadius / 0.384 * dripstoneRadius;
     }
 
-    static boolean isCircleMostlyEmbeddedInStone(WorldGenLevel level, BlockPos center, int xzRadius) {
+    static boolean isCircleMostlyEmbeddedInStone(
+            WorldGenLevel level,
+            BlockPos center,
+            int xzRadius,
+            FeatureChunkBounds chunkBounds
+    ) {
+        if (!chunkBounds.contains(center)) {
+            return false;
+        }
 
         if (level.isStateAtPosition(center, MossySpikeFeature::canReplaceWithSpike)) {
             return false;
@@ -270,7 +295,9 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                 int dx = (int)(Mth.cos(angle) * (float)xzRadius);
                 int dz = (int)(Mth.sin(angle) * (float)xzRadius);
 
-                if (level.isStateAtPosition(center.offset(dx, 0, dz), MossySpikeFeature::canReplaceWithSpike)) {
+                BlockPos sample = center.offset(dx, 0, dz);
+                if (!chunkBounds.contains(sample)
+                        || level.isStateAtPosition(sample, MossySpikeFeature::canReplaceWithSpike)) {
                     return false;
                 }
             }

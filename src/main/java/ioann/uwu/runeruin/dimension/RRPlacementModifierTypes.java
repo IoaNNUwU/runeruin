@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.placements.ChunkCenterPlacement;
 import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
 import net.minecraft.core.registries.Registries;
@@ -20,5 +21,10 @@ public class RRPlacementModifierTypes {
     public static final DeferredHolder<PlacementModifierType<?>, PlacementModifierType<GobletUnderwaterPlacement>> GOBLET_UNDERWATER = REGISTRY.register(
             "goblet_underwater",
             () -> () -> GobletUnderwaterPlacement.CODEC
+    );
+
+    public static final DeferredHolder<PlacementModifierType<?>, PlacementModifierType<ChunkCenterPlacement>> CHUNK_CENTER = REGISTRY.register(
+            "chunk_center",
+            () -> () -> ChunkCenterPlacement.CODEC
     );
 }

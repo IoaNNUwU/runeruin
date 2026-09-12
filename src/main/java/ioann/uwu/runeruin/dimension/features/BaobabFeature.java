@@ -44,7 +44,8 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     public boolean place(FeaturePlaceContext<Config> ctx) {
         WorldGenLevel level = ctx.level();
         BlockPos requestedOrigin = ctx.origin();
-        BlockPos ground = findGround(level, requestedOrigin.getX(), requestedOrigin.getZ(),
+        FeatureChunkBounds chunkBounds = new FeatureChunkBounds(requestedOrigin);
+        BlockPos ground = findGround(level, chunkBounds, requestedOrigin.getX(), requestedOrigin.getZ(),
                 requestedOrigin.getY() - 1);
         if (ground == null) {
             return false;
@@ -68,9 +69,9 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
                 .trySetValue(LeavesBlock.PERSISTENT, true);
         Map<BlockPos, BlockState> tree = new LinkedHashMap<>();
 
-        addTrunk(tree, level, origin, trunk, trunkHeight, trunkBaseRadius, trunkTopRadius);
+        addTrunk(tree, level, chunkBounds, origin, trunk, trunkHeight, trunkBaseRadius, trunkTopRadius);
         addRoundedTrunkCap(tree, origin, trunk, trunkHeight, trunkTopRadius, trunkCapHeight);
-        addButtressRoots(tree, level, origin, trunk, trunkBaseRadius, radius, random);
+        addButtressRoots(tree, level, chunkBounds, origin, trunk, trunkBaseRadius, radius, random);
 
         int branchCount = 6 + random.nextInt(2);
         double branchAngle = random.nextDouble() * Math.PI * 2;
@@ -126,16 +127,21 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
                     crownRadius, crownDepth, crownVerticalRadius, random);
         }
 
-        addCanopyMossBiome(tree, level, leaves, trunk, radius, random);
-        addVanillaVines(tree, level, origin, trunk, leaves, trunkHeight, trunkBaseRadius, radius, random);
+        addCanopyMossBiome(tree, level, chunkBounds, leaves, trunk, radius, random);
+        addVanillaVines(tree, level, chunkBounds, origin, trunk, leaves, trunkHeight, trunkBaseRadius, radius, random);
 
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         var iterator = tree.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<BlockPos, BlockState> entry = iterator.next();
             BlockPos pos = entry.getKey();
-            if (level.isOutsideBuildHeight(pos.getY()) || !level.ensureCanWrite(pos)) {
-                return false;
+            if (!chunkBounds.contains(pos) || level.isOutsideBuildHeight(pos.getY())) {
+                iterator.remove();
+                continue;
+            }
+            if (!level.ensureCanWrite(pos)) {
+                iterator.remove();
+                continue;
             }
 
             BlockState existing = level.getBlockState(pos);
@@ -149,7 +155,10 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         }
 
         for (Map.Entry<BlockPos, BlockState> entry : tree.entrySet()) {
-            level.setBlock(mutable.set(entry.getKey()), entry.getValue(), Block.UPDATE_CLIENTS);
+            BlockPos pos = entry.getKey();
+            if (chunkBounds.contains(pos) && level.ensureCanWrite(pos)) {
+                level.setBlock(mutable.set(pos), entry.getValue(), Block.UPDATE_CLIENTS);
+            }
         }
         return true;
     }
@@ -157,6 +166,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     private static void addButtressRoots(
             Map<BlockPos, BlockState> tree,
             WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
             BlockPos origin,
             BlockState trunk,
             int trunkBaseRadius,
@@ -175,7 +185,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             double dx = Math.cos(angle);
             double dz = Math.sin(angle);
             int startY = Math.max(3, typicalStartY + random.nextInt(3) - 1);
-            RootTip tip = findRootTip(level, origin, dx, dz, startRadius, startY);
+            RootTip tip = findRootTip(level, chunkBounds, origin, dx, dz, startRadius, startY);
             if (tip == null) {
                 continue;
             }
@@ -188,7 +198,8 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         // Roots may meet uneven ground; keep the exposed part instead of failing the whole tree.
         for (Map.Entry<BlockPos, BlockState> entry : roots.entrySet()) {
             BlockPos pos = entry.getKey();
-            if (tree.containsKey(pos) || level.isOutsideBuildHeight(pos.getY()) || !level.ensureCanWrite(pos)) {
+            if (tree.containsKey(pos) || !chunkBounds.contains(pos)
+                    || level.isOutsideBuildHeight(pos.getY()) || !level.ensureCanWrite(pos)) {
                 continue;
             }
 
@@ -201,6 +212,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
 
     private static RootTip findRootTip(
             WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
             BlockPos origin,
             double dx,
             double dz,
@@ -212,7 +224,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         for (int attempt = 0; attempt < 4; attempt++) {
             int endX = (int) Math.round(dx * endRadius);
             int endZ = (int) Math.round(dz * endRadius);
-            BlockPos ground = findGround(level, origin.getX() + endX, origin.getZ() + endZ,
+            BlockPos ground = findGround(level, chunkBounds, origin.getX() + endX, origin.getZ() + endZ,
                     origin.getY() + startY);
             if (ground == null) {
                 return null;
@@ -228,7 +240,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
 
         int endX = (int) Math.round(dx * endRadius);
         int endZ = (int) Math.round(dz * endRadius);
-        BlockPos ground = findGround(level, origin.getX() + endX, origin.getZ() + endZ,
+        BlockPos ground = findGround(level, chunkBounds, origin.getX() + endX, origin.getZ() + endZ,
                 origin.getY() + startY);
         if (ground == null) {
             return null;
@@ -237,7 +249,17 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         return new RootTip(endRadius, endY);
     }
 
-    private static BlockPos findGround(WorldGenLevel level, int x, int z, int startY) {
+    private static BlockPos findGround(
+            WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
+            int x,
+            int z,
+            int startY
+    ) {
+        if (!chunkBounds.contains(new BlockPos(x, startY, z))) {
+            return null;
+        }
+
         for (int distance = 0; distance <= GROUND_SCAN_STEPS; distance++) {
             int y = startY - distance;
             if (level.isOutsideBuildHeight(y)) {
@@ -269,6 +291,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     private static void addTrunk(
             Map<BlockPos, BlockState> tree,
             WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
             BlockPos origin,
             BlockState trunk,
             int height,
@@ -282,7 +305,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         int groundScanStartY = origin.getY() + GROUND_SCAN_STEPS / 2;
         for (int x = -bound; x <= bound; x++) {
             for (int z = -bound; z <= bound; z++) {
-                BlockPos ground = findGround(level, origin.getX() + x, origin.getZ() + z, groundScanStartY);
+                BlockPos ground = findGround(level, chunkBounds, origin.getX() + x, origin.getZ() + z, groundScanStartY);
                 int groundY = ground == null ? origin.getY() - 1 : ground.getY();
                 groundHeights[x + bound][z + bound] = groundY;
                 lowestTrunkY = Math.min(lowestTrunkY, groundY + 1 - origin.getY());
@@ -677,6 +700,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     private static void addCanopyMossBiome(
             Map<BlockPos, BlockState> tree,
             WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
             BlockState leaves,
             BlockState trunk,
             int radius,
@@ -697,7 +721,8 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         for (BlockPos leaf : highestLeaves.values()) {
             BlockPos above = leaf.above();
             if (tree.containsKey(above) || level.isOutsideBuildHeight(above.getY())
-                    || !level.ensureCanWrite(above) || !canTreeReplace(level.getBlockState(above))) {
+                    || !chunkBounds.contains(above) || !level.ensureCanWrite(above)
+                    || !canTreeReplace(level.getBlockState(above))) {
                 continue;
             }
 
@@ -744,14 +769,15 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             }
         }
 
-        List<BlockPos> pools = addCanopyPools(tree, level, leaves, trunk, highestLeaves,
+        List<BlockPos> pools = addCanopyPools(tree, level, chunkBounds, leaves, trunk, highestLeaves,
                 mossBlocks, radius, random);
-        addCanopyPlants(tree, level, mossBlocks, pools, random);
+        addCanopyPlants(tree, level, chunkBounds, mossBlocks, pools, random);
     }
 
     private static List<BlockPos> addCanopyPools(
             Map<BlockPos, BlockState> tree,
             WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
             BlockState leaves,
             BlockState trunk,
             Map<CanopyColumn, BlockPos> highestLeaves,
@@ -817,7 +843,8 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
                     continue;
                 }
 
-                if (level.isOutsideBuildHeight(edge.getY()) || !level.ensureCanWrite(edge)) {
+                if (!chunkBounds.contains(edge) || level.isOutsideBuildHeight(edge.getY())
+                        || !level.ensureCanWrite(edge)) {
                     enclosed = false;
                     break;
                 }
@@ -835,7 +862,8 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
                 BlockPos surfaceSupport = highestLeaves.get(new CanopyColumn(edge.getX(), edge.getZ()));
                 boolean supported = plannedSupport != null && !plannedSupport.isAir()
                         || surfaceSupport != null && surfaceSupport.getY() == supportPos.getY()
-                        || level.getBlockState(supportPos).isFaceSturdy(level, supportPos, Direction.UP);
+                        || chunkBounds.contains(supportPos)
+                        && level.getBlockState(supportPos).isFaceSturdy(level, supportPos, Direction.UP);
                 if (!supported) {
                     enclosed = false;
                     break;
@@ -862,6 +890,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     private static void addCanopyPlants(
             Map<BlockPos, BlockState> tree,
             WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
             Set<BlockPos> mossBlocks,
             List<BlockPos> pools,
             RandomSource random
@@ -879,6 +908,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
                 BlockPos upperPos = lowerPos.above();
                 if (tree.containsKey(lowerPos) || tree.containsKey(upperPos)
                         || level.isOutsideBuildHeight(upperPos.getY())
+                        || !chunkBounds.contains(lowerPos) || !chunkBounds.contains(upperPos)
                         || !level.ensureCanWrite(upperPos)
                         || !canTreeReplace(level.getBlockState(lowerPos))
                         || !canTreeReplace(level.getBlockState(upperPos))) {
@@ -904,7 +934,8 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             }
             BlockPos plantPos = soil.above();
             if (tree.containsKey(plantPos) || level.isOutsideBuildHeight(plantPos.getY())
-                    || !level.ensureCanWrite(plantPos) || !canTreeReplace(level.getBlockState(plantPos))) {
+                    || !chunkBounds.contains(plantPos) || !level.ensureCanWrite(plantPos)
+                    || !canTreeReplace(level.getBlockState(plantPos))) {
                 continue;
             }
 
@@ -945,6 +976,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     private static void addVanillaVines(
             Map<BlockPos, BlockState> tree,
             WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
             BlockPos origin,
             BlockState trunk,
             BlockState leaves,
@@ -970,7 +1002,8 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
 
             for (Direction outward : Direction.Plane.HORIZONTAL) {
                 BlockPos vinePos = support.relative(outward);
-                if (tree.containsKey(vinePos) || !canTreeReplace(level.getBlockState(vinePos))) {
+                if (tree.containsKey(vinePos) || !chunkBounds.contains(vinePos)
+                        || !canTreeReplace(level.getBlockState(vinePos))) {
                     continue;
                 }
                 VineAnchor anchor = new VineAnchor(vinePos, VineBlock.getPropertyForFace(outward.getOpposite()));
@@ -993,7 +1026,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             if (tooClose(usedAnchors, anchor.pos(), 16.0)) {
                 continue;
             }
-            if (placeVanillaVineColumn(tree, level, anchor, 2 + random.nextInt(5))) {
+            if (placeVanillaVineColumn(tree, level, chunkBounds, anchor, 2 + random.nextInt(5))) {
                 usedAnchors.add(anchor.pos());
             }
         }
@@ -1009,7 +1042,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             if (tooClose(usedAnchors, anchor.pos(), 25.0)) {
                 continue;
             }
-            if (placeVanillaVineColumn(tree, level, anchor, 2 + random.nextInt(4))) {
+            if (placeVanillaVineColumn(tree, level, chunkBounds, anchor, 2 + random.nextInt(4))) {
                 usedAnchors.add(anchor.pos());
             }
         }
@@ -1018,6 +1051,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     private static boolean placeVanillaVineColumn(
             Map<BlockPos, BlockState> tree,
             WorldGenLevel level,
+            FeatureChunkBounds chunkBounds,
             VineAnchor anchor,
             int length
     ) {
@@ -1025,7 +1059,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         BlockPos pos = anchor.pos();
         boolean placed = false;
         for (int step = 0; step < length; step++, pos = pos.below()) {
-            if (tree.containsKey(pos) || level.isOutsideBuildHeight(pos.getY())
+            if (tree.containsKey(pos) || !chunkBounds.contains(pos) || level.isOutsideBuildHeight(pos.getY())
                     || !canTreeReplace(level.getBlockState(pos))) {
                 break;
             }

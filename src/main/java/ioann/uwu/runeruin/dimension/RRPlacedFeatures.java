@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.placements.ChunkCenterPlacement;
 import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
 import net.minecraft.core.BlockPos;
@@ -424,7 +425,7 @@ public class RRPlacedFeatures {
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.BAOBAB),
                 List.of(
                         RarityFilter.onAverageOnceEvery(4),
-                        InSquarePlacement.spread(),
+                        new ChunkCenterPlacement(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(BLOOMING_CAVES_Y + TERRAIN_HEIGHT + 1),
                                 VerticalAnchor.absolute(BLOOMING_CAVES_Y + TERRAIN_MIN_HEIGHT + 31)
