@@ -19,6 +19,15 @@ an aptly named task branch before continuing:
 Choose the short name from the user's request, then verify the result with
 `git status --short --branch`. Never continue coding while `HEAD` is detached.
 
+## Code size and quality
+
+When writing code, look for ways to reduce the amount of code rather than increase it:
+
+- Add comments only for important points.
+- Fix existing code instead of endlessly adding more.
+- Preserve style and quality; putting all code on one line does not reduce code.
+- Look for opportunities to change an existing algorithm instead of adding another condition. That is what reducing code means.
+
 ## Parallel agent worktrees
 
 Codex provides each parallel task with its own worktree. Work only in the current assigned checkout; never create or manage another worktree from inside the task.
