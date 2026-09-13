@@ -496,9 +496,9 @@ public class RRPlacedFeatures {
         ctx.register(GLOWING_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GLOWING_MUSHROOM),
                 List.of(
-                        // Five independent one-in-six trials raise the average rate fivefold.
+                        // Keep five attempts, with one in two passing the filter: three times the previous rate.
                         CountPlacement.of(5),
-                        RarityFilter.onAverageOnceEvery(6),
+                        RarityFilter.onAverageOnceEvery(2),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(DEEP_CAVES_Y),

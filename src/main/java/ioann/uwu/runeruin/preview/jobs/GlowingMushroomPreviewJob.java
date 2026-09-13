@@ -22,7 +22,7 @@ public final class GlowingMushroomPreviewJob implements PreviewJob {
 
     @Override
     public String description() {
-        return "GlowingMushroomFeature shape. params: cap_diameter, stem_height, waist_diameter";
+        return "Hollow tilted caps and paired mushrooms. params: cap_diameter, stem_height, waist_diameter, uneven_support";
     }
 
     @Override
@@ -31,9 +31,27 @@ public final class GlowingMushroomPreviewJob implements PreviewJob {
         int capDiameter = clamp(args.getInt("cap_diameter", 14), 12, 16);
         int stemHeight = clamp(args.getInt("stem_height", 7), 4, 9);
         int waistDiameter = clamp(args.getInt("waist_diameter", 2), 2, 3);
+        boolean unevenSupport = Boolean.parseBoolean(args.get("uneven_support", "false"));
         BlockPos origin = new BlockPos(0, 64, 0);
         PreviewWorld world = PreviewWorld.create(seed);
-        world.set(origin.below(), Blocks.STONE.defaultBlockState());
+        if (unevenSupport) {
+            world.fillBox(
+                    new BoundingBox(origin.getX() - 2, origin.getY() - 2, origin.getZ() - 2,
+                            origin.getX() + 2, origin.getY() - 2, origin.getZ() + 2),
+                    Blocks.STONE.defaultBlockState()
+            );
+            world.fillBox(
+                    new BoundingBox(origin.getX() - 1, origin.getY() - 1, origin.getZ() - 1,
+                            origin.getX() + 1, origin.getY() - 1, origin.getZ() + 1),
+                    Blocks.STONE.defaultBlockState()
+            );
+        } else {
+            world.fillBox(
+                    new BoundingBox(origin.getX() - 2, origin.getY() - 1, origin.getZ() - 2,
+                            origin.getX() + 2, origin.getY() - 1, origin.getZ() + 2),
+                    Blocks.STONE.defaultBlockState()
+            );
+        }
 
         boolean placed = PreviewJobs.placeFeature(
                 new GlowingMushroomFeature(),
@@ -55,6 +73,7 @@ public final class GlowingMushroomPreviewJob implements PreviewJob {
                 "cap diameter: " + capDiameter,
                 "stem height: " + stemHeight,
                 "waist diameter: " + waistDiameter,
+                "support: " + (unevenSupport ? "raised center and one-block lower rim" : "5x5 stone pad"),
                 "placed: " + placed,
                 "origin: 0 64 0"
         ));
