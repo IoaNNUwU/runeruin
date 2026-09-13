@@ -23,6 +23,7 @@ public class DatagenMain {
     public static final RegistrySetBuilder DATAPACK_REGISTRY_BUILDER = new RegistrySetBuilder()
             .add(Registries.PLACED_FEATURE, RRPlacedFeatures::bootstrap)
             .add(Registries.CONFIGURED_FEATURE, RRConfiguredFeatures::bootstrap)
+            .add(Registries.CONFIGURED_CARVER, RRConfiguredCarvers::bootstrap)
             .add(Registries.STRUCTURE, RRStructures::bootstrap)
             .add(Registries.STRUCTURE_SET, RRStructureSets::bootstrap)
             .add(Registries.BIOME, RRBiomes::bootstrap)
