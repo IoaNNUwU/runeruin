@@ -31,7 +31,7 @@ public final class BaobabTreeGenerator {
     private static final double MAX_CROWN_RADIUS_SCALE_REDUCTION = 0.25;
     private static final int HANGING_LEAF_VINE_COUNT_MULTIPLIER = 3;
     private static final double ADDITIONAL_LEAF_VINE_MIN_SEPARATION_SQUARED = 3.0;
-    private static final float CANOPY_SIDE_MOSS_CHANCE = 0.55F;
+    private static final float CANOPY_SIDE_MOSS_CHANCE = 0.68F;
     private static final double MIN_HEIGHT_PER_RADIUS = 1.0;
     private static final double MAX_HEIGHT_PER_RADIUS = 1.5;
     public static final int GROUND_PROFILE_WIDTH = MAX_HORIZONTAL_EXTENT * 2 + 1;
@@ -961,58 +961,38 @@ public final class BaobabTreeGenerator {
         for (Map.Entry<BlockPos, BlockState> entry : tree.entrySet()) {
             BlockPos support = entry.getKey();
             BlockState state = entry.getValue();
-            if ((state.getBlock() != leaves.getBlock() && !state.is(Blocks.MOSS_BLOCK))
+            if ((state.getBlock() != leaves.getBlock() && !canopyMoss.contains(support))
                     || support.getY() < anchorY || support.getY() > anchorY + 1) {
                 continue;
             }
-            int nearbyFoliage = 0;
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dy == 0 && dz == 0) {
-                            continue;
-                        }
-                        BlockState neighbor = tree.get(support.offset(dx, dy, dz));
-                        if (neighbor != null && (neighbor.getBlock() == leaves.getBlock()
-                                || neighbor.is(Blocks.MOSS_BLOCK))) {
-                            nearbyFoliage++;
-                        }
-                    }
-                }
-            }
-            if (nearbyFoliage < 4) {
+            boolean connectedAbove = hasMossAboveOrBeside(support, tree);
+            if ((!canopyMoss.contains(support) || support.getY() == anchorY) && !connectedAbove) {
                 continue;
             }
-            Set<Direction> outerFaces = new LinkedHashSet<>();
             for (Direction direction : Direction.Plane.HORIZONTAL) {
                 BlockPos side = support.relative(direction).immutable();
-                if (!tree.containsKey(side) && isClearOutside(side, direction, tree)
-                        && ground.isReplaceable(side)) {
-                    outerFaces.add(direction);
-                    if (support.getY() == anchorY) {
-                        candidates.computeIfAbsent(side, ignored -> new LinkedHashSet<>()).add(direction);
-                    }
+                if (!tree.containsKey(side) && ground.isReplaceable(side)
+                        && isClearOutside(side, direction, tree)) {
+                    candidates.computeIfAbsent(side, ignored -> new LinkedHashSet<>()).add(direction);
                 }
-            }
-            BlockPos hanging = support.below().immutable();
-            if (support.getY() == anchorY + 1 && !outerFaces.isEmpty()
-                    && state.is(Blocks.MOSS_BLOCK)
-                    && !tree.containsKey(hanging) && ground.isReplaceable(hanging)) {
-                candidates.computeIfAbsent(hanging, ignored -> new LinkedHashSet<>()).addAll(outerFaces);
             }
         }
 
-        List<BlockPos> shuffled = new ArrayList<>(candidates.keySet());
-        shufflePositions(shuffled, random);
-        shuffled.sort((left, right) -> Integer.compare(left.getY(), right.getY()));
-        List<BlockPos> selected = new ArrayList<>();
-        for (BlockPos start : shuffled) {
+        List<BlockPos> starts = new ArrayList<>(candidates.keySet());
+        shufflePositions(starts, random);
+        starts.sort((left, right) -> Integer.compare(right.getY(), left.getY()));
+        for (BlockPos start : starts) {
+            if (tree.containsKey(start)
+                    || (start.getY() != anchorY && random.nextFloat() >= CANOPY_SIDE_MOSS_CHANCE)) {
+                continue;
+            }
+
             List<Direction> clearDirections = new ArrayList<>();
             List<Integer> clearLengths = new ArrayList<>();
             for (Direction direction : candidates.get(start)) {
                 int clearLength = 0;
                 BlockPos pos = start;
-                while (clearLength < 3 && !tree.containsKey(pos) && ground.isReplaceable(pos)
+                while (clearLength < 4 && !tree.containsKey(pos) && ground.isReplaceable(pos)
                         && isClearOutside(pos, direction, tree)) {
                     clearLength++;
                     pos = pos.below();
@@ -1025,24 +1005,31 @@ public final class BaobabTreeGenerator {
             if (clearDirections.isEmpty()) {
                 continue;
             }
-            if (selected.stream().anyMatch(other ->
-                    other.getX() == start.getX() && other.getZ() == start.getZ()
-                            && Math.abs(other.getY() - start.getY()) <= 3)
-                    || random.nextFloat() >= CANOPY_SIDE_MOSS_CHANCE) {
-                continue;
-            }
 
             int directionIndex = random.nextInt(clearDirections.size());
             int clearLength = clearLengths.get(directionIndex);
             int lengthRoll = random.nextInt(10);
-            int length = Math.min(clearLength, lengthRoll < 2 ? 1 : lengthRoll < 6 ? 2 : 3);
+            int hangingLength = lengthRoll < 1 ? 0 : lengthRoll < 3 ? 1 : lengthRoll < 6 ? 2 : 3;
+            int length = Math.min(clearLength, hangingLength + 1);
             BlockPos pos = start;
             for (int i = 0; i < length; i++) {
                 tree.put(pos.immutable(), Blocks.MOSS_BLOCK.defaultBlockState());
                 pos = pos.below();
             }
-            selected.add(start);
         }
+    }
+
+    private static boolean hasMossAboveOrBeside(BlockPos pos, Map<BlockPos, BlockState> tree) {
+        BlockPos above = pos.above();
+        if (tree.getOrDefault(above, Blocks.AIR.defaultBlockState()).is(Blocks.MOSS_BLOCK)) {
+            return true;
+        }
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            if (tree.getOrDefault(above.relative(direction), Blocks.AIR.defaultBlockState()).is(Blocks.MOSS_BLOCK)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isClearOutside(
