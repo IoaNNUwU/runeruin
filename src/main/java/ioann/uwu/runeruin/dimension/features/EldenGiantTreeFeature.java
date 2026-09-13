@@ -31,6 +31,7 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
     private static final int CROWN_RADIUS = 4;
     private static final int TOP_BRANCH_MIN_LENGTH = 4;
     private static final int TOP_BRANCH_MAX_LENGTH = 6;
+    private static final int MAX_DOWNWARD_EXTENSION = 3;
 
     private record RootCandidate(BlockPos position, Direction direction) {
     }
@@ -219,11 +220,13 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
     private static void addUndergroundTrunk(WorldGenLevel level, BlockPos origin, Set<BlockPos> trunkPositions) {
         for (int x = 0; x <= 1; x++) {
             for (int z = 0; z <= 1; z++) {
-                BlockPos undergroundPos = origin.offset(x, -1, z);
-                while (undergroundPos.getY() >= level.getMinY()
-                        && isNonFullTreeReplaceable(level, undergroundPos)) {
+                for (int depth = 1; depth <= MAX_DOWNWARD_EXTENSION; depth++) {
+                    BlockPos undergroundPos = origin.offset(x, -depth, z);
+                    if (undergroundPos.getY() < level.getMinY()
+                            || !isNonFullTreeReplaceable(level, undergroundPos)) {
+                        break;
+                    }
                     trunkPositions.add(undergroundPos);
-                    undergroundPos = undergroundPos.below();
                 }
             }
         }
@@ -258,18 +261,30 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
                 continue;
             }
 
-            roots.put(rootPos, baseLog.setValue(RotatedPillarBlock.AXIS, candidate.direction().getAxis()));
-            rootPositions.add(rootPos);
+            BlockPos belowRootPos = rootPos.below();
+            boolean moveRootDown = belowRootPos.getY() >= level.getMinY()
+                    && level.getBlockState(belowRootPos).isAir();
+            BlockPos rootBasePos = moveRootDown ? belowRootPos : rootPos;
+            if (trunkPositions.contains(rootBasePos)
+                    || !isRootReplaceable(level.getBlockState(rootBasePos), level, rootBasePos)) {
+                continue;
+            }
 
-            BlockPos lowerRootPos = rootPos.below();
-            boolean lowerRootReplaceable = isRootReplaceable(level.getBlockState(lowerRootPos), level, lowerRootPos);
+            roots.put(rootBasePos, baseLog.setValue(RotatedPillarBlock.AXIS, candidate.direction().getAxis()));
+            rootPositions.add(rootBasePos);
+
+            BlockPos lowerRootPos = rootBasePos.below();
+            boolean lowerRootReplaceable = lowerRootPos.getY() >= level.getMinY()
+                    && isRootReplaceable(level.getBlockState(lowerRootPos), level, lowerRootPos);
             boolean extendDown = lowerRootReplaceable
                     && (random.nextBoolean() || isNonFullTreeReplaceable(level, lowerRootPos));
-            while (lowerRootPos.getY() >= level.getMinY() && extendDown) {
+            int rootDepth = 1 + random.nextInt(MAX_DOWNWARD_EXTENSION);
+            for (int depth = 0; depth < rootDepth && extendDown; depth++) {
                 roots.put(lowerRootPos, baseLog.setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y));
                 rootPositions.add(lowerRootPos);
                 lowerRootPos = lowerRootPos.below();
-                extendDown = isNonFullTreeReplaceable(level, lowerRootPos);
+                extendDown = lowerRootPos.getY() >= level.getMinY()
+                        && isNonFullTreeReplaceable(level, lowerRootPos);
             }
         }
 
