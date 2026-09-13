@@ -16,6 +16,26 @@ import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvi
 
 public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
+    private static final double CAP_SHELL_THICKNESS = 2.5;
+    private static final double SMALL_CAP_TAPER = 0.25;
+    private static final double LARGE_CAP_TAPER = 0.40;
+    private static final String[] RADIUS_TWO_FOOTPRINT = {
+            ".###.",
+            "#####",
+            "#####",
+            "#####",
+            ".###."
+    };
+    private static final String[] RADIUS_THREE_FOOTPRINT = {
+            "..###..",
+            ".#####.",
+            "#######",
+            "#######",
+            "#######",
+            ".#####.",
+            "..###.."
+    };
+
     public WallMushroomFeature() {
         super(Config.CODEC);
     }
@@ -38,26 +58,85 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         int maxOffset = minOffset + diameter - 1;
         double centerOffset = (minOffset + maxOffset) / 2.0;
         double radius = (diameter - 1) / 2.0;
-        double radiusSquared = radius * radius;
-        int capHeight = 2 + random.nextInt(2);
+        boolean smallCap = radius <= 3.5;
+        boolean tinyCap = radius <= 1.5;
+        double baseRadius = radius <= 1.0
+                ? Math.sqrt(2.0)
+                : (tinyCap && diameter % 2 == 0 ? 2.0 : radius);
+        double apexRadius = tinyCap ? 1.0 : Math.min(radius, diameter % 2 == 0 ? 2.0 : Math.sqrt(2.0));
+        int capLayers = diameter == 5
+                ? 1
+                : radius <= 3.0
+                ? 2
+                : radius <= 5.0
+                ? 3
+                : 3 + random.nextInt(2);
+        double capTaper = smallCap ? SMALL_CAP_TAPER : LARGE_CAP_TAPER;
 
-        // Place only the curved upper shell of a flattened sphere, leaving its underside hollow.
-        for (int x = minOffset; x <= maxOffset; x++) {
-            for (int z = minOffset; z <= maxOffset; z++) {
+        // Build the dome as horizontal shell layers so the lower rim has real thickness.
+        for (int yOffset = 0; yOffset < capLayers; yOffset++) {
+            if (diameter == 5 || (diameter == 7 && yOffset == 0)) {
+                String[] footprint = diameter == 5 ? RADIUS_TWO_FOOTPRINT : RADIUS_THREE_FOOTPRINT;
+                placeFootprint(level, mutable, config, random, origin, ox, oy + yOffset, oz, minOffset, footprint);
+                continue;
+            }
+
+            double progress = yOffset / (double) (capLayers - 1);
+            double outerRadius = baseRadius * (1.0 - capTaper * progress * progress);
+            outerRadius = Math.min(baseRadius, Math.max(outerRadius, apexRadius));
+            // At small scales a thin ring aliases into separate pixels, so use a solid rounded cap.
+            double innerRadius = smallCap ? 0.0 : Math.max(0.0, outerRadius - CAP_SHELL_THICKNESS);
+
+            // Fill only the crown; keeping the lower layers as a shell avoids a broad, boxy plateau.
+            if (!smallCap && yOffset == capLayers - 1) {
+                innerRadius = 0.0;
+            }
+
+            double outerRadiusSquared = outerRadius * outerRadius;
+            double innerRadiusSquared = innerRadius * innerRadius;
+            for (int x = minOffset; x <= maxOffset; x++) {
                 double dx = x - centerOffset;
-                double dz = z - centerOffset;
-                double distanceSquared = dx * dx + dz * dz;
-                if (distanceSquared > radiusSquared) {
-                    continue;
-                }
+                for (int z = minOffset; z <= maxOffset; z++) {
+                    double dz = z - centerOffset;
+                    double distanceSquared = dx * dx + dz * dz;
+                    if (distanceSquared > outerRadiusSquared + 1.0e-6
+                            || (innerRadius > 0.0 && distanceSquared < innerRadiusSquared - 1.0e-6)) {
+                        continue;
+                    }
 
-                double domeProfile = Math.sqrt(1.0 - distanceSquared / radiusSquared);
-                int yOffset = (int) Math.floor(capHeight * domeProfile);
-                tryPlace(level, mutable.set(ox + x, oy + yOffset, oz + z), config, random, origin);
+                    tryPlace(level, mutable.set(ox + x, oy + yOffset, oz + z), config, random, origin);
+                }
             }
         }
 
         return true;
+    }
+
+    private static void placeFootprint(
+            WorldGenLevel level,
+            BlockPos.MutableBlockPos mutable,
+            Config config,
+            RandomSource random,
+            BlockPos origin,
+            int ox,
+            int oy,
+            int oz,
+            int minOffset,
+            String[] footprint
+    ) {
+        for (int z = 0; z < footprint.length; z++) {
+            for (int x = 0; x < footprint[z].length(); x++) {
+                if (footprint[z].charAt(x) == '#') {
+                    tryPlace(
+                            level,
+                            mutable.set(ox + minOffset + x, oy, oz + minOffset + z),
+                            config,
+                            random,
+                            origin
+                    );
+                }
+            }
+        }
     }
 
     private static void tryPlace(
