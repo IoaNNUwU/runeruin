@@ -48,8 +48,40 @@ public final class PreviewJobs {
             world.random(),
             box,
             new ChunkPos(box.minX() >> 4, box.minZ() >> 4),
-            BlockPos.ZERO
+                BlockPos.ZERO
         );
+    }
+
+    public static void placePieceAcrossChunks(StructurePiece piece, PreviewWorld world) {
+        WorldGenLevel level = world.asLevel();
+        BoundingBox box = piece.getBoundingBox();
+        int minChunkX = box.minX() >> 4;
+        int maxChunkX = box.maxX() >> 4;
+        int minChunkZ = box.minZ() >> 4;
+        int maxChunkZ = box.maxZ() >> 4;
+
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+                BoundingBox chunkBB = new BoundingBox(
+                        Math.max(box.minX(), chunkX << 4),
+                        box.minY(),
+                        Math.max(box.minZ(), chunkZ << 4),
+                        Math.min(box.maxX(), (chunkX << 4) + 15),
+                        box.maxY(),
+                        Math.min(box.maxZ(), (chunkZ << 4) + 15)
+                );
+                piece.postProcess(
+                        level,
+                        null,
+                        null,
+                        world.random(),
+                        chunkBB,
+                        chunkPos,
+                        BlockPos.ZERO
+                );
+            }
+        }
     }
 
     public static <C extends FeatureConfiguration> boolean placeFeature(

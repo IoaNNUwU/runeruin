@@ -1,15 +1,10 @@
-package ioann.uwu.runeruin.dimension.features;
+package ioann.uwu.runeruin.dimension.structures;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.valueproviders.IntProvider;
-import net.minecraft.util.valueproviders.IntProviders;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.LeavesBlock;
@@ -18,10 +13,7 @@ import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.RandomState;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,48 +22,66 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** A thick-trunked baobab with buttress roots, mossy canopy biomes, and crowns made from curved branches. */
-public class BaobabFeature extends Feature<BaobabFeature.Config> {
+/** Deterministic block-plan builder shared by the baobab structure and its preview. */
+public final class BaobabTreeGenerator {
     private static final int GROUND_SCAN_STEPS = 32;
-    private static final double MIN_HEIGHT_PER_RADIUS = 1.8;
-    private static final double MAX_HEIGHT_PER_RADIUS = 2.1;
+    public static final int MAX_TREE_HEIGHT = 40;
+    public static final int MAX_HORIZONTAL_EXTENT = 44;
+    private static final int CROWN_SCALE_START_HEIGHT = 30;
+    private static final double MAX_CROWN_RADIUS_SCALE_REDUCTION = 0.25;
+    private static final int HANGING_LEAF_VINE_COUNT_MULTIPLIER = 3;
+    private static final double ADDITIONAL_LEAF_VINE_MIN_SEPARATION_SQUARED = 3.0;
+    private static final double MIN_HEIGHT_PER_RADIUS = 1.0;
+    private static final double MAX_HEIGHT_PER_RADIUS = 1.5;
+    public static final int GROUND_PROFILE_WIDTH = MAX_HORIZONTAL_EXTENT * 2 + 1;
 
-    public BaobabFeature() {
-        super(Config.CODEC);
+    private BaobabTreeGenerator() {
     }
 
-    @Override
-    public boolean place(FeaturePlaceContext<Config> ctx) {
-        WorldGenLevel level = ctx.level();
-        BlockPos requestedOrigin = ctx.origin();
-        FeatureChunkBounds chunkBounds = new FeatureChunkBounds(requestedOrigin);
-        BlockPos ground = findGround(level, chunkBounds, requestedOrigin.getX(), requestedOrigin.getZ(),
-                requestedOrigin.getY() - 1);
-        if (ground == null) {
-            return false;
-        }
-        BlockPos origin = ground.above();
+    public static int sampleHeight(int radius, RandomSource random) {
+        int minHeight = Math.min(MAX_TREE_HEIGHT, (int) Math.ceil(radius * MIN_HEIGHT_PER_RADIUS));
+        int maxHeight = Math.min(MAX_TREE_HEIGHT, (int) Math.floor(radius * MAX_HEIGHT_PER_RADIUS));
+        return random.nextInt(minHeight, maxHeight + 1);
+    }
 
-        RandomSource random = ctx.random();
-        int radius = ctx.config().radius.sample(random);
-        int minHeight = (int) Math.ceil(radius * MIN_HEIGHT_PER_RADIUS);
-        int maxHeight = (int) Math.floor(radius * MAX_HEIGHT_PER_RADIUS);
-        int height = random.nextInt(minHeight, maxHeight + 1);
-        int trunkHeight = (int) Math.round(height * 0.69);
+    public static GroundProfile sampleGroundProfile(int centerX, int centerZ, RandomState randomState) {
+        int[] groundHeights = new int[GROUND_PROFILE_WIDTH * GROUND_PROFILE_WIDTH];
+        for (int dx = -MAX_HORIZONTAL_EXTENT; dx <= MAX_HORIZONTAL_EXTENT; dx++) {
+            for (int dz = -MAX_HORIZONTAL_EXTENT; dz <= MAX_HORIZONTAL_EXTENT; dz++) {
+                groundHeights[profileIndex(dx, dz)] = TopLayerAndBloomingCavesGen.bloomingCavesFloorY(
+                        centerX + dx, centerZ + dz, randomState) - 1;
+            }
+        }
+        return new GroundProfile(centerX, centerZ, groundHeights);
+    }
+
+    public static Map<BlockPos, BlockState> generate(
+            int originX,
+            int originZ,
+            int radius,
+            int height,
+            long seed,
+            GroundProfile ground,
+            BlockState trunk,
+            BlockState leaves
+    ) {
+        RandomSource random = RandomSource.create(seed);
+        BlockPos origin = new BlockPos(originX, ground.groundYAt(originX, originZ) + 1, originZ);
+        int trunkHeight = (int) Math.round(height * 0.60);
         int trunkBaseRadius = Math.max(5, (int) Math.round(radius * 0.22));
         int trunkTopRadius = Math.max(3, (int) Math.round(trunkBaseRadius * 0.72));
         int trunkCapHeight = Math.max(3, trunkTopRadius);
         int trunkApexY = trunkHeight + trunkCapHeight;
         int crownVerticalRadius = Math.max(4, (int) Math.round(radius * 0.18));
+        double canopyScale = crownRadiusScale(height);
+        List<PendingLeafVines> additionalLeafVines = new ArrayList<>();
 
-        BlockState trunk = ctx.config().trunkBlock.getState(level, random, origin);
-        BlockState leaves = ctx.config().leavesBlock.getState(level, random, origin)
-                .trySetValue(LeavesBlock.PERSISTENT, true);
+        leaves = leaves.trySetValue(LeavesBlock.PERSISTENT, true);
         Map<BlockPos, BlockState> tree = new LinkedHashMap<>();
 
-        addTrunk(tree, level, chunkBounds, origin, trunk, trunkHeight, trunkBaseRadius, trunkTopRadius);
+        addTrunk(tree, ground, origin, trunk, trunkHeight, trunkBaseRadius, trunkTopRadius);
         addRoundedTrunkCap(tree, origin, trunk, trunkHeight, trunkTopRadius, trunkCapHeight);
-        addButtressRoots(tree, level, chunkBounds, origin, trunk, trunkBaseRadius, radius, random);
+        addButtressRoots(tree, ground, origin, trunk, trunkBaseRadius, radius, random);
 
         int branchCount = 6 + random.nextInt(2);
         double branchAngle = random.nextDouble() * Math.PI * 2;
@@ -88,17 +98,18 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             int centerX = (int) Math.round(dx * crownOffset);
             int centerZ = (int) Math.round(dz * crownOffset);
             int startY = trunkHeight - random.nextInt(3);
-            int centerY = baseCenterY + random.nextInt(7) - 3;
+            int centerY = Math.min(baseCenterY + random.nextInt(7) - 3, height - crownVerticalRadius);
 
             addCurvedBranch(tree, origin, trunk, dx, dz, branchRadius, startY, crownOffset, centerY,
                     branchBaseWidth, 2);
 
-            double crownRadius = radius * (0.33 + random.nextDouble() * 0.05);
+            double crownRadius = radius * (0.33 + random.nextDouble() * 0.05) * canopyScale;
             double crownDepth = crownRadius * (0.86 + random.nextDouble() * 0.12);
             addCrown(tree, origin, leaves, centerX, centerY, centerZ,
                     crownRadius, crownDepth, crownVerticalRadius, random);
             addHangingLeafVines(tree, origin, leaves, centerX, centerY, centerZ,
-                    crownRadius, crownDepth, crownVerticalRadius, random);
+                    crownRadius, crownDepth, crownVerticalRadius, random, additionalLeafVines,
+                    leafVineSeed(seed, centerX, centerY, centerZ));
         }
 
         int upperBranchCount = 2 + random.nextInt(2);
@@ -110,7 +121,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             double dx = Math.cos(angle);
             double dz = Math.sin(angle);
             int startY = trunkApexY;
-            int centerY = baseCenterY + random.nextInt(7) - 3;
+            int centerY = Math.min(baseCenterY + random.nextInt(7) - 3, height - crownVerticalRadius);
             int rise = Math.max(2, centerY - startY);
             int endRadius = upperStartRadius + rise;
             int centerX = (int) Math.round(dx * endRadius);
@@ -119,54 +130,92 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             addCurvedBranch(tree, origin, trunk, dx, dz, upperStartRadius, startY, endRadius, centerY,
                     Math.max(2, branchBaseWidth - 1), 2);
 
-            double crownRadius = radius * (0.25 + random.nextDouble() * 0.04);
+            double crownRadius = radius * (0.25 + random.nextDouble() * 0.04) * canopyScale;
             double crownDepth = crownRadius * (0.86 + random.nextDouble() * 0.12);
             addCrown(tree, origin, leaves, centerX, centerY, centerZ,
                     crownRadius, crownDepth, crownVerticalRadius, random);
             addHangingLeafVines(tree, origin, leaves, centerX, centerY, centerZ,
-                    crownRadius, crownDepth, crownVerticalRadius, random);
+                    crownRadius, crownDepth, crownVerticalRadius, random, additionalLeafVines,
+                    leafVineSeed(seed ^ 0x9E3779B97F4A7C15L, centerX, centerY, centerZ));
         }
 
-        addCanopyMossBiome(tree, level, chunkBounds, leaves, trunk, radius, random);
-        addVanillaVines(tree, level, chunkBounds, origin, trunk, leaves, trunkHeight, trunkBaseRadius, radius, random);
+        addCanopyMossBiome(tree, ground, leaves, trunk, radius, random);
+        addVanillaVines(tree, ground, origin, trunk, leaves, trunkHeight, trunkBaseRadius, radius, random);
+        addAdditionalHangingLeafVines(tree, origin, leaves, additionalLeafVines);
+        return tree;
+    }
 
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        var iterator = tree.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<BlockPos, BlockState> entry = iterator.next();
-            BlockPos pos = entry.getKey();
-            if (!chunkBounds.contains(pos) || level.isOutsideBuildHeight(pos.getY())) {
-                iterator.remove();
-                continue;
-            }
-            if (!level.ensureCanWrite(pos)) {
-                iterator.remove();
-                continue;
-            }
+    private static double crownRadiusScale(int height) {
+        double heightProgress = Math.max(0.0, Math.min(1.0,
+                (height - CROWN_SCALE_START_HEIGHT) / (double) (MAX_TREE_HEIGHT - CROWN_SCALE_START_HEIGHT)));
+        return 1.0 - heightProgress * MAX_CROWN_RADIUS_SCALE_REDUCTION;
+    }
 
-            BlockState existing = level.getBlockState(pos);
-            if (!canTreeReplace(existing)) {
-                if (isOptionalTreeDecoration(entry.getValue(), leaves)) {
-                    iterator.remove();
-                } else {
-                    return false;
-                }
+    private static int profileIndex(int dx, int dz) {
+        return (dx + MAX_HORIZONTAL_EXTENT) * GROUND_PROFILE_WIDTH + dz + MAX_HORIZONTAL_EXTENT;
+    }
+
+    public static int groundProfileLength() {
+        return GROUND_PROFILE_WIDTH * GROUND_PROFILE_WIDTH;
+    }
+
+    public static int groundProfileIndex(int dx, int dz) {
+        if (Math.abs(dx) > MAX_HORIZONTAL_EXTENT || Math.abs(dz) > MAX_HORIZONTAL_EXTENT) {
+            throw new IndexOutOfBoundsException("Outside baobab ground profile: " + dx + ", " + dz);
+        }
+        return profileIndex(dx, dz);
+    }
+
+    public static final class GroundProfile {
+        private final int centerX;
+        private final int centerZ;
+        private final int[] groundHeights;
+
+        public GroundProfile(int centerX, int centerZ, int[] groundHeights) {
+            if (groundHeights.length != GROUND_PROFILE_WIDTH * GROUND_PROFILE_WIDTH) {
+                throw new IllegalArgumentException("Unexpected baobab ground profile size: " + groundHeights.length);
             }
+            this.centerX = centerX;
+            this.centerZ = centerZ;
+            this.groundHeights = groundHeights.clone();
         }
 
-        for (Map.Entry<BlockPos, BlockState> entry : tree.entrySet()) {
-            BlockPos pos = entry.getKey();
-            if (chunkBounds.contains(pos) && level.ensureCanWrite(pos)) {
-                level.setBlock(mutable.set(pos), entry.getValue(), Block.UPDATE_CLIENTS);
-            }
+        public int[] copyHeights() {
+            return this.groundHeights.clone();
         }
-        return true;
+
+        public int groundYAt(int x, int z) {
+            int dx = x - this.centerX;
+            int dz = z - this.centerZ;
+            if (Math.abs(dx) > MAX_HORIZONTAL_EXTENT || Math.abs(dz) > MAX_HORIZONTAL_EXTENT) {
+                return this.groundHeights[profileIndex(0, 0)];
+            }
+            return this.groundHeights[profileIndex(dx, dz)];
+        }
+
+        public boolean isReplaceable(BlockPos pos) {
+            return pos.getY() > this.groundYAt(pos.getX(), pos.getZ());
+        }
+
+        public boolean isSolid(BlockPos pos) {
+            return pos.getY() <= this.groundYAt(pos.getX(), pos.getZ());
+        }
+
+    }
+
+    public static boolean canTreeReplace(BlockState state) {
+        return state.isAir()
+                || state.canBeReplaced()
+                || state.is(BlockTags.LEAVES)
+                || state.is(BlockTags.REPLACEABLE)
+                || state.is(BlockTags.REPLACEABLE_BY_TREES)
+                || state.is(BlockTags.FLOWERS)
+                || state.is(BlockTags.SMALL_FLOWERS);
     }
 
     private static void addButtressRoots(
             Map<BlockPos, BlockState> tree,
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
+            GroundProfile ground,
             BlockPos origin,
             BlockState trunk,
             int trunkBaseRadius,
@@ -185,7 +234,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             double dx = Math.cos(angle);
             double dz = Math.sin(angle);
             int startY = Math.max(3, typicalStartY + random.nextInt(3) - 1);
-            RootTip tip = findRootTip(level, chunkBounds, origin, dx, dz, startRadius, startY);
+            RootTip tip = findRootTip(ground, origin, dx, dz, startRadius, startY);
             if (tip == null) {
                 continue;
             }
@@ -198,21 +247,15 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         // Roots may meet uneven ground; keep the exposed part instead of failing the whole tree.
         for (Map.Entry<BlockPos, BlockState> entry : roots.entrySet()) {
             BlockPos pos = entry.getKey();
-            if (tree.containsKey(pos) || !chunkBounds.contains(pos)
-                    || level.isOutsideBuildHeight(pos.getY()) || !level.ensureCanWrite(pos)) {
+            if (tree.containsKey(pos) || ground.isSolid(pos)) {
                 continue;
             }
-
-            BlockState existing = level.getBlockState(pos);
-            if (canTreeReplace(existing)) {
-                tree.put(pos, entry.getValue());
-            }
+            tree.put(pos, entry.getValue());
         }
     }
 
     private static RootTip findRootTip(
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
+            GroundProfile groundProfile,
             BlockPos origin,
             double dx,
             double dz,
@@ -224,7 +267,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         for (int attempt = 0; attempt < 4; attempt++) {
             int endX = (int) Math.round(dx * endRadius);
             int endZ = (int) Math.round(dz * endRadius);
-            BlockPos ground = findGround(level, chunkBounds, origin.getX() + endX, origin.getZ() + endZ,
+            BlockPos ground = findGround(groundProfile, origin.getX() + endX, origin.getZ() + endZ,
                     origin.getY() + startY);
             if (ground == null) {
                 return null;
@@ -240,7 +283,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
 
         int endX = (int) Math.round(dx * endRadius);
         int endZ = (int) Math.round(dz * endRadius);
-        BlockPos ground = findGround(level, chunkBounds, origin.getX() + endX, origin.getZ() + endZ,
+        BlockPos ground = findGround(groundProfile, origin.getX() + endX, origin.getZ() + endZ,
                 origin.getY() + startY);
         if (ground == null) {
             return null;
@@ -250,48 +293,19 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     }
 
     private static BlockPos findGround(
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
+            GroundProfile groundProfile,
             int x,
             int z,
             int startY
     ) {
-        if (!chunkBounds.contains(new BlockPos(x, startY, z))) {
-            return null;
-        }
-
-        for (int distance = 0; distance <= GROUND_SCAN_STEPS; distance++) {
-            int y = startY - distance;
-            if (level.isOutsideBuildHeight(y)) {
-                break;
-            }
-
-            BlockPos pos = new BlockPos(x, y, z);
-            BlockState state = level.getBlockState(pos);
-            if (state.is(BlockTags.LEAVES) || state.is(BlockTags.LOGS)) {
-                continue;
-            }
-            if (state.isFaceSturdy(level, pos, Direction.UP)) {
-                return pos;
-            }
-        }
-        return null;
-    }
-
-    private static boolean canTreeReplace(BlockState state) {
-        return state.isAir()
-                || state.canBeReplaced()
-                || state.is(BlockTags.LEAVES)
-                || state.is(BlockTags.REPLACEABLE)
-                || state.is(BlockTags.REPLACEABLE_BY_TREES)
-                || state.is(BlockTags.FLOWERS)
-                || state.is(BlockTags.SMALL_FLOWERS);
+        int groundY = groundProfile.groundYAt(x, z);
+        int y = Math.min(groundY, startY);
+        return startY - y <= GROUND_SCAN_STEPS ? new BlockPos(x, y, z) : null;
     }
 
     private static void addTrunk(
             Map<BlockPos, BlockState> tree,
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
+            GroundProfile groundProfile,
             BlockPos origin,
             BlockState trunk,
             int height,
@@ -305,7 +319,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         int groundScanStartY = origin.getY() + GROUND_SCAN_STEPS / 2;
         for (int x = -bound; x <= bound; x++) {
             for (int z = -bound; z <= bound; z++) {
-                BlockPos ground = findGround(level, chunkBounds, origin.getX() + x, origin.getZ() + z, groundScanStartY);
+                BlockPos ground = findGround(groundProfile, origin.getX() + x, origin.getZ() + z, groundScanStartY);
                 int groundY = ground == null ? origin.getY() - 1 : ground.getY();
                 groundHeights[x + bound][z + bound] = groundY;
                 lowestTrunkY = Math.min(lowestTrunkY, groundY + 1 - origin.getY());
@@ -603,25 +617,32 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             double radiusX,
             double radiusZ,
             int radiusY,
-            RandomSource random
+            RandomSource random,
+            List<PendingLeafVines> additionalLeafVines,
+            long additionalVineSeed
     ) {
         List<BlockPos> candidates = new ArrayList<>();
+        List<BlockPos> expandedCandidates = new ArrayList<>();
         int boundX = (int) Math.ceil(radiusX);
         int boundZ = (int) Math.ceil(radiusZ);
         for (int x = -boundX; x <= boundX; x++) {
             for (int z = -boundZ; z <= boundZ; z++) {
                 double horizontalDistance = x * x / (radiusX * radiusX) + z * z / (radiusZ * radiusZ);
-                if (horizontalDistance < 0.22 || horizontalDistance > 0.88) {
+                if (horizontalDistance < 0.02 || horizontalDistance > 1.02) {
                     continue;
                 }
 
                 int drop = (int) Math.ceil(radiusY * Math.sqrt(Math.max(0.0, 1.0 - horizontalDistance)));
                 BlockPos attach = origin.offset(centerX + x, centerY - drop, centerZ + z);
                 BlockState at = tree.get(attach);
-                if (at == null || at.getBlock() != leaves.getBlock() || tree.containsKey(attach.below())) {
+                if (at == null || at.getBlock() != leaves.getBlock()) {
                     continue;
                 }
-                candidates.add(attach);
+                expandedCandidates.add(attach);
+                if (horizontalDistance >= 0.22 && horizontalDistance <= 0.88
+                        && !tree.containsKey(attach.below())) {
+                    candidates.add(attach);
+                }
             }
         }
 
@@ -647,6 +668,102 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             selected.add(attach);
             placeLeafVine(tree, origin, attach, leaves, random);
         }
+
+        additionalLeafVines.add(new PendingLeafVines(
+                List.copyOf(candidates),
+                List.copyOf(expandedCandidates),
+                List.copyOf(selected),
+                selected.size() * (HANGING_LEAF_VINE_COUNT_MULTIPLIER - 1),
+                additionalVineSeed
+        ));
+    }
+
+    private static void addAdditionalHangingLeafVines(
+            Map<BlockPos, BlockState> tree,
+            BlockPos origin,
+            BlockState leaves,
+            List<PendingLeafVines> pendingVines
+    ) {
+        Set<BlockPos> usedAnchors = new LinkedHashSet<>();
+        List<List<BlockPos>> expandedCandidatesByCrown = new ArrayList<>();
+        List<RandomSource> additionalRandomByCrown = new ArrayList<>();
+        for (PendingLeafVines pending : pendingVines) {
+            usedAnchors.addAll(pending.baseSelection());
+        }
+
+        for (PendingLeafVines pending : pendingVines) {
+            RandomSource random = RandomSource.create(pending.seed());
+            List<BlockPos> candidates = new ArrayList<>(pending.candidates());
+            shufflePositions(candidates, random);
+            List<BlockPos> selected = new ArrayList<>(pending.baseSelection());
+            int added = 0;
+
+            for (BlockPos attach : candidates) {
+                if (added >= pending.target()) {
+                    break;
+                }
+                BlockState at = tree.get(attach);
+                if (at == null || at.getBlock() != leaves.getBlock() || tree.containsKey(attach.below())) {
+                    continue;
+                }
+
+                boolean tooClose = selected.stream().anyMatch(other ->
+                        other.distSqr(attach) < ADDITIONAL_LEAF_VINE_MIN_SEPARATION_SQUARED);
+                if (tooClose || usedAnchors.contains(attach)) {
+                    continue;
+                }
+                selected.add(attach);
+                usedAnchors.add(attach.immutable());
+                placeLeafVine(tree, origin, attach, leaves, random);
+                added++;
+            }
+
+            RandomSource additionalRandom = RandomSource.create(pending.seed() ^ 0xD1B54A32D192ED03L);
+            List<BlockPos> expandedCandidates = new ArrayList<>(pending.expandedCandidates());
+            shufflePositions(expandedCandidates, additionalRandom);
+            expandedCandidatesByCrown.add(expandedCandidates);
+            additionalRandomByCrown.add(additionalRandom);
+        }
+
+        // Match the actual number of existing unique strands across the whole tree.
+        // Crowns with more free underside can make up for crowns whose edge is crowded.
+        int targetAdditional = usedAnchors.size();
+        int[] candidateIndexes = new int[expandedCandidatesByCrown.size()];
+        int addedVisibleStrands = 0;
+        while (addedVisibleStrands < targetAdditional) {
+            boolean placedThisRound = false;
+            for (int crown = 0; crown < expandedCandidatesByCrown.size()
+                    && addedVisibleStrands < targetAdditional; crown++) {
+                List<BlockPos> crownCandidates = expandedCandidatesByCrown.get(crown);
+                RandomSource random = additionalRandomByCrown.get(crown);
+                while (candidateIndexes[crown] < crownCandidates.size()) {
+                    BlockPos attach = crownCandidates.get(candidateIndexes[crown]++);
+                    if (usedAnchors.contains(attach)) {
+                        continue;
+                    }
+                    BlockState at = tree.get(attach);
+                    if (at == null || at.getBlock() != leaves.getBlock()) {
+                        continue;
+                    }
+                    if (!placeAdditionalLeafVine(tree, origin, attach, leaves, random)) {
+                        continue;
+                    }
+                    usedAnchors.add(attach.immutable());
+                    addedVisibleStrands++;
+                    placedThisRound = true;
+                    break;
+                }
+            }
+            if (!placedThisRound) {
+                break;
+            }
+        }
+    }
+
+    private static long leafVineSeed(long treeSeed, int centerX, int centerY, int centerZ) {
+        long seed = treeSeed * 31L + centerX;
+        seed = seed * 31L + centerY;
+        return seed * 31L + centerZ;
     }
 
     private static void placeLeafVine(
@@ -697,10 +814,68 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         }
     }
 
+    private static boolean placeAdditionalLeafVine(
+            Map<BlockPos, BlockState> tree,
+            BlockPos origin,
+            BlockPos attach,
+            BlockState leaves,
+            RandomSource random
+    ) {
+        List<BlockPos> newPath = new ArrayList<>();
+        List<BlockPos> sideTufts = new ArrayList<>();
+        int x = attach.getX() - origin.getX();
+        int z = attach.getZ() - origin.getZ();
+        int length = 3 + random.nextInt(6);
+        BlockPos end = attach;
+        for (int dy = 1; dy <= length; dy++) {
+            if (dy > 1 && random.nextFloat() < 0.28F) {
+                switch (random.nextInt(4)) {
+                    case 0 -> x++;
+                    case 1 -> x--;
+                    case 2 -> z++;
+                    default -> z--;
+                }
+            }
+
+            BlockPos pos = origin.offset(x, attach.getY() - origin.getY() - dy, z);
+            BlockState existing = tree.get(pos);
+            if (existing != null && existing.getBlock() != leaves.getBlock()) {
+                break;
+            }
+            if (existing == null) {
+                newPath.add(pos.immutable());
+            }
+            end = pos;
+
+            if (random.nextFloat() < 0.22F) {
+                int sideX = random.nextBoolean() ? 1 : -1;
+                BlockPos tuft = pos.offset(sideX, 0, random.nextInt(3) - 1);
+                BlockState tuftState = tree.get(tuft);
+                if (tuftState == null) {
+                    sideTufts.add(tuft.immutable());
+                }
+            }
+        }
+
+        // Count only strands that extend the visible foliage with at least one new block.
+        if (newPath.isEmpty()) {
+            return false;
+        }
+
+        newPath.forEach(pos -> putIfAbsent(tree, pos, leaves));
+        sideTufts.forEach(pos -> putIfAbsent(tree, pos, leaves));
+        if (random.nextBoolean()) {
+            BlockPos tip = end.offset(random.nextInt(3) - 1, 0, random.nextInt(3) - 1);
+            if (!tree.containsKey(tip)) {
+                putIfAbsent(tree, tip, leaves);
+            }
+        }
+        return true;
+    }
+
     private static void addCanopyMossBiome(
             Map<BlockPos, BlockState> tree,
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
+            GroundProfile ground,
             BlockState leaves,
             BlockState trunk,
             int radius,
@@ -720,9 +895,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         List<BlockPos> surfaceLeaves = new ArrayList<>();
         for (BlockPos leaf : highestLeaves.values()) {
             BlockPos above = leaf.above();
-            if (tree.containsKey(above) || level.isOutsideBuildHeight(above.getY())
-                    || !chunkBounds.contains(above) || !level.ensureCanWrite(above)
-                    || !canTreeReplace(level.getBlockState(above))) {
+            if (tree.containsKey(above) || !ground.isReplaceable(above)) {
                 continue;
             }
 
@@ -734,61 +907,39 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
                     nearbySurface++;
                 }
             }
-            if (nearbySurface >= 3) {
+            if (nearbySurface >= 2) {
                 surfaceLeaves.add(leaf);
             }
         }
 
-        Set<BlockPos> mossCoveredLeaves = new LinkedHashSet<>();
         Set<BlockPos> mossBlocks = new LinkedHashSet<>();
-        List<BlockPos> orderedSurface = new ArrayList<>(surfaceLeaves);
-        shufflePositions(orderedSurface, random);
-        for (BlockPos leaf : orderedSurface) {
-            BlockPos floor = leaf.above();
-            int adjacentMoss = 0;
-            for (Direction direction : Direction.Plane.HORIZONTAL) {
-                BlockPos neighborLeaf = highestLeaves.get(new CanopyColumn(
-                        leaf.getX() + direction.getStepX(), leaf.getZ() + direction.getStepZ()));
-                if (neighborLeaf != null && Math.abs(neighborLeaf.getY() - leaf.getY()) <= 1
-                        && mossCoveredLeaves.contains(neighborLeaf)) {
-                    adjacentMoss++;
-                }
-            }
-
-            float coverageChance = adjacentMoss > 0 ? 0.82F : 0.42F;
-            if (random.nextFloat() >= coverageChance) {
-                continue;
-            }
-
-            mossCoveredLeaves.add(leaf);
-            if (random.nextFloat() < 0.38F) {
-                tree.put(floor.immutable(), Blocks.MOSS_BLOCK.defaultBlockState());
-                mossBlocks.add(floor.immutable());
-            } else {
-                tree.put(floor.immutable(), Blocks.MOSS_CARPET.defaultBlockState());
-            }
+        for (BlockPos leaf : surfaceLeaves) {
+            BlockPos moss = leaf.immutable();
+            tree.put(moss, Blocks.MOSS_BLOCK.defaultBlockState());
+            mossBlocks.add(moss);
         }
 
-        List<BlockPos> pools = addCanopyPools(tree, level, chunkBounds, leaves, trunk, highestLeaves,
+        List<CanopyPool> pools = addCanopyPools(tree, leaves, trunk,
                 mossBlocks, radius, random);
-        addCanopyPlants(tree, level, chunkBounds, mossBlocks, pools, random);
+        addCanopyPlants(tree, ground, mossBlocks, pools, random);
     }
 
-    private static List<BlockPos> addCanopyPools(
+    private static List<CanopyPool> addCanopyPools(
             Map<BlockPos, BlockState> tree,
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
             BlockState leaves,
             BlockState trunk,
-            Map<CanopyColumn, BlockPos> highestLeaves,
             Set<BlockPos> mossBlocks,
             int radius,
             RandomSource random
     ) {
         List<BlockPos> candidates = new ArrayList<>(mossBlocks);
         shufflePositions(candidates, random);
-        List<BlockPos> pools = new ArrayList<>();
-        int targetPools = 2 + radius / 12 + random.nextInt(3);
+        List<CanopyPool> pools = new ArrayList<>();
+        Map<CanopyColumn, BlockPos> mossSurface = new LinkedHashMap<>();
+        for (BlockPos moss : mossBlocks) {
+            mossSurface.put(new CanopyColumn(moss.getX(), moss.getZ()), moss);
+        }
+        int targetPools = 2 + radius / 24 + random.nextInt(2);
 
         for (BlockPos first : candidates) {
             if (pools.size() >= targetPools) {
@@ -797,121 +948,85 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             if (!tree.getOrDefault(first, Blocks.AIR.defaultBlockState()).is(Blocks.MOSS_BLOCK)) {
                 continue;
             }
-            if (tooClose(pools, first, 36.0)) {
+            if (tooClose(pools.stream().map(CanopyPool::center).toList(), first, 100.0)) {
                 continue;
             }
 
             List<BlockPos> waterTiles = new ArrayList<>();
-            waterTiles.add(first);
-            if (random.nextFloat() < 0.4F) {
-                List<Direction> directions = List.of(
-                        Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
-                int directionOffset = random.nextInt(directions.size());
-                for (int i = 0; i < directions.size(); i++) {
-                    BlockPos second = first.relative(directions.get((directionOffset + i) % directions.size()));
-                    BlockPos support = highestLeaves.get(new CanopyColumn(second.getX(), second.getZ()));
-                    if (mossBlocks.contains(second) && support != null && support.getY() == second.getY() - 1) {
-                        waterTiles.add(second);
-                        break;
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    int distanceSquared = dx * dx + dz * dz;
+                    if (distanceSquared > 5) {
+                        continue;
+                    }
+                    BlockPos tile = mossSurface.get(new CanopyColumn(
+                            first.getX() + dx, first.getZ() + dz));
+                    if (tile == null || Math.abs(tile.getY() - first.getY()) > 1
+                            || !tree.getOrDefault(tile, Blocks.AIR.defaultBlockState()).is(Blocks.MOSS_BLOCK)) {
+                        continue;
+                    }
+                    if (distanceSquared <= 2 || random.nextFloat() < 0.62F) {
+                        waterTiles.add(tile);
                     }
                 }
             }
-
-            Set<BlockPos> waterTileSet = new LinkedHashSet<>(waterTiles);
-            Map<BlockPos, Direction> rim = new LinkedHashMap<>();
-            for (BlockPos tile : waterTiles) {
-                for (Direction direction : Direction.Plane.HORIZONTAL) {
-                    BlockPos edge = tile.relative(direction);
-                    if (!waterTileSet.contains(edge)) {
-                        rim.putIfAbsent(edge, direction.getOpposite());
-                    }
-                }
-            }
-
-            Set<BlockPos> rimMoss = new LinkedHashSet<>();
-            boolean enclosed = true;
-            for (Map.Entry<BlockPos, Direction> edgeEntry : rim.entrySet()) {
-                BlockPos edge = edgeEntry.getKey();
-                BlockState planned = tree.get(edge);
-                if (planned != null) {
-                    if (planned.is(Blocks.MOSS_BLOCK) || planned.is(Blocks.MOSS_CARPET)) {
-                        rimMoss.add(edge);
-                    } else if (planned.getBlock() != leaves.getBlock() && planned.getBlock() != trunk.getBlock()) {
-                        enclosed = false;
-                        break;
-                    }
-                    continue;
-                }
-
-                if (!chunkBounds.contains(edge) || level.isOutsideBuildHeight(edge.getY())
-                        || !level.ensureCanWrite(edge)) {
-                    enclosed = false;
-                    break;
-                }
-                BlockState existing = level.getBlockState(edge);
-                if (!canTreeReplace(existing)) {
-                    if (!existing.isFaceSturdy(level, edge, edgeEntry.getValue())) {
-                        enclosed = false;
-                        break;
-                    }
-                    continue;
-                }
-
-                BlockPos supportPos = edge.below();
-                BlockState plannedSupport = tree.get(supportPos);
-                BlockPos surfaceSupport = highestLeaves.get(new CanopyColumn(edge.getX(), edge.getZ()));
-                boolean supported = plannedSupport != null && !plannedSupport.isAir()
-                        || surfaceSupport != null && surfaceSupport.getY() == supportPos.getY()
-                        || chunkBounds.contains(supportPos)
-                        && level.getBlockState(supportPos).isFaceSturdy(level, supportPos, Direction.UP);
-                if (!supported) {
-                    enclosed = false;
-                    break;
-                }
-                rimMoss.add(edge);
-            }
-
-            if (!enclosed) {
+            if (waterTiles.size() < 5) {
                 continue;
             }
-            for (BlockPos edge : rimMoss) {
-                tree.put(edge.immutable(), Blocks.MOSS_BLOCK.defaultBlockState());
-                mossBlocks.add(edge.immutable());
+
+            boolean supported = true;
+            for (BlockPos tile : waterTiles) {
+                BlockState below = tree.get(tile.below());
+                if (below == null || (below.getBlock() != leaves.getBlock()
+                        && below.getBlock() != trunk.getBlock()
+                        && !below.is(Blocks.MOSS_BLOCK))) {
+                    supported = false;
+                    break;
+                }
             }
+            if (!supported) {
+                continue;
+            }
+
             for (BlockPos tile : waterTiles) {
                 tree.put(tile.immutable(), Blocks.WATER.defaultBlockState());
                 mossBlocks.remove(tile);
             }
-            pools.add(first);
+            pools.add(new CanopyPool(first.immutable(), List.copyOf(waterTiles)));
         }
         return pools;
     }
 
     private static void addCanopyPlants(
             Map<BlockPos, BlockState> tree,
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
+            GroundProfile ground,
             Set<BlockPos> mossBlocks,
-            List<BlockPos> pools,
+            List<CanopyPool> pools,
             RandomSource random
     ) {
-        for (BlockPos pool : pools) {
-            if (random.nextFloat() >= 0.45F) {
-                continue;
+        Set<BlockPos> plantedSoils = new LinkedHashSet<>();
+        for (CanopyPool pool : pools) {
+            List<BlockPos> banks = new ArrayList<>();
+            for (BlockPos tile : pool.waterTiles()) {
+                for (Direction direction : Direction.Plane.HORIZONTAL) {
+                    BlockPos soil = tile.relative(direction);
+                    if (mossBlocks.contains(soil) && plantedSoils.add(soil)) {
+                        banks.add(soil);
+                    }
+                }
             }
-            for (Direction direction : Direction.Plane.HORIZONTAL) {
-                BlockPos soil = pool.relative(direction);
-                if (!mossBlocks.contains(soil) || random.nextFloat() >= 0.35F) {
-                    continue;
+
+            shufflePositions(banks, random);
+            int dripleafTarget = Math.min(banks.size(), 3 + random.nextInt(3));
+            int dripleavesPlaced = 0;
+            for (BlockPos soil : banks) {
+                if (dripleavesPlaced >= dripleafTarget) {
+                    break;
                 }
                 BlockPos lowerPos = soil.above();
                 BlockPos upperPos = lowerPos.above();
                 if (tree.containsKey(lowerPos) || tree.containsKey(upperPos)
-                        || level.isOutsideBuildHeight(upperPos.getY())
-                        || !chunkBounds.contains(lowerPos) || !chunkBounds.contains(upperPos)
-                        || !level.ensureCanWrite(upperPos)
-                        || !canTreeReplace(level.getBlockState(lowerPos))
-                        || !canTreeReplace(level.getBlockState(upperPos))) {
+                        || !ground.isReplaceable(lowerPos) || !ground.isReplaceable(upperPos)) {
                     continue;
                 }
                 Direction facing = switch (random.nextInt(4)) {
@@ -924,44 +1039,40 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
                         .setValue(SmallDripleafBlock.FACING, facing);
                 tree.put(lowerPos.immutable(), dripleaf);
                 tree.put(upperPos.immutable(), dripleaf.setValue(DoublePlantBlock.HALF, DoubleBlockHalf.UPPER));
-                break;
+                plantedSoils.add(soil);
+                dripleavesPlaced++;
+            }
+
+            List<BlockPos> vegetationPatch = new ArrayList<>();
+            for (BlockPos soil : mossBlocks) {
+                int dx = soil.getX() - pool.center().getX();
+                int dz = soil.getZ() - pool.center().getZ();
+                if (dx * dx + dz * dz <= 36 && Math.abs(soil.getY() - pool.center().getY()) <= 2
+                        && !plantedSoils.contains(soil)) {
+                    vegetationPatch.add(soil);
+                }
+            }
+            shufflePositions(vegetationPatch, random);
+            int vegetationTarget = Math.min(vegetationPatch.size(), 6 + random.nextInt(5));
+            int vegetationPlaced = 0;
+            for (BlockPos soil : vegetationPatch) {
+                if (vegetationPlaced >= vegetationTarget) {
+                    break;
+                }
+                BlockPos plantPos = soil.above();
+                if (tree.containsKey(plantPos) || !ground.isReplaceable(plantPos)) {
+                    continue;
+                }
+
+                float plantChoice = random.nextFloat();
+                BlockState plant = plantChoice < 0.38F ? Blocks.SHORT_GRASS.defaultBlockState()
+                        : plantChoice < 0.72F ? Blocks.FERN.defaultBlockState()
+                        : Blocks.PINK_PETALS.defaultBlockState();
+                tree.put(plantPos.immutable(), plant);
+                plantedSoils.add(soil);
+                vegetationPlaced++;
             }
         }
-
-        for (BlockPos soil : mossBlocks) {
-            if (random.nextFloat() >= 0.18F) {
-                continue;
-            }
-            BlockPos plantPos = soil.above();
-            if (tree.containsKey(plantPos) || level.isOutsideBuildHeight(plantPos.getY())
-                    || !chunkBounds.contains(plantPos) || !level.ensureCanWrite(plantPos)
-                    || !canTreeReplace(level.getBlockState(plantPos))) {
-                continue;
-            }
-
-            float plantChoice = random.nextFloat();
-            BlockState plant = plantChoice < 0.12F ? Blocks.FLOWERING_AZALEA.defaultBlockState()
-                    : plantChoice < 0.28F ? Blocks.AZALEA.defaultBlockState()
-                    : plantChoice < 0.57F ? Blocks.SHORT_GRASS.defaultBlockState()
-                    : plantChoice < 0.78F ? Blocks.FERN.defaultBlockState()
-                    : Blocks.PINK_PETALS.defaultBlockState();
-            tree.put(plantPos.immutable(), plant);
-        }
-    }
-
-    private static boolean isOptionalTreeDecoration(BlockState state, BlockState leaves) {
-        Block block = state.getBlock();
-        return block == leaves.getBlock()
-                || block == Blocks.VINE
-                || block == Blocks.MOSS_BLOCK
-                || block == Blocks.MOSS_CARPET
-                || block == Blocks.WATER
-                || block == Blocks.AZALEA
-                || block == Blocks.FLOWERING_AZALEA
-                || block == Blocks.SHORT_GRASS
-                || block == Blocks.FERN
-                || block == Blocks.PINK_PETALS
-                || block == Blocks.SMALL_DRIPLEAF;
     }
 
     private static void shufflePositions(List<BlockPos> positions, RandomSource random) {
@@ -975,8 +1086,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
 
     private static void addVanillaVines(
             Map<BlockPos, BlockState> tree,
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
+            GroundProfile ground,
             BlockPos origin,
             BlockState trunk,
             BlockState leaves,
@@ -1002,8 +1112,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
 
             for (Direction outward : Direction.Plane.HORIZONTAL) {
                 BlockPos vinePos = support.relative(outward);
-                if (tree.containsKey(vinePos) || !chunkBounds.contains(vinePos)
-                        || !canTreeReplace(level.getBlockState(vinePos))) {
+                if (tree.containsKey(vinePos) || !ground.isReplaceable(vinePos)) {
                     continue;
                 }
                 VineAnchor anchor = new VineAnchor(vinePos, VineBlock.getPropertyForFace(outward.getOpposite()));
@@ -1026,7 +1135,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             if (tooClose(usedAnchors, anchor.pos(), 16.0)) {
                 continue;
             }
-            if (placeVanillaVineColumn(tree, level, chunkBounds, anchor, 2 + random.nextInt(5))) {
+            if (placeVanillaVineColumn(tree, ground, anchor, 2 + random.nextInt(5))) {
                 usedAnchors.add(anchor.pos());
             }
         }
@@ -1042,7 +1151,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
             if (tooClose(usedAnchors, anchor.pos(), 25.0)) {
                 continue;
             }
-            if (placeVanillaVineColumn(tree, level, chunkBounds, anchor, 2 + random.nextInt(4))) {
+            if (placeVanillaVineColumn(tree, ground, anchor, 2 + random.nextInt(4))) {
                 usedAnchors.add(anchor.pos());
             }
         }
@@ -1050,8 +1159,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
 
     private static boolean placeVanillaVineColumn(
             Map<BlockPos, BlockState> tree,
-            WorldGenLevel level,
-            FeatureChunkBounds chunkBounds,
+            GroundProfile ground,
             VineAnchor anchor,
             int length
     ) {
@@ -1059,8 +1167,7 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
         BlockPos pos = anchor.pos();
         boolean placed = false;
         for (int step = 0; step < length; step++, pos = pos.below()) {
-            if (tree.containsKey(pos) || !chunkBounds.contains(pos) || level.isOutsideBuildHeight(pos.getY())
-                    || !canTreeReplace(level.getBlockState(pos))) {
+            if (tree.containsKey(pos) || !ground.isReplaceable(pos)) {
                 break;
             }
             tree.put(pos.immutable(), vine);
@@ -1096,15 +1203,18 @@ public class BaobabFeature extends Feature<BaobabFeature.Config> {
     private record CanopyColumn(int x, int z) {
     }
 
+    private record CanopyPool(BlockPos center, List<BlockPos> waterTiles) {
+    }
+
     private record VineAnchor(BlockPos pos, BooleanProperty facing) {
     }
 
-    public record Config(BlockStateProvider trunkBlock, BlockStateProvider leavesBlock, IntProvider radius)
-            implements FeatureConfiguration {
-        public static final Codec<Config> CODEC = RecordCodecBuilder.create(codec -> codec.group(
-                BlockStateProvider.CODEC.fieldOf("trunk_block").forGetter(Config::trunkBlock),
-                BlockStateProvider.CODEC.fieldOf("leaves_block").forGetter(Config::leavesBlock),
-                IntProviders.codec(20, 40).fieldOf("radius").forGetter(Config::radius)
-        ).apply(codec, Config::new));
+    private record PendingLeafVines(
+            List<BlockPos> candidates,
+            List<BlockPos> expandedCandidates,
+            List<BlockPos> baseSelection,
+            int target,
+            long seed
+    ) {
     }
 }

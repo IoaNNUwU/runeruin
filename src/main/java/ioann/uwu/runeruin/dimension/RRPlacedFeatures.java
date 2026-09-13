@@ -12,7 +12,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.features.AquaticFeatures;
 import net.minecraft.data.worldgen.features.CaveFeatures;
+import net.minecraft.data.worldgen.features.TreeFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
+import net.minecraft.data.worldgen.placement.VegetationPlacements;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.ConstantInt;
@@ -62,8 +64,6 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_block_vine");
 
     public static final ResourceKey<PlacedFeature> INVERTED_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "inverted_tree");
-    public static final ResourceKey<PlacedFeature> BAOBAB = RR.resourceKey(Registries.PLACED_FEATURE, "baobab");
-
     public static final ResourceKey<PlacedFeature> ELDEN_GIANT_TREE = RR.resourceKey(Registries.PLACED_FEATURE, "elden_giant_tree");
 
     public static final ResourceKey<PlacedFeature> DRIPSTONE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "dripstone_spike");
@@ -78,9 +78,27 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_deep_roots");
     public static final ResourceKey<PlacedFeature> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<PlacedFeature> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "big_lily_pad_patch");
+    public static final ResourceKey<PlacedFeature> JUNGLE_MEGA_TREE_ON_NON_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "jungle_mega_tree_on_non_moss");
+    public static final ResourceKey<PlacedFeature> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.PLACED_FEATURE, "swamp_jungle_trees");
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
+
+        // Baobab canopy uses moss blocks, so keep mega jungle trees off that surface.
+        ctx.register(JUNGLE_MEGA_TREE_ON_NON_MOSS, new PlacedFeature(
+                configuredFeatures.getOrThrow(TreeFeatures.MEGA_JUNGLE_TREE),
+                List.of(
+                        PlacementUtils.filteredByBlockSurvival(Blocks.JUNGLE_SAPLING),
+                        BlockPredicateFilter.forPredicate(BlockPredicate.not(
+                                BlockPredicate.matchesBlocks(Direction.DOWN.getUnitVec3i(), Blocks.MOSS_BLOCK)
+                        ))
+                )
+        ));
+
+        ctx.register(SWAMP_JUNGLE_TREES, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.SWAMP_JUNGLE_TREES),
+                VegetationPlacements.treePlacement(PlacementUtils.countExtra(8, 0.1F, 1))
+        ));
 
         List<PlacementModifier> smallWallMushroomPlacement = List.of(
                 CountPlacement.of(64),
@@ -444,32 +462,6 @@ public class RRPlacedFeatures {
                                 RRBlocks.ELDEN_SAPLING.get().defaultBlockState(),
                                 BlockPos.ZERO
                         ))
-                )
-        ));
-
-        ctx.register(BAOBAB, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.BAOBAB),
-                List.of(
-                        RarityFilter.onAverageOnceEvery(4),
-                        new ChunkCenterPlacement(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(BLOOMING_CAVES_Y + TERRAIN_HEIGHT + 1),
-                                VerticalAnchor.absolute(BLOOMING_CAVES_Y + TERRAIN_MIN_HEIGHT + 31)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.hasSturdyFace(Direction.UP),
-                                BlockPredicate.anyOf(
-                                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                        BlockPredicate.replaceable(),
-                                        BlockPredicate.matchesTag(BlockTags.REPLACEABLE_BY_TREES),
-                                        BlockPredicate.matchesTag(BlockTags.FLOWERS),
-                                        BlockPredicate.matchesTag(BlockTags.SMALL_FLOWERS)
-                                ),
-                                32
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                        BiomeFilter.biome()
                 )
         ));
 
