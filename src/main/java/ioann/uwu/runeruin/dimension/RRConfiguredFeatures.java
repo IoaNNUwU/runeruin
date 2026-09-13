@@ -11,6 +11,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
+import net.minecraft.data.worldgen.placement.TreePlacements;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
@@ -23,11 +24,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.WeightedPlacedFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.*;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.RandomizedIntStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.WeightedStateProvider;
 import net.minecraft.world.level.levelgen.placement.CaveSurface;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 import java.util.List;
 
@@ -56,8 +59,6 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_mushroom");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
-    public static final ResourceKey<ConfiguredFeature<?, ?>> BAOBAB = RR.resourceKey(Registries.CONFIGURED_FEATURE, "baobab");
-
     public static final ResourceKey<ConfiguredFeature<?, ?>> ELDEN_GIANT_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "elden_giant_tree");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> DRIPSTONE_SPIKE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dripstone_spike");
@@ -70,11 +71,26 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_deep_roots");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_lily_pad_patch");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "swamp_jungle_trees");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
         var otherConfiguredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
+        HolderGetter<PlacedFeature> placedFeatures = ctx.lookup(Registries.PLACED_FEATURE);
         HolderGetter<Block> blocks = ctx.lookup(Registries.BLOCK);
+
+        ctx.register(SWAMP_JUNGLE_TREES, new ConfiguredFeature<>(
+                Feature.RANDOM_SELECTOR,
+                new RandomFeatureConfiguration(
+                        List.of(
+                                new WeightedPlacedFeature(placedFeatures.getOrThrow(TreePlacements.FANCY_OAK_CHECKED), 0.1F),
+                                new WeightedPlacedFeature(placedFeatures.getOrThrow(TreePlacements.JUNGLE_BUSH), 0.5F),
+                                new WeightedPlacedFeature(placedFeatures.getOrThrow(RRPlacedFeatures.JUNGLE_MEGA_TREE_ON_NON_MOSS), 0.33333334F),
+                                new WeightedPlacedFeature(placedFeatures.getOrThrow(TreePlacements.FALLEN_JUNGLE_TREE), 0.0125F)
+                        ),
+                        placedFeatures.getOrThrow(TreePlacements.JUNGLE_TREE_CHECKED)
+                )
+        ));
 
         ctx.register(SMALL_RED_WALL_MUSHROOM, new ConfiguredFeature<>(
                 RRFeatures.WALL_MUSHROOM.get(),
@@ -276,15 +292,6 @@ public class RRConfiguredFeatures {
         ctx.register(ELDEN_GIANT_TREE, new ConfiguredFeature<>(
                 RRFeatures.ELDEN_GIANT_TREE.get(),
                 NoneFeatureConfiguration.INSTANCE
-        ));
-
-        ctx.register(BAOBAB, new ConfiguredFeature<>(
-                RRFeatures.BAOBAB.get(),
-                new BaobabFeature.Config(
-                        BlockStateProvider.simple(RRBlocks.BAOBAB_WOOD.get()),
-                        BlockStateProvider.simple(RRBlocks.BAOBAB_LEAVES.get()),
-                        UniformInt.of(20, 40)
-                )
         ));
 
         ctx.register(DRIPSTONE_SPIKE, new ConfiguredFeature<>(

@@ -1,7 +1,8 @@
 package ioann.uwu.runeruin.preview.jobs;
 
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.dimension.features.BaobabFeature;
+import ioann.uwu.runeruin.dimension.structures.BaobabPiece;
+import ioann.uwu.runeruin.dimension.structures.BaobabTreeGenerator;
 import ioann.uwu.runeruin.preview.PreviewArgs;
 import ioann.uwu.runeruin.preview.PreviewJob;
 import ioann.uwu.runeruin.preview.PreviewJobs;
@@ -9,10 +10,8 @@ import ioann.uwu.runeruin.preview.PreviewWorld;
 import java.io.IOException;
 import java.util.List;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.valueproviders.ConstantInt;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.block.Blocks;
 
 public final class BaobabPreviewJob implements PreviewJob {
     @Override
@@ -22,7 +21,7 @@ public final class BaobabPreviewJob implements PreviewJob {
 
     @Override
     public String description() {
-        return "BaobabFeature with grounded buttress roots and curved branch crowns. params: radius (20-40), groundGap (0-8), cover=true";
+        return "Baobab structure with grounded buttress roots and curved branch crowns. params: radius (20-40), groundGap (0-8), cover=true";
     }
 
     @Override
@@ -33,7 +32,6 @@ public final class BaobabPreviewJob implements PreviewJob {
         boolean roughGround = Boolean.parseBoolean(args.get("roughGround", "false"));
         long seed = args.seed();
         PreviewWorld world = PreviewWorld.create(seed);
-        BlockPos origin = new BlockPos(0, 65, 0);
         int groundRadius = (int) Math.ceil(radius * 0.4);
         int groundY = 64 - groundGap;
         if (roughGround) {
@@ -62,17 +60,24 @@ public final class BaobabPreviewJob implements PreviewJob {
                     Blocks.TALL_GRASS.defaultBlockState());
         }
 
-        PreviewJobs.placeFeature(
-                new BaobabFeature(),
-                new BaobabFeature.Config(
-                        BlockStateProvider.simple(RRBlocks.BAOBAB_WOOD.get()),
-                        BlockStateProvider.simple(RRBlocks.BAOBAB_LEAVES.get()),
-                        ConstantInt.of(radius)
-                ),
-                origin,
-                world,
-                null
-        );
+        int[] groundHeights = new int[BaobabTreeGenerator.groundProfileLength()];
+        for (int dx = -BaobabTreeGenerator.MAX_HORIZONTAL_EXTENT;
+             dx <= BaobabTreeGenerator.MAX_HORIZONTAL_EXTENT; dx++) {
+            for (int dz = -BaobabTreeGenerator.MAX_HORIZONTAL_EXTENT;
+                 dz <= BaobabTreeGenerator.MAX_HORIZONTAL_EXTENT; dz++) {
+                int surfaceY = groundY;
+                if (roughGround && Math.abs(dx) <= groundRadius && Math.abs(dz) <= groundRadius) {
+                    surfaceY += (int) Math.round(
+                            Math.sin(dx * 0.45) * 4.0 + Math.cos(dz * 0.37) * 4.0 - 4.0
+                                    + Math.sin((dx + dz) * 0.18) * 2.0);
+                }
+                groundHeights[BaobabTreeGenerator.groundProfileIndex(dx, dz)] = surfaceY;
+            }
+        }
+        int height = BaobabTreeGenerator.sampleHeight(radius, world.random());
+        long treeSeed = world.random().nextLong();
+        PreviewJobs.placePieceAcrossChunks(new BaobabPiece(
+                0, 0, radius, height, treeSeed, groundHeights), world);
 
         return PreviewJobs.export(world, PreviewJobs.paddedOccupied(world, 1), args.name("preview_baobab"), args.exportDir(), List.of(
                 "job: " + id(),
@@ -81,8 +86,8 @@ public final class BaobabPreviewJob implements PreviewJob {
                 "ground gap: " + groundGap,
                 "rough ground: " + roughGround,
                 "flower cover: " + cover,
-                "height factor: 1.8-2.1",
-                "origin: 0 65 0"
+                "height: " + height + " blocks (maximum 40)",
+                "origin: 0 " + (groundY + 1) + " 0"
         ));
     }
 }

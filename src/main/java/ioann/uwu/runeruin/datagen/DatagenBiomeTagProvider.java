@@ -25,5 +25,8 @@ public class DatagenBiomeTagProvider extends BiomeTagsProvider {
         this.tag(RRBiomeTags.HAS_GIANT_GOBLET)
                 .add(RRBiomes.SPARKLING_CAVES);
 
+        this.tag(RRBiomeTags.HAS_BAOBAB)
+                .add(RRBiomes.JUNGLE_SWAMP);
+
     }
 }

@@ -21,6 +21,12 @@ public class TopLayerAndBloomingCavesGen {
 
     private static final LazyNoise floorNoise = new LazyNoise("bloomingCavesFloorNoise", SingleNoise::new);
 
+    public static int bloomingCavesFloorY(int x, int z, RandomState randomState) {
+        float noise = floorNoise.getOrCreateNoise(randomState).noise(x, z);
+        int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
+        return BLOOMING_CAVES_Y + biomeHeight;
+    }
+
     public static void generateBloomingCavesFloor(ChunkAccess chunk, RandomState randomState) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         BlockState stone = Blocks.STONE.defaultBlockState();
@@ -31,10 +37,7 @@ public class TopLayerAndBloomingCavesGen {
                 int xx = chunk.getPos().getMiddleBlockX() + x;
                 int zz = chunk.getPos().getMiddleBlockZ() + z;
 
-                float noise = floorNoise.getOrCreateNoise(randomState).noise(xx, zz);
-
-                int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
-                int topY = BLOOMING_CAVES_Y + biomeHeight;
+                int topY = bloomingCavesFloorY(xx, zz, randomState);
 
                 for (int y = BLOOMING_CAVES_Y; y < topY; y++) {
                     chunk.setBlockState(pos.set(x, y, z), stone);

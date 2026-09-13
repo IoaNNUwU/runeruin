@@ -11,6 +11,7 @@ import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
 public class RRStructureSets {
 
     public static final ResourceKey<StructureSet> GIANT_GOBLETS = RR.resourceKey(Registries.STRUCTURE_SET, "giant_goblets");
+    public static final ResourceKey<StructureSet> BAOBABS = RR.resourceKey(Registries.STRUCTURE_SET, "baobabs");
 
     public static void bootstrap(BootstrapContext<StructureSet> ctx) {
         var structures = ctx.lookup(Registries.STRUCTURE);
@@ -20,6 +21,14 @@ public class RRStructureSets {
                 new StructureSet(
                         structures.getOrThrow(RRStructures.GIANT_GOBLET),
                         new RandomSpreadStructurePlacement(5, 3, RandomSpreadType.LINEAR, 2892828)
+                )
+        );
+
+        ctx.register(
+                BAOBABS,
+                new StructureSet(
+                        structures.getOrThrow(RRStructures.BAOBAB),
+                        new RandomSpreadStructurePlacement(5, 3, RandomSpreadType.LINEAR, 2819815)
                 )
         );
     }
