@@ -53,7 +53,9 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.INVERTED_TREE_SIGN.getKey(),
                 RRBlocks.INVERTED_TREE_WALL_SIGN.getKey(),
                 RRBlocks.INVERTED_TREE_HANGING_SIGN.getKey(),
-                RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.getKey()
+                RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.getKey(),
+                RRBlocks.GLOWING_MUSHROOM_CAP.getKey(),
+                RRBlocks.GLOWING_MUSHROOM_STEM.getKey()
         );
 
         tag(BlockTags.MINEABLE_WITH_HOE).add(

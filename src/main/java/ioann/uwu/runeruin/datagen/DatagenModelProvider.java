@@ -103,6 +103,10 @@ public class DatagenModelProvider extends ModelProvider {
                 TexturedModel.CUBE.updateTexture(TextureMapping::forceAllTranslucent)
         );
         blockModels.createTrivialCube(RRBlocks.GLOWING_MUSHROOM_STEM.get());
+        blockModels.createCrossBlockWithDefaultItem(
+                RRBlocks.GLOWING_MUSHROOM.get(),
+                BlockModelGenerators.PlantType.NOT_TINTED
+        );
         blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
         createFireflyInJar(blockModels);
         createBigLilyPad(blockModels);

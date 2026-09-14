@@ -236,6 +236,11 @@ public class RRBlocks {
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MUSHROOM_STEM)
                     .mapColor(MapColor.COLOR_LIGHT_GRAY));
 
+    public static final DeferredBlock<Block> GLOWING_MUSHROOM = register("glowing_mushroom",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.RED_MUSHROOM)
+                    .lightLevel(_ -> 3),
+            GlowingMushroomBlock::new);
+
     public static final DeferredBlock<Block> MOSS_BERRY_BUSH = REGISTRY.registerBlock(
             "moss_berry_bush",
             MossBerryBushBlock::new,

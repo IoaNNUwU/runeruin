@@ -58,6 +58,7 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<PlacedFeature> GLOWING_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_mushroom");
+    public static final ResourceKey<PlacedFeature> SMALL_GLOWING_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "small_glowing_mushroom");
     public static final ResourceKey<PlacedFeature> MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "moss_vegetation");
 
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_vine");
@@ -491,6 +492,26 @@ public class RRPlacedFeatures {
                         // Keep five attempts, with one in two passing the filter: three times the previous rate.
                         CountPlacement.of(5),
                         RarityFilter.onAverageOnceEvery(2),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(DEEP_CAVES_Y),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                32
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                        BiomeFilter.biome()
+                )
+        ));
+
+        ctx.register(SMALL_GLOWING_MUSHROOM, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_GLOWING_MUSHROOM),
+                List.of(
+                        CountPlacement.of(3),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(DEEP_CAVES_Y),

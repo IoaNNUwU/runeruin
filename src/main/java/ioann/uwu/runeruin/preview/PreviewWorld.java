@@ -125,6 +125,7 @@ public final class PreviewWorld {
             }
             case "getBlockState" -> get((BlockPos) args[0]);
             case "getFluidState" -> get((BlockPos) args[0]).getFluidState();
+            case "getRawBrightness" -> 0;
             case "removeBlock", "destroyBlock" -> {
                 set((BlockPos) args[0], Blocks.AIR.defaultBlockState());
                 yield true;
