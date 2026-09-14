@@ -57,6 +57,7 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_mushroom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_glowing_mushroom");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> INVERTED_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "inverted_tree");
     public static final ResourceKey<ConfiguredFeature<?, ?>> ELDEN_GIANT_TREE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "elden_giant_tree");
@@ -274,6 +275,11 @@ public class RRConfiguredFeatures {
                         UniformInt.of(4, 9),
                         UniformInt.of(2, 3)
                 )
+        ));
+
+        ctx.register(SMALL_GLOWING_MUSHROOM, new ConfiguredFeature<>(
+                RRFeatures.GLOWING_MUSHROOM_PATCH.get(),
+                NoneFeatureConfiguration.NONE
         ));
 
         ctx.register(INVERTED_TREE, new ConfiguredFeature<>(

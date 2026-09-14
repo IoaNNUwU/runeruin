@@ -15,9 +15,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
+import net.minecraft.world.level.storage.loot.providers.number.BinomialDistributionGenerator;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import org.jspecify.annotations.NonNull;
 
@@ -79,8 +81,9 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.FIREFLY_IN_A_JAR.get());
         dropSelf(RRBlocks.GLOWING_MOSS.get());
         dropSelf(RRBlocks.GLOWING_MOSS_CARPET.get());
-        dropSelf(RRBlocks.GLOWING_MUSHROOM_CAP.get());
-        dropSelf(RRBlocks.GLOWING_MUSHROOM_STEM.get());
+        add(RRBlocks.GLOWING_MUSHROOM_CAP.get(), this::createGlowingMushroomBlockDrop);
+        add(RRBlocks.GLOWING_MUSHROOM_STEM.get(), this::createGlowingMushroomBlockDrop);
+        dropSelf(RRBlocks.GLOWING_MUSHROOM.get());
         dropSelf(RRBlocks.LAPIS_LIGHT.get());
         dropSelf(RRBlocks.BIG_LILY_PAD.get());
 
@@ -93,6 +96,18 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
                 RRBlocks.ELDEN_SAPLING.get(),
                 BlockLootSubProvider.NORMAL_LEAVES_SAPLING_CHANCES
         ));
+    }
+
+    private LootTable.Builder createGlowingMushroomBlockDrop(Block original) {
+        return createSilkTouchDispatchTable(
+                original,
+                (LootPoolEntryContainer.Builder<?>) applyExplosionDecay(
+                        original,
+                        LootItem.lootTableItem(RRBlocks.GLOWING_MUSHROOM.get()).apply(
+                                SetItemCountFunction.setCount(BinomialDistributionGenerator.binomial(1, 2.0F / 9.0F))
+                        )
+                )
+        );
     }
 
     private void createMossBerry() {

@@ -1,7 +1,9 @@
 package ioann.uwu.runeruin.preview;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.util.ArrayDeque;
@@ -16,7 +18,10 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -36,6 +41,10 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_large_radii", () -> RRGameTests::ashenMushroomLargeRadii);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_BONEMEAL =
+        TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
+        TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
 
     private RRGameTests() {}
 
@@ -60,6 +69,20 @@ public final class RRGameTests {
             RR.id("ashen_mushroom_large_radii"),
             new FunctionGameTestInstance(
                 ASHEN_MUSHROOM_LARGE_RADII.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("glowing_mushroom_bonemeal"),
+            new FunctionGameTestInstance(
+                GLOWING_MUSHROOM_BONEMEAL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("glowing_mushroom_patch"),
+            new FunctionGameTestInstance(
+                GLOWING_MUSHROOM_PATCH.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -120,6 +143,64 @@ public final class RRGameTests {
         } catch (Exception e) {
             helper.fail(e.toString());
         }
+    }
+
+    private static void glowingMushroomBonemeal(GameTestHelper helper) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
+        var level = helper.getLevel();
+        var mushroom = (GlowingMushroomBlock) RRBlocks.GLOWING_MUSHROOM.get();
+        for (int x = -12; x <= 12; x++) {
+            for (int z = -12; z <= 12; z++) {
+                level.setBlockAndUpdate(base.offset(x, -1, z), Blocks.STONE.defaultBlockState());
+            }
+        }
+
+        var state = mushroom.defaultBlockState();
+        level.setBlockAndUpdate(base, state);
+        helper.assertTrue(mushroom.isValidBonemealTarget(level, base, state), "glowing mushroom rejected bonemeal");
+        mushroom.performBonemeal(level, RandomSource.create(42), base, state);
+
+        boolean grew = false;
+        for (int x = -12; x <= 12 && !grew; x++) {
+            for (int y = 0; y <= 24 && !grew; y++) {
+                for (int z = -12; z <= 12; z++) {
+                    var block = level.getBlockState(base.offset(x, y, z)).getBlock();
+                    if (block == RRBlocks.GLOWING_MUSHROOM_CAP.get() || block == RRBlocks.GLOWING_MUSHROOM_STEM.get()) {
+                        grew = true;
+                        break;
+                    }
+                }
+            }
+        }
+        helper.assertTrue(grew, "bonemeal did not grow a glowing mushroom");
+        helper.succeed();
+    }
+
+    private static void glowingMushroomPatch(GameTestHelper helper) {
+        BlockPos origin = new BlockPos(0, 64, 0);
+        PreviewWorld world = PreviewWorld.create(42);
+        world.fillBox(new BoundingBox(-8, 63, -8, 8, 63, 8), Blocks.STONE.defaultBlockState());
+        boolean placed = PreviewJobs.placeFeature(
+            RRFeatures.GLOWING_MUSHROOM_PATCH.get(),
+            NoneFeatureConfiguration.NONE,
+            origin,
+            world,
+            null
+        );
+        helper.assertTrue(placed, "glowing mushroom patch placed nothing");
+
+        int mushrooms = 0;
+        for (int x = -2; x <= 2; x++) {
+            for (int y = 0; y <= 2; y++) {
+                for (int z = -2; z <= 2; z++) {
+                    if (world.get(origin.offset(x, y, z)).is(RRBlocks.GLOWING_MUSHROOM.get())) {
+                        mushrooms++;
+                    }
+                }
+            }
+        }
+        helper.assertTrue(mushrooms > 1, "glowing mushroom patch placed fewer than two mushrooms");
+        helper.succeed();
     }
 
     private static void ashenMushroomLargeRadii(GameTestHelper helper) {
