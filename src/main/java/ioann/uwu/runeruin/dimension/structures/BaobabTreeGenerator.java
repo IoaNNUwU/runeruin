@@ -981,6 +981,7 @@ public final class BaobabTreeGenerator {
         List<BlockPos> starts = new ArrayList<>(candidates.keySet());
         shufflePositions(starts, random);
         starts.sort((left, right) -> Integer.compare(right.getY(), left.getY()));
+        List<MossStart> placedStarts = new ArrayList<>();
         for (BlockPos start : starts) {
             if (tree.containsKey(start)
                     || (start.getY() != anchorY && random.nextFloat() >= CANOPY_SIDE_MOSS_CHANCE)) {
@@ -992,7 +993,7 @@ public final class BaobabTreeGenerator {
             for (Direction direction : candidates.get(start)) {
                 int clearLength = 0;
                 BlockPos pos = start;
-                while (clearLength < 4 && !tree.containsKey(pos) && ground.isReplaceable(pos)
+                while (clearLength < 3 && !tree.containsKey(pos) && ground.isReplaceable(pos)
                         && isClearOutside(pos, direction, tree)) {
                     clearLength++;
                     pos = pos.below();
@@ -1007,16 +1008,63 @@ public final class BaobabTreeGenerator {
             }
 
             int directionIndex = random.nextInt(clearDirections.size());
-            int clearLength = clearLengths.get(directionIndex);
-            int lengthRoll = random.nextInt(10);
-            int hangingLength = lengthRoll < 1 ? 0 : lengthRoll < 3 ? 1 : lengthRoll < 6 ? 2 : 3;
-            int length = Math.min(clearLength, hangingLength + 1);
+            int maxHangingLength = Math.min(2, clearLengths.get(directionIndex) - 1);
+            int hangingLength = chooseHangingLength(start, maxHangingLength, placedStarts, random);
+            if (hangingLength < 0) {
+                continue;
+            }
+            placedStarts.add(new MossStart(start, hangingLength));
             BlockPos pos = start;
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i <= hangingLength; i++) {
                 tree.put(pos.immutable(), Blocks.MOSS_BLOCK.defaultBlockState());
                 pos = pos.below();
             }
         }
+    }
+
+    private static int chooseHangingLength(
+            BlockPos start,
+            int maxLength,
+            List<MossStart> placedStarts,
+            RandomSource random
+    ) {
+        int[] weights = {1, 2, 3};
+        List<Integer> options = new ArrayList<>();
+        for (int length = 0; length <= maxLength; length++) {
+            boolean conflicts = false;
+            for (MossStart placed : placedStarts) {
+                if (areNearbyMossStarts(start, placed.pos()) && placed.hangingLength() == length) {
+                    conflicts = true;
+                    break;
+                }
+            }
+            if (!conflicts) {
+                options.add(length);
+            }
+        }
+
+        if (options.isEmpty()) {
+            return -1;
+        }
+
+        int totalWeight = 0;
+        for (int length : options) {
+            totalWeight += weights[length];
+        }
+        int roll = random.nextInt(totalWeight);
+        for (int length : options) {
+            roll -= weights[length];
+            if (roll < 0) {
+                return length;
+            }
+        }
+        return options.getLast();
+    }
+
+    private static boolean areNearbyMossStarts(BlockPos first, BlockPos second) {
+        int horizontalDistance = Math.abs(first.getX() - second.getX())
+                + Math.abs(first.getZ() - second.getZ());
+        return first.getY() == second.getY() && horizontalDistance == 1;
     }
 
     private static boolean hasMossAboveOrBeside(BlockPos pos, Map<BlockPos, BlockState> tree) {
@@ -1325,6 +1373,9 @@ public final class BaobabTreeGenerator {
     }
 
     private record CanopyPool(BlockPos center, List<BlockPos> waterTiles) {
+    }
+
+    private record MossStart(BlockPos pos, int hangingLength) {
     }
 
     private record VineAnchor(BlockPos pos, BooleanProperty facing) {
