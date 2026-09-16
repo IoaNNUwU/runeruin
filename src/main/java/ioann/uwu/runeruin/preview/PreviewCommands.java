@@ -57,7 +57,7 @@ public final class PreviewCommands {
                 RR.LOGGER.info("Preview job list -> {}", path.toAbsolutePath());
             } else {
                 PreviewArgs args = PreviewArgs.fromSystem(dir);
-                PreviewJobs.Result result = PreviewCatalog.require(job).run(args);
+                PreviewJobs.Result result = PreviewCatalog.require(job).run(args, server);
                 RR.LOGGER.info("Headless preview '{}' finished: {} blocks -> {}", job, result.world().placedCount(), result.jsonPath().toAbsolutePath());
             }
         } catch (Exception e) {
@@ -120,8 +120,8 @@ public final class PreviewCommands {
         try {
             Path dir = RegionExport.resolveExportDir(source.getServer());
             PreviewArgs args = new PreviewArgs(dir, extra).with("seed", Long.toString(seed));
-            PreviewJobs.Result result = PreviewCatalog.require(jobId).run(args);
-            source.sendSuccess(() -> success(jobId, seed, result), false);
+            PreviewJobs.Result result = PreviewCatalog.require(jobId).run(args, source.getServer());
+            source.sendSuccess(() -> success(jobId, result), false);
             return Math.max(1, result.world().placedCount());
         } catch (IllegalArgumentException e) {
             source.sendFailure(Component.literal(e.getMessage()));
@@ -133,11 +133,11 @@ public final class PreviewCommands {
         }
     }
 
-    private static Component success(String jobId, long seed, PreviewJobs.Result result) {
+    private static Component success(String jobId, PreviewJobs.Result result) {
         MutableComponent message = Component.translatable(
             "commands.runeruin.preview.done",
             jobId,
-            seed,
+            result.world().seed(),
             result.world().placedCount(),
             clickablePath(result.jsonPath())
         );

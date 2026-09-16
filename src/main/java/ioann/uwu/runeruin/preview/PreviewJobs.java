@@ -121,6 +121,17 @@ public final class PreviewJobs {
         Path exportDir,
         List<String> infoLines
     ) throws IOException {
+        return export(world, DIMENSION, box, name, exportDir, infoLines);
+    }
+
+    public static Result export(
+        PreviewWorld world,
+        String dimension,
+        BoundingBox box,
+        String name,
+        Path exportDir,
+        List<String> infoLines
+    ) throws IOException {
         int volume = box.getXSpan() * box.getYSpan() * box.getZSpan();
         if (volume > PREVIEW_MAX_VOLUME) {
             throw new IOException("Preview volume " + volume + " exceeds " + PREVIEW_MAX_VOLUME);
@@ -130,7 +141,7 @@ public final class PreviewJobs {
         List<Path> files = new ArrayList<>();
         String safeName = RegionExport.sanitizeName(name);
 
-        RegionExport.Snapshot full = world.capture(DIMENSION, box);
+        RegionExport.Snapshot full = world.capture(dimension, box);
         RegionExport.Result json = RegionExport.write(full, exportDir, safeName);
         files.add(json.jsonPath());
 
@@ -138,13 +149,15 @@ public final class PreviewJobs {
         int midZ = (box.minZ() + box.maxZ()) / 2;
         int midY = (box.minY() + box.maxY()) / 2;
 
-        files.add(writeSlice(world, new BoundingBox(midX, box.minY(), box.minZ(), midX, box.maxY(), box.maxZ()), safeName + "_yz", exportDir));
-        files.add(writeSlice(world, new BoundingBox(box.minX(), box.minY(), midZ, box.maxX(), box.maxY(), midZ), safeName + "_xy", exportDir));
-        files.add(writeSlice(world, new BoundingBox(box.minX(), midY, box.minZ(), box.maxX(), midY, box.maxZ()), safeName + "_xz", exportDir));
+        files.add(writeSlice(world, dimension, new BoundingBox(midX, box.minY(), box.minZ(), midX, box.maxY(), box.maxZ()), safeName + "_yz", exportDir));
+        files.add(writeSlice(world, dimension, new BoundingBox(box.minX(), box.minY(), midZ, box.maxX(), box.maxY(), midZ), safeName + "_xy", exportDir));
+        files.add(writeSlice(world, dimension, new BoundingBox(box.minX(), midY, box.minZ(), box.maxX(), midY, box.maxZ()), safeName + "_xz", exportDir));
 
         Path infoPath = exportDir.resolve(safeName + "_info.txt");
         StringBuilder info = new StringBuilder();
         info.append("# runeruin.preview/1\n");
+        info.append("# dimension: ").append(dimension).append('\n');
+        info.append("# seed: ").append(world.seed()).append('\n');
         for (String line : infoLines) {
             info.append("# ").append(line).append('\n');
         }
@@ -169,8 +182,8 @@ public final class PreviewJobs {
         return new Result(world, full, json.jsonPath(), files);
     }
 
-    private static Path writeSlice(PreviewWorld world, BoundingBox slice, String name, Path dir) throws IOException {
-        RegionExport.Result result = RegionExport.write(world.capture(DIMENSION, slice), dir, name);
+    private static Path writeSlice(PreviewWorld world, String dimension, BoundingBox slice, String name, Path dir) throws IOException {
+        RegionExport.Result result = RegionExport.write(world.capture(dimension, slice), dir, name);
         return result.txtPath() != null ? result.txtPath() : result.jsonPath();
     }
 

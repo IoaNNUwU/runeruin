@@ -99,8 +99,12 @@
   "commands.runeruin.region.export": "Сетка %sx%sx%s записана в %s",
   "commands.runeruin.region.export_projection": "2D-проекция (её удобно дать агенту): %s",
   "commands.runeruin.region.export_3d_hint": "Для агента лучше переэкспортировать срез толщиной 1 блок (XZ / XY / YZ).",
+  "commands.runeruin.region.export_trimmed": "Обрезано редких состояний: %s; заменено блоков: %s (оставлены самые частые).",
   "commands.runeruin.region.open_file": "Нажми, чтобы открыть",
   "commands.runeruin.region.clear": "Выделение снято",
+  "commands.runeruin.region.generate": "Выделение %sx%sx%s перегенерировано headless-генератором: изменено %s блоков, сгенерировано %s",
+  "commands.runeruin.region.generate_height": "Высота выделения должна быть в диапазоне %s..%s",
+  "commands.runeruin.region.generate_error": "Не удалось сгенерировать выделение: %s",
 
   "commands.runeruin.preview.done": "Превью %s seed=%s (%s блоков) -> %s",
   "commands.runeruin.preview.io_error": "Не удалось записать превью: %s"

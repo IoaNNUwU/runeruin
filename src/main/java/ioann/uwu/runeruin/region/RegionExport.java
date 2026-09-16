@@ -23,6 +23,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Writes a cuboid as {@code runeruin.region/1}: palette + Y-layers of X-strings.
@@ -67,11 +68,23 @@ public final class RegionExport {
      * Used by in-game {@code /rrexport} (via {@link #scan}) and headless previews.
      */
     public static Snapshot capture(String dimension, BoundingBox box, java.util.function.Function<BlockPos, BlockState> blocks) {
+        return capture(dimension, box, null, blocks);
+    }
+
+    public static Snapshot capture(
+        String dimension,
+        BoundingBox box,
+        @Nullable Long worldSeed,
+        java.util.function.Function<BlockPos, BlockState> blocks
+    ) {
         int sizeX = box.getXSpan();
         int sizeY = box.getYSpan();
         int sizeZ = box.getZSpan();
-        Palette palette = new Palette();
-        char[][][] grid = new char[sizeY][sizeZ][sizeX];
+        BlockState[][][] states = new BlockState[sizeY][sizeZ][sizeX];
+        Map<String, Integer> stateCounts = new LinkedHashMap<>();
+        Map<String, BlockState> representatives = new LinkedHashMap<>();
+        BlockState air = Blocks.AIR.defaultBlockState();
+        String airState = BlockStateParser.serialize(air);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
 
         for (int y = 0; y < sizeY; y++) {
@@ -80,14 +93,55 @@ public final class RegionExport {
                     cursor.set(box.minX() + x, box.minY() + y, box.minZ() + z);
                     BlockState state = blocks.apply(cursor);
                     if (state == null) {
-                        state = Blocks.AIR.defaultBlockState();
+                        state = air;
                     }
-                    grid[y][z][x] = palette.tokenFor(BlockStateParser.serialize(state), state);
+                    states[y][z][x] = state;
+                    String id = BlockStateParser.serialize(state);
+                    stateCounts.merge(id, 1, Integer::sum);
+                    representatives.putIfAbsent(id, state);
                 }
             }
         }
 
-        return new Snapshot(dimension, box, sizeX, sizeY, sizeZ, palette, grid);
+        List<String> keptStates = new ArrayList<>(stateCounts.keySet());
+        keptStates.sort(Comparator.comparingInt((String id) -> stateCounts.get(id)).reversed());
+        boolean trimmed = keptStates.size() > Palette.MAX_STATES;
+        if (trimmed) {
+            keptStates = new ArrayList<>(keptStates.subList(0, Palette.MAX_STATES));
+            if (!keptStates.contains(airState)) {
+                keptStates.set(keptStates.size() - 1, airState);
+            }
+        }
+
+        Palette palette = new Palette();
+        for (String id : keptStates) {
+            palette.register(id, representatives.getOrDefault(id, air));
+        }
+        char[][][] grid = new char[sizeY][sizeZ][sizeX];
+        int trimmedBlocks = 0;
+
+        for (int y = 0; y < sizeY; y++) {
+            for (int z = 0; z < sizeZ; z++) {
+                for (int x = 0; x < sizeX; x++) {
+                    BlockState state = states[y][z][x];
+                    String id = BlockStateParser.serialize(state);
+                    if (!palette.contains(id)) {
+                        id = airState;
+                        state = air;
+                        trimmedBlocks++;
+                    }
+                    grid[y][z][x] = palette.tokenFor(id, state);
+                }
+            }
+        }
+
+        int trimmedStates = 0;
+        for (String id : stateCounts.keySet()) {
+            if (!palette.contains(id)) {
+                trimmedStates++;
+            }
+        }
+        return new Snapshot(dimension, box, sizeX, sizeY, sizeZ, worldSeed, palette, grid, trimmedStates, trimmedBlocks);
     }
 
     public static Result write(Snapshot snapshot, Path dir, String name) throws IOException {
@@ -115,13 +169,16 @@ public final class RegionExport {
                 }
             }
         }
-        return capture(level.dimension().identifier().toString(), box, level::getBlockState);
+        return capture(level.dimension().identifier().toString(), box, level.getSeed(), level::getBlockState);
     }
 
     static String toJson(Snapshot snap) {
         JsonObject root = new JsonObject();
         root.addProperty("format", FORMAT);
         root.addProperty("dimension", snap.dimension);
+        if (snap.worldSeed != null) {
+            root.addProperty("worldSeed", snap.worldSeed);
+        }
 
         JsonArray origin = new JsonArray();
         origin.add(snap.box.minX());
@@ -137,6 +194,8 @@ public final class RegionExport {
 
         root.addProperty("volume", snap.volume());
         root.addProperty("projection", snap.projection());
+        root.addProperty("trimmedStates", snap.trimmedStates);
+        root.addProperty("trimmedBlocks", snap.trimmedBlocks);
         root.addProperty(
             "axes",
             "local (0,0,0) = origin; +X east (right in rows); +Z south (down the page); +Y up (layers bottom to top)"
@@ -201,6 +260,9 @@ public final class RegionExport {
     private static void header(StringBuilder out, Snapshot snap) {
         out.append("# ").append(FORMAT).append('\n');
         out.append("# dimension: ").append(snap.dimension).append('\n');
+        if (snap.worldSeed != null) {
+            out.append("# world seed: ").append(snap.worldSeed).append('\n');
+        }
         out.append("# origin (inclusive min): ")
             .append(snap.box.minX()).append(' ')
             .append(snap.box.minY()).append(' ')
@@ -291,17 +353,34 @@ public final class RegionExport {
         final int sizeX;
         final int sizeY;
         final int sizeZ;
+        final @Nullable Long worldSeed;
         final Palette palette;
         final char[][][] grid;
+        final int trimmedStates;
+        final int trimmedBlocks;
 
-        Snapshot(String dimension, BoundingBox box, int sizeX, int sizeY, int sizeZ, Palette palette, char[][][] grid) {
+        Snapshot(
+            String dimension,
+            BoundingBox box,
+            int sizeX,
+            int sizeY,
+            int sizeZ,
+            @Nullable Long worldSeed,
+            Palette palette,
+            char[][][] grid,
+            int trimmedStates,
+            int trimmedBlocks
+        ) {
             this.dimension = dimension;
             this.box = box;
             this.sizeX = sizeX;
             this.sizeY = sizeY;
             this.sizeZ = sizeZ;
+            this.worldSeed = worldSeed;
             this.palette = palette;
             this.grid = grid;
+            this.trimmedStates = trimmedStates;
+            this.trimmedBlocks = trimmedBlocks;
         }
 
         int volume() {
@@ -338,16 +417,40 @@ public final class RegionExport {
             }
             return out;
         }
+
+        int trimmedStates() {
+            return trimmedStates;
+        }
+
+        int trimmedBlocks() {
+            return trimmedBlocks;
+        }
     }
 
     static final class Palette {
         private static final String POOL = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789#*+=~@%&?:;<>^";
+        private static final String TOKEN_POOL = POOL + "ILO";
+        static final int MAX_STATES = 3 + TOKEN_POOL.length();
         private static final Map<String, Character> PREFERRED = preferred();
 
         final Map<String, Character> stateToToken = new LinkedHashMap<>();
         final Map<Character, String> tokenToState = new LinkedHashMap<>();
         final Map<Character, Integer> counts = new LinkedHashMap<>();
         private int nextPool = 0;
+
+        void register(String state, BlockState blockState) {
+            if (stateToToken.containsKey(state)) {
+                return;
+            }
+            char token = allocate(state, blockState);
+            stateToToken.put(state, token);
+            tokenToState.put(token, state);
+            counts.put(token, 0);
+        }
+
+        boolean contains(String state) {
+            return stateToToken.containsKey(state);
+        }
 
         char tokenFor(String state, BlockState blockState) {
             Character existing = stateToToken.get(state);
@@ -411,13 +514,13 @@ public final class RegionExport {
         }
 
         private char nextFree() {
-            while (nextPool < POOL.length()) {
-                char c = POOL.charAt(nextPool++);
+            while (nextPool < TOKEN_POOL.length()) {
+                char c = TOKEN_POOL.charAt(nextPool++);
                 if (!tokenToState.containsKey(c)) {
                     return c;
                 }
             }
-            throw new IllegalStateException("Too many unique block states in selection (max " + POOL.length() + ")");
+            throw new IllegalStateException("Too many unique block states in selection (max " + MAX_STATES + ")");
         }
 
         private static Map<String, Character> preferred() {

@@ -131,6 +131,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             // TODO: Split chunk into sections to avoid unnecessary blocking
             generateTerrain(chunk, randomState);
             ArcaneStructureGen.generateArcaneStructure(chunk, randomState);
+            TopLayerAndBloomingCavesGen.generateHangingSoil(chunk, randomState);
             return chunk;
         });
     }

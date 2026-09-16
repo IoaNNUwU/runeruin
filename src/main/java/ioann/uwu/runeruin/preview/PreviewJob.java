@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.preview;
 
 import java.io.IOException;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * One named preview target. Add a class, register it in {@link PreviewCatalog},
@@ -12,4 +13,8 @@ public interface PreviewJob {
     String description();
 
     PreviewJobs.Result run(PreviewArgs args) throws IOException;
+
+    default PreviewJobs.Result run(PreviewArgs args, MinecraftServer server) throws IOException {
+        return run(args);
+    }
 }

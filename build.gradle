@@ -78,6 +78,7 @@ neoForge {
         //   .\gradlew.bat runPreview
         //   .\gradlew.bat runPreview -Ppreview=boulder -Pseed=3 -Pradius=10
         //   .\gradlew.bat runPreview -Ppreview=list
+        //   .\gradlew.bat runPreview -Ppreview=world_region '-Pregion=exports/terrain_expected.json' -Pstage=generated
         preview {
             server()
             programArgument '--nogui'
@@ -86,10 +87,13 @@ neoForge {
             if (findProperty('previewName') != null) {
                 systemProperty 'runeruin.preview.name', findProperty('previewName')
             }
-            ['height', 'radius', 'minRadius', 'maxRadius'].each { key ->
+            ['height', 'radius', 'minRadius', 'maxRadius', 'stage'].each { key ->
                 if (findProperty(key) != null) {
                     systemProperty "runeruin.preview.${key}", findProperty(key)
                 }
+            }
+            if (findProperty('region') != null) {
+                systemProperty 'runeruin.preview.region', project.file(findProperty('region')).absolutePath
             }
             project.properties.each { key, value ->
                 if (key instanceof String && key.startsWith('arg.')) {

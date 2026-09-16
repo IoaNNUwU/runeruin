@@ -103,7 +103,7 @@ public final class PreviewWorld {
     }
 
     public RegionExport.Snapshot capture(String dimension, BoundingBox box) {
-        return RegionExport.capture(dimension, box, this::get);
+        return RegionExport.capture(dimension, box, seed, this::get);
     }
 
     public void fillBox(BoundingBox box, BlockState state) {

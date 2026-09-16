@@ -6,6 +6,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.preview.HeadlessTerrainGenerator;
+import ioann.uwu.runeruin.preview.PreviewWorld;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -25,6 +27,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -53,6 +57,7 @@ public final class RegionCommands {
         registerAliases(dispatcher, "rrpos1", "/rrpos1", RegionCommands::registerPos1);
         registerAliases(dispatcher, "rrpos2", "/rrpos2", RegionCommands::registerPos2);
         registerAliases(dispatcher, "rrexport", "/rrexport", RegionCommands::registerExport);
+        registerAliases(dispatcher, "rrgenerate", "/rrgenerate", RegionCommands::registerGenerate);
         registerAliases(dispatcher, "rrclear", "/rrclear", RegionCommands::registerClear);
     }
 
@@ -101,6 +106,10 @@ public final class RegionCommands {
             c.getSource().sendSuccess(() -> Component.translatable("commands.runeruin.region.clear"), false);
             return Command.SINGLE_SUCCESS;
         });
+    }
+
+    private static void registerGenerate(LiteralArgumentBuilder<CommandSourceStack> cmd) {
+        cmd.executes(c -> generate(c.getSource()));
     }
 
     private static int setPos(CommandSourceStack source, int which, BlockPos pos) throws CommandSyntaxException {
@@ -174,6 +183,73 @@ public final class RegionCommands {
         }
     }
 
+    private static int generate(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        RegionSelection selection = SELECTIONS.get(player.getUUID());
+        if (selection == null || !selection.isComplete()) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.need_both"));
+            return 0;
+        }
+        ServerLevel level = source.getLevel();
+        if (!selection.dimension().equals(level.dimension())) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.wrong_dimension"));
+            return 0;
+        }
+
+        BoundingBox box = selection.box();
+        long volume = (long) box.getXSpan() * box.getYSpan() * box.getZSpan();
+        if (volume > RegionExport.MAX_VOLUME) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.too_big", volume, RegionExport.MAX_VOLUME));
+            return 0;
+        }
+        if (box.minY() < level.getMinY() || box.maxY() > level.getMaxY()) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.generate_height", level.getMinY(), level.getMaxY()));
+            return 0;
+        }
+
+        try {
+            PreviewWorld generated = HeadlessTerrainGenerator.generate(source.getServer(), level.getSeed(), box);
+            int changed = insert(level, generated, box);
+            int generatedBlocks = generated.placedCount();
+            source.sendSuccess(
+                () -> Component.translatable(
+                    "commands.runeruin.region.generate",
+                    box.getXSpan(),
+                    box.getYSpan(),
+                    box.getZSpan(),
+                    changed,
+                    generatedBlocks
+                ),
+                false
+            );
+            return Math.max(Command.SINGLE_SUCCESS, changed);
+        } catch (IllegalArgumentException e) {
+            source.sendFailure(Component.literal(e.getMessage()));
+            return 0;
+        } catch (IOException e) {
+            RR.LOGGER.error("Headless region generation failed", e);
+            source.sendFailure(Component.translatable("commands.runeruin.region.generate_error", String.valueOf(e.getMessage())));
+            return 0;
+        }
+    }
+
+    private static int insert(ServerLevel level, PreviewWorld generated, BoundingBox box) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        int changed = 0;
+        for (int y = box.minY(); y <= box.maxY(); y++) {
+            for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                for (int x = box.minX(); x <= box.maxX(); x++) {
+                    pos.set(x, y, z);
+                    BlockState state = generated.get(pos);
+                    if (!level.getBlockState(pos).equals(state) && level.setBlock(pos, state, Block.UPDATE_CLIENTS)) {
+                        changed++;
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+
     private static Component exportSuccess(RegionExport.Result result, BoundingBox box) {
         MutableComponent message = Component.translatable(
             "commands.runeruin.region.export",
@@ -189,6 +265,16 @@ public final class RegionCommands {
         } else {
             message.append(Component.literal("\n"));
             message.append(Component.translatable("commands.runeruin.region.export_3d_hint").withStyle(ChatFormatting.GRAY));
+        }
+        if (result.snapshot().trimmedBlocks() > 0) {
+            message.append(Component.literal("\n"));
+            message.append(
+                Component.translatable(
+                    "commands.runeruin.region.export_trimmed",
+                    result.snapshot().trimmedStates(),
+                    result.snapshot().trimmedBlocks()
+                ).withStyle(ChatFormatting.GOLD)
+            );
         }
         return message;
     }

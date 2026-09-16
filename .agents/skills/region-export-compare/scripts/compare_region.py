@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare /rrexport dumps (runeruin.region/1 .txt / .json) and print a geometry-oriented diff."""
+"""Compare /rrexport dumps (runeruin.region/1 .txt / .json) and print geometry-oriented diffs."""
 
 from __future__ import annotations
 
@@ -14,8 +14,9 @@ from typing import Iterable
 
 AIR_STATES = frozenset({"minecraft:air", "minecraft:cave_air", "minecraft:void_air"})
 AIR_TOKENS = frozenset(". ,'")
-SHOULD_NAME = re.compile(r"(should|expected|want|correct|target)", re.I)
+SHOULD_NAME = re.compile(r"(should|expected|want|correct|target|built)", re.I)
 STAMP_NAME = re.compile(r"region_(\d{8}_\d{6})", re.I)
+REPLAY_NAME = re.compile(r"_(?:generated|generated_after_modify)(?:_(?:xy|xz|yz|info))?$", re.I)
 ORIGIN_RE = re.compile(r"# origin \(inclusive min\): (-?\d+) (-?\d+) (-?\d+)")
 SIZE_RE = re.compile(r"# size: (\d+) x (\d+) x (\d+)")
 PROJ_RE = re.compile(r"# projection: (YZ|XY|XZ)\b")
@@ -165,7 +166,13 @@ def load_txt(path: Path) -> Region:
 
 
 def discover(export_dir: Path) -> tuple[Path | None, Path | None, list[Path]]:
-    files = [p for p in export_dir.iterdir() if p.is_file() and p.suffix.lower() in {".txt", ".json"}]
+    files = [
+        p for p in export_dir.iterdir()
+        if p.is_file()
+        and p.suffix.lower() in {".txt", ".json"}
+        and not p.stem.lower().startswith("preview_")
+        and not REPLAY_NAME.search(p.stem)
+    ]
     stems: dict[str, list[Path]] = defaultdict(list)
     for p in files:
         stems[p.stem].append(p)
@@ -405,6 +412,19 @@ def compare(actual: Region, expected: Region) -> int:
     if leftover > 0:
         print(f"  ... {leftover} more cells")
     return 1
+
+
+def compare_three(generated: Region, expected: Region, generated_after: Region) -> int:
+    comparisons = (
+        ("generated vs expected", generated, expected),
+        ("generated_after_modify vs expected", generated_after, expected),
+        ("generated vs generated_after_modify", generated, generated_after),
+    )
+    result = 0
+    for title, actual, target in comparisons:
+        print(f"\n{'=' * 12} {title} {'=' * 12}")
+        result = max(result, compare(actual, target))
+    return result
 
 
 def count_states(items: list[tuple[tuple[int, int, int], str]]) -> str:
@@ -667,9 +687,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Compare /rrexport region dumps")
     p.add_argument("actual", nargs="?", help="Actual export (.txt or .json)")
     p.add_argument("expected", nargs="?", help="Corrected export or region_should_be.txt")
+    p.add_argument("generated_after", nargs="?", help="Regenerated export after the generator change")
     p.add_argument("--dir", default="exports", help="Folder to auto-pick files from")
     p.add_argument("--actual", dest="actual_opt", help="Actual path (overrides positional)")
     p.add_argument("--expected", dest="expected_opt", help="Expected path (overrides positional)")
+    p.add_argument("--generated-after", dest="generated_after_opt", help="Regenerated export after the generator change")
     p.add_argument("--profile", action="store_true", help="Measure one file only (no expected)")
     return p.parse_args(argv)
 
@@ -690,6 +712,20 @@ def main(argv: list[str]) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     args = parse_args(argv)
+    generated_after_path = Path(args.generated_after_opt or args.generated_after) if (args.generated_after_opt or args.generated_after) else None
+    if generated_after_path:
+        generated_path = Path(args.actual_opt or args.actual) if (args.actual_opt or args.actual) else None
+        expected_path = Path(args.expected_opt or args.expected) if (args.expected_opt or args.expected) else None
+        paths = (generated_path, expected_path, generated_after_path)
+        if any(path is None or not path.is_file() for path in paths):
+            print("Three-way compare needs existing generated, expected, and generated_after_modify files.", file=sys.stderr)
+            for label, path in zip(("generated", "expected", "generated_after_modify"), paths):
+                if path is None or not path.is_file():
+                    print(f"Missing {label}: {path}", file=sys.stderr)
+            print("Usage: compare_region.py <generated> <expected> <generated_after_modify>", file=sys.stderr)
+            return 2
+        return compare_three(load(generated_path), load(expected_path), load(generated_after_path))
+
     actual_path, expected_path = resolve_paths(args)
 
     if args.profile or (actual_path and not expected_path):

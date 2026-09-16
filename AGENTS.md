@@ -203,7 +203,7 @@ NFRT (Minecraft assets + decompile) is pinned to `%USERPROFILE%\.gradle\caches\n
 - Blocks/items: `RRBlocks`, `RRItems` (+ lang under `resources/assets/runeruin/lang/`)
 - Models/loot/recipes/tags: `datagen/*`
 - Teleport item: `items/RuneOfSpaceItem`
-- Region export commands: `region/RegionCommands` → `exports/`
+- Region export commands: `region/RegionCommands` → `exports/`; each `/rrexport` JSON includes the dimension seed as `worldSeed`
 - Headless preview: `preview/PreviewJobs` → `exports/preview_*.txt` (same `runeruin.region/1` format)
 
 ## Headless structure / feature preview
@@ -226,6 +226,20 @@ Outputs (name defaults to `preview_<job>`):
 - `exports/preview_<job>_yz.txt` — midplane looking +X
 - `exports/preview_<job>_xy.txt` / `_xz.txt` — the other midplanes
 - `exports/preview_<job>_info.txt` — seed, params, block counts
+
+For terrain-generator experiments, keep two full JSON exports with matching seed/dimension/origin/size: `was` is the untouched world region; `expected` is the user's edited target. Compare them first, then replay `was` before changing code to prove the current generator reproduces the original terrain. Only after that baseline is close, edit the generator and iterate toward `expected`:
+
+```powershell
+python .agents/skills/region-export-compare/scripts/compare_region.py exports/was.json exports/expected.json
+.\gradlew.bat runPreview -Ppreview=world_region '-Pregion=exports/was.json' -Pstage=generated
+python .agents/skills/region-export-compare/scripts/compare_terrain.py exports/was_generated.json exports/was.json
+python .agents/skills/region-export-compare/scripts/compare_terrain.py exports/was_generated.json exports/expected.json
+.\gradlew.bat runPreview -Ppreview=world_region '-Pregion=exports/was.json' -Pstage=generated_after_modify
+python .agents/skills/region-export-compare/scripts/compare_region.py exports/was_generated.json exports/expected.json exports/was_generated_after_modify.json
+python .agents/skills/region-export-compare/scripts/compare_terrain.py exports/was_generated_after_modify.json exports/expected.json
+```
+
+`world_region` replays `RRChunkGenerator.fillFromNoise` into temporary in-memory chunks using the exact chunk bounds and seed in the export. This runs terrain and arcane plates, not carvers, biome features (including ores/vegetation), or structure placement. Before editing, require the terrain-only `generated` result to be nearly identical to `was`; if not, investigate the replay inputs/version before tuning. Keep `generated` as the baseline; compare its distance to `expected`, then compare `generated_after_modify` to `expected` on each iteration. For a full in-game export versus a terrain-only replay, run the regular `compare_region.py` raw diff and then `compare_terrain.py` to report terrain agreement while masking known post-terrain feature blocks; always report both results because features can replace terrain blocks.
 
 In-game: `/rrpreview list` or `/rrpreview <job> [seed] [name] [k=v]…` (e.g. `/rrpreview boulder 3 radius=10`).
 
