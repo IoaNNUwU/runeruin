@@ -217,6 +217,10 @@ public class TopLayerAndBloomingCavesGen {
 
         PositionalRandomFactory orderRandom = randomState.getOrCreateRandomFactory(RR.id("hanging_soil_order"));
         PositionalRandomFactory lengthRandom = randomState.getOrCreateRandomFactory(RR.id("hanging_soil_length"));
+        Map<HangingSoilColumn, HangingSoilPlan> plans = new LinkedHashMap<>();
+        for (Map.Entry<HangingSoilColumn, HangingSoilCandidate> entry : candidates.entrySet()) {
+            plans.put(entry.getKey(), planHangingSoil(entry.getValue(), randomState, candidates, lengthRandom));
+        }
         Map<HangingSoilCandidate, Long> orderKeys = new LinkedHashMap<>();
         for (HangingSoilCandidate candidate : candidates.values()) {
             orderKeys.put(candidate, orderRandom.at(candidate.start()).nextLong());
@@ -227,34 +231,42 @@ public class TopLayerAndBloomingCavesGen {
                 .thenComparingInt(candidate -> candidate.start().getX())
                 .thenComparingInt(candidate -> candidate.start().getZ()));
 
-        List<HangingSoilStart> placed = new ArrayList<>();
+        Map<HangingSoilColumn, Integer> initialLengths = new LinkedHashMap<>();
+        List<HangingSoilStart> planned = new ArrayList<>();
+        for (HangingSoilCandidate candidate : starts) {
+            BlockPos start = candidate.start();
+            HangingSoilPlan plan = plans.get(new HangingSoilColumn(start.getX(), start.getZ()));
+            int length = chooseHangingLength(plan, planned, lengthRandom);
+            if (!plan.allowLongPeak() && length >= 4) {
+                length = 2;
+            }
+            boolean clear = true;
+            for (int i = 0; i <= length; i++) {
+                if (!chunk.getBlockState(start.below(i)).isAir()) {
+                    clear = false;
+                    break;
+                }
+            }
+            if (!clear) {
+                continue;
+            }
+            initialLengths.put(new HangingSoilColumn(start.getX(), start.getZ()), length);
+            planned.add(new HangingSoilStart(start, length));
+        }
+
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         BlockState grass = Blocks.GRASS_BLOCK.defaultBlockState();
         BlockState dirt = Blocks.DIRT.defaultBlockState();
         BlockState stone = Blocks.STONE.defaultBlockState();
         for (HangingSoilCandidate candidate : starts) {
             BlockPos start = candidate.start();
-            int clearBelow = candidate.clearLength() - 1;
-            boolean joinsNearbySoil = candidate.joinsSoil()
-                    && candidate.clearLength() <= MAX_SOIL_JOIN_CLEAR_LENGTH;
-            int maxHangingLength = joinsNearbySoil
-                    ? clearBelow
-                    : Math.min(MAX_HANGING_LENGTH, clearBelow);
-            int minHangingLength = joinsNearbySoil
-                    ? maxHangingLength
-                    : Math.min(2, maxHangingLength);
-            if (candidate.bridgeToStone()) {
-                int maxStoneBridgeLength = MAX_STONE_BRIDGE_LENGTH;
-                if (candidate.clearLength() == MAX_STONE_BRIDGE_CLEAR_LENGTH) {
-                    maxStoneBridgeLength = desiredHangingLength(start, lengthRandom) >= 4 ? 0 : 1;
-                }
-                minHangingLength = Math.max(
-                        minHangingLength,
-                        candidate.clearLength() - maxStoneBridgeLength - 1
-                );
+            HangingSoilColumn column = new HangingSoilColumn(start.getX(), start.getZ());
+            if (!initialLengths.containsKey(column)) {
+                continue;
             }
-            int hangingLength = chooseHangingLength(
-                    start, minHangingLength, maxHangingLength, placed, lengthRandom
+            HangingSoilPlan plan = plans.get(column);
+            int hangingLength = smoothCornerLength(
+                    plan, initialLengths.get(column), plans, initialLengths, randomState
             );
 
             boolean clear = true;
@@ -268,12 +280,11 @@ public class TopLayerAndBloomingCavesGen {
                 continue;
             }
 
-            placed.add(new HangingSoilStart(start, hangingLength));
             for (int i = 0; i <= hangingLength; i++) {
                 pos.set(start.getX() - chunkMinX, start.getY() - i, start.getZ() - chunkMinZ);
                 chunk.setBlockState(pos, i == 0 ? grass : dirt);
             }
-            if (joinsNearbySoil) {
+            if (plan.joinsNearbySoil()) {
                 pos.set(
                         start.getX() - chunkMinX,
                         start.getY() - candidate.clearLength(),
@@ -371,19 +382,46 @@ public class TopLayerAndBloomingCavesGen {
                 : null;
     }
 
+    private static HangingSoilPlan planHangingSoil(
+            HangingSoilCandidate candidate,
+            RandomState randomState,
+            Map<HangingSoilColumn, HangingSoilCandidate> candidates,
+            PositionalRandomFactory random
+    ) {
+        BlockPos start = candidate.start();
+        int clearBelow = candidate.clearLength() - 1;
+        boolean joinsNearbySoil = candidate.joinsSoil()
+                && candidate.clearLength() <= MAX_SOIL_JOIN_CLEAR_LENGTH;
+        int maxLength = joinsNearbySoil ? clearBelow : Math.min(MAX_HANGING_LENGTH, clearBelow);
+        int minLength = joinsNearbySoil ? maxLength : Math.min(2, maxLength);
+        int desiredLength = desiredHangingLength(start, random);
+        if (candidate.bridgeToStone()) {
+            int maxStoneBridgeLength = MAX_STONE_BRIDGE_LENGTH;
+            if (candidate.clearLength() == MAX_STONE_BRIDGE_CLEAR_LENGTH) {
+                maxStoneBridgeLength = desiredLength >= 4 ? 0 : 1;
+            }
+            minLength = Math.max(minLength, candidate.clearLength() - maxStoneBridgeLength - 1);
+        }
+        desiredLength = Math.max(minLength, Math.min(maxLength, desiredLength));
+        boolean allowLongPeak = candidate.bridgeToStone()
+                || isInnerCorner(start.getX(), start.getZ(), randomState, candidates);
+        if (!allowLongPeak && desiredLength >= 4) {
+            desiredLength = 2;
+        }
+        return new HangingSoilPlan(candidate, minLength, maxLength, desiredLength, joinsNearbySoil, allowLongPeak);
+    }
+
     private static int chooseHangingLength(
-            BlockPos start,
-            int minLength,
-            int maxLength,
+            HangingSoilPlan plan,
             List<HangingSoilStart> placed,
             PositionalRandomFactory random
     ) {
-        int desiredLength = desiredHangingLength(start, random);
+        BlockPos start = plan.candidate().start();
         List<Integer> options = new ArrayList<>();
         int fewestExcess = Integer.MAX_VALUE;
         int closestToDesired = Integer.MAX_VALUE;
         int fewestMatches = Integer.MAX_VALUE;
-        for (int length = minLength; length <= maxLength; length++) {
+        for (int length = plan.minLength(); length <= plan.maxLength(); length++) {
             int bottomY = start.getY() - length;
             int excess = 0;
             int matches = 0;
@@ -394,7 +432,7 @@ public class TopLayerAndBloomingCavesGen {
                     matches += difference == 0 ? 1 : 0;
                 }
             }
-            int distanceToDesired = Math.abs(length - desiredLength);
+            int distanceToDesired = Math.abs(length - plan.desiredLength());
             if (excess < fewestExcess
                     || excess == fewestExcess && distanceToDesired < closestToDesired
                     || excess == fewestExcess && distanceToDesired == closestToDesired && matches < fewestMatches) {
@@ -410,6 +448,66 @@ public class TopLayerAndBloomingCavesGen {
         return options.get(random.at(start).nextInt(options.size()));
     }
 
+    private static int smoothCornerLength(
+            HangingSoilPlan plan,
+            int length,
+            Map<HangingSoilColumn, HangingSoilPlan> plans,
+            Map<HangingSoilColumn, Integer> initialLengths,
+            RandomState randomState
+    ) {
+        if (plan.joinsNearbySoil() || plan.candidate().bridgeToStone()) {
+            return length;
+        }
+        BlockPos start = plan.candidate().start();
+        int extendedLength = length;
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            HangingSoilColumn neighborColumn = new HangingSoilColumn(
+                    start.getX() + direction.getStepX(), start.getZ() + direction.getStepZ()
+            );
+            Integer neighborLength = initialLengths.get(neighborColumn);
+            if (neighborLength == null) {
+                continue;
+            }
+            HangingSoilPlan neighbor = plans.get(neighborColumn);
+            if (neighbor.joinsNearbySoil() || neighbor.candidate().bridgeToStone()) {
+                continue;
+            }
+            BlockPos neighborStart = neighbor.candidate().start();
+            if (!sharesCliffFace(start, neighborStart, randomState)) {
+                continue;
+            }
+            int heightDifference = start.getY() - neighborStart.getY();
+            if (heightDifference > 0) {
+                extendedLength = Math.max(
+                        extendedLength,
+                        Math.min(plan.maxLength(), neighborLength + heightDifference)
+                );
+            }
+        }
+        return extendedLength;
+    }
+
+    private static boolean sharesCliffFace(BlockPos first, BlockPos second, RandomState randomState) {
+        int dx = second.getX() - first.getX();
+        int dz = second.getZ() - first.getZ();
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            if (direction.getStepX() * dx + direction.getStepZ() * dz != 0) {
+                continue;
+            }
+            TerrainColumn firstSupport = topLayerColumnAt(
+                    first.getX() + direction.getStepX(), first.getZ() + direction.getStepZ(), randomState
+            );
+            TerrainColumn secondSupport = topLayerColumnAt(
+                    second.getX() + direction.getStepX(), second.getZ() + direction.getStepZ(), randomState
+            );
+            if (firstSupport.present() && firstSupport.topY() - 1 == first.getY()
+                    && secondSupport.present() && secondSupport.topY() - 1 == second.getY()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static int desiredHangingLength(BlockPos start, PositionalRandomFactory random) {
         // Max-cones make rare long peaks taper consistently, including across chunk borders.
         int desired = 2 + random.at(start.getX(), 0, start.getZ()).nextInt(2);
@@ -418,12 +516,35 @@ public class TopLayerAndBloomingCavesGen {
             for (int dz = -maxDz; dz <= maxDz; dz++) {
                 RandomSource peakRandom = random.at(start.getX() + dx, 1, start.getZ() + dz);
                 if (peakRandom.nextInt(HANGING_PEAK_CHANCE) == 0) {
-                    int peakLength = 5 + peakRandom.nextInt(2);
-                    desired = Math.max(desired, peakLength - Math.abs(dx) - Math.abs(dz));
+                    desired = Math.max(desired, 5 + peakRandom.nextInt(2) - Math.abs(dx) - Math.abs(dz));
                 }
             }
         }
         return desired;
+    }
+
+    private static boolean isInnerCorner(
+            int x,
+            int z,
+            RandomState randomState,
+            Map<HangingSoilColumn, HangingSoilCandidate> candidates
+    ) {
+        boolean north = supportsCorner(x, z - 1, randomState, candidates);
+        boolean east = supportsCorner(x + 1, z, randomState, candidates);
+        boolean south = supportsCorner(x, z + 1, randomState, candidates);
+        boolean west = supportsCorner(x - 1, z, randomState, candidates);
+        return north && east || east && south || south && west || west && north;
+    }
+
+    private static boolean supportsCorner(
+            int x,
+            int z,
+            RandomState randomState,
+            Map<HangingSoilColumn, HangingSoilCandidate> candidates
+    ) {
+        HangingSoilCandidate candidate = candidates.get(new HangingSoilColumn(x, z));
+        return topLayerColumnAt(x, z, randomState).present()
+                || candidate != null && candidate.bridgeToStone();
     }
 
     private static boolean areNearbyHangingStarts(BlockPos first, BlockPos second) {
@@ -439,6 +560,15 @@ public class TopLayerAndBloomingCavesGen {
             int clearLength,
             boolean joinsSoil,
             boolean bridgeToStone
+    ) {}
+
+    private record HangingSoilPlan(
+            HangingSoilCandidate candidate,
+            int minLength,
+            int maxLength,
+            int desiredLength,
+            boolean joinsNearbySoil,
+            boolean allowLongPeak
     ) {}
 
     private record HangingSoilStart(BlockPos pos, int hangingLength) {
