@@ -27,12 +27,15 @@ import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_Y;
 public class TopLayerAndBloomingCavesGen {
 
     private static final int MAX_HANGING_LENGTH = 6;
-    private static final int MAX_HANGING_SHAPE_WIDTH = 5;
     private static final int MAX_CLIFF_RUN_SCAN = 32;
     private static final int MAX_SOIL_JOIN_CLEAR_LENGTH = 3;
     private static final int MAX_STONE_BRIDGE_LENGTH = 2;
     private static final int MAX_STONE_BRIDGE_CLEAR_LENGTH = 6;
     private static final int MAX_CLEAR_LENGTH = 7;
+    private static final int[] WIDE_HANGING_TEMPLATE = {1, 3, 2, 1, 0};
+    private static final int[] NATURAL_FALLBACK_PATTERN = {
+            2, 3, 3, 2, 1, 2, 2, 1, 1, 2, 3, 2
+    };
 
     private static final LazyNoise floorNoise = new LazyNoise("bloomingCavesFloorNoise", SingleNoise::new);
 
@@ -362,6 +365,23 @@ public class TopLayerAndBloomingCavesGen {
         );
     }
 
+    // General rule: hanging soil traces a whole exposed wall, orients its profile by the
+    // corner geometry, and deterministically shapes dirt below a separate grass cap.
+    // A 1-block wall (or no detected face) uses a random dirt length of 2-3 blocks.
+    // A 2-block wall uses template A; 3-4 use the matching outer portion of template B.
+    // A wall 5+ blocks wide starts with the full template B at its outer end; every
+    // remaining column toward the inner corner uses a varied 1-3-block fallback whose
+    // equal-height runs never exceed two columns.
+    // Profiles below include the grass cap (# = hanging block).
+    // Template A; outer -> inner:
+    // # #
+    // # #
+    //   #
+    // Template B; outer -> inner/fallback:
+    // # # # # #
+    // # # # #
+    //   # #
+    //   #
     private static int shapedHangingLength(
             HangingSoilCandidate candidate,
             RandomState randomState,
@@ -378,28 +398,55 @@ public class TopLayerAndBloomingCavesGen {
         WallRun before = traceLowerStoneWall(start, face, -axisX, -axisZ, randomState);
         WallRun after = traceLowerStoneWall(start, face, axisX, axisZ, randomState);
         int runWidth = before.length() + 1 + after.length();
-        if (runWidth == 1 || runWidth > MAX_HANGING_SHAPE_WIDTH) {
+        if (runWidth == 1) {
             return randomFallbackLength(start, random);
         }
         int stoneY = face.startY() - 2;
         boolean negativeEndIsInner = isInnerCorner(before.endX(), before.endZ(), stoneY, randomState);
         boolean positiveEndIsInner = isInnerCorner(after.endX(), after.endZ(), stoneY, randomState);
 
-        boolean reverse = positiveEndIsInner && !negativeEndIsInner;
+        boolean reverse = runWidth > WIDE_HANGING_TEMPLATE.length
+                ? negativeEndIsInner && !positiveEndIsInner
+                : positiveEndIsInner && !negativeEndIsInner;
         if (negativeEndIsInner == positiveEndIsInner) {
             reverse = random.at(before.endX(), 3, before.endZ()).nextBoolean();
         }
         int index = reverse ? after.length() : before.length();
+        int edgeX = reverse ? after.endX() : before.endX();
+        int edgeZ = reverse ? after.endZ() : before.endZ();
         int heightOffset = face.startY() - Math.min(before.minStartY(), after.minStartY());
-        // The grass cap is placed separately: these dirt lengths produce total profiles
-        // 3-2, 3-4-2, 2-3-4-2, and 1-2-3-4-2 for wall widths 2 through 5.
+        // The grass cap is placed separately: from outer to inner, these dirt lengths
+        // produce total profiles 2-3, 2-4-3, 2-4-3-2, and 2-4-3-2-1 for widths 2-5.
         int baseLength;
-        if (index == runWidth - 1) {
+        if (runWidth > WIDE_HANGING_TEMPLATE.length) {
+            if (index >= WIDE_HANGING_TEMPLATE.length) {
+                baseLength = naturalFallbackLength(edgeX, edgeZ, index - WIDE_HANGING_TEMPLATE.length, random);
+            } else {
+                baseLength = WIDE_HANGING_TEMPLATE[index];
+            }
+        } else if (index == Math.min(runWidth, WIDE_HANGING_TEMPLATE.length) - 1) {
             baseLength = 1;
         } else {
-            baseLength = runWidth == 2 ? 2 : 5 - runWidth + index;
+            baseLength = runWidth == 2
+                    ? 2
+                    : WIDE_HANGING_TEMPLATE.length - Math.min(runWidth, WIDE_HANGING_TEMPLATE.length) + index;
         }
         return baseLength + heightOffset;
+    }
+
+    private static int naturalFallbackLength(
+            int edgeX,
+            int edgeZ,
+            int index,
+            PositionalRandomFactory random
+    ) {
+        int variant = random.at(edgeX, 5, edgeZ).nextInt(4);
+        int patternIndex = index % NATURAL_FALLBACK_PATTERN.length;
+        if ((variant & 1) != 0) {
+            patternIndex = NATURAL_FALLBACK_PATTERN.length - 1 - patternIndex;
+        }
+        int length = NATURAL_FALLBACK_PATTERN[patternIndex];
+        return (variant & 2) == 0 ? length : 4 - length;
     }
 
     private static WallRun traceLowerStoneWall(
