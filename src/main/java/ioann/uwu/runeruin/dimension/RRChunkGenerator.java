@@ -191,9 +191,9 @@ public class RRChunkGenerator extends ChunkGenerator {
     public static final LazyNoise topLevelBaselineNoise = new LazyNoise(
             "topLevelBaselineNoise",
             seed -> Noise.multi(
-                    new SingleNoise(Noise.hashString("topLevelBaselineNoise1" + seed), 1f),
-                    new SingleNoise(Noise.hashString("topLevelBaselineNoise2" + seed), 0.1f),
-                    new SingleNoise(Noise.hashString("topLevelBaselineNoise3" + seed), 0.4f)
+                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise1" + seed), 1f),
+                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise2" + seed), 0.1f),
+                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise3" + seed), 0.4f)
             )
     );
 
@@ -216,14 +216,8 @@ public class RRChunkGenerator extends ChunkGenerator {
             TopLevelNoise::new
     );
 
-    public static final LazyNoise lostTopLevelBaselineNoise = new LazyNoise(
-            "topLevelBaselineNoise",
-            seed -> Noise.multi(
-                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise1" + seed), 1f),
-                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise2" + seed), 0.1f),
-                    new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise3" + seed), 0.4f)
-            )
-    );
+    // Preserve the shared baseline shape without relying on which layer wins LazyNoise's cache race.
+    public static final LazyNoise lostTopLevelBaselineNoise = topLevelBaselineNoise;
 
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types types, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
