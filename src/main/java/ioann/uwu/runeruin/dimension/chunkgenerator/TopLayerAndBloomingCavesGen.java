@@ -389,9 +389,6 @@ public class TopLayerAndBloomingCavesGen {
         if (negativeEndIsInner == positiveEndIsInner) {
             reverse = random.at(before.endX(), 3, before.endZ()).nextBoolean();
         }
-        if (runWidth == 3) {
-            reverse = !reverse;
-        }
         int index = reverse ? after.length() : before.length();
         int heightOffset = face.startY() - Math.min(before.minStartY(), after.minStartY());
         // The grass cap is placed separately: these dirt lengths produce total profiles
