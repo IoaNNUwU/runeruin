@@ -58,8 +58,8 @@ public final class RRTerrainSurfaces {
 
         register(RRBiomes.DEEP_DRIPSTONE_CAVES, STONE, STONE);
         register(RRBiomes.GLOWING_MOSS_CAVES, GLOWING_MOSS, STONE);
-        register(RRBiomes.STONE_SPIKE_CAVES, STONE, STONE);
-        register(RRBiomes.DEEPSLATE_SPIKE_CAVES, STONE, STONE);
+        register(RRBiomes.STONE_SPIKE_CAVES, MOSS, STONE);
+        register(RRBiomes.DEEPSLATE_SPIKE_CAVES, MOSS, STONE);
 
         register(RRBiomes.SPARKLING_CAVES, DEEPSLATE, DEEPSLATE);
         register(RRBiomes.SPARKLING_CAVES_CEILING, DEEPSLATE, DEEPSLATE);
