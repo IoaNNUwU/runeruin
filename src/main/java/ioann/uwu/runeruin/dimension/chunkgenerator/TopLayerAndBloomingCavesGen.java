@@ -32,7 +32,7 @@ public class TopLayerAndBloomingCavesGen {
     private static final int MAX_STONE_BRIDGE_LENGTH = 2;
     private static final int MAX_STONE_BRIDGE_CLEAR_LENGTH = 6;
     private static final int MAX_CLEAR_LENGTH = 7;
-    private static final int[] WIDE_HANGING_TEMPLATE = {1, 3, 2, 1, 0};
+    private static final int[] WIDE_HANGING_TEMPLATE = {1, 3, 2, 1, 2};
     private static final int[] NATURAL_FALLBACK_PATTERN = {
             2, 3, 3, 2, 1, 2, 2, 1, 1, 2, 3, 2
     };
@@ -379,8 +379,8 @@ public class TopLayerAndBloomingCavesGen {
     //   #
     // Template B; outer -> inner/fallback:
     // # # # # #
-    // # # # #
-    //   # #
+    // # # # # #
+    //   # #   #
     //   #
     private static int shapedHangingLength(
             HangingSoilCandidate candidate,
@@ -405,7 +405,7 @@ public class TopLayerAndBloomingCavesGen {
         boolean negativeEndIsInner = isInnerCorner(before.endX(), before.endZ(), stoneY, randomState);
         boolean positiveEndIsInner = isInnerCorner(after.endX(), after.endZ(), stoneY, randomState);
 
-        boolean reverse = runWidth > WIDE_HANGING_TEMPLATE.length
+        boolean reverse = runWidth >= WIDE_HANGING_TEMPLATE.length
                 ? negativeEndIsInner && !positiveEndIsInner
                 : positiveEndIsInner && !negativeEndIsInner;
         if (negativeEndIsInner == positiveEndIsInner) {
@@ -416,9 +416,9 @@ public class TopLayerAndBloomingCavesGen {
         int edgeZ = reverse ? after.endZ() : before.endZ();
         int heightOffset = face.startY() - Math.min(before.minStartY(), after.minStartY());
         // The grass cap is placed separately: from outer to inner, these dirt lengths
-        // produce total profiles 2-3, 2-4-3, 2-4-3-2, and 2-4-3-2-1 for widths 2-5.
+        // produce total profiles 2-3, 2-4-3, 2-4-3-2, and 2-4-3-2-3 for widths 2-5.
         int baseLength;
-        if (runWidth > WIDE_HANGING_TEMPLATE.length) {
+        if (runWidth >= WIDE_HANGING_TEMPLATE.length) {
             if (index >= WIDE_HANGING_TEMPLATE.length) {
                 baseLength = naturalFallbackLength(edgeX, edgeZ, index - WIDE_HANGING_TEMPLATE.length, random);
             } else {
