@@ -132,6 +132,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             generateTerrain(chunk, randomState);
             ArcaneStructureGen.generateArcaneStructure(chunk, randomState);
             TopLayerAndBloomingCavesGen.generateHangingSoil(chunk, randomState);
+            DeepCavesAndLostCavesGen.generateHangingMoss(chunk, randomState);
             return chunk;
         });
     }
