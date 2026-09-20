@@ -33,6 +33,17 @@ public class DatagenItemTagProvider extends ItemTagsProvider {
         tag(ItemTags.LEAVES).add(itemKey(RRBlocks.ELDEN_LEAVES.get()));
         tag(ItemTags.SAPLINGS).add(itemKey(RRBlocks.ELDEN_SAPLING.get()));
 
+        tag(ItemTags.WOODEN_BUTTONS).add(itemKey(RRBlocks.ELDEN_BUTTON.get()));
+        tag(ItemTags.WOODEN_DOORS).add(itemKey(RRBlocks.ELDEN_DOOR.get()));
+        tag(ItemTags.WOODEN_STAIRS).add(itemKey(RRBlocks.ELDEN_STAIRS.get()));
+        tag(ItemTags.WOODEN_SLABS).add(itemKey(RRBlocks.ELDEN_SLAB.get()));
+        tag(ItemTags.WOODEN_FENCES).add(itemKey(RRBlocks.ELDEN_FENCE.get()));
+        tag(ItemTags.FENCE_GATES).add(itemKey(RRBlocks.ELDEN_FENCE_GATE.get()));
+        tag(ItemTags.WOODEN_PRESSURE_PLATES).add(itemKey(RRBlocks.ELDEN_PRESSURE_PLATE.get()));
+        tag(ItemTags.WOODEN_TRAPDOORS).add(itemKey(RRBlocks.ELDEN_TRAPDOOR.get()));
+        tag(ItemTags.SIGNS).add(itemKey(RRBlocks.ELDEN_SIGN.get()));
+        tag(ItemTags.HANGING_SIGNS).add(itemKey(RRBlocks.ELDEN_HANGING_SIGN.get()));
+
         tag(ItemTags.PLANKS).add(itemKey(RRBlocks.INVERTED_TREE_PLANKS.get()));
         tag(ItemTags.LOGS).add(itemKey(RRBlocks.INVERTED_TREE_WOOD.get()));
         tag(ItemTags.LOGS_THAT_BURN).add(itemKey(RRBlocks.INVERTED_TREE_WOOD.get()));

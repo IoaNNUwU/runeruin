@@ -36,6 +36,9 @@ bin/
 ### Cursor / agent Minecraft sources (extractMcSources) ###
 .mc-sources/
 
+### Vanilla Minecraft textures (extractVanillaTextures) ###
+.vanilla-textures/
+
 ### Codex project environment ###
 # Keep .codex/ tracked: it contains the reproducible Local Environment configuration.
 

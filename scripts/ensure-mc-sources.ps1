@@ -73,6 +73,39 @@ $sharedGame = Join-Path $userHome '.runeruin\game'
 $legacyGame = Join-Path $projectRoot 'run'
 $lockPath = Join-Path $cacheRoot '.setup.lock'
 $gradleUserHome = Join-Path $userHome '.gradle'
+$vanillaTextureVersion = $minecraftVersion -replace '\.0$', ''
+$vanillaTextureVersionText = "minecraft=$vanillaTextureVersion`nsource=minecraft_${vanillaTextureVersion}_client.jar"
+$vanillaTextures = Join-Path $projectRoot '.vanilla-textures'
+$vanillaTextureSentinel = Join-Path $vanillaTextures 'assets\minecraft\textures\block\oak_planks.png'
+
+function Ensure-VanillaTextures {
+    if ((Read-VersionText -Directory $vanillaTextures) -eq $vanillaTextureVersionText -and
+        (Test-Path -LiteralPath $vanillaTextureSentinel -PathType Leaf)) {
+        return
+    }
+
+    $wrapper = Join-Path $projectRoot 'gradlew.bat'
+    if (-not (Test-Path -LiteralPath $wrapper -PathType Leaf)) {
+        $wrapper = Join-Path $projectRoot 'gradlew'
+    }
+
+    Write-Host "Extracting Minecraft $vanillaTextureVersion textures into .vanilla-textures..."
+    Push-Location $projectRoot
+    try {
+        & $wrapper '--gradle-user-home' $gradleUserHome 'extractVanillaTextures'
+        if ($LASTEXITCODE -ne 0) {
+            throw "extractVanillaTextures failed with exit code $LASTEXITCODE."
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    if ((Read-VersionText -Directory $vanillaTextures) -ne $vanillaTextureVersionText -or
+        -not (Test-Path -LiteralPath $vanillaTextureSentinel -PathType Leaf)) {
+        throw "extractVanillaTextures completed without producing the expected versioned texture set: $vanillaTextures"
+    }
+}
 
 New-Item -ItemType Directory -Force -Path $cacheRoot | Out-Null
 
@@ -131,6 +164,7 @@ try {
             $linkedVersion = Read-VersionText -Directory $worktreeSources
             if ($linkedVersion -eq $expectedVersion) {
                 Write-Host "Minecraft sources link already exists: $worktreeSources"
+                Ensure-VanillaTextures
                 return
             }
 
@@ -177,6 +211,7 @@ try {
             New-DirectoryLink -Link $worktreeSources -Target $sharedSources
             Write-Host "Linked Minecraft sources: $worktreeSources -> $sharedSources"
         }
+        Ensure-VanillaTextures
         return
     }
 
@@ -195,6 +230,7 @@ try {
         }
         New-DirectoryLink -Link $worktreeSources -Target $sharedSources
         Write-Host "Moved existing Minecraft sources to the shared cache and linked this worktree."
+        Ensure-VanillaTextures
         return
     }
 
@@ -234,6 +270,7 @@ try {
     }
     New-DirectoryLink -Link $worktreeSources -Target $sharedSources
     Write-Host "Created shared Minecraft sources cache and linked it into the worktree."
+    Ensure-VanillaTextures
 }
 finally {
     if ($null -ne $lockStream) {

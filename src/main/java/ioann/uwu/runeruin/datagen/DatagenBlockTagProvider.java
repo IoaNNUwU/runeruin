@@ -40,6 +40,18 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.BAOBAB_LOG.getKey(),
                 RRBlocks.BAOBAB_WOOD.getKey(),
                 RRBlocks.ELDEN_PLANKS.getKey(),
+                RRBlocks.ELDEN_STAIRS.getKey(),
+                RRBlocks.ELDEN_SLAB.getKey(),
+                RRBlocks.ELDEN_FENCE.getKey(),
+                RRBlocks.ELDEN_FENCE_GATE.getKey(),
+                RRBlocks.ELDEN_DOOR.getKey(),
+                RRBlocks.ELDEN_TRAPDOOR.getKey(),
+                RRBlocks.ELDEN_PRESSURE_PLATE.getKey(),
+                RRBlocks.ELDEN_BUTTON.getKey(),
+                RRBlocks.ELDEN_SIGN.getKey(),
+                RRBlocks.ELDEN_WALL_SIGN.getKey(),
+                RRBlocks.ELDEN_HANGING_SIGN.getKey(),
+                RRBlocks.ELDEN_WALL_HANGING_SIGN.getKey(),
                 RRBlocks.INVERTED_TREE_WOOD.getKey(),
                 RRBlocks.INVERTED_TREE_PLANKS.getKey(),
                 RRBlocks.INVERTED_TREE_STAIRS.getKey(),
@@ -126,6 +138,33 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.INVERTED_TREE_WALL_SIGN.getKey(),
                 RRBlocks.INVERTED_TREE_HANGING_SIGN.getKey(),
                 RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.getKey()
+        );
+
+        tag(BlockTags.PLANKS).add(RRBlocks.ELDEN_PLANKS.getKey());
+        tag(BlockTags.WOODEN_STAIRS).add(RRBlocks.ELDEN_STAIRS.getKey());
+        tag(BlockTags.WOODEN_SLABS).add(RRBlocks.ELDEN_SLAB.getKey());
+        tag(BlockTags.WOODEN_FENCES).add(RRBlocks.ELDEN_FENCE.getKey());
+        tag(BlockTags.FENCES).add(RRBlocks.ELDEN_FENCE.getKey());
+        tag(BlockTags.FENCE_GATES).add(RRBlocks.ELDEN_FENCE_GATE.getKey());
+        tag(BlockTags.WOODEN_DOORS).add(RRBlocks.ELDEN_DOOR.getKey());
+        tag(BlockTags.DOORS).add(RRBlocks.ELDEN_DOOR.getKey());
+        tag(BlockTags.WOODEN_TRAPDOORS).add(RRBlocks.ELDEN_TRAPDOOR.getKey());
+        tag(BlockTags.TRAPDOORS).add(RRBlocks.ELDEN_TRAPDOOR.getKey());
+        tag(BlockTags.WOODEN_PRESSURE_PLATES).add(RRBlocks.ELDEN_PRESSURE_PLATE.getKey());
+        tag(BlockTags.PRESSURE_PLATES).add(RRBlocks.ELDEN_PRESSURE_PLATE.getKey());
+        tag(BlockTags.WOODEN_BUTTONS).add(RRBlocks.ELDEN_BUTTON.getKey());
+        tag(BlockTags.BUTTONS).add(RRBlocks.ELDEN_BUTTON.getKey());
+        tag(BlockTags.STANDING_SIGNS).add(RRBlocks.ELDEN_SIGN.getKey());
+        tag(BlockTags.WALL_SIGNS).add(RRBlocks.ELDEN_WALL_SIGN.getKey());
+        tag(BlockTags.SIGNS).add(RRBlocks.ELDEN_SIGN.getKey(), RRBlocks.ELDEN_WALL_SIGN.getKey());
+        tag(BlockTags.CEILING_HANGING_SIGNS).add(RRBlocks.ELDEN_HANGING_SIGN.getKey());
+        tag(BlockTags.WALL_HANGING_SIGNS).add(RRBlocks.ELDEN_WALL_HANGING_SIGN.getKey());
+        tag(BlockTags.ALL_HANGING_SIGNS).add(RRBlocks.ELDEN_HANGING_SIGN.getKey(), RRBlocks.ELDEN_WALL_HANGING_SIGN.getKey());
+        tag(BlockTags.ALL_SIGNS).add(
+                RRBlocks.ELDEN_SIGN.getKey(),
+                RRBlocks.ELDEN_WALL_SIGN.getKey(),
+                RRBlocks.ELDEN_HANGING_SIGN.getKey(),
+                RRBlocks.ELDEN_WALL_HANGING_SIGN.getKey()
         );
 
         tag(BlockTags.PLANKS).add(RRBlocks.GIANT_GOBLET_STEM.getKey());
