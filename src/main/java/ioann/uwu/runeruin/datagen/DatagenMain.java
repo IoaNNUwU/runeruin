@@ -59,6 +59,8 @@ public class DatagenMain {
 
         gen.addProvider(true, new DatagenItemTagProvider(packOutput, lookupProvider));
 
+        gen.addProvider(true, new DatagenDataMapProvider(packOutput, lookupProvider));
+
         gen.addProvider(true, new DatagenBiomeTagProvider(packOutput, lookupProvider));
 
         gen.addProvider(true, new DatagenRecipeProvider.Runner(packOutput, lookupProvider));

@@ -78,9 +78,13 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
         tag(BlockTags.LEAVES).add(RRBlocks.ELDEN_LEAVES.getKey());
 
         tag(BlockTags.INSIDE_STEP_SOUND_BLOCKS).add(
+                RRBlocks.ELDEN_LEAF_LITTER.getKey(),
                 RRBlocks.DEEP_ROOTS.getKey(),
                 RRBlocks.BIG_LILY_PAD.getKey()
         );
+
+        tag(BlockTags.REPLACEABLE_BY_TREES).add(RRBlocks.ELDEN_LEAF_LITTER.getKey());
+        tag(BlockTags.REPLACEABLE_BY_MUSHROOMS).add(RRBlocks.ELDEN_LEAF_LITTER.getKey());
 
         tag(BlockTags.FROG_PREFER_JUMP_TO).add(RRBlocks.BIG_LILY_PAD.getKey());
 

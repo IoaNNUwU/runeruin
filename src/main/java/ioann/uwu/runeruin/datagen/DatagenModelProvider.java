@@ -57,6 +57,7 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createPlantWithDefaultItem(RRBlocks.ELDEN_SAPLING.get(), RRBlocks.POTTED_ELDEN_SAPLING.get(), BlockModelGenerators.PlantType.NOT_TINTED);
 
         blockModels.createTrivialBlock(RRBlocks.ELDEN_LEAVES.get(), TexturedModel.LEAVES);
+        blockModels.createLeafLitter(RRBlocks.ELDEN_LEAF_LITTER.get());
         blockModels.createTrivialCube(RRBlocks.ELDEN_PLANKS.get());
         createEldenVines(blockModels);
         Material eldenLogBark = TextureMapping.getBlockTexture(RRBlocks.ELDEN_LOG.get());

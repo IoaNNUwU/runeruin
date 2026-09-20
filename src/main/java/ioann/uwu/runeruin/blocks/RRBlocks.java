@@ -103,6 +103,11 @@ public class RRBlocks {
             p -> new UntintedParticleLeavesBlock(0.1f, ParticleTypes.CLOUD, p) // TODO: ParticleType
     );
 
+    public static final DeferredBlock<Block> ELDEN_LEAF_LITTER = register("elden_leaf_litter",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LEAF_LITTER).mapColor(MapColor.COLOR_YELLOW),
+            EldenLeafLitterBlock::new
+    );
+
     public static final DeferredBlock<Block> ELDEN_VINES = register("elden_vines",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CAVE_VINES_PLANT)
                     .mapColor(MapColor.COLOR_BROWN)
