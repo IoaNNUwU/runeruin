@@ -38,6 +38,10 @@ def distance_sq(first: RGB | tuple[float, float, float], second: RGB | tuple[flo
     return sum((a - b) ** 2 for a, b in zip(first, second))
 
 
+def luminance(color: RGB | tuple[float, float, float]) -> float:
+    return 0.2126 * color[0] + 0.7152 * color[1] + 0.0722 * color[2]
+
+
 def make_palette(pixels: list[RGB], color_count: int, seed: int) -> list[RGB]:
     weights = Counter(pixels)
     colors = sorted(weights)
@@ -103,6 +107,12 @@ def main() -> int:
     palette_group.add_argument("--palette", nargs="+", type=parse_color, help="explicit nearest-match palette in #RRGGBB form")
     parser.add_argument("--size", type=parse_size, default=(16, 16), help="output dimensions, default: 16x16")
     parser.add_argument("--alpha-mode", choices=("binary", "opaque", "preserve"), default="binary")
+    parser.add_argument(
+        "--palette-match",
+        choices=("rgb", "luminance"),
+        default="rgb",
+        help="match by RGB distance, or map source brightness across the palette brightness range",
+    )
     parser.add_argument("--seed", type=int, default=42, help="deterministic palette seed")
     args = parser.parse_args()
 
@@ -125,13 +135,25 @@ def main() -> int:
     except ValueError as exc:
         parser.error(str(exc))
 
+    luminance_palette = sorted(palette, key=luminance)
+    visible_luminances = [luminance(pixel[:3]) for pixel in source_pixels if args.alpha_mode == "opaque" or pixel[3] > 0]
+    source_min = min(visible_luminances)
+    source_span = max(visible_luminances) - source_min
+    target_min = luminance(luminance_palette[0])
+    target_span = luminance(luminance_palette[-1]) - target_min
+
     output_pixels = []
     for red, green, blue, alpha in source_pixels:
         if args.alpha_mode == "binary" and alpha == 0:
             output_pixels.append((0, 0, 0, 0))
             continue
         source_color = (red, green, blue)
-        nearest = min(palette, key=lambda color: distance_sq(source_color, color))
+        if args.palette_match == "luminance":
+            source_level = 0.5 if source_span == 0 else (luminance(source_color) - source_min) / source_span
+            target_level = target_min + source_level * target_span
+            nearest = min(luminance_palette, key=lambda color: abs(luminance(color) - target_level))
+        else:
+            nearest = min(palette, key=lambda color: distance_sq(source_color, color))
         output_alpha = alpha if args.alpha_mode == "preserve" else 255
         output_pixels.append((*nearest, output_alpha))
 

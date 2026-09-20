@@ -417,9 +417,10 @@ public class DatagenModelProvider extends ModelProvider {
                 .slab(RRBlocks.ELDEN_SLAB.get())
                 .stairs(RRBlocks.ELDEN_STAIRS.get())
                 .strippedLog(RRBlocks.ELDEN_LOG.get())
-                .trapdoor(RRBlocks.ELDEN_TRAPDOOR.get())
                 .getFamily();
         blockModels.familyWithExistingFullBlock(RRBlocks.ELDEN_PLANKS.get()).generateFor(family);
+        // Oak uses the non-orientable trapdoor UV templates, unlike the generic family default.
+        blockModels.createTrapdoor(RRBlocks.ELDEN_TRAPDOOR.get());
     }
 
     private static void createInvertedTreeBlocks(@NonNull BlockModelGenerators blockModels) {

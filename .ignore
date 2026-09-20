@@ -14,3 +14,9 @@ repo/
 # instead of ~/.gradle (multiple game versions, mostly jars).
 !.mc-sources/
 !.mc-sources/**
+
+# Vanilla Minecraft client textures for THIS project version (see VERSION.txt).
+# Gitignores the extracted copy while making it visible to agents when they inspect references.
+.vanilla-textures/
+!.vanilla-textures/
+!.vanilla-textures/**

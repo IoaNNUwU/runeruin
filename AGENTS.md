@@ -60,6 +60,7 @@ Gradle needs some JDK installed to start; the wrapper then downloads **Java 25**
 - `runData` — datagen into `src/generated/resources`
 - `build` — compile and package the mod jar
 - `extractMcSources` — explode Minecraft + NeoForge Java into `.mc-sources/` for Agents to index minecraft sources (also runs on IDE Gradle sync)
+- `extractVanillaTextures` — extract this project's pinned Minecraft client textures into `.vanilla-textures/` for visual references (also runs with `extractMcSources`)
 
 # Datagen cache and game lock
 
@@ -98,6 +99,8 @@ Exploded sources (after `./gradlew extractMcSources` or IDE Gradle sync) live in
 - `net/neoforged/` — NeoForge API
 
 **Always search `.mc-sources` for vanilla/NeoForge types** (official mappings, this version only). `.ignore` un-ignores that folder for ripgrep; do not search `~/.gradle` (multiple Minecraft versions, mostly jars). If Grep still skips it, use Shell `rg` or `rg --no-ignore-vcs`. Do not treat `.mc-sources` as mod source — never edit it, never add it to `src/`.
+
+Pinned Minecraft texture references are extracted to **`.vanilla-textures/assets/minecraft/textures/`** by `extractVanillaTextures` or automatically with `extractMcSources`. `scripts/setup-codex-worktree.ps1` also ensures this export exists when it reuses an already-populated sources cache. The directory is gitignored but visible to `rg`; use it instead of searching client jars or the Gradle cache for vanilla PNGs. Its `VERSION.txt` identifies the Minecraft version.
 
 ## Packages
 
