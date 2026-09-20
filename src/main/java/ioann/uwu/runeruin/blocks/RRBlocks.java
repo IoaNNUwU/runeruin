@@ -231,6 +231,11 @@ public class RRBlocks {
     public static final DeferredBlock<Block> GLOWING_MOSS = registerGlowingMoss("glowing_moss", MapColor.COLOR_CYAN);
     public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = registerGlowingMossCarpet("glowing_moss_carpet", MapColor.COLOR_CYAN);
 
+    public static final DeferredBlock<Block> POWDERED_MOSS = registerNoItem("powdered_moss",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.POWDER_SNOW)
+                    .mapColor(MapColor.COLOR_GREEN),
+            PowderedMossBlock::new);
+
     public static final DeferredBlock<Block> GLOWING_MUSHROOM_CAP = register("glowing_mushroom_cap",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS)
                     .mapColor(MapColor.COLOR_LIGHT_GREEN)

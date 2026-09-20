@@ -98,6 +98,13 @@ public class DatagenModelProvider extends ModelProvider {
         createInvertedTreeBlocks(blockModels);
 
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
+        blockModels.createTrivialBlock(
+                RRBlocks.POWDERED_MOSS.get(),
+                TexturedModel.createDefault(
+                        TextureMapping::defaultTexture,
+                        ModelTemplates.create("powder_snow", TextureSlot.TEXTURE)
+                )
+        );
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
         blockModels.createTrivialBlock(
                 RRBlocks.GLOWING_MUSHROOM_CAP.get(),
@@ -651,6 +658,7 @@ public class DatagenModelProvider extends ModelProvider {
 
     private static void createMossBerry(@NonNull BlockModelGenerators blockModels, @NonNull ItemModelGenerators itemModels) {
         itemModels.generateFlatItem(RRItems.MOSS_BERRY.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(RRItems.POWDERED_MOSS_BUCKET.get(), ModelTemplates.FLAT_ITEM);
 
         blockModels.blockStateOutput.accept(
                 MultiVariantGenerator.dispatch(RRBlocks.MOSS_BERRY_BUSH.get())

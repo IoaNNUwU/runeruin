@@ -55,6 +55,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> COMMON_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "common_stone_lily");
 
     public static final ResourceKey<PlacedFeature> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "moss_berry_bush_patch");
+    public static final ResourceKey<PlacedFeature> POWDERED_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "powdered_moss");
 
     public static final ResourceKey<PlacedFeature> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<PlacedFeature> GLOWING_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_mushroom");
@@ -398,6 +399,25 @@ public class RRPlacedFeatures {
                         ),
                         RandomOffsetPlacement.vertical(ConstantInt.of(1))
 
+                )
+        ));
+
+        ctx.register(POWDERED_MOSS, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.POWDERED_MOSS),
+                List.of(
+                        CountPlacement.of(6),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(BLOOMING_CAVES_Y),
+                                VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                16
+                        ),
+                        BiomeFilter.biome()
                 )
         ));
 

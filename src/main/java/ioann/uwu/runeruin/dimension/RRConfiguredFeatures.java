@@ -54,6 +54,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_lily");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_berry_bush_patch");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> POWDERED_MOSS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "powdered_moss");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_mushroom");
@@ -247,6 +248,11 @@ public class RRConfiguredFeatures {
                                 new UniformInt(0, 3)
                         )
                 )
+        ));
+
+        ctx.register(POWDERED_MOSS, new ConfiguredFeature<>(
+                RRFeatures.POWDERED_MOSS_VEIN.get(),
+                NoneFeatureConfiguration.INSTANCE
         ));
 
         ctx.register(GLOWING_MOSS_VEGETATION, new ConfiguredFeature<>(

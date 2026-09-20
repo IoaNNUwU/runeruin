@@ -3,11 +3,13 @@ package ioann.uwu.runeruin.items;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.entities.RREntityTypes;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SolidBucketItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.Consumable;
 import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
@@ -47,6 +49,12 @@ public class RRItems {
                                     )
                             ))
                             .build())
+    );
+
+    public static final DeferredItem<Item> POWDERED_MOSS_BUCKET = REGISTRY.registerItem(
+            "powdered_moss_bucket",
+            p -> new SolidBucketItem(RRBlocks.POWDERED_MOSS.get(), SoundEvents.BUCKET_EMPTY_POWDER_SNOW, p),
+            p -> p.stacksTo(1).useItemDescriptionPrefix()
     );
 
     public static final DeferredItem<Item> SNAIL_SPAWN_EGG = REGISTRY.registerItem(

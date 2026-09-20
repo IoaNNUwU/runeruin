@@ -79,6 +79,7 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropPottedContents(RRBlocks.POTTED_ELDEN_SAPLING.get());
 
         dropSelf(RRBlocks.MOSS_LIGHT.get());
+        add(RRBlocks.POWDERED_MOSS.get(), noDrop());
         dropSelf(RRBlocks.FIREFLY_IN_A_JAR.get());
         dropSelf(RRBlocks.GLOWING_MOSS.get());
         dropSelf(RRBlocks.GLOWING_MOSS_CARPET.get());

@@ -3,6 +3,7 @@
 
   "item.runeruin.rune_of_space": "Rune of Space",
   "item.runeruin.moss_berry": "Mossberry",
+  "item.runeruin.powdered_moss_bucket": "Powdered Moss Bucket",
   "item.runeruin.snail_spawn_egg": "Snail Spawn Egg",
   "entity.runeruin.snail": "Snail",
 
@@ -19,6 +20,7 @@
   "block.runeruin.rune_ruin_portal": "Rune Ruin Portal",
 
   "block.runeruin.moss_light": "Moss Light",
+  "block.runeruin.powdered_moss": "Powdered Moss",
   "block.runeruin.glowing_moss": "Glowing Moss",
   "block.runeruin.glowing_moss_carpet": "Glowing Moss Carpet",
   "block.runeruin.glowing_mushroom_cap": "Glowing Mushroom Cap",
