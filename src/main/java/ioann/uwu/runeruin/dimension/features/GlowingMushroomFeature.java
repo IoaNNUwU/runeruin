@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.GeometryUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -191,7 +192,7 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
                     || level.isOutsideBuildHeight(lowered)
                     || level.isOutsideBuildHeight(support)
                     || !level.ensureCanWrite(lowered)
-                    || !level.getBlockState(lowered).isAir()) {
+                    || !isAirLike(level, lowered)) {
                 continue;
             }
 
@@ -612,11 +613,18 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
                 return false;
             }
             BlockState existing = level.getBlockState(pos);
-            if (!existing.isAir() && (!existing.canBeReplaced() || !existing.getFluidState().isEmpty())) {
+            if (!isAirLike(level, pos) && (!existing.canBeReplaced() || !existing.getFluidState().isEmpty())) {
                 return false;
             }
         }
         return true;
+    }
+
+    private static boolean isAirLike(WorldGenLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.isAir()
+                || state.is(RRBlocks.GLOWING_MUSHROOM.get())
+                || !state.isCollisionShapeFullBlock(level, pos);
     }
 
     public record Config(

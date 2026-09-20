@@ -84,6 +84,14 @@ public class RRPlacedFeatures {
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
+        BlockPredicate glowingMushroomSupport = BlockPredicate.allOf(
+                BlockPredicate.hasSturdyFace(Direction.UP),
+                BlockPredicate.not(BlockPredicate.matchesBlocks(
+                        RRBlocks.GLOWING_MUSHROOM_CAP.get(),
+                        RRBlocks.GLOWING_MUSHROOM_STEM.get(),
+                        RRBlocks.GLOWING_MUSHROOM.get()
+                ))
+        );
 
         // Baobab canopy uses moss blocks, so keep mega jungle trees off that surface.
         ctx.register(JUNGLE_MEGA_TREE_ON_NON_MOSS, new PlacedFeature(
@@ -489,8 +497,7 @@ public class RRPlacedFeatures {
         ctx.register(GLOWING_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GLOWING_MUSHROOM),
                 List.of(
-                        // Keep five attempts, with one in two passing the filter: three times the previous rate.
-                        CountPlacement.of(5),
+                        CountPlacement.of(10),
                         RarityFilter.onAverageOnceEvery(2),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
@@ -499,7 +506,7 @@ public class RRPlacedFeatures {
                         ),
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,
-                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                glowingMushroomSupport,
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 32
                         ),
@@ -511,7 +518,7 @@ public class RRPlacedFeatures {
         ctx.register(SMALL_GLOWING_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_GLOWING_MUSHROOM),
                 List.of(
-                        CountPlacement.of(3),
+                        CountPlacement.of(6),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(DEEP_CAVES_Y),
@@ -519,7 +526,7 @@ public class RRPlacedFeatures {
                         ),
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,
-                                BlockPredicate.hasSturdyFace(Direction.UP),
+                                glowingMushroomSupport,
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 32
                         ),
