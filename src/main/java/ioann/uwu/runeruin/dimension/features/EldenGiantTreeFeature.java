@@ -7,9 +7,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.LeafLitterBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
@@ -32,6 +34,8 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
     private static final int TOP_BRANCH_MIN_LENGTH = 4;
     private static final int TOP_BRANCH_MAX_LENGTH = 6;
     private static final int MAX_DOWNWARD_EXTENSION = 3;
+    private static final int LEAF_LITTER_PATCH_ATTEMPTS = 32;
+    private static final int LEAF_LITTER_RADIUS = 8;
 
     private record RootCandidate(BlockPos position, Direction direction) {
     }
@@ -171,8 +175,57 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
         }
 
         placeEldenVines(level, placeableLeaves, random);
+        placeEldenLeafLitter(level, origin, random);
 
         return true;
+    }
+
+    private static void placeEldenLeafLitter(WorldGenLevel level, BlockPos origin, RandomSource random) {
+        for (int attempt = 0; attempt < LEAF_LITTER_PATCH_ATTEMPTS; attempt++) {
+            double angle = random.nextDouble() * Math.PI * 2.0;
+            double radius = 3.0 + random.nextDouble() * (LEAF_LITTER_RADIUS - 3.0);
+            int x = origin.getX() + (int) Math.round(Math.cos(angle) * radius);
+            int z = origin.getZ() + (int) Math.round(Math.sin(angle) * radius);
+            BlockPos target = findLeafLitterPosition(level, x, z, origin.getY());
+            if (target == null) {
+                continue;
+            }
+
+            BlockState existing = level.getBlockState(target);
+            if (existing.is(RRBlocks.ELDEN_LEAF_LITTER.get())) {
+                int amount = existing.getValue(BlockStateProperties.SEGMENT_AMOUNT);
+                if (amount < LeafLitterBlock.MAX_SEGMENT && random.nextBoolean()) {
+                    level.setBlock(target, existing.setValue(BlockStateProperties.SEGMENT_AMOUNT, amount + 1), 19);
+                }
+                continue;
+            }
+
+            if (!existing.isAir() && (!existing.canBeReplaced() || !existing.getFluidState().isEmpty())) {
+                continue;
+            }
+
+            BlockState litter = RRBlocks.ELDEN_LEAF_LITTER.get().defaultBlockState()
+                    .setValue(LeafLitterBlock.FACING, Direction.Plane.HORIZONTAL.getRandomDirection(random))
+                    .setValue(BlockStateProperties.SEGMENT_AMOUNT, 1 + random.nextInt(LeafLitterBlock.MAX_SEGMENT));
+            level.setBlock(target, litter, 19);
+        }
+    }
+
+    private static BlockPos findLeafLitterPosition(WorldGenLevel level, int x, int z, int baseY) {
+        for (int y = baseY + 1; y >= baseY - LEAF_LITTER_RADIUS; y--) {
+            BlockPos support = new BlockPos(x, y, z);
+            if (!level.getBlockState(support).isFaceSturdy(level, support, Direction.UP)) {
+                continue;
+            }
+
+            BlockPos target = support.above();
+            BlockState state = level.getBlockState(target);
+            if (state.isAir() || state.is(RRBlocks.ELDEN_LEAF_LITTER.get())
+                    || (state.canBeReplaced() && state.getFluidState().isEmpty())) {
+                return target;
+            }
+        }
+        return null;
     }
 
     private static void placeEldenVines(WorldGenLevel level, Set<BlockPos> leaves, RandomSource random) {

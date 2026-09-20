@@ -55,6 +55,7 @@ public class RRCreativeModeTabs {
                     RRBlocks.GIANT_GOBLET_BUD.toStack(),
                     RRBlocks.DEEP_ROOTS.toStack(),
                     RRBlocks.ELDEN_LEAVES.toStack(),
+                    RRBlocks.ELDEN_LEAF_LITTER.toStack(),
                     RRBlocks.ELDEN_VINES.toStack(),
                     RRBlocks.BAOBAB_LOG.toStack(),
                     RRBlocks.BAOBAB_WOOD.toStack(),
