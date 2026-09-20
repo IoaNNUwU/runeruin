@@ -1,11 +1,14 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
+import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -16,6 +19,23 @@ import static ioann.uwu.runeruin.dimension.Const.*;
 public class DeepCavesAndLostCavesGen {
 
     private static final LazyNoise floorNoise = new LazyNoise("LostCavesFloorNoise", SingleNoise::new);
+
+    private static final HangingTerrainGenerator.Profile HANGING_MOSS = new HangingTerrainGenerator.Profile(
+            DeepCavesAndLostCavesGen::deepCavesFloorColumnAt,
+            LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_OFFSET,
+            new HangingTerrainGenerator.Supports(
+                    state -> state.is(Blocks.STONE),
+                    DeepCavesAndLostCavesGen::isMoss,
+                    DeepCavesAndLostCavesGen::isMoss,
+                    state -> state.is(BlockTags.BASE_STONE_OVERWORLD)
+            ),
+            new HangingTerrainGenerator.Materials(
+                    DeepCavesAndLostCavesGen::mossAt,
+                    DeepCavesAndLostCavesGen::mossAt,
+                    Blocks.STONE.defaultBlockState()
+            ),
+            RR.id("hanging_moss_shape")
+    );
 
     public static void generateLostCavesFloor(ChunkAccess chunk, RandomState randomState) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -118,6 +138,35 @@ public class DeepCavesAndLostCavesGen {
                 chunk.setBlockState(pos.set(x, topY, z), RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState));
             }
         }
+    }
+
+    public static void generateHangingMoss(ChunkAccess chunk, RandomState randomState) {
+        HangingTerrainGenerator.generate(chunk, randomState, HANGING_MOSS);
+    }
+
+    private static HangingTerrainGenerator.TerrainColumn deepCavesFloorColumnAt(
+            int x,
+            int z,
+            RandomState randomState
+    ) {
+        float noise = lostTopLevelNoise.getOrCreateNoise(randomState).noise(x, z);
+        if (noise < 0.01f) {
+            return new HangingTerrainGenerator.TerrainColumn(false, 0, 0);
+        }
+        float biomeHeight = noise * TOP_LAYER_TERRAIN_HEIGHT - ARCANE_PLATE_HEIGHT;
+        float baselineNoise = lostTopLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
+        float baseline = DEEP_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise
+                + TOP_LAYER_OFFSET - ARCANE_PLATE_HEIGHT;
+        int topY = (int) (baseline + biomeHeight);
+        return new HangingTerrainGenerator.TerrainColumn(true, baseline, topY);
+    }
+
+    private static boolean isMoss(BlockState state) {
+        return state.is(Blocks.MOSS_BLOCK) || state.is(RRBlocks.GLOWING_MOSS.get());
+    }
+
+    private static BlockState mossAt(ChunkAccess chunk, BlockPos start, RandomState randomState) {
+        return RRTerrainSurfaces.floorAt(chunk, start.getX(), start.getY(), start.getZ(), randomState);
     }
 
     /**
