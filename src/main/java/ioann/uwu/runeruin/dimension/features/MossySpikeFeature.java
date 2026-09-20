@@ -103,6 +103,12 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
     }
 
     private static boolean canReplaceWithSpike(BlockState state) {
+        return SpeleothemUtils.isEmptyOrWaterOrLava(state)
+                || isMossCarpet(state)
+                || state.is(BlockTags.MOSS_BLOCKS);
+    }
+
+    private static boolean canReplaceWithMossCap(BlockState state) {
         return SpeleothemUtils.isEmptyOrWaterOrLava(state) || isMossCarpet(state);
     }
 
@@ -197,6 +203,10 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
                             BlockPos.MutableBlockPos pos = this.root.offset(dx, 0, dz).mutable();
                             boolean hasBeenOutOfStone = false;
+                            BlockState mossBase = null;
+                            BlockPos mossCapPos = null;
+                            int heightFromMoss = 0;
+                            Direction growthDirection = this.pointingUp ? Direction.UP : Direction.DOWN;
 
                             int maxY = this.pointingUp ? columnRange.ceiling() + 3 : Integer.MAX_VALUE;
 
@@ -206,21 +216,43 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                                     break;
                                 }
 
-                                if (level.isStateAtPosition(windAdjustedPos, MossySpikeFeature::canReplaceWithSpike)) {
+                                BlockState state = level.getBlockState(windAdjustedPos);
+                                if (canReplaceWithSpike(state)) {
                                     hasBeenOutOfStone = true;
 
+                                    if (mossBase == null && state.is(BlockTags.MOSS_BLOCKS)) {
+                                        mossBase = state;
+                                        heightFromMoss = 1;
+                                    } else if (mossBase != null) {
+                                        ++heightFromMoss;
+                                    }
+
                                     level.setBlock(windAdjustedPos, block, 2);
-                                } else if (hasBeenOutOfStone && level.getBlockState(windAdjustedPos).is(BlockTags.BASE_STONE_OVERWORLD)) {
+                                    if (mossBase != null) {
+                                        mossCapPos = wind.offset(pos.relative(growthDirection)).immutable();
+                                    }
+                                } else if (hasBeenOutOfStone && state.is(BlockTags.BASE_STONE_OVERWORLD)) {
                                     break;
                                 }
 
-                                pos.move(this.pointingUp ? Direction.UP : Direction.DOWN);
+                                pos.move(growthDirection);
+                            }
+
+                            if (mossCapPos != null
+                                    && chunkBounds.contains(mossCapPos)
+                                    && isMossTransitionColumn(heightFromMoss, random)
+                                    && level.isStateAtPosition(mossCapPos, MossySpikeFeature::canReplaceWithMossCap)) {
+                                level.setBlock(mossCapPos, mossBase, 2);
                             }
                         }
                     }
                 }
             }
 
+        }
+
+        private static boolean isMossTransitionColumn(int heightFromMoss, RandomSource random) {
+            return heightFromMoss == 1 || heightFromMoss == 2 && random.nextFloat() < 0.66F;
         }
 
         private boolean isSuitableForWind(SpikeConfiguration config) {
