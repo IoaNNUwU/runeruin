@@ -58,13 +58,9 @@ public class DatagenModelProvider extends ModelProvider {
 
         blockModels.createTrivialBlock(RRBlocks.ELDEN_LEAVES.get(), TexturedModel.LEAVES);
         blockModels.createLeafLitter(RRBlocks.ELDEN_LEAF_LITTER.get());
-        blockModels.createTrivialCube(RRBlocks.ELDEN_PLANKS.get());
+        createEldenTreeBlocks(blockModels);
         createEldenVines(blockModels);
-        Material eldenLogBark = TextureMapping.getBlockTexture(RRBlocks.ELDEN_LOG.get());
-        blockModels.createTrivialBlock(RRBlocks.ELDEN_WOOD.get(), _ -> TexturedModel.createAllSame(eldenLogBark));
         createGiantGobletBlocks(blockModels);
-        blockModels.new WoodProvider(TextureMapping.column(eldenLogBark, eldenLogBark))
-                .wood(RRBlocks.ELDEN_LOG.get());
 
         var acaciaLogSide = TextureMapping.getBlockTexture(Blocks.ACACIA_LOG);
         var acaciaLogTop = TextureMapping.getBlockTexture(Blocks.ACACIA_LOG, "_top");
@@ -400,6 +396,30 @@ public class DatagenModelProvider extends ModelProvider {
                 RRBlocks.GIANT_GOBLET_BUD.get(),
                 _ -> TexturedModel.createAllSame(warpedWart)
         );
+    }
+
+    private static void createEldenTreeBlocks(@NonNull BlockModelGenerators blockModels) {
+        Material bark = TextureMapping.getBlockTexture(RRBlocks.ELDEN_LOG.get());
+        Material core = TextureMapping.getBlockTexture(RRBlocks.ELDEN_LOG.get(), "_top");
+        blockModels.createTrivialBlock(RRBlocks.ELDEN_WOOD.get(), _ -> TexturedModel.createAllSame(bark));
+        blockModels.new WoodProvider(TextureMapping.column(bark, core))
+                .logWithHorizontal(RRBlocks.ELDEN_LOG.get());
+        blockModels.createTrivialCube(RRBlocks.ELDEN_PLANKS.get());
+
+        BlockFamily family = new BlockFamily.Builder(RRBlocks.ELDEN_PLANKS.get())
+                .button(RRBlocks.ELDEN_BUTTON.get())
+                .door(RRBlocks.ELDEN_DOOR.get())
+                .fence(RRBlocks.ELDEN_FENCE.get())
+                .fenceGate(RRBlocks.ELDEN_FENCE_GATE.get())
+                .hangingSign(RRBlocks.ELDEN_HANGING_SIGN.get(), RRBlocks.ELDEN_WALL_HANGING_SIGN.get())
+                .pressurePlate(RRBlocks.ELDEN_PRESSURE_PLATE.get())
+                .sign(RRBlocks.ELDEN_SIGN.get(), RRBlocks.ELDEN_WALL_SIGN.get())
+                .slab(RRBlocks.ELDEN_SLAB.get())
+                .stairs(RRBlocks.ELDEN_STAIRS.get())
+                .strippedLog(RRBlocks.ELDEN_LOG.get())
+                .trapdoor(RRBlocks.ELDEN_TRAPDOOR.get())
+                .getFamily();
+        blockModels.familyWithExistingFullBlock(RRBlocks.ELDEN_PLANKS.get()).generateFor(family);
     }
 
     private static void createInvertedTreeBlocks(@NonNull BlockModelGenerators blockModels) {

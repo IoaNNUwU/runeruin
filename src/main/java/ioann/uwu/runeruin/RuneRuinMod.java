@@ -65,11 +65,15 @@ public class RuneRuinMod {
     private void addBlockEntityTypes(BlockEntityTypeAddBlocksEvent event) {
         event.modify(
                 BlockEntityTypes.SIGN,
+                RRBlocks.ELDEN_SIGN.get(),
+                RRBlocks.ELDEN_WALL_SIGN.get(),
                 RRBlocks.INVERTED_TREE_SIGN.get(),
                 RRBlocks.INVERTED_TREE_WALL_SIGN.get()
         );
         event.modify(
                 BlockEntityTypes.HANGING_SIGN,
+                RRBlocks.ELDEN_HANGING_SIGN.get(),
+                RRBlocks.ELDEN_WALL_HANGING_SIGN.get(),
                 RRBlocks.INVERTED_TREE_HANGING_SIGN.get(),
                 RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.get()
         );

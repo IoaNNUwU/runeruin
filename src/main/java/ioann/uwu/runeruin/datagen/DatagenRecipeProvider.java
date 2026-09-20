@@ -1,8 +1,10 @@
 package ioann.uwu.runeruin.datagen;
 
+import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
@@ -22,6 +24,7 @@ public class DatagenRecipeProvider extends RecipeProvider {
     @Override
     protected void buildRecipes() {
 
+        buildEldenTreeRecipes();
         buildInvertedTreeRecipes();
 
         this.shaped(RecipeCategory.DECORATIONS, RRBlocks.MOSS_LIGHT, 1)
@@ -49,6 +52,58 @@ public class DatagenRecipeProvider extends RecipeProvider {
                 .unlockedBy(getHasName(RRBlocks.ARCANE_STONE), has(RRBlocks.ARCANE_STONE))
                 .save(this.output, "diamond_arcane_stone_mirrored");
 
+    }
+
+    private void buildEldenTreeRecipes() {
+        this.shapeless(RecipeCategory.BUILDING_BLOCKS, RRBlocks.ELDEN_PLANKS, 4)
+                .requires(RRBlocks.ELDEN_LOG)
+                .group("planks")
+                .unlockedBy(getHasName(RRBlocks.ELDEN_LOG), has(RRBlocks.ELDEN_LOG))
+                .save(this.output, RR.resourceKey(Registries.RECIPE, "elden_planks_from_log"));
+
+        this.shapeless(RecipeCategory.BUILDING_BLOCKS, RRBlocks.ELDEN_PLANKS, 4)
+                .requires(RRBlocks.ELDEN_WOOD)
+                .group("planks")
+                .unlockedBy(getHasName(RRBlocks.ELDEN_WOOD), has(RRBlocks.ELDEN_WOOD))
+                .save(this.output, RR.resourceKey(Registries.RECIPE, "elden_planks_from_wood"));
+
+        this.shaped(RecipeCategory.BUILDING_BLOCKS, RRBlocks.ELDEN_WOOD, 3)
+                .define('#', RRBlocks.ELDEN_LOG)
+                .pattern("##")
+                .pattern("##")
+                .unlockedBy(getHasName(RRBlocks.ELDEN_LOG), has(RRBlocks.ELDEN_LOG))
+                .save(this.output);
+
+        this.stairBuilder(RRBlocks.ELDEN_STAIRS, Ingredient.of(RRBlocks.ELDEN_PLANKS))
+                .unlockedBy(getHasName(RRBlocks.ELDEN_PLANKS), has(RRBlocks.ELDEN_PLANKS))
+                .save(this.output);
+        this.slab(RecipeCategory.BUILDING_BLOCKS, RRBlocks.ELDEN_SLAB, RRBlocks.ELDEN_PLANKS);
+
+        this.fenceBuilder(RRBlocks.ELDEN_FENCE, Ingredient.of(RRBlocks.ELDEN_PLANKS))
+                .unlockedBy(getHasName(RRBlocks.ELDEN_PLANKS), has(RRBlocks.ELDEN_PLANKS))
+                .save(this.output);
+        this.fenceGateBuilder(RRBlocks.ELDEN_FENCE_GATE, Ingredient.of(RRBlocks.ELDEN_PLANKS))
+                .unlockedBy(getHasName(RRBlocks.ELDEN_PLANKS), has(RRBlocks.ELDEN_PLANKS))
+                .save(this.output);
+
+        this.doorBuilder(RRBlocks.ELDEN_DOOR, Ingredient.of(RRBlocks.ELDEN_PLANKS))
+                .unlockedBy(getHasName(RRBlocks.ELDEN_PLANKS), has(RRBlocks.ELDEN_PLANKS))
+                .save(this.output);
+        this.trapdoorBuilder(RRBlocks.ELDEN_TRAPDOOR, Ingredient.of(RRBlocks.ELDEN_PLANKS))
+                .unlockedBy(getHasName(RRBlocks.ELDEN_PLANKS), has(RRBlocks.ELDEN_PLANKS))
+                .save(this.output);
+        this.pressurePlate(RRBlocks.ELDEN_PRESSURE_PLATE, RRBlocks.ELDEN_PLANKS);
+
+        this.buttonBuilder(RRBlocks.ELDEN_BUTTON, Ingredient.of(RRBlocks.ELDEN_PLANKS))
+                .unlockedBy(getHasName(RRBlocks.ELDEN_PLANKS), has(RRBlocks.ELDEN_PLANKS))
+                .save(this.output);
+
+        this.signBuilder(RRBlocks.ELDEN_SIGN, Ingredient.of(RRBlocks.ELDEN_PLANKS))
+                .unlockedBy(getHasName(RRBlocks.ELDEN_PLANKS), has(RRBlocks.ELDEN_PLANKS))
+                .save(this.output);
+        this.hangingSignBuilder(RRBlocks.ELDEN_HANGING_SIGN, Ingredient.of(RRBlocks.ELDEN_WOOD))
+                .unlockedBy(getHasName(RRBlocks.ELDEN_WOOD), has(RRBlocks.ELDEN_WOOD))
+                .save(this.output);
     }
 
     private void buildInvertedTreeRecipes() {

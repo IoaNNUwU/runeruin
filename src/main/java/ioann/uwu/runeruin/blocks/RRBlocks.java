@@ -31,6 +31,8 @@ public class RRBlocks {
 
     private static final BlockSetType INVERTED_TREE_BLOCK_SET = BlockSetType.register(new BlockSetType("inverted_tree"));
     private static final WoodType INVERTED_TREE_WOOD_TYPE = WoodType.register(new WoodType("inverted_tree", INVERTED_TREE_BLOCK_SET));
+    private static final BlockSetType ELDEN_BLOCK_SET = BlockSetType.register(new BlockSetType("elden"));
+    private static final WoodType ELDEN_WOOD_TYPE = WoodType.register(new WoodType("elden", ELDEN_BLOCK_SET));
 
     private static final TreeGrower ELDEN_TREE_GROWER = new TreeGrower(
             "elden",
@@ -80,6 +82,54 @@ public class RRBlocks {
 
     public static final DeferredBlock<Block> ELDEN_PLANKS = register("elden_planks",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS));
+
+    public static final DeferredBlock<Block> ELDEN_STAIRS = register("elden_stairs",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_STAIRS),
+            p -> new StairBlock(ELDEN_PLANKS.get().defaultBlockState(), p));
+
+    public static final DeferredBlock<Block> ELDEN_SLAB = register("elden_slab",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_SLAB),
+            SlabBlock::new);
+
+    public static final DeferredBlock<Block> ELDEN_FENCE = register("elden_fence",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_FENCE),
+            FenceBlock::new);
+
+    public static final DeferredBlock<Block> ELDEN_FENCE_GATE = register("elden_fence_gate",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_FENCE_GATE),
+            p -> new FenceGateBlock(ELDEN_WOOD_TYPE, p));
+
+    public static final DeferredBlock<Block> ELDEN_DOOR = register("elden_door",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_DOOR),
+            p -> new DoorBlock(ELDEN_BLOCK_SET, p));
+
+    public static final DeferredBlock<Block> ELDEN_TRAPDOOR = register("elden_trapdoor",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_TRAPDOOR),
+            p -> new TrapDoorBlock(ELDEN_BLOCK_SET, p));
+
+    public static final DeferredBlock<Block> ELDEN_PRESSURE_PLATE = register("elden_pressure_plate",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PRESSURE_PLATE),
+            p -> new PressurePlateBlock(ELDEN_BLOCK_SET, p));
+
+    public static final DeferredBlock<Block> ELDEN_BUTTON = register("elden_button",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_BUTTON),
+            p -> new ButtonBlock(ELDEN_BLOCK_SET, 30, p));
+
+    public static final DeferredBlock<Block> ELDEN_SIGN = registerNoItem("elden_sign",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_SIGN),
+            p -> new StandingSignBlock(ELDEN_WOOD_TYPE, p));
+
+    public static final DeferredBlock<Block> ELDEN_WALL_SIGN = registerNoItem("elden_wall_sign",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_WALL_SIGN),
+            p -> new WallSignBlock(ELDEN_WOOD_TYPE, p));
+
+    public static final DeferredBlock<Block> ELDEN_HANGING_SIGN = registerNoItem("elden_hanging_sign",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_HANGING_SIGN),
+            p -> new CeilingHangingSignBlock(ELDEN_WOOD_TYPE, p));
+
+    public static final DeferredBlock<Block> ELDEN_WALL_HANGING_SIGN = registerNoItem("elden_wall_hanging_sign",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_WALL_HANGING_SIGN),
+            p -> new WallHangingSignBlock(ELDEN_WOOD_TYPE, p));
 
     /** Gray pale-oak look; planks recipes, not tagged as logs/wood. */
     public static final DeferredBlock<Block> GIANT_GOBLET_STEM = register("giant_goblet_stem",
@@ -212,6 +262,14 @@ public class RRBlocks {
     );
 
     static {
+        RRItems.REGISTRY.registerItem("elden_sign",
+                p -> new SignItem(ELDEN_SIGN.get(), ELDEN_WALL_SIGN.get(), p),
+                p -> p.stacksTo(16).useBlockDescriptionPrefix()
+        );
+        RRItems.REGISTRY.registerItem("elden_hanging_sign",
+                p -> new HangingSignItem(ELDEN_HANGING_SIGN.get(), ELDEN_WALL_HANGING_SIGN.get(), p),
+                p -> p.stacksTo(16).useBlockDescriptionPrefix()
+        );
         RRItems.REGISTRY.registerItem("inverted_tree_sign",
                 p -> new SignItem(INVERTED_TREE_SIGN.get(), INVERTED_TREE_WALL_SIGN.get(), p),
                 p -> p.stacksTo(16).useBlockDescriptionPrefix()
