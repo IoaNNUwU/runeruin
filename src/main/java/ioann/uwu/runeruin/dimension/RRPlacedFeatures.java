@@ -39,6 +39,9 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "small_brown_wall_mushroom");
     public static final ResourceKey<PlacedFeature> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "big_brown_wall_mushroom");
     public static final ResourceKey<PlacedFeature> ASHEN_WALL_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "ashen_wall_mushroom");
+    public static final ResourceKey<PlacedFeature> ASHEN_WALL_MUSHROOM_CLUSTER = RR.resourceKey(Registries.PLACED_FEATURE, "ashen_wall_mushroom_cluster");
+    public static final ResourceKey<PlacedFeature> ASHEN_WALL_MUSHROOM_UPPER = RR.resourceKey(Registries.PLACED_FEATURE, "ashen_wall_mushroom_upper");
+    public static final ResourceKey<PlacedFeature> ASHEN_WALL_MUSHROOM_CLUSTER_UPPER = RR.resourceKey(Registries.PLACED_FEATURE, "ashen_wall_mushroom_cluster_upper");
 
     public static final ResourceKey<PlacedFeature> CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "ceiling_vine");
     public static final ResourceKey<PlacedFeature> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "long_ceiling_block_vine");
@@ -158,28 +161,21 @@ public class RRPlacedFeatures {
                 bigWallMushroomPlacement
         ));
 
-        List<PlacementModifier> ashenWallMushroomPlacement = List.of(
-                // Fewer placement attempts balance the expanded 5–15 block patch sizes.
-                CountPlacement.of(16),
-                InSquarePlacement.spread(),
-                HeightRangePlacement.uniform(
-                        VerticalAnchor.absolute(LOST_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT),
-                        VerticalAnchor.absolute(DEEP_CAVES_Y + TOP_LAYER_TERRAIN_HEIGHT)
-                ),
-                new WallPlacementFilter(
-                        List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
-                        List.of(
-                                Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(),
-                                Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState(),
-                                RRBlocks.ASHEN_MUSHROOM_BLOCK.get().defaultBlockState()
-                        )
-                ),
-                BiomeFilter.biome()
-        );
-
         ctx.register(ASHEN_WALL_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.ASHEN_WALL_MUSHROOM),
-                ashenWallMushroomPlacement
+                ashenWallMushroomPlacement(8)
+        ));
+        ctx.register(ASHEN_WALL_MUSHROOM_CLUSTER, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.ASHEN_WALL_MUSHROOM_CLUSTER),
+                ashenWallMushroomPlacement(4)
+        ));
+        ctx.register(ASHEN_WALL_MUSHROOM_UPPER, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.ASHEN_WALL_MUSHROOM_UPPER),
+                ashenWallMushroomPlacement(8)
+        ));
+        ctx.register(ASHEN_WALL_MUSHROOM_CLUSTER_UPPER, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.ASHEN_WALL_MUSHROOM_CLUSTER_UPPER),
+                ashenWallMushroomPlacement(4)
         ));
 
         List<PlacementModifier> ceilingBlockVinePlacement = List.of(
@@ -750,6 +746,19 @@ public class RRPlacedFeatures {
                 count,
                 InSquarePlacement.spread(),
                 new GobletUnderwaterPlacement(),
+                BiomeFilter.biome()
+        );
+    }
+
+    private static List<PlacementModifier> ashenWallMushroomPlacement(int count) {
+        return List.of(
+                CountPlacement.of(count),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(
+                        VerticalAnchor.absolute(LOST_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT),
+                        VerticalAnchor.absolute(DEEP_CAVES_Y + TOP_LAYER_TERRAIN_HEIGHT)
+                ),
+                WallPlacementFilter.ashenMushroom(),
                 BiomeFilter.biome()
         );
     }

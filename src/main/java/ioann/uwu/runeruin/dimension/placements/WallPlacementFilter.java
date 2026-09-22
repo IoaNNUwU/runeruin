@@ -3,10 +3,12 @@ package ioann.uwu.runeruin.dimension.placements;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.placement.PlacementContext;
 import net.minecraft.world.level.levelgen.placement.PlacementFilter;
@@ -32,11 +34,23 @@ public class WallPlacementFilter extends PlacementFilter {
         return forbidNearby;
     }
 
+    public static WallPlacementFilter ashenMushroom() {
+        return new WallPlacementFilter(
+                List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
+                List.of(
+                        Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(),
+                        Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState(),
+                        RRBlocks.ASHEN_MUSHROOM_BLOCK.get().defaultBlockState()
+                )
+        );
+    }
+
     @Override
     protected boolean shouldPlace(PlacementContext placementContext, RandomSource randomSource, BlockPos origin) {
+        return canPlaceAt(placementContext.getLevel(), origin);
+    }
 
-        WorldGenLevel level = placementContext.getLevel();
-
+    public boolean canPlaceAt(WorldGenLevel level, BlockPos origin) {
         BlockState originBlock = level.getBlockState(origin);
 
         if (placeOn.stream().noneMatch(block -> originBlock.is(block.getBlock()))) {
