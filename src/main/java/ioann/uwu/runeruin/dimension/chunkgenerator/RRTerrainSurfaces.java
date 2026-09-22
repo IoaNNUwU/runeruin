@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMossBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRBiomes;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.resources.ResourceKey;
@@ -100,6 +101,33 @@ public final class RRTerrainSurfaces {
 
     public static BlockState ceilingFor(Holder<Biome> biome, int x, int y, int z, RandomState randomState) {
         return ceiling(biome, surfaceRandom(randomState, x, y, z));
+    }
+
+    public static void placeFloorSurface(
+            ChunkAccess chunk, BlockPos.MutableBlockPos pos, int x, int y, int z, BlockState state
+    ) {
+        placeSurface(chunk, pos, x, y, z, state, -1);
+    }
+
+    public static void placeCeilingSurface(
+            ChunkAccess chunk, BlockPos.MutableBlockPos pos, int x, int y, int z, BlockState state
+    ) {
+        placeSurface(chunk, pos, x, y, z, state, 1);
+    }
+
+    private static void placeSurface(
+            ChunkAccess chunk, BlockPos.MutableBlockPos pos, int x, int y, int z, BlockState state, int inwardDirection
+    ) {
+        chunk.setBlockState(pos.set(x, y, z), state);
+        if (isMoss(state)) {
+            chunk.setBlockState(pos.set(x, y + inwardDirection, z), state);
+        }
+    }
+
+    private static boolean isMoss(BlockState state) {
+        return state.is(Blocks.MOSS_BLOCK)
+                || state.is(Blocks.PALE_MOSS_BLOCK)
+                || state.is(RRBlocks.GLOWING_MOSS.get());
     }
 
     public static boolean usesGrassySubfloor(Holder<Biome> biome) {

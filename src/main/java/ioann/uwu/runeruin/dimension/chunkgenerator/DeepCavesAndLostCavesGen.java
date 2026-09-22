@@ -24,7 +24,7 @@ public class DeepCavesAndLostCavesGen {
             DeepCavesAndLostCavesGen::deepCavesFloorColumnAt,
             LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_OFFSET,
             new HangingTerrainGenerator.Supports(
-                    state -> state.is(Blocks.STONE),
+                    state -> state.is(Blocks.STONE) || isMoss(state),
                     DeepCavesAndLostCavesGen::isMoss,
                     DeepCavesAndLostCavesGen::isMoss,
                     state -> state.is(BlockTags.BASE_STONE_OVERWORLD)
@@ -135,7 +135,9 @@ public class DeepCavesAndLostCavesGen {
                     chunk.setBlockState(pos.set(x, y, z), stone);
                 }
 
-                chunk.setBlockState(pos.set(x, topY, z), RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState));
+                RRTerrainSurfaces.placeFloorSurface(
+                        chunk, pos, x, topY, z, RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState)
+                );
             }
         }
     }
