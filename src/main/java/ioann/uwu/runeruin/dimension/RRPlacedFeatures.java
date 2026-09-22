@@ -10,7 +10,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
-import net.minecraft.data.worldgen.features.AquaticFeatures;
 import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.data.worldgen.features.TreeFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
@@ -671,7 +670,7 @@ public class RRPlacedFeatures {
         ));
 
         ctx.register(GOBLET_KELP, new PlacedFeature(
-                configuredFeatures.getOrThrow(AquaticFeatures.KELP),
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_KELP),
                 gobletUnderwaterPlacement(NoiseBasedCountPlacement.of(120, 80.0, 0.0))
         ));
 
