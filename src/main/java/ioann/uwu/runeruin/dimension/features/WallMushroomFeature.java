@@ -42,13 +42,12 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
 
     @Override
     public boolean place(FeaturePlaceContext<WallMushroomFeature.Config> ctx) {
+        return placeAt(ctx.level(), ctx.config(), ctx.origin(), ctx.random());
+    }
 
-        Config config = ctx.config();
-
-        WorldGenLevel level = ctx.level();
-        BlockPos origin = ctx.origin();
-        RandomSource random = ctx.random();
+    static boolean placeAt(WorldGenLevel level, Config config, BlockPos origin, RandomSource random) {
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        boolean placed = false;
 
         int diameter = config.diameter().sample(random);
         int ox = origin.getX();
@@ -77,7 +76,7 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         for (int yOffset = 0; yOffset < capLayers; yOffset++) {
             if (diameter == 5 || (diameter == 7 && yOffset == 0)) {
                 String[] footprint = diameter == 5 ? RADIUS_TWO_FOOTPRINT : RADIUS_THREE_FOOTPRINT;
-                placeFootprint(level, mutable, config, random, origin, ox, oy + yOffset, oz, minOffset, footprint);
+                placed |= placeFootprint(level, mutable, config, random, origin, ox, oy + yOffset, oz, minOffset, footprint);
                 continue;
             }
 
@@ -104,15 +103,15 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
                         continue;
                     }
 
-                    tryPlace(level, mutable.set(ox + x, oy + yOffset, oz + z), config, random, origin);
+                    placed |= tryPlace(level, mutable.set(ox + x, oy + yOffset, oz + z), config, random, origin);
                 }
             }
         }
 
-        return true;
+        return placed;
     }
 
-    private static void placeFootprint(
+    private static boolean placeFootprint(
             WorldGenLevel level,
             BlockPos.MutableBlockPos mutable,
             Config config,
@@ -124,10 +123,11 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
             int minOffset,
             String[] footprint
     ) {
+        boolean placed = false;
         for (int z = 0; z < footprint.length; z++) {
             for (int x = 0; x < footprint[z].length(); x++) {
                 if (footprint[z].charAt(x) == '#') {
-                    tryPlace(
+                    placed |= tryPlace(
                             level,
                             mutable.set(ox + minOffset + x, oy, oz + minOffset + z),
                             config,
@@ -137,9 +137,10 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
                 }
             }
         }
+        return placed;
     }
 
-    private static void tryPlace(
+    private static boolean tryPlace(
             WorldGenLevel level,
             BlockPos.MutableBlockPos pos,
             Config config,
@@ -149,7 +150,9 @@ public class WallMushroomFeature extends Feature<WallMushroomFeature.Config> {
         BlockState blockState = config.mushroomBlock().getState(level, random, origin);
         if (level.getBlockState(pos).isAir()) {
             level.setBlock(pos, blockState, GeometryUtils.BULK_FLAG);
+            return true;
         }
+        return false;
     }
 
     public record Config(BlockStateProvider mushroomBlock, IntProvider diameter) implements FeatureConfiguration {

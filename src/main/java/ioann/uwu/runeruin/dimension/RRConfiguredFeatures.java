@@ -41,6 +41,9 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_brown_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_brown_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> ASHEN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ashen_wall_mushroom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> ASHEN_WALL_MUSHROOM_CLUSTER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ashen_wall_mushroom_cluster");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> ASHEN_WALL_MUSHROOM_UPPER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ashen_wall_mushroom_upper");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> ASHEN_WALL_MUSHROOM_CLUSTER_UPPER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ashen_wall_mushroom_cluster_upper");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> CEILING_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ceiling_vine");
     public static final ResourceKey<ConfiguredFeature<?, ?>> LONG_CEILING_BLOCK_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "long_ceiling_block_vine");
@@ -124,10 +127,19 @@ public class RRConfiguredFeatures {
         ));
         ctx.register(ASHEN_WALL_MUSHROOM, new ConfiguredFeature<>(
                 RRFeatures.WALL_MUSHROOM.get(),
-                new WallMushroomFeature.Config(
-                        BlockStateProvider.simple(RRBlocks.ASHEN_MUSHROOM_BLOCK.get()),
-                        UniformInt.of(5, 15)
-                )
+                ashenMushroomConfig(7, 15)
+        ));
+        ctx.register(ASHEN_WALL_MUSHROOM_CLUSTER, new ConfiguredFeature<>(
+                RRFeatures.ASHEN_MUSHROOM_CLUSTER.get(),
+                ashenMushroomConfig(7, 15)
+        ));
+        ctx.register(ASHEN_WALL_MUSHROOM_UPPER, new ConfiguredFeature<>(
+                RRFeatures.WALL_MUSHROOM.get(),
+                ashenMushroomConfig(5, 7)
+        ));
+        ctx.register(ASHEN_WALL_MUSHROOM_CLUSTER_UPPER, new ConfiguredFeature<>(
+                RRFeatures.ASHEN_MUSHROOM_CLUSTER.get(),
+                ashenMushroomConfig(5, 7)
         ));
 
         ctx.register(LONG_CEILING_BLOCK_VINE, new ConfiguredFeature<>(
@@ -397,6 +409,13 @@ public class RRConfiguredFeatures {
                         32
                 )
         ));
+    }
+
+    private static WallMushroomFeature.Config ashenMushroomConfig(int minimumDiameter, int maximumDiameter) {
+        return new WallMushroomFeature.Config(
+                BlockStateProvider.simple(RRBlocks.ASHEN_MUSHROOM_BLOCK.get()),
+                UniformInt.of(minimumDiameter, maximumDiameter)
+        );
     }
 
     private static VegetationPatchConfiguration gobletMossPatchConfig(
