@@ -143,7 +143,7 @@ public class RRBlocks {
     public static final DeferredBlock<Block> GIANT_GOBLET_BUD = register("giant_goblet_bud",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.WARPED_WART_BLOCK));
 
-    /** Nether-roots-like decoration that can only grow on giant goblet buds. */
+    /** Nether-roots-like decoration for giant goblet buds and glowing moss floors. */
     public static final DeferredBlock<Block> DEEP_ROOTS = register("deep_roots",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.WARPED_ROOTS),
             p -> new NetherRootsBlock(RRTags.SUPPORTS_DEEP_ROOTS, p));

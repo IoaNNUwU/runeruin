@@ -78,6 +78,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> GOBLET_SEAGRASS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<PlacedFeature> GOBLET_KELP = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_kelp");
     public static final ResourceKey<PlacedFeature> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_deep_roots");
+    public static final ResourceKey<PlacedFeature> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.PLACED_FEATURE, "deep_roots_grass");
     public static final ResourceKey<PlacedFeature> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<PlacedFeature> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "big_lily_pad_patch");
     public static final ResourceKey<PlacedFeature> JUNGLE_MEGA_TREE_ON_NON_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "jungle_mega_tree_on_non_moss");
@@ -687,6 +688,26 @@ public class RRPlacedFeatures {
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,
                                 BlockPredicate.matchesBlocks(RRBlocks.GIANT_GOBLET_BUD.get()),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                32
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                        BiomeFilter.biome()
+                )
+        ));
+
+        ctx.register(DEEP_ROOTS_GRASS, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEP_ROOTS_GRASS),
+                List.of(
+                        CountPlacement.of(64),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(DEEP_CAVES_Y),
+                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.matchesBlocks(RRBlocks.GLOWING_MOSS.get()),
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 32
                         ),
