@@ -45,6 +45,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> CEILING_BALL = RR.resourceKey(Registries.PLACED_FEATURE, "ceiling_ball");
 
     public static final ResourceKey<PlacedFeature> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.PLACED_FEATURE, "tuff_moss_boulder");
+    public static final ResourceKey<PlacedFeature> MINI_VOLCANO = RR.resourceKey(Registries.PLACED_FEATURE, "mini_volcano");
 
     public static final ResourceKey<PlacedFeature> MONOLITH = RR.resourceKey(Registries.PLACED_FEATURE, "monolith");
 
@@ -263,6 +264,25 @@ public class RRPlacedFeatures {
                                         Blocks.CLAY,
                                         Blocks.WATER
                                 ),
+                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                16
+                        ),
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-2))
+                )
+        ));
+
+        ctx.register(MINI_VOLCANO, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MINI_VOLCANO),
+                List.of(
+                        CountPlacement.of(4),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
+                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
+                        ),
+                        EnvironmentScanPlacement.scanningFor(
+                                Direction.DOWN,
+                                BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK, Blocks.MOSSY_COBBLESTONE, Blocks.STONE, Blocks.CLAY),
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
