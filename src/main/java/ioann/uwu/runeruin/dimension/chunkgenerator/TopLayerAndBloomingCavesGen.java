@@ -57,7 +57,9 @@ public class TopLayerAndBloomingCavesGen {
                 for (int y = BLOOMING_CAVES_Y; y < topY; y++) {
                     chunk.setBlockState(pos.set(x, y, z), stone);
                 }
-                chunk.setBlockState(pos.set(x, topY, z), RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState));
+                RRTerrainSurfaces.placeFloorSurface(
+                        chunk, pos, x, topY, z, RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState)
+                );
             }
         }
     }
@@ -100,7 +102,9 @@ public class TopLayerAndBloomingCavesGen {
                 for (int y = (int) (baseLine - ceilingHeight + 1); y < baseLine - 1; y++) {
                     chunk.setBlockState(pos.set(x, y, z), deepslate);
                 }
-                chunk.setBlockState(pos.set(x, ceilingSurfaceY, z), underside(chunk, xx, zz, ceilingSurfaceY, randomState));
+                RRTerrainSurfaces.placeCeilingSurface(
+                        chunk, pos, x, ceilingSurfaceY, z, underside(chunk, xx, zz, ceilingSurfaceY, randomState)
+                );
             }
         }
     }

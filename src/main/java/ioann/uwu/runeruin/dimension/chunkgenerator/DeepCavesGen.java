@@ -60,7 +60,10 @@ public class DeepCavesGen {
                 for (int y = 0; y < biomeHeight; y++) {
                     chunk.setBlockState(pos.set(x, DEEP_CAVES_CEILING_Y - y, z), stone);
                 }
-                chunk.setBlockState(pos.set(x, ceilingSurfaceY, z), RRTerrainSurfaces.ceilingAt(chunk, xx, ceilingSurfaceY, zz, randomState));
+                RRTerrainSurfaces.placeCeilingSurface(
+                        chunk, pos, x, ceilingSurfaceY, z,
+                        RRTerrainSurfaces.ceilingAt(chunk, xx, ceilingSurfaceY, zz, randomState)
+                );
             }
         }
     }
