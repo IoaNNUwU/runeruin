@@ -50,6 +50,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> CEILING_BALL = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ceiling_ball");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> TUFF_MOSS_BOULDER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "tuff_moss_boulder");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MINI_VOLCANO = RR.resourceKey(Registries.CONFIGURED_FEATURE, "mini_volcano");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MONOLITH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "monolith");
 
@@ -212,6 +213,11 @@ public class RRConfiguredFeatures {
                         ConstantInt.of(5),
                         ConstantInt.of(7)
                 )
+        ));
+
+        ctx.register(MINI_VOLCANO, new ConfiguredFeature<>(
+                RRFeatures.MINI_VOLCANO.get(),
+                new MiniVolcanoFeature.Config(BlockStateProvider.simple(Blocks.TUFF), UniformInt.of(7, 9))
         ));
 
         ctx.register(MONOLITH, new ConfiguredFeature<>(

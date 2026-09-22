@@ -23,7 +23,7 @@ public class SwampJungle {
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
-        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.TUFF_MOSS_BOULDER);
+        generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MINI_VOLCANO);
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.MONOLITH);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.MOSS_VEGETATION);
