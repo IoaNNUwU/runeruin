@@ -169,7 +169,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.PLANKS).add(RRBlocks.GIANT_GOBLET_STEM.getKey());
 
-        tag(BlockTags.MOSS_BLOCKS).add(RRBlocks.GLOWING_MOSS.getKey());
+        tag(BlockTags.MOSS_BLOCKS).add(RRBlocks.GLOWING_MOSS.getKey(), RRBlocks.FLOATING_MOSS.getKey());
+        tag(BlockTags.SUPPORTS_VEGETATION).add(RRBlocks.FLOATING_MOSS.getKey());
 
 
         tag(RRTags.VEGETABLES_NON_REPLACEABLE).add(
