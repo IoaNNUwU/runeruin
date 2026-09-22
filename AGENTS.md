@@ -2,22 +2,20 @@
 
 ## Development branches
 
-For every substantial change, create a separate branch and do all work for the feature or bug in that branch. Never merge branches except when explicitly asked.
+For every substantial change, create a separate branch in a new Git worktree and do all work for the feature or bug there. Multiple agents work on this repository at the same time; never implement a new feature in the shared checkout. Never merge branches except when explicitly asked.
 
 The following exceptions do not require creating a branch: editing `README` files, `AGENTS.md`, `.json` files, or only changing text inside a string literal in a code file.
 
 - New functionality: use `feature/<name>`, for example `feature/giant_goblet`. Do not include `add_` in the name; use just the feature name.
 - Bug fixes: use `bug/<name>`, for example `bug/giant_goblet_spawns_in_wrong_biome`.
 
-At the beginning of every coding task, before editing files, run `git branch --show-current`.
-If it returns an empty string, Codex is in a newly created detached worktree and must create
-an aptly named task branch before continuing:
+At the beginning of every coding task, before editing files, run `git branch --show-current` and `git status --short --branch`. For changes outside the exceptions above, choose a short name from the user's request. Create a unique sibling directory and a new task branch from the current `HEAD`, for example:
 
-- New functionality: `git switch -c feature/<short-kebab-case-name>`
-- Bug fixes: `git switch -c bug/<short-kebab-case-name>`
+```powershell
+git worktree add -b feature/giant_goblet ../RuneRuin-giant-goblet HEAD
+```
 
-Choose the short name from the user's request, then verify the result with
-`git status --short --branch`. Never continue coding while `HEAD` is detached.
+For a bug fix, use a `bug/<name>` branch instead. If the proposed branch or directory already exists, choose a distinct name; never take over another agent's branch or worktree. This command also works if the starting checkout has a detached `HEAD`. Run `git -C ../RuneRuin-giant-goblet status --short --branch` to verify the new worktree has the intended branch before changing code.
 
 ## Code size and quality
 
@@ -30,16 +28,11 @@ When writing code, look for ways to reduce the amount of code rather than increa
 
 ## Parallel agent worktrees
 
-Codex provides each parallel task with its own worktree. Work only in the current assigned checkout; never create or manage another worktree from inside the task.
+The agent creates its task worktree with Git; do not rely on Codex to create it. After creation, run all edits, searches, Gradle commands, and checks from that worktree. Leave the starting checkout and other agents' worktrees untouched. For a fresh worktree, run `.\scripts\setup-codex-worktree.ps1` from its root to set up hooks and local Minecraft sources.
 
-Codex-managed worktrees may initially use a detached `HEAD`. In a newly created detached
-worktree, the branch-initialization procedure above is the required exception that allows
-one `git switch -c` command. Do not switch to another existing branch, check out a branch
-that may be used by another worktree, or create another worktree from inside the task.
+Do not manually copy files or uncommitted changes between worktrees. Tracked files are available automatically; ignored local files must be generated or set up in the task worktree. Never switch to a branch used by another worktree.
 
-Keep changes isolated to the current task. Do not manually copy files or uncommitted changes between worktrees. Tracked files are available automatically; ignored local files are available only when explicitly provided by the environment (for example through `.worktreeinclude`).
-
-Before finishing, report the current worktree state and leave branch creation, handoff, merge, cherry-pick, or other cross-worktree operations to the user/Codex orchestration. Never merge branches unless explicitly asked.
+Before finishing, report the task branch, worktree path, and `git status --short --branch`. Leave merge, cherry-pick, and worktree removal to the user unless explicitly asked.
 
 NeoForge mod (`runeruin`), MC 26.2. Custom stacked-cave dimension. Entry: `RuneRuinMod` → registers DeferredRegisters; datapack registries come from `DatagenMain`.
 
