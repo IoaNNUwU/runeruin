@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.RRConfiguredFeatures;
 import ioann.uwu.runeruin.dimension.RRTags;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.items.FloatingMossItem;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.HangingSignItem;
@@ -289,6 +290,11 @@ public class RRBlocks {
     public static final DeferredBlock<Block> GLOWING_MOSS = registerGlowingMoss("glowing_moss", MapColor.COLOR_CYAN);
     public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = registerGlowingMossCarpet("glowing_moss_carpet", MapColor.COLOR_CYAN);
 
+    public static final DeferredBlock<Block> FLOATING_MOSS = registerFloatingMoss("floating_moss",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)
+                    .noOcclusion(),
+            FloatingMossBlock::new);
+
     public static final DeferredBlock<Block> POWDERED_MOSS = registerNoItem("powdered_moss",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.POWDER_SNOW)
                     .mapColor(MapColor.COLOR_GREEN),
@@ -357,6 +363,18 @@ public class RRBlocks {
                 p -> new PlaceOnWaterBlockItem(blockRecord.get(), p),
                 p -> p.useBlockDescriptionPrefix()
         );
+        return blockRecord;
+    }
+
+    private static DeferredBlock<Block> registerFloatingMoss(
+            String name,
+            UnaryOperator<BlockBehaviour.Properties> props,
+            Function<BlockBehaviour.Properties, ? extends Block> block
+    ) {
+        DeferredBlock<Block> blockRecord = REGISTRY.registerBlock(name, block, props);
+        RRItems.REGISTRY.registerItem(name,
+                p -> new FloatingMossItem(blockRecord.get(), p),
+                p -> p.useBlockDescriptionPrefix());
         return blockRecord;
     }
 

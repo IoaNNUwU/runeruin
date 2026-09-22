@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.ArcaneStonePortalBlock;
 import ioann.uwu.runeruin.blocks.BigLilyPadBlock;
 import ioann.uwu.runeruin.blocks.EldenVinesBlock;
+import ioann.uwu.runeruin.blocks.FloatingMossBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
@@ -102,6 +103,7 @@ public class DatagenModelProvider extends ModelProvider {
                 )
         );
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
+        createFloatingMoss(blockModels);
         blockModels.createTrivialBlock(
                 RRBlocks.GLOWING_MUSHROOM_CAP.get(),
                 TexturedModel.CUBE.updateTexture(TextureMapping::forceAllTranslucent)
@@ -154,6 +156,65 @@ public class DatagenModelProvider extends ModelProvider {
                 itemModel,
                 ItemModelUtils.constantTint(-12012264)
         );
+    }
+
+    private static void createFloatingMoss(@NonNull BlockModelGenerators blockModels) {
+        for (int connections = 0; connections < 16; connections++) {
+            boolean north = (connections & 1) != 0;
+            boolean east = (connections & 2) != 0;
+            boolean south = (connections & 4) != 0;
+            boolean west = (connections & 8) != 0;
+            JsonObject model = new JsonObject();
+            JsonObject textures = new JsonObject();
+            textures.addProperty("particle", "minecraft:block/moss_block");
+            textures.addProperty("moss", "minecraft:block/moss_block");
+            textures.addProperty("soil", "runeruin:block/floating_moss_roots");
+            textures.addProperty("bottom", "minecraft:block/rooted_dirt");
+            model.add("textures", textures);
+
+            JsonArray elements = new JsonArray();
+            double[] soilFrom = {west ? 0 : 1, 5, north ? 0 : 1};
+            double[] soilTo = {east ? 16 : 15, 14, south ? 16 : 15};
+            double[] mossFrom = {west ? 0 : 0.5, 14, north ? 0 : 0.5};
+            double[] mossTo = {east ? 16 : 15.5, 16, south ? 16 : 15.5};
+            addJarElement(elements, "rooted_soil", soilFrom, soilTo,
+                    "soil", 0, "north", "south", "east", "west", "up");
+            addJarElement(elements, "moss_cap", mossFrom, mossTo,
+                    "moss", 0, "north", "south", "east", "west", "up", "down");
+            elements.get(1).getAsJsonObject().getAsJsonObject("faces").getAsJsonObject("down")
+                    .addProperty("texture", "#bottom");
+            addInnerMossFaces(elements, "soil", soilFrom, soilTo);
+            addInnerMossFaces(elements, "moss", mossFrom, mossTo);
+            model.add("elements", elements);
+            int variant = connections;
+            blockModels.modelOutput.accept(RR.id("block/floating_moss_" + variant), () -> model);
+        }
+
+        blockModels.blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(RRBlocks.FLOATING_MOSS.get())
+                        .with(PropertyDispatch.initial(FloatingMossBlock.NORTH, FloatingMossBlock.EAST,
+                                        FloatingMossBlock.SOUTH, FloatingMossBlock.WEST)
+                                .generate((north, east, south, west) -> BlockModelGenerators.plainVariant(
+                                        RR.id("block/floating_moss_" + ((north ? 1 : 0) | (east ? 2 : 0)
+                                                | (south ? 4 : 0) | (west ? 8 : 0))))))
+        );
+        blockModels.registerSimpleItemModel(RRBlocks.FLOATING_MOSS.get(), RR.id("block/floating_moss_0"));
+    }
+
+    private static void addInnerMossFaces(JsonArray elements, String texture, double[] from, double[] to) {
+        // A quad faces only one way; these flat inner faces keep the far walls visible from below.
+        addJarElement(elements, texture + "_inner_north",
+                new double[]{from[0], from[1], from[2]}, new double[]{to[0], to[1], from[2]},
+                texture, 0, "south");
+        addJarElement(elements, texture + "_inner_south",
+                new double[]{from[0], from[1], to[2]}, new double[]{to[0], to[1], to[2]},
+                texture, 0, "north");
+        addJarElement(elements, texture + "_inner_west",
+                new double[]{from[0], from[1], from[2]}, new double[]{from[0], to[1], to[2]},
+                texture, 0, "east");
+        addJarElement(elements, texture + "_inner_east",
+                new double[]{to[0], from[1], from[2]}, new double[]{to[0], to[1], to[2]},
+                texture, 0, "west");
     }
 
     private static void createAshenMushroomBlock(@NonNull BlockModelGenerators blockModels) {
