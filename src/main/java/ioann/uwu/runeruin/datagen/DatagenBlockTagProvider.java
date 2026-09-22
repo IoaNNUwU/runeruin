@@ -181,7 +181,10 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
         );
 
         tag(RRTags.GOBLET_MOSS_REPLACEABLE).add(RRBlocks.GIANT_GOBLET_BUD.getKey());
-        tag(RRTags.SUPPORTS_DEEP_ROOTS).add(RRBlocks.GIANT_GOBLET_BUD.getKey());
+        tag(RRTags.SUPPORTS_DEEP_ROOTS).add(
+                RRBlocks.GIANT_GOBLET_BUD.getKey(),
+                RRBlocks.GLOWING_MOSS.getKey()
+        );
 
         tag(BlockTags.PORTALS).add(RRBlocks.RUNE_RUIN_PORTAL.getKey());
     }

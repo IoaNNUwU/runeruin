@@ -72,6 +72,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_SEAGRASS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_KELP = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_kelp");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_deep_roots");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deep_roots_grass");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "swamp_jungle_trees");
@@ -378,6 +379,11 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(GOBLET_DEEP_ROOTS, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DEEP_ROOTS.get()))
+        ));
+
+        ctx.register(DEEP_ROOTS_GRASS, new ConfiguredFeature<>(
                 Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DEEP_ROOTS.get()))
         ));
