@@ -32,7 +32,7 @@ The agent creates its task worktree with Git; do not rely on Codex to create it.
 
 Do not manually copy files or uncommitted changes between worktrees. Tracked files are available automatically; ignored local files must be generated or set up in the task worktree. Never switch to a branch used by another worktree.
 
-Before finishing, report the task branch, worktree path, and `git status --short --branch`. Leave merge, cherry-pick, and worktree removal to the user unless explicitly asked.
+Before finishing, report the task branch, worktree path, and `git status --short --branch`. Always provide a single-line PowerShell command to launch the client from the worktree used for the task, using absolute paths to that worktree's `gradlew.bat` and project directory (for example, `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`); do not use `cd`. If a separate prerequisite such as `runData` is required, provide a second single-line command for it, in execution order before the client command. Leave merge, cherry-pick, and worktree removal to the user unless explicitly asked.
 
 NeoForge mod (`runeruin`), MC 26.2. Custom stacked-cave dimension. Entry: `RuneRuinMod` → registers DeferredRegisters; datapack registries come from `DatagenMain`.
 
