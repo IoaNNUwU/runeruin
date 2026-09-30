@@ -87,6 +87,12 @@ public class RRConfiguredFeatures {
         HolderGetter<PlacedFeature> placedFeatures = ctx.lookup(Registries.PLACED_FEATURE);
         HolderGetter<Block> blocks = ctx.lookup(Registries.BLOCK);
 
+        for (CaveMushroomKind kind : CaveMushroomKind.values()) {
+            for (boolean hanging : new boolean[]{false, true}) {
+                ctx.register(kind.configuredKey(hanging), new ConfiguredFeature<>(RRFeatures.CAVE_MUSHROOM.get(), kind.config(hanging)));
+            }
+        }
+
         ctx.register(SWAMP_JUNGLE_TREES, new ConfiguredFeature<>(
                 Feature.RANDOM_SELECTOR,
                 new RandomFeatureConfiguration(

@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.dimension.biomes.deepcaves;
 
+import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.placement.CavePlacements;
@@ -31,6 +32,8 @@ public class StoneSpikeCaves {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_DEEP_ROOTS);
 
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.STONE_SPIKE);
+
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.YELLOW_HAT.placedKey(false));
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);

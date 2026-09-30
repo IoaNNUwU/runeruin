@@ -98,6 +98,33 @@ public class RRPlacedFeatures {
                 ))
         );
 
+        for (CaveMushroomKind kind : CaveMushroomKind.values()) {
+            for (boolean hanging : new boolean[]{false, true}) {
+                ctx.register(kind.placedKey(hanging), new PlacedFeature(
+                        configuredFeatures.getOrThrow(kind.configuredKey(hanging)),
+                        List.of(
+                                CountPlacement.of(24),
+                                InSquarePlacement.spread(),
+                                HeightRangePlacement.uniform(
+                                        VerticalAnchor.absolute(LOST_CAVES_Y),
+                                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y)
+                                ),
+                                EnvironmentScanPlacement.scanningFor(
+                                        hanging ? Direction.UP : Direction.DOWN,
+                                        BlockPredicate.allOf(
+                                                BlockPredicate.hasSturdyFace(hanging ? Direction.DOWN : Direction.UP),
+                                                BlockPredicate.not(BlockPredicate.matchesBlocks(CaveMushroomKind.BLOCKS))
+                                        ),
+                                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                                        32
+                                ),
+                                RandomOffsetPlacement.vertical(ConstantInt.of(hanging ? -1 : 1)),
+                                BiomeFilter.biome()
+                        )
+                ));
+            }
+        }
+
         // Baobab canopy uses moss blocks, so keep mega jungle trees off that surface.
         ctx.register(JUNGLE_MEGA_TREE_ON_NON_MOSS, new PlacedFeature(
                 configuredFeatures.getOrThrow(TreeFeatures.MEGA_JUNGLE_TREE),

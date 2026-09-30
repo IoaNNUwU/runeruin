@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.preview;
 import ioann.uwu.runeruin.preview.jobs.AshenMushroomPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.BaobabPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.BoulderPreviewJob;
+import ioann.uwu.runeruin.preview.jobs.CaveMushroomPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GiantGobletPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GlowingBallPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.GlowingMushroomPreviewJob;
@@ -33,6 +34,7 @@ public final class PreviewCatalog {
         register(new BaobabPreviewJob());
         register(new GlowingMushroomPreviewJob());
         register(new AshenMushroomPreviewJob());
+        register(new CaveMushroomPreviewJob());
         register(new TerrainRegionPreviewJob());
     }
 
