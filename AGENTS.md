@@ -221,6 +221,7 @@ Outputs (name defaults to `preview_<job>`):
 - `exports/preview_<job>.json` — full volume
 - `exports/preview_<job>_yz.txt` — midplane looking +X
 - `exports/preview_<job>_xy.txt` / `_xz.txt` — the other midplanes
+- `python scripts/render_preview.py out.png exports/preview_<job>.json [...]` — optional front/side/top silhouette PNG of the full volume; use it to judge shape (bends, tilt, gaps) since midplanes can miss the subject. The JSON/text stay the exact source of truth.
 - `exports/preview_<job>_info.txt` — seed, params, block counts
 
 For terrain-generator experiments, keep two full JSON exports with matching seed/dimension/origin/size: `was` is the untouched world region; `expected` is the user's edited target. Compare them first, then replay `was` before changing code to prove the current generator reproduces the original terrain. Only after that baseline is close, edit the generator and iterate toward `expected`:
