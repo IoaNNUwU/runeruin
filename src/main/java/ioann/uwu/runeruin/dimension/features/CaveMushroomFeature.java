@@ -26,7 +26,7 @@ public class CaveMushroomFeature extends Feature<CaveMushroomFeature.Config> {
     private static final double MAX_BLOCKED_FRACTION = 0.12;
     private static final int MAX_FOOT_DEPTH = 3;
     private static final double MIN_TILT_DEGREES = 8.0;
-    private static final double MAX_TILT_DEGREES = 18.0;
+    private static final double MAX_TILT_DEGREES = 25.0;
     private static final double MIN_SHELL_WIDTH = 2.0;
 
     public CaveMushroomFeature() {
@@ -74,7 +74,10 @@ public class CaveMushroomFeature extends Feature<CaveMushroomFeature.Config> {
         Shape shape = config.shape();
         double capRadius = config.capRadius().sample(random);
         int layers = shape.layers(capRadius);
-        addCap(shape, capRadius, layers, origin, centerX, height - 1, centerZ, random, cap, rim);
+        // The cap leans the way the stem leans overall (its top is displaced by `bend` along `angle`).
+        double tilt = Math.atan2(bend, height - 1);
+        tilt = Math.max(Math.toRadians(MIN_TILT_DEGREES), Math.min(Math.toRadians(MAX_TILT_DEGREES), tilt));
+        addCap(shape, capRadius, layers, origin, centerX, height - 1, centerZ, tilt, angle, cap, rim);
         if (cap.isEmpty()) {
             return false;
         }
@@ -124,11 +127,9 @@ public class CaveMushroomFeature extends Feature<CaveMushroomFeature.Config> {
      * The cap pivots around the centre of its lowest layer, which sits on top of the stem.
      */
     private static void addCap(Shape shape, double capRadius, int layers, BlockPos origin, double pivotX, int pivotY,
-                               double pivotZ, RandomSource random, Set<BlockPos> cap, Set<BlockPos> rim) {
-        double tilt = Math.toRadians(MIN_TILT_DEGREES + random.nextDouble() * (MAX_TILT_DEGREES - MIN_TILT_DEGREES));
-        double tiltAngle = random.nextDouble() * Math.PI * 2.0;
-        double tiltX = Math.cos(tiltAngle);
-        double tiltZ = Math.sin(tiltAngle);
+                               double pivotZ, double tilt, double tiltDirection, Set<BlockPos> cap, Set<BlockPos> rim) {
+        double tiltX = Math.cos(tiltDirection);
+        double tiltZ = Math.sin(tiltDirection);
         int extent = (int) Math.ceil(capRadius + layers + 2);
 
         for (int x = (int) Math.floor(pivotX) - extent; x <= (int) Math.ceil(pivotX) + extent; x++) {

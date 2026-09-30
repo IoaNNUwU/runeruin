@@ -22,7 +22,7 @@ public enum CaveMushroomKind {
     /** Short fat stem under a thick brown dome. */
     BROWN_DOME("brown_dome", Shape.DOME,
             BlockStateProvider.simple(Blocks.BROWN_MUSHROOM_BLOCK), BlockStateProvider.simple(Blocks.BROWN_MUSHROOM_BLOCK),
-            UniformInt.of(4, 6), UniformInt.of(3, 4), UniformInt.of(7, 9), ConstantInt.of(0), 0),
+            UniformInt.of(4, 6), UniformInt.of(3, 4), UniformInt.of(7, 9), UniformInt.of(1, 2), 0),
     /** Tall twisting stem flaring into a trumpet. */
     TRUMPET("trumpet", Shape.FUNNEL,
             BlockStateProvider.simple(Blocks.JUNGLE_PLANKS), BlockStateProvider.simple(Blocks.JUNGLE_PLANKS),
