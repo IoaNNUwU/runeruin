@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.dimension.biomes.bloomingcavesceiling;
 
-import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
@@ -35,8 +34,6 @@ public class GlowingRootsCeilingBiome {
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
-
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.RED_ARCH.placedKey(true));
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);

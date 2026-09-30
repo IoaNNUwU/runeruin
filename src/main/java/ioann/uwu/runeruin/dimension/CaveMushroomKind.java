@@ -17,14 +17,14 @@ import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvi
 import net.minecraft.world.level.levelgen.feature.stateproviders.WeightedStateProvider;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-/** The big cave mushroom varieties; every cave biome uses exactly one, standing on floors or hanging from ceilings. */
+/** The big cave mushroom varieties; every floor cave biome uses exactly one. */
 public enum CaveMushroomKind {
     /** Short fat stem under a thick brown dome. */
     BROWN_DOME("brown_dome", Shape.DOME,
             BlockStateProvider.simple(Blocks.BROWN_MUSHROOM_BLOCK), BlockStateProvider.simple(Blocks.BROWN_MUSHROOM_BLOCK),
-            UniformInt.of(3, 5), UniformInt.of(3, 4), UniformInt.of(7, 9), ConstantInt.of(0), 0),
-    /** Tall twisting stem under a stepped pyramid. */
-    TWISTED_PYRAMID("twisted_pyramid", Shape.CONE,
+            UniformInt.of(4, 6), UniformInt.of(3, 4), UniformInt.of(7, 9), ConstantInt.of(0), 0),
+    /** Tall twisting stem flaring into a trumpet. */
+    TRUMPET("trumpet", Shape.FUNNEL,
             BlockStateProvider.simple(Blocks.JUNGLE_PLANKS), BlockStateProvider.simple(Blocks.JUNGLE_PLANKS),
             UniformInt.of(12, 16), ConstantInt.of(2), UniformInt.of(5, 6), UniformInt.of(3, 5), 3),
     /** Stem arching over into a wide red umbrella with yellow speckles. */
@@ -72,20 +72,20 @@ public enum CaveMushroomKind {
         this.sway = sway;
     }
 
-    public CaveMushroomFeature.Config config(boolean hanging) {
+    public CaveMushroomFeature.Config config() {
         return new CaveMushroomFeature.Config(BlockStateProvider.simple(Blocks.MUSHROOM_STEM), this.cap, this.rim,
-                this.shape, this.height, this.stemRadius, this.capRadius, this.bend, this.sway, hanging);
+                this.shape, this.height, this.stemRadius, this.capRadius, this.bend, this.sway);
     }
 
-    public ResourceKey<ConfiguredFeature<?, ?>> configuredKey(boolean hanging) {
-        return RR.resourceKey(Registries.CONFIGURED_FEATURE, name(hanging));
+    public ResourceKey<ConfiguredFeature<?, ?>> configuredKey() {
+        return RR.resourceKey(Registries.CONFIGURED_FEATURE, featureName());
     }
 
-    public ResourceKey<PlacedFeature> placedKey(boolean hanging) {
-        return RR.resourceKey(Registries.PLACED_FEATURE, name(hanging));
+    public ResourceKey<PlacedFeature> placedKey() {
+        return RR.resourceKey(Registries.PLACED_FEATURE, featureName());
     }
 
-    private String name(boolean hanging) {
-        return (hanging ? "hanging_" : "") + this.id + "_mushroom";
+    private String featureName() {
+        return this.id + "_mushroom";
     }
 }

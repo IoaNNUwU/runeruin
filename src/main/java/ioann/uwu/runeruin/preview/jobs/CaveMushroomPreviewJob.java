@@ -22,27 +22,24 @@ public final class CaveMushroomPreviewJob implements PreviewJob {
 
     @Override
     public String description() {
-        return "Big cave mushroom on a stone floor (or hanging from a ceiling). params: kind (" + Arrays.stream(CaveMushroomKind.values())
-                .map(kind -> kind.name().toLowerCase(Locale.ROOT)).toList() + "), hanging";
+        return "Big cave mushroom on a stone floor. params: kind (" + Arrays.stream(CaveMushroomKind.values())
+                .map(kind -> kind.name().toLowerCase(Locale.ROOT)).toList() + ")";
     }
 
     @Override
     public PreviewJobs.Result run(PreviewArgs args) throws IOException {
         long seed = args.seed();
         CaveMushroomKind kind = CaveMushroomKind.valueOf(args.get("kind", "brown_dome").toUpperCase(Locale.ROOT));
-        boolean hanging = Boolean.parseBoolean(args.get("hanging", "false"));
         BlockPos origin = new BlockPos(0, 64, 0);
         PreviewWorld world = PreviewWorld.create(seed);
-        int supportY = origin.getY() + (hanging ? 1 : -1);
-        world.fillBox(new BoundingBox(-4, supportY, -4, 4, supportY, 4), Blocks.STONE.defaultBlockState());
+        world.fillBox(new BoundingBox(-4, origin.getY() - 1, -4, 4, origin.getY() - 1, 4), Blocks.STONE.defaultBlockState());
 
-        boolean placed = PreviewJobs.placeFeature(new CaveMushroomFeature(), kind.config(hanging), origin, world, null);
+        boolean placed = PreviewJobs.placeFeature(new CaveMushroomFeature(), kind.config(), origin, world, null);
 
         return PreviewJobs.export(world, PreviewJobs.paddedOccupied(world, 1), args.name("preview_cave_mushroom"), args.exportDir(), List.of(
                 "job: " + id(),
                 "seed: " + seed,
                 "kind: " + kind,
-                "hanging: " + hanging,
                 "placed: " + placed,
                 "origin: 0 64 0"
         ));

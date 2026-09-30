@@ -45,7 +45,7 @@ public class SparklingCaves {
 
         generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, NetherPlacements.DELTA);
 
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.PINK_TWIST.placedKey(false));
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.PINK_TWIST.placedKey());
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);

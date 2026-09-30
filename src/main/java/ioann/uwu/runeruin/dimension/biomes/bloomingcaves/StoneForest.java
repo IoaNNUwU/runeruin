@@ -65,7 +65,7 @@ public class StoneForest {
         // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
         // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
 
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.BROWN_DOME.placedKey(false));
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.BROWN_DOME.placedKey());
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
