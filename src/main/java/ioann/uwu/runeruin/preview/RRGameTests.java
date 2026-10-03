@@ -3,24 +3,41 @@ package ioann.uwu.runeruin.preview;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.RRBiomeSource;
+import ioann.uwu.runeruin.dimension.RRBiomes;
+import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
+import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.region.RegionExport;
+import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -45,6 +62,13 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
         TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> WORLD_SEED_CHANGES_GENERATION =
+        TEST_FUNCTIONS.register("world_seed_changes_generation", () -> RRGameTests::worldSeedChangesGeneration);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_REGISTRY_COMPLETE =
+        TEST_FUNCTIONS.register("biome_registry_complete", () -> RRGameTests::biomeRegistryComplete);
+
+    // Registered biomes that never generate. biome_registry_complete fails if one of them generates.
+    private static final Set<ResourceKey<Biome>> PARKED_BIOMES = Set.of(RRBiomes.GHOST_GROVE, RRBiomes.DEEP_DRIPSTONE_CAVES);
 
     private RRGameTests() {}
 
@@ -86,6 +110,110 @@ public final class RRGameTests {
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
+        event.registerTest(
+            RR.id("world_seed_changes_generation"),
+            new FunctionGameTestInstance(
+                WORLD_SEED_CHANGES_GENERATION.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("biome_registry_complete"),
+            new FunctionGameTestInstance(
+                BIOME_REGISTRY_COMPLETE.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+    }
+
+    // Terrain and the biome map must follow the world seed: one seed regenerates the same world,
+    // another seed a different one. In-game, ChunkMap hands the seed over through createState.
+    private static void worldSeedChangesGeneration(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            BoundingBox column = new BoundingBox(0, 0, 0, 15, 511, 15);
+            PreviewWorld seed1 = HeadlessTerrainGenerator.generate(server, 1, column);
+            helper.assertTrue(sameBlocks(seed1, HeadlessTerrainGenerator.generate(server, 1, column), column),
+                "seed 1 generated different terrain twice");
+            helper.assertTrue(!sameBlocks(seed1, HeadlessTerrainGenerator.generate(server, 2, column), column),
+                "seeds 1 and 2 generated the same terrain");
+            // Plates, hanging terrain and surfaces already followed the seed; the layer shapes did not.
+            helper.assertTrue(RRChunkGenerator.topLevelNoise.getOrCreateNoise(HeadlessTerrainGenerator.randomState(server, 1)).noise(100, 100)
+                    != RRChunkGenerator.topLevelNoise.getOrCreateNoise(HeadlessTerrainGenerator.randomState(server, 2)).noise(100, 100),
+                "the terrain shape noise ignores the world seed");
+            helper.assertTrue(!biomeMap(server, 1).equals(biomeMap(server, 2)),
+                "seeds 1 and 2 generated the same biome map");
+
+            // The gametest server loads no mod dimension, so replay what ChunkMap does for a level.
+            RandomState levelRandom = RandomState.create(
+                NoiseGeneratorSettings.dummy(), server.registryAccess().lookupOrThrow(Registries.NOISE), 3);
+            new RRChunkGenerator(RRBiomeSource.newDefault(server.registryAccess().lookupOrThrow(Registries.BIOME)))
+                .createState(server.registryAccess().lookupOrThrow(Registries.STRUCTURE_SET), levelRandom, 3);
+            RRChunkGenerator.topLevelNoise.getOrCreateNoise(levelRandom);
+            helper.succeed();
+        } catch (IOException | IllegalStateException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    private static boolean sameBlocks(PreviewWorld a, PreviewWorld b, BoundingBox box) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int y = box.minY(); y <= box.maxY(); y++) {
+            for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                for (int x = box.minX(); x <= box.maxX(); x++) {
+                    if (a.get(pos.set(x, y, z)) != b.get(pos)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private static List<Holder<Biome>> biomeMap(MinecraftServer server, long seed) throws IOException {
+        RRBiomeSource biomes = RRBiomeSource.newDefault(server.registryAccess().lookupOrThrow(Registries.BIOME));
+        Climate.Sampler sampler = HeadlessTerrainGenerator.randomState(server, seed).sampler();
+        List<Holder<Biome>> map = new ArrayList<>();
+        for (int y = 0; y < 512; y += 16) {
+            for (int z = -512; z < 512; z += 32) {
+                for (int x = -512; x < 512; x += 32) {
+                    map.add(biomes.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z), sampler));
+                }
+            }
+        }
+        return map;
+    }
+
+    // Every mod biome generates or is parked and has its own terrain surface; every mod placed
+    // feature is used by some mod biome, directly or nested inside another feature.
+    private static void biomeRegistryComplete(GameTestHelper helper) {
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        Registry<Biome> biomeRegistry = registries.lookupOrThrow(Registries.BIOME);
+        Set<Holder<Biome>> generated = RRBiomeSource.newDefault(biomeRegistry).possibleBiomes();
+        Set<ConfiguredFeature<?, ?>> usedFeatures = new HashSet<>();
+        List<String> problems = new ArrayList<>();
+        biomeRegistry.listElements().filter(biome -> isModKey(biome.key())).forEach(biome -> {
+            Identifier id = biome.key().identifier();
+            boolean parked = PARKED_BIOMES.contains(biome.key());
+            if (generated.contains(biome) == parked) {
+                problems.add(id + (parked ? " is parked but generates" : " never generates; add it to RRBiomeSource or PARKED_BIOMES"));
+            }
+            if (!RRTerrainSurfaces.hasProfile(biome.key())) {
+                problems.add(id + " has no RRTerrainSurfaces entry");
+            }
+            biome.value().getGenerationSettings().features().forEach(step -> step.forEach(
+                placed -> placed.value().getFeatures().forEach(configured -> usedFeatures.add(configured.value()))
+            ));
+        });
+        registries.lookupOrThrow(Registries.PLACED_FEATURE).listElements()
+            .filter(placed -> isModKey(placed.key()) && !usedFeatures.contains(placed.value().feature().value()))
+            .forEach(placed -> problems.add(placed.key().identifier() + " is not used by any biome"));
+        helper.assertTrue(problems.isEmpty(), String.join("; ", problems));
+        helper.succeed();
+    }
+
+    private static boolean isModKey(ResourceKey<?> key) {
+        return key.identifier().getNamespace().equals(RR.MODID);
     }
 
     private static void previewGiantGoblet(GameTestHelper helper) {

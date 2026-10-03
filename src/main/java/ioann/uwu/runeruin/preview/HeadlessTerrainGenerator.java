@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.preview;
 
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
+import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,17 +44,7 @@ public final class HeadlessTerrainGenerator {
             throw new IOException("Region Y range must be within " + minY + ".." + maxY);
         }
 
-        final RandomState randomState;
-        try {
-            randomState = RandomState.create(
-                NoiseGeneratorSettings.dummy(),
-                server.registryAccess().lookupOrThrow(Registries.NOISE),
-                seed
-            );
-        } catch (IllegalStateException e) {
-            throw new IOException("Runeruin noise registries are missing from the loaded registries", e);
-        }
-
+        RandomState randomState = randomState(server, seed);
         Map<Long, ChunkAccess> chunks = generateChunks(generator, server, randomState, box);
         PreviewWorld world = PreviewWorld.create(seed);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -69,6 +60,21 @@ public final class HeadlessTerrainGenerator {
             }
         }
         return world;
+    }
+
+    /** The RandomState a level with this seed gets, with the seed bound for {@link LazyNoise} like in-game. */
+    public static RandomState randomState(MinecraftServer server, long seed) throws IOException {
+        try {
+            RandomState randomState = RandomState.create(
+                NoiseGeneratorSettings.dummy(),
+                server.registryAccess().lookupOrThrow(Registries.NOISE),
+                seed
+            );
+            LazyNoise.bindSeed(randomState, seed);
+            return randomState;
+        } catch (IllegalStateException e) {
+            throw new IOException("Runeruin noise registries are missing from the loaded registries", e);
+        }
     }
 
     private static Map<Long, ChunkAccess> generateChunks(
