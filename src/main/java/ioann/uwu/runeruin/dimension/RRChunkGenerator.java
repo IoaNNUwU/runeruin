@@ -161,13 +161,6 @@ public class RRChunkGenerator extends ChunkGenerator {
         DeepCavesAndLostCavesGen.generateLostCavesCeiling(chunk, randomState);
         DeepCavesAndLostCavesGen.generateLostCavesFloor(chunk, randomState);
 
-        /*
-        DeepCavesGen.generateDeepCavesFloor(chunk, randomState);
-        LostCavesGen.generateLostCavesCeiling(chunk, randomState);
-
-        LostCavesGen.generateLostCavesFloor(chunk, randomState);
-         */
-
         VoidGen.generateVoidCeiling(chunk, randomState);
     }
 

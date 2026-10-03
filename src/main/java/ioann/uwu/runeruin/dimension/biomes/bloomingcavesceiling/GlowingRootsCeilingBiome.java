@@ -19,10 +19,6 @@ public class GlowingRootsCeilingBiome {
 
         MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
 
-        // mobs.addSpawn(MobCategory.MONSTER, 10, new MobSpawnSettings.SpawnerData(EntityType.SLIME, 1, 1));
-        // mobs.addSpawn(MobCategory.MONSTER, 30, new MobSpawnSettings.SpawnerData(EntityType.BOGGED, 4, 4));
-        // mobs.addSpawn(MobCategory.CREATURE, 10, new MobSpawnSettings.SpawnerData(EntityType.FROG, 2, 5));
-
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.ROOTED_AZALEA_TREE);
@@ -37,15 +33,11 @@ public class GlowingRootsCeilingBiome {
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
-        //      .grassColorOverride(0xFFAA70);
 
         Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
                 .hasPrecipitation(true)
                 .temperature(1f)
                 .downfall(0.5f)
-                //.setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
-                //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
-                //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
                 .mobSpawnSettings(mobs.build())
