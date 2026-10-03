@@ -18,7 +18,7 @@ import static ioann.uwu.runeruin.dimension.Const.*;
 
 public class DeepCavesAndLostCavesGen {
 
-    private static final LazyNoise floorNoise = new LazyNoise("LostCavesFloorNoise", SingleNoise::new);
+    private static final LazyNoise floorNoise = LazyNoise.single("LostCavesFloorNoise", 1f);
 
     private static final HangingTerrainGenerator.Profile HANGING_MOSS = new HangingTerrainGenerator.Profile(
             DeepCavesAndLostCavesGen::deepCavesFloorColumnAt,
@@ -37,19 +37,20 @@ public class DeepCavesAndLostCavesGen {
             RR.id("hanging_moss_shape")
     );
 
+    public static int lostCavesFloorY(int x, int z, RandomState randomState) {
+        float noise = floorNoise.getOrCreateNoise(randomState).noise(x, z);
+        int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
+        return LOST_CAVES_Y + biomeHeight;
+    }
+
     public static void generateLostCavesFloor(ChunkAccess chunk, RandomState randomState) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         BlockState deepslate = Blocks.DEEPSLATE.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-
-                float noise = floorNoise.getOrCreateNoise(randomState)
-                        .noise(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z);
-
-                int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
-
-                for (int y = LOST_CAVES_Y; y < LOST_CAVES_Y + biomeHeight + 1; y++) {
+                int topY = lostCavesFloorY(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z, randomState);
+                for (int y = LOST_CAVES_Y; y <= topY; y++) {
                     chunk.setBlockState(pos.set(x, y, z), deepslate);
                 }
             }

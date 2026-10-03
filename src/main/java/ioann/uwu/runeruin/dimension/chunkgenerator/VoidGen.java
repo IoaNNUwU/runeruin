@@ -1,7 +1,6 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
-import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -12,7 +11,7 @@ import static ioann.uwu.runeruin.dimension.Const.*;
 
 public class VoidGen {
 
-    private static final LazyNoise ceilingNoise = new LazyNoise("voidCeilingNoise", SingleNoise::new);
+    private static final LazyNoise ceilingNoise = LazyNoise.single("voidCeilingNoise", 1f);
 
     public static void generateVoidCeiling(ChunkAccess chunk, RandomState randomState) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();

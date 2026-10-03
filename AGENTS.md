@@ -138,4 +138,6 @@ Two independent systems:
 
 These change existing worlds, so design them first: adding, removing or reordering a biome list entry (shifts every border in the layer), renaming noise seed strings, changing `RRTerrainSurfaces`, changing a structure algorithm (seams in half-generated structures).
 
+A new noise takes its name into the seed: `LazyNoise.single(name, frequency)` or `Noise.hashString(name + seed)`. A noise built from the bare world seed repeats every other such noise; the lost and blooming cave floors once had the same relief that way.
+
 Procedures for features, biomes and structures: the `worldgen-*` skills.
