@@ -27,7 +27,7 @@ Labels show where an issue stands:
 | biome         | `biome: <name>`                                                           | a specific biome                              |
 | infra         | `infra`                                                                   | scripts, build, CI, agent docs                |
 
-Only the maintainer can change labels. A bug becomes `confirmed` once it is reproduced, a feature becomes `accepted` once the maintainer agrees with it. Issues that will not be done are closed as "not planned".
+Only the maintainer can change labels. A bug becomes `confirmed` once it is reproduced, a feature becomes `accepted` once the maintainer agrees with it. Issues that will not be done are closed with the reason "not planned", which GitHub offers next to the Close button; no label is needed.
 
 What happens after `confirmed` or `accepted` is shown by the pull request, not by a label: an open draft pull request means someone is working on it, a pull request ready for review means it waits for the maintainer, and the merge closes the issue.
 
