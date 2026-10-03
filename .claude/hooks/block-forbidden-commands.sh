@@ -22,6 +22,6 @@ matches '(^|[^[:alnum:]_-])(taskkill|stop-process|pkill|killall|kill)[^[:alnum:]
 matches '(^|[^[:alnum:]_-])(rm|rmdir|rd|del|remove-item)[^[:alnum:]_-][^|;&]*src[\\/]+generated' \
     && block "never delete src/generated or its .cache; run runData instead"
 matches '(^|[^[:alnum:]_-])gh(\.exe)?[^[:alnum:]_.][^|;&]*pr[[:space:]]+merge' \
-    && block "only the user merges pull requests"
+    && block "only the maintainer merges pull requests"
 
 exit 0

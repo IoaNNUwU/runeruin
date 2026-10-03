@@ -37,18 +37,6 @@ if ($worktree -eq (Get-NormalizedPath $projectRoot)) {
 
 $branch = (& git -C $worktree branch --show-current).Trim()
 
-# Pull requests are merged on GitHub, maybe squashed or rebased, so ask GitHub whether the last commit was merged.
-if ($branch) {
-    $head = (& git -C $worktree rev-parse HEAD).Trim()
-    $merged = & gh pr list --repo IoaNNUwU/runeruin --state merged --search $head --json number --jq length
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not query pull requests with gh.'
-    }
-    if ($merged -eq '0') {
-        throw "No merged pull request contains $branch at $head."
-    }
-}
-
 # Git for Windows follows junctions while deleting ignored directories, so a linked
 # .mc-sources or run would wipe the shared cache or game directory. Unlink them first.
 Get-ChildItem -LiteralPath $worktree -Force |
@@ -64,6 +52,6 @@ Invoke-Git -C $projectRoot worktree remove $worktree
 Write-Host "Removed worktree $worktree"
 
 if ($branch) {
-    # -D: -d cannot see a merge made on GitHub; the merged pull request was checked above.
-    Invoke-Git -C $projectRoot branch -D $branch
+    # -d (not -D) keeps a branch with commits that are neither pushed to its upstream nor in main.
+    Invoke-Git -C $projectRoot branch -d $branch
 }

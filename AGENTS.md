@@ -4,51 +4,26 @@ NeoForge mod `runeruin` for Minecraft 26.2.0 + NeoForge 26.2.0.59 (official Moja
 
 Commands below are for Windows PowerShell. On Linux/macOS run the `scripts/*.ps1` with `pwsh` (PowerShell 7), e.g. `pwsh ./scripts/start-task.ps1 feature giant_goblet`, and Gradle as `./gradlew`.
 
-## Issues and pull requests
-
-All work is tracked in the issues of `IoaNNUwU/runeruin` and reaches its `main` only through pull requests. Use `gh` for both. **The maintainer** (`IoaNNUwU`) squash-merges pull requests (the PR title and body become the commit on `main`), decides on stages and closes issues. **The user** is whoever drives the agent: the maintainer or a contributor working in a fork.
-
-Remotes: `upstream` is always `IoaNNUwU/runeruin` (`start-task.ps1` adds it, `gh` targets it); `origin` is where task branches are pushed, the repository itself or the contributor's fork.
-
-Agents may, without asking: create issues and comment on them, push task branches to `origin`, open draft pull requests and edit them, change labels (only the maintainer has the permission). A PR becomes ready for review only after the user's explicit approval. Agents never merge a pull request, push to `main`, merge into `main` locally or close an issue.
-
-| Group         | Labels                                                                                          |
-|---------------|-------------------------------------------------------------------------------------------------|
-| type          | `bug`, `enhancement`                                                                            |
-| bug stage     | `needs triage` → `confirmed`                                                                    |
-| feature stage | `idea` → `accepted`                                                                             |
-| layer         | `layer: top`, `layer: blooming caves`, `layer: deep caves`, `layer: lost caves`, `layer: void`  |
-| biome         | `biome: <name>`, added when first needed                                                        |
-| infra         | `infra`: scripts, build, CI, agent docs                                                         |
-
-- An issue has one type, one stage and every layer or biome label that applies. A new stage replaces the old one: `gh issue edit 12 --remove-label idea --add-label accepted`. Labels are defined in `.github/labels.json`; a missing one is added there in the PR that needs it.
-- `needs triage` → `confirmed` once the bug is reproduced or the maintainer confirms it; `idea` → `accepted` only when the maintainer agrees. An issue the maintainer asks for directly is created as `confirmed` or `accepted`; a contributor's issue gets its labels from the maintainer.
-- After the stage label the pull request tells the rest: an open draft PR with `Fixes #12` means in progress, a PR ready for review means waiting for merge, the merge closes the issue. Rejected issues are closed as "not planned".
-- An issue with an open linked PR is taken. If the PR's last commit and comment are older than two weeks, it may be taken over once its author or the maintainer agrees: the maintainer in the chat, anyone else in a PR comment.
-- A design proposal (see below) goes into an issue comment as well as the chat, so the choice stays in the issue.
-
-Queries: `gh issue list --search "label:confirmed,accepted -linked:pr"` (free to take), `gh issue list --label "needs triage"`, `gh pr list --draft`.
-
 ## Task protocol
 
-Several agents work in this repository at once. Every change, documentation included, goes in its own issue, task branch, worktree and pull request; never edit files in the shared main checkout.
+Several agents work in this repository at once. Every change, documentation included, goes in its own task branch and worktree; never edit files in the shared main checkout.
 
 1. Run `git branch --show-current` and `git status --short --branch`.
-2. Find the issue (`gh issue view 12`, `gh issue list --search …`) or create it with its labels. Check that it is not taken.
-3. Create the task worktree: `feature` or `bug`, a short snake_case name from the request, no `add_` prefix.
+2. Create the task worktree: `feature` or `bug`, a short snake_case name from the request, no `add_` prefix.
 
    ```powershell
    .\scripts\start-task.ps1 feature giant_goblet
    ```
 
-   It adds and fetches `upstream`, creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from `upstream/main`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option).
-4. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
-5. After the first commit run `git push -u origin HEAD` and open a draft PR titled like a commit subject, its body in the format of `.github/pull_request_template.md` with `Fixes #12`: `gh pr create --draft --title "…" --body-file <file>`. Push every later commit.
-6. Before the final report: `git fetch upstream`, `git merge upstream/main`, resolve conflicts, repeat the checks and push. Give the report in the chat and wait: the user reviews the changes and the Decisions and explicitly approves them. Only then write the report into the PR body (`gh pr edit 34 --body-file <file>`) and mark it ready: `gh pr ready 34`. Requested changes are follow-ups (step 7).
-7. Follow-ups stay in the same issue, branch, worktree and PR; while working on them, move a ready PR back to draft (`gh pr ready 34 --undo`). Start a new issue and branch only for an unrelated feature or bug; work after the merge also needs a new branch, since GitHub deletes the merged one.
-8. Remove a worktree only when the user asks, after its PR is merged, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it checks that a merged pull request contains the branch and unlinks `.mc-sources` first, whereas `git worktree remove --force` deletes the shared sources cache through the junction.
+   It creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from the local `main`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option).
+3. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
+4. Follow-ups after a commit stay in the same branch and worktree. Start a new branch only for an unrelated feature or bug.
+5. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
+6. Remove a worktree only when the user asks, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` deletes the shared sources cache through the junction, and it keeps the branch unless its commits are pushed or in `main`.
 
-Git hooks in `.githooks` (enabled by the setup script) reject any commit on `main`, any push to `main`, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
+`main` changes only through pull requests on GitHub: never commit on it, merge into it or push to it. Git hooks in `.githooks` (enabled by the setup script) reject commits on `main`, pushes to `main`, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
+
+Work with GitHub, in this repository or in the user's fork (issues, pushing, pull requests), only when the user asks for it, in the chat or in their personal agent instructions; then follow [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Questions, designs, reports
 
@@ -63,15 +38,14 @@ Git hooks in `.githooks` (enabled by the setup script) reject any commit on `mai
 3. `gradlew.bat runGameTestServer` — mod and datapack load, GameTests in `preview/RRGameTests`
 4. shapes: `runPreview` of the matching job (`headless-preview` skill); models, textures, translations: `python scripts/lint_assets.py` after `runData`, and renders from `scripts/render_model.py` / `scripts/render_texture_tile.py`
 5. `gradlew.bat build`
-6. CI on the pushed PR: `gh pr checks 34 --watch`
 
 Lighting, render layers, interaction and biome placement need the game: list them under "Check in game".
 
-**Final report**, also for partial work: first in the chat, in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions) with the PR link, the branch, the worktree path and the output of `git status --short --branch`; after the user approves it, also in the PR body, so it outlives the chat. End the chat report with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
+**Final report**, also for partial work: in the chat, in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions), with the branch, the worktree path and the output of `git status --short --branch`. The user reviews the changes and the Decisions and approves them; only then may a pull request become ready for review. End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
 
 ## Commits and code
 
-- Commit subject and PR title in the imperative, no prefix: `Make floating moss sink under creatures that stand still`. No attribution lines (`Co-Authored-By`, "Generated with …").
+- Commit subject in the imperative, no prefix: `Make floating moss sink under creatures that stand still`. No attribution lines (`Co-Authored-By`, "Generated with …").
 - Reduce code rather than grow it: fix existing code instead of adding more, change an algorithm instead of adding another condition, comment only important points. Keep the surrounding style; packing code onto one line is not less code.
 - Imports one per line, sorted, no wildcards: the shared registry files then merge cleanly.
 

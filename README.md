@@ -52,4 +52,4 @@ Tasks are [issues](https://github.com/IoaNNUwU/runeruin/issues); labels show the
 - [In progress](https://github.com/IoaNNUwU/runeruin/pulls?q=is%3Apr+is%3Aopen+draft%3Atrue) and [waiting for merge](https://github.com/IoaNNUwU/runeruin/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse)
 - By layer: [top](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+top%22), [blooming caves](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+blooming+caves%22), [deep caves](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+deep+caves%22), [lost caves](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+lost+caves%22), [void](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+void%22)
 
-Contributing: pick a free issue, fork the repository, open a draft pull request with `Fixes #<issue>` in its description, mark it ready when done.
+Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).

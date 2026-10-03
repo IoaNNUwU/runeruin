@@ -20,21 +20,7 @@ if (Test-Path -LiteralPath $worktree) {
     throw "Directory already exists, choose another task name: $worktree"
 }
 
-# In a fork origin is the fork, so every clone names the repository itself upstream.
-if (@(& git -C $projectRoot remote) -notcontains 'upstream') {
-    & git -C $projectRoot remote add upstream https://github.com/IoaNNUwU/runeruin.git
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not add the upstream remote.'
-    }
-}
-
-& git -C $projectRoot fetch upstream
-if ($LASTEXITCODE -ne 0) {
-    throw 'Could not fetch upstream.'
-}
-
-# --no-track: the branch tracks origin after the first push, never upstream/main.
-& git -C $projectRoot worktree add --no-track -b $branch $worktree upstream/main
+& git -C $projectRoot worktree add -b $branch $worktree main
 if ($LASTEXITCODE -ne 0) {
     throw "Could not create $branch at $worktree. If the branch exists, choose another task name."
 }
