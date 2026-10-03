@@ -75,9 +75,9 @@ $sharedGame = Join-Path $userHome '.runeruin/game'
 $lockPath = Join-Path $cacheRoot '.setup.lock'
 $gradleUserHome = Join-Path $userHome '.gradle'
 $vanillaTextureVersion = $minecraftVersion -replace '\.0$', ''
-$vanillaTextureVersionText = "minecraft=$vanillaTextureVersion`nsource=minecraft_${vanillaTextureVersion}_client.jar"
+$vanillaTextureVersionText = "minecraft=$vanillaTextureVersion`nsource=minecraft_${vanillaTextureVersion}_client.jar`ncontent=textures,models"
 $vanillaTextures = Join-Path $projectRoot '.vanilla-textures'
-$vanillaTextureSentinel = Join-Path $vanillaTextures 'assets/minecraft/textures/block/oak_planks.png'
+$vanillaTextureSentinel = Join-Path $vanillaTextures 'assets/minecraft/models/block/cross.json'
 
 function Ensure-VanillaTextures {
     if ((Read-VersionText -Directory $vanillaTextures) -eq $vanillaTextureVersionText -and
@@ -85,7 +85,7 @@ function Ensure-VanillaTextures {
         return
     }
 
-    Write-Host "Extracting Minecraft $vanillaTextureVersion textures into .vanilla-textures..."
+    Write-Host "Extracting Minecraft $vanillaTextureVersion textures and models into .vanilla-textures..."
     Push-Location $projectRoot
     try {
         & $wrapper '--gradle-user-home' $gradleUserHome 'extractVanillaTextures'

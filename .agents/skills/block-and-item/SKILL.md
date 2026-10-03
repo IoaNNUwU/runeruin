@@ -23,4 +23,4 @@ A new block touches 8–10 files. Copy the closest existing block (same shape, r
 | 9 | `assets/runeruin/lang/en_us.json` and `ru_ru.json` | `block.runeruin.<id>` / `item.runeruin.<id>` in both files; they are hand-written. A missing key shows the raw key in game. |
 | 10 | `assets/runeruin/textures/{block,item,entity}/` | PNGs, made with the `minecraft-pixel-texture-generation` skill. A missing texture only shows as magenta-black in game. |
 
-Then run `compileJava` and `runData`. Datagen does not catch a missing texture, translation, wrong render layer, drops or tool, so list those under "Check in game" in the final report.
+Then run `compileJava`, `runData` and `python scripts/lint_assets.py`: the linter catches a missing model, texture or translation and a texture of the wrong size. Render the new model with `scripts/render_model.py`. Nothing catches a wrong render layer, drops or tool, so list those under "Check in game" in the final report.

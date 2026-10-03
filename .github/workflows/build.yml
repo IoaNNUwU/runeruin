@@ -26,6 +26,10 @@ jobs:
       - name: Datagen
         run: ./gradlew runData
 
+      # Models, textures and translations; vanilla references are not checked without .vanilla-textures.
+      - name: Asset lint
+        run: python3 scripts/lint_assets.py
+
       - name: GameTests and build
         run: ./gradlew runGameTestServer build
 

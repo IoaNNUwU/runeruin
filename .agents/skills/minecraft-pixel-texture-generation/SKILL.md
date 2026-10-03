@@ -53,4 +53,12 @@ python .agents/skills/minecraft-pixel-texture-generation/scripts/compare_texture
 python .agents/skills/minecraft-pixel-texture-generation/scripts/compare_texture_shape.py vanilla.png custom.png --exact-alpha
 ```
 
-Run the checker after conversion and the shape comparator for vanilla alternatives. Also ensure every texture identifier used by generated block and item models resolves to a PNG under the matching `textures/block/` or `textures/item/` directory. Inventory sprites need their own correctly named item texture when the model points to `textures/item/<item>.png`.
+Run the checker after conversion and the shape comparator for vanilla alternatives.
+
+Judge seams and repetition on a tiled 3×3 render, the way a wall of the block looks, never on the single 16×16 file. Pass texture ids or paths; several textures go side by side, e.g. the new one next to its vanilla counterpart:
+
+```powershell
+python scripts/render_texture_tile.py exports/tile.png runeruin:block/moss_light minecraft:block/moss_block --grid 3 --scale 8
+```
+
+On a model, check the texture with `scripts/render_model.py` (the `minecraft-model-texture-analysis` skill). After `runData`, `python scripts/lint_assets.py` checks that every texture a model uses exists and that block and item textures are 16×16 (or animated 16-wide strips); a deliberate other size goes into its `OTHER_SIZES` with the reason.

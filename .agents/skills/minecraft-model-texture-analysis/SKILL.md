@@ -34,7 +34,7 @@ Inspect the resulting `build/libs/*.jar` as a zip to compare the shipped model o
 
 ## Extract JSON face UVs
 
-The bundled script supports Minecraft cuboid/block model JSON with `elements`, `faces`, texture variables, project parent models, common vanilla cube parents (`cube_all`, `cube`, `cube_bottom_top`, vertical/horizontal `cube_column`, and orientable variants), and omitted `uv` values. It writes one PNG per selected face and a `manifest.json` that maps the crop back to the element, direction, texture resource, UV coordinates, source pixels, and face rotation. Other vanilla parents need their model assets available through `--assets-root`.
+The bundled script supports Minecraft cuboid/block model JSON with `elements`, `faces`, texture variables, project parent models, common vanilla cube parents (`cube_all`, `cube`, `cube_bottom_top`, vertical/horizontal `cube_column`, and orientable variants), and omitted `uv` values. It writes one PNG per selected face and a `manifest.json` that maps the crop back to the element, direction, texture resource, UV coordinates, source pixels, and face rotation. Other vanilla parents resolve from `.vanilla-textures/assets/minecraft/models`, extracted by the setup script.
 
 ```powershell
 python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_faces.py src/generated/resources/assets/runeruin/models/block/firefly_in_a_jar.json --element jar_glass_body --face north
@@ -44,6 +44,17 @@ python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_fac
 The output defaults to `exports/model_faces/<namespace>/<model path>/`. Read `manifest.json` before judging the image: the script crops the source UV rectangle and records rotation/mirroring without baking those transforms into the PNG. UVs outside the texture bounds are clipped and called out in the manifest and warnings. If Pillow is missing, install it in the active Python environment with `python -m pip install Pillow`.
 
 Minecraft's cuboid element format has no standard semantic `name` field. A project may add `name` to its generated element JSON for analysis selectors; the Minecraft 26.2 model deserializer ignores this extra field. If names are unavailable, select by array index with `--element '#0'`, then use `from`, `to`, face directions, and texture variables in the manifest to identify the part. Report ambiguity instead of treating array order as a stable semantic label.
+
+## Render a model
+
+`scripts/render_model.py` renders a block or item model to one PNG: isometric views from south-east and north-west, the south face and the top. It bakes like the game (vertex order and UV rotation as in `FaceBakery`, element rotation with `rescale`, directional shade) and multiplies faces with a `tintindex` by `--tint` (default grass). Item models on `item/generated` show their layers as a sprite. Use it to judge geometry and UV placement after a model or texture change instead of writing a renderer:
+
+```powershell
+python scripts/render_model.py exports/firefly_in_a_jar.png runeruin:block/firefly_in_a_jar
+python scripts/render_model.py exports/model.png glowing_mushroom --scale 24
+```
+
+A bare name tries `runeruin:block/` then `runeruin:item/`. Blockstate rotations, cullfaces, emissive light and render types are not applied; transparency is blended in draw order.
 
 ## Assess model changes
 

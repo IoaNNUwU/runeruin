@@ -34,10 +34,10 @@ Git hooks in `.githooks` (enabled by the setup script) reject commits to `main` 
 1. `gradlew.bat compileJava`
 2. `gradlew.bat runData` — after any change to datagen, blocks/items, models, tags, loot or worldgen bootstrap
 3. `gradlew.bat runGameTestServer` — mod and datapack load, GameTests in `preview/RRGameTests`
-4. shapes: `runPreview` of the matching job (`headless-preview` skill); textures: the scripts of `minecraft-pixel-texture-generation`
+4. shapes: `runPreview` of the matching job (`headless-preview` skill); models, textures, translations: `python scripts/lint_assets.py` after `runData`, and renders from `scripts/render_model.py` / `scripts/render_texture_tile.py`
 5. `gradlew.bat build`
 
-Rendering, missing textures or translations, interaction and biome placement need the game: list them under "Check in game".
+Lighting, render layers, interaction and biome placement need the game: list them under "Check in game".
 
 **Final report**, also for partial work:
 
@@ -74,7 +74,7 @@ Gradle needs any installed JDK; the wrapper downloads Java 25.
 | `runPreview` | headless shape export into `exports/` (`headless-preview` skill) |
 | `runData` | datagen into `src/generated/resources` |
 | `build` | mod jar |
-| `extractMcSources` | Minecraft + NeoForge sources into `.mc-sources/`, textures into `.vanilla-textures/` |
+| `extractMcSources` | Minecraft + NeoForge sources into `.mc-sources/`, textures and models into `.vanilla-textures/` |
 
 - Never `clean`, `--rerun-tasks`, `--refresh-dependencies`, `--offline` or `--stop`; never kill Java or Gradle; never start, restart or wait for the game. A Claude Code hook blocks these.
 - `src/generated` is not in git. Never delete it or `src/generated/resources/.cache`, never hand-write `src/generated/**`: change the Java bootstrap and run `runData` yourself.
@@ -88,7 +88,7 @@ Do not use Minecraft or NeoForge APIs from memory. Search `.mc-sources/` (`net/m
 
 - No `.mc-sources/VERSION.txt`: run `.\scripts\setup-codex-worktree.ps1`. If it fails or the file is still missing, find the cause in the script's output, report it to the user and stop the task.
 - `.ignore` un-ignores `.mc-sources` for ripgrep; if Grep still skips it, use `rg --no-ignore-vcs`. Do not search `~/.gradle`.
-- Vanilla textures: `.vanilla-textures/assets/minecraft/textures/`.
+- Vanilla textures and models: `.vanilla-textures/assets/minecraft/{textures,models}/`.
 
 ## Skills
 
