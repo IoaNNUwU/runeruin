@@ -72,7 +72,6 @@ $cacheRoot = Join-Path $userHome '.runeruin/mc-sources'
 $sharedSources = Join-Path $cacheRoot "minecraft-$minecraftVersion-neoforge-$neoVersion-official"
 $worktreeSources = Join-Path $projectRoot '.mc-sources'
 $sharedGame = Join-Path $userHome '.runeruin/game'
-$legacyGame = Join-Path $projectRoot 'run'
 $lockPath = Join-Path $cacheRoot '.setup.lock'
 $gradleUserHome = Join-Path $userHome '.gradle'
 $vanillaTextureVersion = $minecraftVersion -replace '\.0$', ''
@@ -127,32 +126,8 @@ try {
         throw "Could not acquire the Minecraft sources cache lock: $lockPath"
     }
 
-    $sharedGameExists = Test-Path -LiteralPath $sharedGame
-    if ($sharedGameExists -and -not (Test-Path -LiteralPath $sharedGame -PathType Container)) {
-        throw "The shared game path is not a directory: $sharedGame"
-    }
-
-    if (-not $sharedGameExists) {
-        $legacyGameItem = Get-Item -LiteralPath $legacyGame -Force -ErrorAction SilentlyContinue
-        if ($null -ne $legacyGameItem -and -not ($legacyGameItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
-            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $sharedGame) | Out-Null
-            Write-Host "Moving the existing game directory to the shared location..."
-            try {
-                Move-Item -LiteralPath $legacyGame -Destination $sharedGame -ErrorAction Stop
-            }
-            catch {
-                # Move-Item cannot move a directory between volumes. Copy the
-                # existing game data, then remove only the copied legacy dir.
-                Copy-Item -LiteralPath $legacyGame -Destination $sharedGame -Recurse -Force
-                Remove-Item -LiteralPath $legacyGame -Recurse -Force
-            }
-            New-DirectoryLink -Link $legacyGame -Target $sharedGame
-            Write-Host "Linked the legacy run directory: $legacyGame -> $sharedGame"
-        }
-        else {
-            New-Item -ItemType Directory -Force -Path $sharedGame | Out-Null
-        }
-    }
+    # runClient uses this shared directory; every other run keeps its own <checkout>/run.
+    New-Item -ItemType Directory -Force -Path $sharedGame | Out-Null
 
     $localSourcesReady = $false
     $existingWorktreeItem = Get-Item -LiteralPath $worktreeSources -Force -ErrorAction SilentlyContinue
