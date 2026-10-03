@@ -17,7 +17,7 @@ case "$branch" in
         for head in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
             [ -e "$(git rev-parse --git-path $head)" ] && exit 0
         done
-        [ "$RUNERUIN_ALLOW_MAIN_COMMIT" = 1 ] || fail "every change goes in a task branch; main only receives merges." ;;
+        fail "every change goes in a task branch; main only receives merges." ;;
     feature/add_*)
         fail "branch names do not start with add_: $branch" ;;
     feature/*|bug/*)
