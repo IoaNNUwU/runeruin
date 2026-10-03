@@ -62,6 +62,9 @@ public final class PreviewCommands {
             }
         } catch (Exception e) {
             RR.LOGGER.error("Headless preview '{}' failed. Known jobs:\n{}", job, PreviewCatalog.listText(), e);
+            // Exit non-zero so runPreview fails. Not on this thread: the server shutdown hook joins it.
+            new Thread(() -> System.exit(1), "Preview failure exit").start();
+            return;
         }
         server.halt(false);
     }

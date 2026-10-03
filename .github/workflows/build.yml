@@ -26,5 +26,16 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew build
+      # src/generated is not in git. Separate invocation: runData depends on
+      # processResources, so it cannot be ordered before it within one build.
+      - name: Datagen
+        run: ./gradlew runData
+
+      - name: GameTests and build
+        run: ./gradlew runGameTestServer build
+
+      - name: Upload mod jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: runeruin-jar
+          path: build/libs/*.jar
