@@ -1,7 +1,9 @@
 package ioann.uwu.runeruin.datagen;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.ArcaneStonePortalBlock;
 import ioann.uwu.runeruin.blocks.BigLilyPadBlock;
@@ -33,9 +35,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 public class DatagenModelProvider extends ModelProvider {
 
@@ -175,8 +178,17 @@ public class DatagenModelProvider extends ModelProvider {
                         floatingMossPoint(x + 1, z + 1, FloatingMossBlock.MOSS_INSET, 16), "moss", 0, "up", "down");
                 addJarElement(cap, "rooted_soil_floor", floatingMossPoint(x, z, FloatingMossBlock.SOIL_INSET, 8),
                         floatingMossPoint(x + 1, z + 1, FloatingMossBlock.SOIL_INSET, 14), "bottom", 0, "down");
+                for (Direction side : Direction.Plane.HORIZONTAL) {
+                    int nx = x + side.getStepX();
+                    int nz = z + side.getStepZ();
+                    // A seam to a connected neighbour hides inside the mat until that neighbour sinks lower.
+                    if (nx < 0 || nx > 2 || nz < 0 || nz > 2) {
+                        addFloatingMossWall(cap, "moss_edge", x, z, side, FloatingMossBlock.MOSS_INSET, 14, 16, false);
+                        addFloatingMossWall(cap, "soil", x, z, side, FloatingMossBlock.SOIL_INSET, 8, 14, false);
+                    }
+                }
                 addFloatingMossPart(blockModels, blockState, "cell_" + x + "_" + z, cap,
-                        cell == null ? null : new ConditionBuilder().term(cell, true));
+                        condition -> cell == null ? condition : condition.term(cell, true));
                 if (cell == null) {
                     inventory.addAll(cap);
                 }
@@ -188,17 +200,15 @@ public class DatagenModelProvider extends ModelProvider {
                         continue;
                     }
                     JsonArray wall = new JsonArray();
-                    addFloatingMossWall(wall, "moss_edge", x, z, side, FloatingMossBlock.MOSS_INSET, 12, 16);
-                    addFloatingMossWall(wall, "soil", x, z, side, FloatingMossBlock.SOIL_INSET, 5, 14);
-                    ConditionBuilder condition = new ConditionBuilder()
-                            .term(Objects.requireNonNull(FloatingMossBlock.cell(nx, nz)), false);
-                    if (cell != null) {
-                        condition.term(cell, true);
-                    } else {
+                    addFloatingMossWall(wall, "moss_edge", x, z, side, FloatingMossBlock.MOSS_INSET, 12, 16, true);
+                    addFloatingMossWall(wall, "soil", x, z, side, FloatingMossBlock.SOIL_INSET, 5, 14, true);
+                    BooleanProperty outer = Objects.requireNonNull(FloatingMossBlock.cell(nx, nz));
+                    if (cell == null) {
                         inventory.addAll(wall);
                     }
-                    addFloatingMossPart(blockModels, blockState,
-                            "wall_" + x + "_" + z + "_" + side.getSerializedName(), wall, condition);
+                    addFloatingMossPart(blockModels, blockState, "wall_" + x + "_" + z + "_" + side.getSerializedName(),
+                            wall, condition -> cell == null ? condition.term(outer, false)
+                                    : condition.term(outer, false).term(cell, true));
                 }
             }
         }
@@ -211,16 +221,41 @@ public class DatagenModelProvider extends ModelProvider {
     }
 
     private static void addFloatingMossPart(BlockModelGenerators blockModels, MultiPartGenerator blockState,
-                                            String name, JsonArray elements, @Nullable ConditionBuilder condition) {
-        JsonObject model = floatingMossModel(elements);
-        Identifier id = RR.id("block/floating_moss_" + name);
-        blockModels.modelOutput.accept(id, () -> model);
-        MultiVariant variant = BlockModelGenerators.plainVariant(id);
-        if (condition == null) {
-            blockState.with(variant);
-        } else {
-            blockState.with(condition, variant);
+                                            String name, JsonArray elements,
+                                            UnaryOperator<ConditionBuilder> condition) {
+        for (int sink = 0; sink <= FloatingMossBlock.SINK_STAGES; sink++) {
+            JsonObject model = floatingMossModel(sunkFloatingMoss(elements, sink));
+            Identifier id = RR.id("block/floating_moss_" + name + (sink == 0 ? "" : "_sunk_" + sink));
+            blockModels.modelOutput.accept(id, () -> model);
+            blockState.with(condition.apply(new ConditionBuilder().term(FloatingMossBlock.SINK, sink)),
+                    BlockModelGenerators.plainVariant(id));
         }
+    }
+
+    private static JsonArray sunkFloatingMoss(JsonArray elements, int sink) {
+        JsonArray sunk = elements.deepCopy();
+        for (JsonElement element : sunk) {
+            JsonArray from = element.getAsJsonObject().getAsJsonArray("from");
+            JsonArray to = element.getAsJsonObject().getAsJsonArray("to");
+            double[] min = {from.get(0).getAsDouble(), from.get(1).getAsDouble(), from.get(2).getAsDouble()};
+            double[] max = {to.get(0).getAsDouble(), to.get(1).getAsDouble(), to.get(2).getAsDouble()};
+            // Side UVs default to the element position; pin them so the texture sinks with the model.
+            for (Map.Entry<String, JsonElement> face : element.getAsJsonObject().getAsJsonObject("faces").entrySet()) {
+                double[] u = switch (face.getKey()) {
+                    case "north" -> new double[]{16 - max[0], 16 - min[0]};
+                    case "south" -> new double[]{min[0], max[0]};
+                    case "west" -> new double[]{min[2], max[2]};
+                    case "east" -> new double[]{16 - max[2], 16 - min[2]};
+                    default -> null;
+                };
+                if (u != null) {
+                    face.getValue().getAsJsonObject().add("uv", vector(new double[]{u[0], 16 - max[1], u[1], 16 - min[1]}));
+                }
+            }
+            from.set(1, new JsonPrimitive(min[1] - FloatingMossBlock.sinkPixels(sink)));
+            to.set(1, new JsonPrimitive(max[1] - FloatingMossBlock.sinkPixels(sink)));
+        }
+        return sunk;
     }
 
     private static JsonObject floatingMossModel(JsonArray elements) {
@@ -246,7 +281,7 @@ public class DatagenModelProvider extends ModelProvider {
     }
 
     private static void addFloatingMossWall(JsonArray elements, String texture, int x, int z, Direction side,
-                                            double inset, double minY, double maxY) {
+                                            double inset, double minY, double maxY, boolean withInner) {
         double[] from = floatingMossPoint(x, z, inset, minY);
         double[] to = floatingMossPoint(x + 1, z + 1, inset, maxY);
         int axis = side.getAxis() == Direction.Axis.X ? 0 : 2;
@@ -256,8 +291,9 @@ public class DatagenModelProvider extends ModelProvider {
             to[axis] = from[axis];
         }
         // A quad faces only one way; the inward face keeps the far drips visible from below.
-        addJarElement(elements, texture + "_wall", from, to, texture, 0,
-                side.getSerializedName(), side.getOpposite().getSerializedName());
+        String[] faces = withInner ? new String[]{side.getSerializedName(), side.getOpposite().getSerializedName()}
+                : new String[]{side.getSerializedName()};
+        addJarElement(elements, texture + "_wall", from, to, texture, 0, faces);
     }
 
     private static void createAshenMushroomBlock(@NonNull BlockModelGenerators blockModels) {
