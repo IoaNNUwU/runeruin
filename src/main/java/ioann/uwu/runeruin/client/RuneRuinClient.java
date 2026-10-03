@@ -96,6 +96,7 @@ public class RuneRuinClient {
                 RRBlocks.BIG_LILY_PAD.get(),
                 RRBlocks.WATER_LILY_ROOT.get(),
                 RRBlocks.WATER_LILY_LEAF.get(),
+                RRBlocks.WATER_LILY_FLOWER.get(),
                 RRBlocks.BAOBAB_LEAVES.get()
         );
     }

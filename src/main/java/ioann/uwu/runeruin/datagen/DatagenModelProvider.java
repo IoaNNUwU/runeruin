@@ -32,6 +32,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jspecify.annotations.NonNull;
 
+import java.util.List;
+
 public class DatagenModelProvider extends ModelProvider {
 
     public DatagenModelProvider(PackOutput output) {
@@ -203,7 +205,36 @@ public class DatagenModelProvider extends ModelProvider {
                 ItemModelUtils.constantTint(-12012264)
         );
 
-        blockModels.createCrossBlockWithDefaultItem(RRBlocks.WATER_LILY_FLOWER.get(), BlockModelGenerators.PlantType.NOT_TINTED);
+        // The flower lies flat on its own pad, slightly above it.
+        JsonObject flowerModel = new JsonObject();
+        flowerModel.addProperty("ambientocclusion", false);
+        JsonObject flowerTextures = new JsonObject();
+        flowerTextures.addProperty("particle", "minecraft:block/lily_pad");
+        flowerTextures.addProperty("texture", "minecraft:block/lily_pad");
+        flowerTextures.addProperty("flower", "runeruin:block/water_lily_flower_top");
+        flowerModel.add("textures", flowerTextures);
+        JsonObject flowerDown = planeFace(0, 16, 16, 0);
+        JsonObject flowerUp = planeFace(0, 0, 16, 16);
+        for (JsonObject face : List.of(flowerDown, flowerUp)) {
+            face.addProperty("texture", "#flower");
+            face.remove("tintindex");
+        }
+        JsonArray flowerElements = new JsonArray();
+        flowerElements.add(horizontalPlane(0.25, planeFace(0, 16, 16, 0), planeFace(0, 0, 16, 16)));
+        flowerElements.add(horizontalPlane(2.0, flowerDown, flowerUp));
+        flowerModel.add("elements", flowerElements);
+
+        Identifier flowerModelId = RR.id("block/water_lily_flower");
+        blockModels.modelOutput.accept(flowerModelId, () -> flowerModel);
+        blockModels.blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(RRBlocks.WATER_LILY_FLOWER.get())
+                        .with(PropertyDispatch.initial(WaterLilyLeafBlock.FACING)
+                                .generate(facing -> rotatedTo(BlockModelGenerators.plainVariant(flowerModelId), facing)))
+        );
+        blockModels.registerSimpleItemModel(
+                RRBlocks.WATER_LILY_FLOWER.get(),
+                blockModels.createFlatItemModelWithBlockTexture(RRBlocks.WATER_LILY_FLOWER.get().asItem(), RRBlocks.WATER_LILY_FLOWER.get())
+        );
     }
 
     private static void createFloatingMoss(@NonNull BlockModelGenerators blockModels) {
@@ -393,13 +424,16 @@ public class DatagenModelProvider extends ModelProvider {
         // world cell. Select the inverse-rotated source cell first so that
         // the complete 2x2/3x3 texture rotates as one connected pad.
         BigLilyPadBlock.Part sourcePart = sourcePartFor(targetPart, facing);
-        MultiVariant variant = BlockModelGenerators.plainVariant(modelFor(sourcePart));
+        return rotatedTo(BlockModelGenerators.plainVariant(modelFor(sourcePart)), facing);
+    }
+
+    private static MultiVariant rotatedTo(MultiVariant variant, Direction facing) {
         return switch (facing) {
             case NORTH -> variant;
             case EAST -> variant.with(BlockModelGenerators.Y_ROT_90);
             case SOUTH -> variant.with(BlockModelGenerators.Y_ROT_180);
             case WEST -> variant.with(BlockModelGenerators.Y_ROT_270);
-            default -> throw new IllegalArgumentException("Big lily pad facing must be horizontal");
+            default -> throw new IllegalArgumentException("Lily pad facing must be horizontal");
         };
     }
 
@@ -461,17 +495,8 @@ public class DatagenModelProvider extends ModelProvider {
         textures.addProperty("texture", "minecraft:block/lily_pad");
         model.add("textures", textures);
 
-        JsonObject element = new JsonObject();
-        element.add("from", array(0.0, 0.25, 0.0));
-        element.add("to", array(16.0, 0.25, 16.0));
-
-        JsonObject faces = new JsonObject();
-        faces.add("down", planeFace(u0, v1, u1, v0));
-        faces.add("up", planeFace(u0, v0, u1, v1));
-        element.add("faces", faces);
-
         JsonArray elements = new JsonArray();
-        elements.add(element);
+        elements.add(horizontalPlane(0.25, planeFace(u0, v1, u1, v0), planeFace(u0, v0, u1, v1)));
         model.add("elements", elements);
 
         blockModels.modelOutput.accept(
@@ -486,6 +511,17 @@ public class DatagenModelProvider extends ModelProvider {
         result.add(y);
         result.add(z);
         return result;
+    }
+
+    private static JsonObject horizontalPlane(double y, JsonObject down, JsonObject up) {
+        JsonObject element = new JsonObject();
+        element.add("from", array(0.0, y, 0.0));
+        element.add("to", array(16.0, y, 16.0));
+        JsonObject faces = new JsonObject();
+        faces.add("down", down);
+        faces.add("up", up);
+        element.add("faces", faces);
+        return element;
     }
 
     private static JsonObject planeFace(double u0, double v0, double u1, double v1) {

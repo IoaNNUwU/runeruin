@@ -337,7 +337,7 @@ public class RRBlocks {
             WaterLilyLeafBlock::new);
 
     public static final DeferredBlock<Block> WATER_LILY_FLOWER = register("water_lily_flower",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD).noCollision(),
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
             WaterLilyFlowerBlock::new);
 
     /** Interior portal block; no BlockItem (like nether portal). */

@@ -9,11 +9,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-/** A water lily bloom; it attaches to a root exactly like a leaf. */
+/** A water lily bloom lying on its own pad; it attaches to a root exactly like a leaf. */
 public class WaterLilyFlowerBlock extends WaterLilyLeafBlock {
     public static final MapCodec<WaterLilyFlowerBlock> CODEC = simpleCodec(WaterLilyFlowerBlock::new);
 
-    private static final VoxelShape SHAPE = Block.box(3.0, 0.0, 3.0, 13.0, 12.0, 13.0);
+    private static final VoxelShape SHAPE = Block.box(1.0, 0.0, 1.0, 15.0, 2.5, 15.0);
 
     public WaterLilyFlowerBlock(BlockBehaviour.Properties properties) {
         super(properties);

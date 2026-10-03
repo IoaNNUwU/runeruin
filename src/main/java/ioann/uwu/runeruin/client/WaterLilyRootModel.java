@@ -12,6 +12,7 @@ import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
@@ -46,24 +47,26 @@ public class WaterLilyRootModel implements DynamicBlockStateModel {
         this.base.collectParts(level, pos, state, random, parts);
         List<BakedQuad> quads = new ArrayList<>();
         for (BlockPos leaf : WaterLilyRootBlock.attachedLeaves(level, pos)) {
-            this.addStem(quads, leaf.getX() - pos.getX(), leaf.getY() - pos.getY(), leaf.getZ() - pos.getZ());
+            // The leaf position picks the variant, so a stem keeps its bends.
+            int variant = (int) Math.floorMod(Mth.getSeed(leaf), (long) VARIANTS);
+            this.addStem(quads, leaf.getX() - pos.getX(), leaf.getY() - pos.getY(), leaf.getZ() - pos.getZ(), variant);
         }
         if (!quads.isEmpty()) {
             parts.add(new StemPart(quads, this.base.particleMaterial()));
         }
     }
 
-    private void addStem(List<BakedQuad> quads, int dx, int dy, int dz) {
+    private void addStem(List<BakedQuad> quads, int dx, int dy, int dz, int variant) {
         Vector3f along = dx == 0 && dz == 0 ? new Vector3f(1, 0, 0) : new Vector3f(dx, 0, dz).normalize();
-        Vector3f bottomLeft = new Vector3f(0.5F, START_Y, 0.5F).fma(-MARGIN / 16.0F, along);
+        Vector3f bottomLeft = new Vector3f(0.5F, START_Y - BELOW / 16.0F, 0.5F).fma(-MARGIN / 16.0F, along);
         Vector3f bottomRight = new Vector3f(bottomLeft).fma(CELL_WIDTH / 16.0F, along);
         Vector3f topRight = new Vector3f(bottomRight).add(0, CELL_HEIGHT / 16.0F, 0);
         Vector3f topLeft = new Vector3f(bottomLeft).add(0, CELL_HEIGHT / 16.0F, 0);
 
         float u0 = this.sprite.getU((float) cellX(dx, dz) / WIDTH);
         float u1 = this.sprite.getU((float) (cellX(dx, dz) + CELL_WIDTH) / WIDTH);
-        float v0 = this.sprite.getV((float) cellY(dy) / HEIGHT);
-        float v1 = this.sprite.getV((float) (cellY(dy) + CELL_HEIGHT) / HEIGHT);
+        float v0 = this.sprite.getV((float) cellY(dy, variant) / HEIGHT);
+        float v1 = this.sprite.getV((float) (cellY(dy, variant) + CELL_HEIGHT) / HEIGHT);
         long bl = UVPair.pack(u0, v1);
         long br = UVPair.pack(u1, v1);
         long tr = UVPair.pack(u1, v0);
