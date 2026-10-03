@@ -25,6 +25,7 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.heightproviders.VeryBiasedToBottomHeight;
 import net.minecraft.world.level.levelgen.placement.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static ioann.uwu.runeruin.dimension.Const.*;
@@ -88,6 +89,13 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> JUNGLE_MEGA_TREE_ON_NON_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "jungle_mega_tree_on_non_moss");
     public static final ResourceKey<PlacedFeature> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.PLACED_FEATURE, "swamp_jungle_trees");
 
+    // Height bands that decorations start their surface scan from.
+    private static final int BLOOMING_FLOOR_TOP = BLOOMING_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
+    private static final int BLOOMING_CEILING_BOTTOM = BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
+    private static final int BLOOMING_CEILING_TOP = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
+    private static final int DEEP_CEILING_BOTTOM = DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
+    private static final int DEEP_CEILING_TOP = DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
+
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
         BlockPredicate glowingMushroomSupport = BlockPredicate.allOf(
@@ -98,29 +106,21 @@ public class RRPlacedFeatures {
                         RRBlocks.GLOWING_MUSHROOM.get()
                 ))
         );
+        BlockPredicate bloomingGround = BlockPredicate.matchesBlocks(
+                Blocks.MOSS_BLOCK,
+                Blocks.MOSSY_COBBLESTONE,
+                Blocks.STONE,
+                Blocks.CLAY,
+                Blocks.WATER
+        );
 
         for (CaveMushroomKind kind : CaveMushroomKind.values()) {
             ctx.register(kind.placedKey(), new PlacedFeature(
                     configuredFeatures.getOrThrow(kind.configuredKey()),
-                    List.of(
-                            CountPlacement.of(3),
-                            InSquarePlacement.spread(),
-                            HeightRangePlacement.uniform(
-                                    VerticalAnchor.absolute(LOST_CAVES_Y),
-                                    VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y)
-                            ),
-                            EnvironmentScanPlacement.scanningFor(
-                                    Direction.DOWN,
-                                    BlockPredicate.allOf(
-                                            BlockPredicate.hasSturdyFace(Direction.UP),
-                                            BlockPredicate.not(BlockPredicate.matchesBlocks(CaveMushroomKind.BLOCKS))
-                                    ),
-                                    BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                    32
-                            ),
-                            RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                            BiomeFilter.biome()
-                    )
+                    floorPlacement(CountPlacement.of(3), LOST_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.allOf(
+                            BlockPredicate.hasSturdyFace(Direction.UP),
+                            BlockPredicate.not(BlockPredicate.matchesBlocks(CaveMushroomKind.BLOCKS))
+                    ), 32, 1)
             ));
         }
 
@@ -140,52 +140,21 @@ public class RRPlacedFeatures {
                 VegetationPlacements.treePlacement(PlacementUtils.countExtra(8, 0.1F, 1))
         ));
 
-        List<PlacementModifier> smallWallMushroomPlacement = List.of(
-                CountPlacement.of(64),
-                InSquarePlacement.spread(),
-                HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
-                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT),
-                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_TERRAIN_HEIGHT),
-                        1
-                )),
-                new WallPlacementFilter(
-                        List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
-                        List.of(Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(), Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState())
-                ),
-                BiomeFilter.biome()
-        );
-
         ctx.register(SMALL_RED_WALL_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_RED_WALL_MUSHROOM),
-                smallWallMushroomPlacement
+                wallMushroomPlacement(64)
         ));
         ctx.register(SMALL_BROWN_WALL_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_BROWN_WALL_MUSHROOM),
-                smallWallMushroomPlacement
+                wallMushroomPlacement(64)
         ));
-
-        List<PlacementModifier> bigWallMushroomPlacement = List.of(
-                CountPlacement.of(32),
-                InSquarePlacement.spread(),
-                HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
-                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT),
-                        VerticalAnchor.aboveBottom(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_TERRAIN_HEIGHT),
-                        1
-                )),
-                new WallPlacementFilter(
-                        List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
-                        List.of(Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(), Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState())
-                ),
-                BiomeFilter.biome()
-        );
-
         ctx.register(BIG_RED_WALL_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.BIG_RED_WALL_MUSHROOM),
-                bigWallMushroomPlacement
+                wallMushroomPlacement(32)
         ));
         ctx.register(BIG_BROWN_WALL_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.BIG_BROWN_WALL_MUSHROOM),
-                bigWallMushroomPlacement
+                wallMushroomPlacement(32)
         ));
 
         ctx.register(ASHEN_WALL_MUSHROOM, new PlacedFeature(
@@ -205,116 +174,27 @@ public class RRPlacedFeatures {
                 ashenWallMushroomPlacement(4)
         ));
 
-        List<PlacementModifier> ceilingBlockVinePlacement = List.of(
-                CountPlacement.of(16),
-                InSquarePlacement.spread(),
-                HeightRangePlacement.uniform(
-                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
-                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
-                ),
-                EnvironmentScanPlacement.scanningFor(
-                        Direction.UP,
-                        BlockPredicate.hasSturdyFace(Direction.DOWN),
-                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                        16
-                ),
-                BiomeFilter.biome()
-        );
-
         ctx.register(LONG_CEILING_BLOCK_VINE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.LONG_CEILING_BLOCK_VINE),
-                ceilingBlockVinePlacement
+                ceilingPlacement(CountPlacement.of(16), BLOOMING_CEILING_BOTTOM, BLOOMING_CEILING_TOP, 0)
         ));
-
-        List<PlacementModifier> ceilingBallPlacement = List.of(
-                CountPlacement.of(8),
-                InSquarePlacement.spread(),
-                HeightRangePlacement.uniform(
-                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
-                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
-                ),
-                EnvironmentScanPlacement.scanningFor(
-                        Direction.UP,
-                        BlockPredicate.hasSturdyFace(Direction.DOWN),
-                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                        16
-                ),
-                BiomeFilter.biome()
-        );
-
         ctx.register(CEILING_BALL, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.CEILING_BALL),
-                ceilingBallPlacement
+                ceilingPlacement(CountPlacement.of(8), BLOOMING_CEILING_BOTTOM, BLOOMING_CEILING_TOP, 0)
         ));
-
         ctx.register(CEILING_VINE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.CEILING_VINE),
-                List.of(
-                        CountPlacement.of(188),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
-                                VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.UP,
-                                BlockPredicate.hasSturdyFace(Direction.DOWN),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-1)),
-                        BiomeFilter.biome()
-                )
+                ceilingPlacement(CountPlacement.of(188), BLOOMING_CEILING_BOTTOM, BLOOMING_CEILING_TOP, -1)
         ));
 
         ctx.register(TUFF_MOSS_BOULDER, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.TUFF_MOSS_BOULDER),
-                List.of(
-                        CountPlacement.of(4),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
-                                VerticalAnchor.aboveBottom(
-                                        BLOOMING_CAVES_Y +
-                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                TOP_LAYER_TERRAIN_HEIGHT
-                                )
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesBlocks(
-                                        Blocks.MOSS_BLOCK,
-                                        Blocks.MOSSY_COBBLESTONE,
-                                        Blocks.STONE,
-                                        Blocks.CLAY,
-                                        Blocks.WATER
-                                ),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-2)),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(4), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP, bloomingGround, 16, -2)
         ));
-
         ctx.register(MINI_VOLCANO, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.MINI_VOLCANO),
-                List.of(
-                        CountPlacement.of(4),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
-                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK, Blocks.MOSSY_COBBLESTONE, Blocks.STONE, Blocks.CLAY),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-2)),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(4), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP,
+                        BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK, Blocks.MOSSY_COBBLESTONE, Blocks.STONE, Blocks.CLAY), 16, -2)
         ));
 
         ctx.register(MONOLITH, new PlacedFeature(
@@ -322,14 +202,7 @@ public class RRPlacedFeatures {
                 List.of(
                         CountPlacement.of(1),
                         InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
-                                VerticalAnchor.aboveBottom(
-                                        BLOOMING_CAVES_Y +
-                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                TOP_LAYER_TERRAIN_HEIGHT
-                                )
-                        ),
+                        HeightRangePlacement.uniform(VerticalAnchor.absolute(BLOOMING_CAVES_Y), VerticalAnchor.absolute(BLOOMING_FLOOR_TOP)),
                         PlacementUtils.HEIGHTMAP,
                         RarityFilter.onAverageOnceEvery(128),
                         EnvironmentScanPlacement.scanningFor(
@@ -345,77 +218,15 @@ public class RRPlacedFeatures {
 
         ctx.register(MOSS_LAKE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_POOL_WITH_DRIPLEAVES),
-                List.of(
-                        CountPlacement.of(16),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
-                                VerticalAnchor.aboveBottom(
-                                        BLOOMING_CAVES_Y +
-                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                TOP_LAYER_TERRAIN_HEIGHT
-                                )
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.hasSturdyFace(Direction.UP),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(16), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP, BlockPredicate.hasSturdyFace(Direction.UP), 16, 0)
         ));
-
         ctx.register(RARE_STONE_LILY, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_LILY),
-                List.of(
-                        CountPlacement.of(1),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
-                                VerticalAnchor.aboveBottom(
-                                        BLOOMING_CAVES_Y +
-                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                TOP_LAYER_TERRAIN_HEIGHT
-                                )
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.hasSturdyFace(Direction.UP),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(1), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP, BlockPredicate.hasSturdyFace(Direction.UP), 16, 0)
         ));
-
         ctx.register(COMMON_STONE_LILY, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_LILY),
-                List.of(
-                        CountPlacement.of(16),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
-                                VerticalAnchor.aboveBottom(
-                                        BLOOMING_CAVES_Y +
-                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                TOP_LAYER_TERRAIN_HEIGHT
-                                )
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesBlocks(
-                                        Blocks.MOSS_BLOCK,
-                                        Blocks.MOSSY_COBBLESTONE,
-                                        Blocks.STONE,
-                                        Blocks.CLAY,
-                                        Blocks.WATER
-                                ),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(16), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP, bloomingGround, 16, 0)
         ));
 
         ctx.register(MOSS_BERRY_BUSH_PATCH, new PlacedFeature(
@@ -423,14 +234,7 @@ public class RRPlacedFeatures {
                 List.of(
                         RarityFilter.onAverageOnceEvery(1),
                         InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.aboveBottom(BLOOMING_CAVES_Y),
-                                VerticalAnchor.aboveBottom(
-                                        BLOOMING_CAVES_Y +
-                                                TOP_LAYER_MAX_BASELINE_HEIGHT +
-                                                TOP_LAYER_TERRAIN_HEIGHT
-                                )
-                        ),
+                        HeightRangePlacement.uniform(VerticalAnchor.absolute(BLOOMING_CAVES_Y), VerticalAnchor.absolute(BLOOMING_FLOOR_TOP)),
                         BiomeFilter.biome(),
                         CountPlacement.of(96),
                         RandomOffsetPlacement.ofTriangle(7, 3),
@@ -445,89 +249,25 @@ public class RRPlacedFeatures {
                                 16
                         ),
                         RandomOffsetPlacement.vertical(ConstantInt.of(1))
-
                 )
         ));
 
         ctx.register(POWDERED_MOSS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.POWDERED_MOSS),
-                List.of(
-                        CountPlacement.of(6),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(BLOOMING_CAVES_Y),
-                                VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK), 16, 0)
         ));
 
         ctx.register(DEEP_CEILING_VINE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.CEILING_VINE),
-                List.of(
-                        CountPlacement.of(188),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.UP,
-                                BlockPredicate.hasSturdyFace(Direction.DOWN),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-1)),
-                        BiomeFilter.biome()
-                )
+                ceilingPlacement(CountPlacement.of(188), DEEP_CEILING_BOTTOM, DEEP_CEILING_TOP, -1)
         ));
-
-        List<PlacementModifier> deepBlockVinePlacement = List.of(
-                CountPlacement.of(16),
-                InSquarePlacement.spread(),
-                HeightRangePlacement.uniform(
-                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
-                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT)
-                ),
-                EnvironmentScanPlacement.scanningFor(
-                        Direction.UP,
-                        BlockPredicate.hasSturdyFace(Direction.DOWN),
-                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                        16
-                ),
-                BiomeFilter.biome()
-        );
-
         ctx.register(DEEP_CEILING_BLOCK_VINE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.LONG_CEILING_BLOCK_VINE),
-                deepBlockVinePlacement
+                ceilingPlacement(CountPlacement.of(16), DEEP_CEILING_BOTTOM, DEEP_CEILING_TOP, 0)
         ));
-
-        List<PlacementModifier> invertedTreePlacement = List.of(
-                CountPlacement.of(8),
-                InSquarePlacement.spread(),
-                HeightRangePlacement.uniform(
-                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10),
-                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                ),
-                EnvironmentScanPlacement.scanningFor(
-                        Direction.UP,
-                        BlockPredicate.hasSturdyFace(Direction.DOWN),
-                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                        16
-                ),
-                BiomeFilter.biome()
-        );
-
         ctx.register(INVERTED_TREE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.INVERTED_TREE),
-                invertedTreePlacement
+                ceilingPlacement(CountPlacement.of(8), DEEP_CEILING_BOTTOM, DEEP_CAVES_CEILING_Y, 0)
         ));
 
         ctx.register(ELDEN_GIANT_TREE, new PlacedFeature(
@@ -546,22 +286,7 @@ public class RRPlacedFeatures {
 
         ctx.register(GLOWING_MOSS_VEGETATION, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GLOWING_MOSS_VEGETATION),
-                List.of(
-                        CountPlacement.of(128),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(DEEP_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.solid(),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                12
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(128), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y, BlockPredicate.solid(), 12, 1)
         ));
 
         ctx.register(GLOWING_MUSHROOM, new PlacedFeature(
@@ -584,144 +309,48 @@ public class RRPlacedFeatures {
                         BiomeFilter.biome()
                 )
         ));
-
         ctx.register(SMALL_GLOWING_MUSHROOM, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_GLOWING_MUSHROOM),
-                List.of(
-                        CountPlacement.of(6),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(DEEP_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                glowingMushroomSupport,
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                32
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(6), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y, glowingMushroomSupport, 32, 1)
         ));
 
         ctx.register(MOSS_VEGETATION, new PlacedFeature(
                 configuredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION),
-                List.of(
-                        CountPlacement.of(200),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(BLOOMING_CAVES_Y),
-                                VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.solid(),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                12
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(200), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.solid(), 12, 1)
         ));
 
         ctx.register(DRIPSTONE_SPIKE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.DRIPSTONE_SPIKE),
-                List.of(
-                        CountPlacement.of(UniformInt.of(10, 48)),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(DEEP_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        BiomeFilter.biome()
-                )
+                bandPlacement(CountPlacement.of(UniformInt.of(10, 48)), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y)
         ));
-
         ctx.register(STONE_SPIKE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_SPIKE),
-                List.of(
-                        CountPlacement.of(UniformInt.of(10, 48)),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(DEEP_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        BiomeFilter.biome()
-                )
+                bandPlacement(CountPlacement.of(UniformInt.of(10, 48)), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y)
         ));
-
         ctx.register(DEEPSLATE_SPIKE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEPSLATE_SPIKE),
-                List.of(
-                        CountPlacement.of(UniformInt.of(10, 48)),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(LOST_CAVES_Y),
-                                VerticalAnchor.absolute(LOST_CAVES_CEILING_Y)
-                        ),
-                        BiomeFilter.biome()
-                )
+                bandPlacement(CountPlacement.of(UniformInt.of(10, 48)), LOST_CAVES_Y, LOST_CAVES_CEILING_Y)
         ));
-
         ctx.register(DEEP_DEEPSLATE_SPIKE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEPSLATE_SPIKE),
-                List.of(
-                        CountPlacement.of(UniformInt.of(10, 48)),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(DEEP_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        BiomeFilter.biome()
-                )
+                bandPlacement(CountPlacement.of(UniformInt.of(10, 48)), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y)
         ));
 
         ctx.register(GOBLET_MOSS_PATCH, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_MOSS_PATCH),
-                List.of(
-                        CountPlacement.of(31),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(LOST_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesTag(RRTags.GOBLET_MOSS_REPLACEABLE),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                32
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(31), LOST_CAVES_Y, DEEP_CAVES_CEILING_Y,
+                        BlockPredicate.matchesTag(RRTags.GOBLET_MOSS_REPLACEABLE), 32, 1)
         ));
-
         ctx.register(GOBLET_MOSS_PATCH_UNDERWATER, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_MOSS_PATCH_UNDERWATER),
-                List.of(
-                        CountPlacement.of(88),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(LOST_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesTag(RRTags.GOBLET_MOSS_REPLACEABLE),
-                                BlockPredicate.matchesBlocks(Blocks.WATER),
-                                32
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                        BiomeFilter.biome()
-                )
+                scanPlacement(CountPlacement.of(88), LOST_CAVES_Y, DEEP_CAVES_CEILING_Y, Direction.DOWN,
+                        BlockPredicate.matchesTag(RRTags.GOBLET_MOSS_REPLACEABLE), BlockPredicate.matchesBlocks(Blocks.WATER), 32, 1)
         ));
 
         ctx.register(GOBLET_SEAGRASS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_SEAGRASS),
                 gobletUnderwaterPlacement(CountPlacement.of(48))
         ));
-
         ctx.register(GOBLET_KELP, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_KELP),
                 gobletUnderwaterPlacement(NoiseBasedCountPlacement.of(120, 80.0, 0.0))
@@ -729,77 +358,69 @@ public class RRPlacedFeatures {
 
         ctx.register(GOBLET_DEEP_ROOTS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_DEEP_ROOTS),
-                List.of(
-                        CountPlacement.of(64),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(LOST_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesBlocks(RRBlocks.GIANT_GOBLET_BUD.get()),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                32
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(64), LOST_CAVES_Y, DEEP_CAVES_CEILING_Y,
+                        BlockPredicate.matchesBlocks(RRBlocks.GIANT_GOBLET_BUD.get()), 32, 1)
         ));
-
         ctx.register(DEEP_ROOTS_GRASS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEP_ROOTS_GRASS),
-                List.of(
-                        CountPlacement.of(64),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(
-                                VerticalAnchor.absolute(DEEP_CAVES_Y),
-                                VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        ),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesBlocks(RRBlocks.GLOWING_MOSS.get()),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                32
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1)),
-                        BiomeFilter.biome()
-                )
+                floorPlacement(CountPlacement.of(64), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y,
+                        BlockPredicate.matchesBlocks(RRBlocks.GLOWING_MOSS.get()), 32, 1)
         ));
 
         ctx.register(SMALL_LILY_PAD_PATCH, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_LILY_PAD_PATCH),
-                lilyPadPatchPlacement(CountPlacement.of(2))
+                waterSurfacePlacement(CountPlacement.of(2))
         ));
-
         ctx.register(BIG_LILY_PAD_PATCH, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.BIG_LILY_PAD_PATCH),
-                lilyPadPatchPlacement(CountPlacement.of(1))
+                waterSurfacePlacement(CountPlacement.of(1))
         ));
-
         ctx.register(WATER_LILY, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.WATER_LILY),
-                lilyPadPatchPlacement(RarityFilter.onAverageOnceEvery(3))
+                waterSurfacePlacement(RarityFilter.onAverageOnceEvery(3))
         ));
     }
 
-    private static List<PlacementModifier> lilyPadPatchPlacement(PlacementModifier frequency) {
+    /** Spread over the chunk at a random height in [minY, maxY]; spikes find their own surface. */
+    private static List<PlacementModifier> bandPlacement(PlacementModifier count, int minY, int maxY) {
         return List.of(
-                frequency,
+                count,
                 InSquarePlacement.spread(),
-                HeightRangePlacement.uniform(
-                        VerticalAnchor.absolute(LOST_CAVES_Y),
-                        VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                ),
-                EnvironmentScanPlacement.scanningFor(
-                        Direction.DOWN,
-                        BlockPredicate.matchesBlocks(Blocks.WATER),
-                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                        32
-                ),
-                RandomOffsetPlacement.vertical(ConstantInt.of(1)),
+                HeightRangePlacement.uniform(VerticalAnchor.absolute(minY), VerticalAnchor.absolute(maxY)),
                 BiomeFilter.biome()
         );
+    }
+
+    /** Scans down from the band to the first air block above {@code ground}, then shifts by {@code offsetY}. */
+    private static List<PlacementModifier> floorPlacement(PlacementModifier count, int minY, int maxY, BlockPredicate ground,
+                                                         int scanSteps, int offsetY) {
+        return scanPlacement(count, minY, maxY, Direction.DOWN, ground, BlockPredicate.ONLY_IN_AIR_PREDICATE, scanSteps, offsetY);
+    }
+
+    /** Scans up from the band to the first air block under a sturdy ceiling, then shifts by {@code offsetY}. */
+    private static List<PlacementModifier> ceilingPlacement(PlacementModifier count, int minY, int maxY, int offsetY) {
+        return scanPlacement(count, minY, maxY, Direction.UP, BlockPredicate.hasSturdyFace(Direction.DOWN),
+                BlockPredicate.ONLY_IN_AIR_PREDICATE, 16, offsetY);
+    }
+
+    private static List<PlacementModifier> scanPlacement(PlacementModifier count, int minY, int maxY, Direction direction,
+                                                        BlockPredicate target, BlockPredicate allowed, int scanSteps, int offsetY) {
+        List<PlacementModifier> placement = new ArrayList<>(List.of(
+                count,
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(VerticalAnchor.absolute(minY), VerticalAnchor.absolute(maxY)),
+                EnvironmentScanPlacement.scanningFor(direction, target, allowed, scanSteps)
+        ));
+        if (offsetY != 0) {
+            placement.add(RandomOffsetPlacement.vertical(ConstantInt.of(offsetY)));
+        }
+        placement.add(BiomeFilter.biome());
+        return List.copyOf(placement);
+    }
+
+    /** Lily pads and water lilies: on top of the water surface in the lost and deep caves. */
+    private static List<PlacementModifier> waterSurfacePlacement(PlacementModifier frequency) {
+        return floorPlacement(frequency, LOST_CAVES_Y, DEEP_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(Blocks.WATER), 32, 1);
     }
 
     private static List<PlacementModifier> gobletUnderwaterPlacement(PlacementModifier count) {
@@ -807,6 +428,23 @@ public class RRPlacedFeatures {
                 count,
                 InSquarePlacement.spread(),
                 new GobletUnderwaterPlacement(),
+                BiomeFilter.biome()
+        );
+    }
+
+    private static List<PlacementModifier> wallMushroomPlacement(int count) {
+        return List.of(
+                CountPlacement.of(count),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.of(VeryBiasedToBottomHeight.of(
+                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT),
+                        VerticalAnchor.absolute(BLOOMING_CAVES_CEILING_Y + TOP_LAYER_TERRAIN_HEIGHT),
+                        1
+                )),
+                new WallPlacementFilter(
+                        List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
+                        List.of(Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(), Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState())
+                ),
                 BiomeFilter.biome()
         );
     }
