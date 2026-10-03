@@ -10,7 +10,7 @@ All work is tracked in the issues of `IoaNNUwU/runeruin` and reaches its `main` 
 
 Remotes: `upstream` is always `IoaNNUwU/runeruin` (`start-task.ps1` adds it, `gh` targets it); `origin` is where task branches are pushed, the repository itself or the contributor's fork.
 
-Agents may, without asking: create issues and comment on them, push task branches to `origin`, open and edit pull requests, change labels (only the maintainer has the permission). Agents never merge a pull request, push to `main`, merge into `main` locally or close an issue.
+Agents may, without asking: create issues and comment on them, push task branches to `origin`, open draft pull requests and edit them, change labels (only the maintainer has the permission). A PR becomes ready for review only after the user's explicit approval. Agents never merge a pull request, push to `main`, merge into `main` locally or close an issue.
 
 | Group         | Labels                                                                                          |
 |---------------|-------------------------------------------------------------------------------------------------|
@@ -44,7 +44,7 @@ Several agents work in this repository at once. Every change, documentation incl
    It adds and fetches `upstream`, creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from `upstream/main`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option).
 4. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
 5. After the first commit run `git push -u origin HEAD` and open a draft PR titled like a commit subject, its body in the format of `.github/pull_request_template.md` with `Fixes #12`: `gh pr create --draft --title "…" --body-file <file>`. Push every later commit.
-6. Before the final report: `git fetch upstream`, `git merge upstream/main`, resolve conflicts, repeat the checks and push. Write the report into the PR body (`gh pr edit 34 --body-file <file>`) and mark it ready: `gh pr ready 34`.
+6. Before the final report: `git fetch upstream`, `git merge upstream/main`, resolve conflicts, repeat the checks and push. Give the report in the chat and wait: the user reviews the changes and the Decisions and explicitly approves them. Only then write the report into the PR body (`gh pr edit 34 --body-file <file>`) and mark it ready: `gh pr ready 34`. Requested changes are follow-ups (step 7).
 7. Follow-ups stay in the same issue, branch, worktree and PR; while working on them, move a ready PR back to draft (`gh pr ready 34 --undo`). Start a new issue and branch only for an unrelated feature or bug.
 8. Remove a worktree only when the user asks, after its PR is merged, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it checks that a merged pull request contains the branch and unlinks `.mc-sources` first, whereas `git worktree remove --force` deletes the shared sources cache through the junction.
 
@@ -67,7 +67,7 @@ Git hooks in `.githooks` (enabled by the setup script) reject any commit on `mai
 
 Lighting, render layers, interaction and biome placement need the game: list them under "Check in game".
 
-**Final report**, also for partial work: the PR body in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions), so it outlives the chat. Repeat it in the chat with the PR link, the branch, the worktree path and the output of `git status --short --branch`. End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
+**Final report**, also for partial work: first in the chat, in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions) with the PR link, the branch, the worktree path and the output of `git status --short --branch`; after the user approves it, also in the PR body, so it outlives the chat. End the chat report with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
 
 ## Commits and code
 
