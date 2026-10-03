@@ -41,6 +41,7 @@ import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -210,8 +211,8 @@ public final class RRGameTests {
         return map;
     }
 
-    // Every mod biome generates or is parked and has its own terrain surface; every mod placed
-    // feature is used by some mod biome, directly or nested inside another feature.
+    // Every mod biome generates or is parked, has its own terrain surface and filters its features
+    // by biome; every mod placed feature is used by some mod biome, directly or nested in another.
     private static void biomeRegistryComplete(GameTestHelper helper) {
         RegistryAccess registries = helper.getLevel().registryAccess();
         Registry<Biome> biomeRegistry = registries.lookupOrThrow(Registries.BIOME);
@@ -227,9 +228,13 @@ public final class RRGameTests {
             if (!RRTerrainSurfaces.hasProfile(biome.key())) {
                 problems.add(id + " has no RRTerrainSurfaces entry");
             }
-            biome.value().getGenerationSettings().features().forEach(step -> step.forEach(
-                placed -> placed.value().getFeatures().forEach(configured -> usedFeatures.add(configured.value()))
-            ));
+            biome.value().getGenerationSettings().features().forEach(step -> step.forEach(placed -> {
+                placed.value().getFeatures().forEach(configured -> usedFeatures.add(configured.value()));
+                // Datagen only logs this; without the filter the feature also decorates neighbouring biomes.
+                if (!placed.value().placement().contains(BiomeFilter.biome())) {
+                    problems.add(placed.getRegisteredName() + " in " + id + " is missing BiomeFilter.biome()");
+                }
+            }));
         });
         registries.lookupOrThrow(Registries.PLACED_FEATURE).listElements()
             .filter(placed -> isModKey(placed.key()) && !usedFeatures.contains(placed.value().feature().value()))

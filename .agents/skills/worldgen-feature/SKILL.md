@@ -24,7 +24,7 @@ Then `compileJava`, `runData` (the configured, placed and biome JSON is generate
 Rules:
 
 - Vanilla features and placements are fine (`Feature.BLOCK_COLUMN`, `CavePlacements.*`). Custom placement modifiers live in `dimension/placements/` and are registered in `RRPlacementModifierTypes`.
-- Vanilla runs every feature of every biome in the surrounding 3×3 chunks at any height; only a `BiomeFilter` placement checks the biome at the placement position. Without it the feature leaks into neighbouring biomes and into other layers within its height range. A feature placed from inside another feature needs no filter of its own.
+- End every placement of a feature attached to a biome with `BiomeFilter.biome()`. Vanilla runs every feature of every biome in the surrounding 3×3 chunks at any height, and only this filter checks the biome at the placement position; without it the feature leaks into neighbouring biomes and other layers. Datagen only logs "is missing BiomeFilter.biome()", the GameTest `biome_registry_complete` fails on it. A feature placed from inside another feature needs no filter of its own.
 - Biomes that share features must list them in the same relative order, or world loading fails in `FeatureSorter` with "Feature order cycle found". Biomes with pools get their water plants from `dimension/biomes/WaterDecorations.add(generation)`: add a new pool plant there, not to single biomes.
 - Do not write outside the chunks a feature may touch. Reuse an existing guard (`FeatureChunkBounds`, `ensureCanWrite` in `CaveMushroomFeature` / `GlowingMushroomFeature`) instead of adding a new one.
 - Changing an existing feature only affects chunks generated afterwards.
