@@ -80,7 +80,7 @@ Gradle needs any installed JDK; the wrapper downloads Java 25.
 - `src/generated` is not in git. Never delete it or `src/generated/resources/.cache`, never hand-write `src/generated/**`: change the Java bootstrap and run `runData` yourself.
 - A running game locks `build/` of the checkout it was started from. If Gradle fails on a locked file, tell the user the game is locking `build/`, ask them to close it, and give the single-line absolute `runData` and `runClient` commands for the task worktree.
 - `build.gradle` pins NeoForm Runtime to `%USERPROFILE%\.gradle\caches\neoformruntime`. If `downloadAssets` starts downloading thousands of files, stop: the pin failed.
-- Headless runs use `<checkout>/run`; in the main checkout `run` links to the shared game directory.
+- Every run except `runClient` (server, datagen, GameTests, previews) uses its own `<checkout>/run`, never the game directory.
 
 ## Minecraft and NeoForge sources
 
