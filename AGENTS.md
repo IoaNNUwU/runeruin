@@ -17,6 +17,8 @@ git worktree add -b feature/giant_goblet ../RuneRuin-giant-goblet HEAD
 
 For a bug fix, use a `bug/<name>` branch instead. If the proposed branch or directory already exists, choose a distinct name; never take over another agent's branch or worktree. This command also works if the starting checkout has a detached `HEAD`. Run `git -C ../RuneRuin-giant-goblet status --short --branch` to verify the new worktree has the intended branch before changing code.
 
+In Claude Code, then call `EnterWorktree` with `path` set to the new worktree's absolute path so the whole session runs there. Do not use the built-in worktree option or `EnterWorktree` with `name`: they create worktrees under `.claude/worktrees/` with branch names that do not follow these rules.
+
 ## Commits and PRs
 
 Do not add attribution lines (`Co-Authored-By`, "Generated with Claude Code", etc.) to commit messages or pull request descriptions.
