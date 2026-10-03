@@ -84,6 +84,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.PLACED_FEATURE, "deep_roots_grass");
     public static final ResourceKey<PlacedFeature> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<PlacedFeature> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "big_lily_pad_patch");
+    public static final ResourceKey<PlacedFeature> WATER_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "water_lily");
     public static final ResourceKey<PlacedFeature> JUNGLE_MEGA_TREE_ON_NON_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "jungle_mega_tree_on_non_moss");
     public static final ResourceKey<PlacedFeature> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.PLACED_FEATURE, "swamp_jungle_trees");
 
@@ -758,18 +759,23 @@ public class RRPlacedFeatures {
 
         ctx.register(SMALL_LILY_PAD_PATCH, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.SMALL_LILY_PAD_PATCH),
-                lilyPadPatchPlacement(2)
+                lilyPadPatchPlacement(CountPlacement.of(2))
         ));
 
         ctx.register(BIG_LILY_PAD_PATCH, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.BIG_LILY_PAD_PATCH),
-                lilyPadPatchPlacement(1)
+                lilyPadPatchPlacement(CountPlacement.of(1))
+        ));
+
+        ctx.register(WATER_LILY, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.WATER_LILY),
+                lilyPadPatchPlacement(RarityFilter.onAverageOnceEvery(3))
         ));
     }
 
-    private static List<PlacementModifier> lilyPadPatchPlacement(int count) {
+    private static List<PlacementModifier> lilyPadPatchPlacement(PlacementModifier frequency) {
         return List.of(
-                CountPlacement.of(count),
+                frequency,
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(
                         VerticalAnchor.absolute(LOST_CAVES_Y),

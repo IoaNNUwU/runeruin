@@ -18,6 +18,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRendererEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -93,7 +94,17 @@ public class RuneRuinClient {
         event.register(
                 List.of(BlockTintSources.foliage()),
                 RRBlocks.BIG_LILY_PAD.get(),
+                RRBlocks.WATER_LILY_ROOT.get(),
+                RRBlocks.WATER_LILY_LEAF.get(),
                 RRBlocks.BAOBAB_LEAVES.get()
         );
+    }
+
+    @SubscribeEvent
+    static void addWaterLilyStems(ModelEvent.ModifyBakingResult event) {
+        var sprite = event.getTextureGetter().apply(WaterLilyStemTexture.SPRITE);
+        for (var state : RRBlocks.WATER_LILY_ROOT.get().getStateDefinition().getPossibleStates()) {
+            event.getBakingResult().blockStateModels().computeIfPresent(state, (_, model) -> new WaterLilyRootModel(model, sprite));
+        }
     }
 }

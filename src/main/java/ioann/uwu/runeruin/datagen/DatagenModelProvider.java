@@ -8,6 +8,7 @@ import ioann.uwu.runeruin.blocks.BigLilyPadBlock;
 import ioann.uwu.runeruin.blocks.EldenVinesBlock;
 import ioann.uwu.runeruin.blocks.FloatingMossBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.blocks.WaterLilyLeafBlock;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.client.data.models.BlockModelGenerators;
@@ -116,6 +117,7 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.createTrivialCube(RRBlocks.LAPIS_LIGHT.get());
         createFireflyInJar(blockModels);
         createBigLilyPad(blockModels);
+        createWaterLily(blockModels);
 
         blockModels.registerSimpleItemModel(
                 RRBlocks.DEEP_ROOTS.get().asItem(),
@@ -156,6 +158,52 @@ public class DatagenModelProvider extends ModelProvider {
                 itemModel,
                 ItemModelUtils.constantTint(-12012264)
         );
+    }
+
+    private static void createWaterLily(@NonNull BlockModelGenerators blockModels) {
+        JsonObject model = new JsonObject();
+        model.addProperty("ambientocclusion", false);
+
+        JsonObject textures = new JsonObject();
+        textures.addProperty("particle", "minecraft:block/dark_oak_log");
+        textures.addProperty("rhizome", "minecraft:block/dark_oak_log");
+        textures.addProperty("roots", "minecraft:block/hanging_roots");
+        model.add("textures", textures);
+
+        JsonArray elements = new JsonArray();
+        addJarElement(elements, "rhizome", new double[]{5, 9, 5}, new double[]{11, 13, 11}, "rhizome", 0,
+                "north", "south", "east", "west", "up", "down");
+        // Hair roots hang from the rhizome below the block, like on a real water lily.
+        addJarElement(elements, "roots_north_south", new double[]{1, -3, 8}, new double[]{15, 13, 8}, "roots", 0,
+                "north", "south");
+        addJarElement(elements, "roots_east_west", new double[]{8, -3, 1}, new double[]{8, 13, 15}, "roots", 0,
+                "east", "west");
+        for (int i = 1; i < elements.size(); i++) {
+            for (var face : elements.get(i).getAsJsonObject().getAsJsonObject("faces").entrySet()) {
+                face.getValue().getAsJsonObject().add("uv", vector(new double[]{1, 0, 15, 16}));
+            }
+        }
+        model.add("elements", elements);
+
+        Identifier rootModel = RR.id("block/water_lily_root");
+        blockModels.modelOutput.accept(rootModel, () -> model);
+        blockModels.blockStateOutput.accept(
+                BlockModelGenerators.createSimpleBlock(RRBlocks.WATER_LILY_ROOT.get(), BlockModelGenerators.plainVariant(rootModel))
+        );
+        blockModels.registerSimpleItemModel(RRBlocks.WATER_LILY_ROOT.get(), rootModel);
+
+        blockModels.blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(RRBlocks.WATER_LILY_LEAF.get())
+                        .with(PropertyDispatch.initial(WaterLilyLeafBlock.FACING)
+                                .generate(facing -> orientedBigLilyVariant(BigLilyPadBlock.Part.SINGLE, facing)))
+        );
+        blockModels.registerSimpleTintedItemModel(
+                RRBlocks.WATER_LILY_LEAF.get(),
+                blockModels.createFlatItemModelWithBlockTexture(RRBlocks.WATER_LILY_LEAF.get().asItem(), Blocks.LILY_PAD),
+                ItemModelUtils.constantTint(-12012264)
+        );
+
+        blockModels.createCrossBlockWithDefaultItem(RRBlocks.WATER_LILY_FLOWER.get(), BlockModelGenerators.PlantType.NOT_TINTED);
     }
 
     private static void createFloatingMoss(@NonNull BlockModelGenerators blockModels) {

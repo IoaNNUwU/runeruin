@@ -48,6 +48,9 @@ public class RRCreativeModeTabs {
                     RRBlocks.GLOWING_MUSHROOM_STEM.toStack(),
                     RRBlocks.GLOWING_MUSHROOM.toStack(),
                     RRBlocks.BIG_LILY_PAD.toStack(),
+                    RRBlocks.WATER_LILY_ROOT.toStack(),
+                    RRBlocks.WATER_LILY_LEAF.toStack(),
+                    RRBlocks.WATER_LILY_FLOWER.toStack(),
 
                     RRBlocks.ELDEN_SAPLING.toStack(),
                     RRBlocks.ELDEN_LOG.toStack(),

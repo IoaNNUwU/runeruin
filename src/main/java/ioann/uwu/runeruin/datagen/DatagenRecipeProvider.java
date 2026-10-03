@@ -27,6 +27,12 @@ public class DatagenRecipeProvider extends RecipeProvider {
         buildEldenTreeRecipes();
         buildInvertedTreeRecipes();
 
+        this.shapeless(RecipeCategory.MISC, Items.DYE.white())
+                .requires(RRBlocks.WATER_LILY_FLOWER)
+                .group("white_dye")
+                .unlockedBy(getHasName(RRBlocks.WATER_LILY_FLOWER), has(RRBlocks.WATER_LILY_FLOWER))
+                .save(this.output, RR.resourceKey(Registries.RECIPE, "white_dye_from_water_lily_flower"));
+
         this.shaped(RecipeCategory.DECORATIONS, RRBlocks.MOSS_LIGHT, 1)
                 .define('#', Blocks.COBBLESTONE)
                 .define('M', RRItems.MOSS_BERRY)
