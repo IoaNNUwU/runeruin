@@ -15,7 +15,8 @@ function Invoke-Git {
 }
 
 function Get-NormalizedPath([string] $Value) {
-    return [System.IO.Path]::GetFullPath($Value.Replace('/', '\')).TrimEnd('\')
+    # On Windows GetFullPath also turns git's C:/... into C:\...
+    return [System.IO.Path]::GetFullPath($Value).TrimEnd([System.IO.Path]::DirectorySeparatorChar)
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -36,15 +37,13 @@ if ($worktree -eq (Get-NormalizedPath $projectRoot)) {
 
 $branch = (& git -C $worktree branch --show-current).Trim()
 
-# git deletes ignored directories recursively and follows junctions, so a linked
+# Git for Windows follows junctions while deleting ignored directories, so a linked
 # .mc-sources or run would wipe the shared cache or game directory. Unlink them first.
-Get-ChildItem -LiteralPath $worktree -Force -Directory |
+Get-ChildItem -LiteralPath $worktree -Force |
     Where-Object { $_.Attributes -band [System.IO.FileAttributes]::ReparsePoint } |
     ForEach-Object {
-        & cmd /c rmdir "$($_.FullName)"
-        if ($LASTEXITCODE -ne 0) {
-            throw "Could not unlink $($_.FullName)."
-        }
+        # Non-recursive delete removes a junction or symlink itself, never its target.
+        $_.Delete()
         Write-Host "Unlinked $($_.FullName)"
     }
 

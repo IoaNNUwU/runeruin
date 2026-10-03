@@ -53,6 +53,8 @@ function New-DirectoryLink {
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
+# Every checkout has both wrappers, so pick by OS. Paths below use '/', which works everywhere.
+$wrapper = Join-Path $projectRoot $(if ($env:OS -eq 'Windows_NT') { 'gradlew.bat' } else { 'gradlew' })
 $gradleProperties = Join-Path $projectRoot 'gradle.properties'
 $minecraftVersion = Get-GradleProperty -Path $gradleProperties -Name 'minecraft_version'
 $neoVersion = Get-GradleProperty -Path $gradleProperties -Name 'neo_version'
@@ -66,27 +68,22 @@ if ([string]::IsNullOrWhiteSpace($userHome)) {
     throw 'Could not determine the current user profile directory.'
 }
 
-$cacheRoot = Join-Path $userHome '.runeruin\mc-sources'
+$cacheRoot = Join-Path $userHome '.runeruin/mc-sources'
 $sharedSources = Join-Path $cacheRoot "minecraft-$minecraftVersion-neoforge-$neoVersion-official"
 $worktreeSources = Join-Path $projectRoot '.mc-sources'
-$sharedGame = Join-Path $userHome '.runeruin\game'
+$sharedGame = Join-Path $userHome '.runeruin/game'
 $legacyGame = Join-Path $projectRoot 'run'
 $lockPath = Join-Path $cacheRoot '.setup.lock'
 $gradleUserHome = Join-Path $userHome '.gradle'
 $vanillaTextureVersion = $minecraftVersion -replace '\.0$', ''
 $vanillaTextureVersionText = "minecraft=$vanillaTextureVersion`nsource=minecraft_${vanillaTextureVersion}_client.jar"
 $vanillaTextures = Join-Path $projectRoot '.vanilla-textures'
-$vanillaTextureSentinel = Join-Path $vanillaTextures 'assets\minecraft\textures\block\oak_planks.png'
+$vanillaTextureSentinel = Join-Path $vanillaTextures 'assets/minecraft/textures/block/oak_planks.png'
 
 function Ensure-VanillaTextures {
     if ((Read-VersionText -Directory $vanillaTextures) -eq $vanillaTextureVersionText -and
         (Test-Path -LiteralPath $vanillaTextureSentinel -PathType Leaf)) {
         return
-    }
-
-    $wrapper = Join-Path $projectRoot 'gradlew.bat'
-    if (-not (Test-Path -LiteralPath $wrapper -PathType Leaf)) {
-        $wrapper = Join-Path $projectRoot 'gradlew'
     }
 
     Write-Host "Extracting Minecraft $vanillaTextureVersion textures into .vanilla-textures..."
@@ -169,7 +166,8 @@ try {
             }
 
             Write-Host "Replacing the Minecraft sources link for the new project version."
-            Remove-Item -LiteralPath $worktreeSources -Force
+            # Removes only the link. Remove-Item on a junction can delete the shared cache behind it.
+            [System.IO.Directory]::Delete($worktreeSources)
             $existingWorktreeItem = $null
         }
 
@@ -232,11 +230,6 @@ try {
         Write-Host "Moved existing Minecraft sources to the shared cache and linked this worktree."
         Ensure-VanillaTextures
         return
-    }
-
-    $wrapper = Join-Path $projectRoot 'gradlew.bat'
-    if (-not (Test-Path -LiteralPath $wrapper -PathType Leaf)) {
-        $wrapper = Join-Path $projectRoot 'gradlew'
     }
 
     Write-Host "Preparing the shared Minecraft sources cache for $minecraftVersion / $neoVersion..."

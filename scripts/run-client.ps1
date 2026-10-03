@@ -13,10 +13,8 @@ if ([string]::IsNullOrWhiteSpace($userHome)) {
 }
 
 $gradleUserHome = Join-Path $userHome '.gradle'
-$wrapper = Join-Path $projectRoot 'gradlew.bat'
-if (-not (Test-Path -LiteralPath $wrapper -PathType Leaf)) {
-    $wrapper = Join-Path $projectRoot 'gradlew'
-}
+# Every checkout has both wrappers, so pick by OS.
+$wrapper = Join-Path $projectRoot $(if ($env:OS -eq 'Windows_NT') { 'gradlew.bat' } else { 'gradlew' })
 
 & (Join-Path $PSScriptRoot 'setup-codex-worktree.ps1')
 if ($LASTEXITCODE -ne 0) {

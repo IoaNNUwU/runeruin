@@ -1,11 +1,29 @@
 #!/bin/sh
+# Branch rules from AGENTS.md.
 
 branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)
 
-if [ -z "$branch" ]; then
-    echo "ERROR: commits are not allowed from a detached HEAD." >&2
-    echo "Create a task branch first, for example: git switch -c feature/<name>" >&2
+fail() {
+    echo "ERROR: $1" >&2
+    echo "Start a task branch with: scripts/start-task.ps1 feature|bug <snake_case_name>" >&2
     exit 1
-fi
+}
+
+case "$branch" in
+    "")
+        fail "commits are not allowed from a detached HEAD." ;;
+    main)
+        # Merges, cherry-picks and reverts that stopped on conflicts end with a commit on main.
+        for head in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+            [ -e "$(git rev-parse --git-path $head)" ] && exit 0
+        done
+        [ "$RUNERUIN_ALLOW_MAIN_COMMIT" = 1 ] || fail "every change goes in a task branch; main only receives merges." ;;
+    feature/add_*)
+        fail "branch names do not start with add_: $branch" ;;
+    feature/*|bug/*)
+        echo "${branch#*/}" | grep -qE '^[a-z0-9]+(_[a-z0-9]+)*$' || fail "use snake_case after feature/ or bug/: $branch" ;;
+    *)
+        fail "branches are named feature/<name> or bug/<name>, not $branch." ;;
+esac
 
 exit 0

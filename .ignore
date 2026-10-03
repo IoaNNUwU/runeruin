@@ -3,7 +3,8 @@
 build/
 .gradle/
 run/
-src/generated/
+# Generated models/blockstates stay searchable (the model analysis skill reads them); only the datagen cache is hidden.
+src/generated/resources/.cache/
 exports/
 bin/
 out/

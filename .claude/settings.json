@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-forbidden-commands.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.mc-sources/VERSION.txt\" ] || echo 'WARNING: .mc-sources/VERSION.txt is missing, so Minecraft/NeoForge sources are unavailable. Run scripts/setup-codex-worktree.ps1 before relying on vanilla APIs.'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

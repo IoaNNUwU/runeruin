@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
-& git config core.hooksPath .githooks
+& git -C $PSScriptRoot config core.hooksPath .githooks
 if ($LASTEXITCODE -ne 0) {
     throw 'Could not configure the repository pre-commit hook path.'
 }

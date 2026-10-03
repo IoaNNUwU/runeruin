@@ -1,268 +1,141 @@
 # RuneRuin — agent map
 
-## Development branches
+NeoForge mod `runeruin` for Minecraft 26.2.0 + NeoForge 26.2.0.59 (official Mojang mappings): a stacked-cave dimension `runeruin:runeruin_dimension` (`/execute in runeruin:runeruin_dimension …`). `RuneRuinMod` registers the DeferredRegisters; datapack registries come from `DatagenMain`. Helpers: `RR.id` / `RR.resourceKey` / `RR.tagKey`.
 
-For every substantial change, create a separate branch in a new Git worktree and do all work for the feature or bug there. Multiple agents work on this repository at the same time; never implement a new feature in the shared checkout. Never merge branches except when explicitly asked.
+Commands below are for Windows PowerShell. On Linux/macOS run the `scripts/*.ps1` with `pwsh` (PowerShell 7), e.g. `pwsh ./scripts/start-task.ps1 feature giant_goblet`, and Gradle as `./gradlew`.
 
-The following exceptions do not require creating a branch: editing `README` files, `AGENTS.md`, `.json` files, or only changing text inside a string literal in a code file.
+## Task protocol
 
-- New functionality: use `feature/<name>`, for example `feature/giant_goblet`. Do not include `add_` in the name; use just the feature name.
-- Bug fixes: use `bug/<name>`, for example `bug/giant_goblet_spawns_in_wrong_biome`.
+Several agents work in this repository at once. Every change, documentation included, goes in its own task branch and worktree; never edit files in the shared main checkout.
 
-At the beginning of every coding task, before editing files, run `git branch --show-current` and `git status --short --branch`. For changes outside the exceptions above, choose a short name from the user's request. Create a unique sibling directory and a new task branch from the current `HEAD`, for example:
+1. Run `git branch --show-current` and `git status --short --branch`.
+2. Create the task worktree: `feature` or `bug`, a short snake_case name from the request, no `add_` prefix.
 
-```powershell
-git worktree add -b feature/giant_goblet ../RuneRuin-giant-goblet HEAD
-```
+   ```powershell
+   .\scripts\start-task.ps1 feature giant_goblet
+   ```
 
-For a bug fix, use a `bug/<name>` branch instead. If the proposed branch or directory already exists, choose a distinct name; never take over another agent's branch or worktree. This command also works if the starting checkout has a detached `HEAD`. Run `git -C ../RuneRuin-giant-goblet status --short --branch` to verify the new worktree has the intended branch before changing code.
+   It creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from the current `HEAD`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option).
+3. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
+4. Follow-ups after a commit stay in the same branch and worktree. Start a new branch only for an unrelated feature or bug.
+5. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
+6. Merge into `main`, cherry-pick or remove worktrees only when the user asks. Merge from the main checkout, then remove the worktree only with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` deletes the shared sources cache through the junction.
 
-In Claude Code, then call `EnterWorktree` with `path` set to the new worktree's absolute path so the whole session runs there. Do not use the built-in worktree option or `EnterWorktree` with `name`: they create worktrees under `.claude/worktrees/` with branch names that do not follow these rules.
+Git hooks in `.githooks` (enabled by the setup script) reject commits to `main` other than merges, cherry-picks and reverts, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Set `RUNERUIN_ALLOW_MAIN_COMMIT=1` for a commit only when the user explicitly asks to commit directly to `main`; never use `--no-verify`.
 
-One branch per feature or bug. If you are already working in a task worktree and the user asks for further changes after a commit, make them in the same branch and worktree; do not create a new branch, even if the follow-up looks like a separate change. Create a new branch only when the user starts an unrelated feature or bug.
+## Questions, designs, reports
 
-## Commits and PRs
+- A question ("can we…?", "why…?", "how would you…?") gets an answer, not code changes. Edit only after an explicit go-ahead.
+- Propose a design (2–3 options and a recommendation) and wait before implementing a new block or mechanic, new blockstate properties, tiling textures, anything that changes existing worlds (see Worldgen) or work touching more than ~5 files.
+- Answer numbered follow-up requests point by point.
 
-Do not add attribution lines (`Co-Authored-By`, "Generated with Claude Code", etc.) to commit messages or pull request descriptions.
+**Done** means every applicable check passed in the task worktree:
 
-## Code size and quality
+1. `gradlew.bat compileJava`
+2. `gradlew.bat runData` — after any change to datagen, blocks/items, models, tags, loot or worldgen bootstrap
+3. `gradlew.bat runGameTestServer` — mod and datapack load, GameTests in `preview/RRGameTests`
+4. shapes: `runPreview` of the matching job (`headless-preview` skill); textures: the scripts of `minecraft-pixel-texture-generation`
+5. `gradlew.bat build`
 
-When writing code, look for ways to reduce the amount of code rather than increase it:
+Rendering, missing textures or translations, interaction and biome placement need the game: list them under "Check in game".
 
-- Add comments only for important points.
-- Fix existing code instead of endlessly adding more.
-- Preserve style and quality; putting all code on one line does not reduce code.
-- Look for opportunities to change an existing algorithm instead of adding another condition. That is what reducing code means.
-
-## Parallel agent worktrees
-
-The agent creates its task worktree with Git; do not rely on Codex to create it. After creation, run all edits, searches, Gradle commands, and checks from that worktree. Leave the starting checkout and other agents' worktrees untouched. For a fresh worktree, run `.\scripts\setup-codex-worktree.ps1` from its root to set up hooks and local Minecraft sources.
-
-Do not manually copy files or uncommitted changes between worktrees. Tracked files are available automatically; ignored local files must be generated or set up in the task worktree. Never switch to a branch used by another worktree.
-
-When working in a task worktree, watch file paths carefully: read, edit, and link files only via the worktree's path (e.g. `C:\path\to\RuneRuin-giant-goblet\src\...`), never the `main` checkout's path. File links in replies must point to the files in the worktree/branch the work was done in, not to `main`.
-
-Before finishing, report the task branch, worktree path, and `git status --short --branch`. Always provide a single-line PowerShell command to launch the client from the worktree used for the task, using absolute paths to that worktree's `gradlew.bat` and project directory (for example, `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`); do not use `cd`. If a separate prerequisite such as `runData` is required, provide a second single-line command for it, in execution order before the client command. Leave merge, cherry-pick, and worktree removal to the user unless explicitly asked.
-
-NeoForge mod (`runeruin`), MC 26.2. Custom stacked-cave dimension. Entry: `RuneRuinMod` → registers DeferredRegisters; datapack registries come from `DatagenMain`.
-
-Helpers: `RR.id` / `RR.resourceKey` / `RR.tagKey`. Dimension command: `/execute in runeruin:runeruin_dimension …`
-
-## Run
-
-Gradle needs some JDK installed to start; the wrapper then downloads **Java 25** for this project.
-
-```powershell
-.\gradlew.bat runClient
-```
-
-- `runClient` — launch the game with the mod
-- `runServer` — dedicated server (`--nogui`)
-- `runGameTestServer` — run GameTests, then exit
-- `runPreview` — headless structure/feature dump into `exports/` (no client)
-- `runData` — datagen into `src/generated/resources`
-- `build` — compile and package the mod jar
-- `extractMcSources` — explode Minecraft + NeoForge Java into `.mc-sources/` for Agents to index minecraft sources (also runs on IDE Gradle sync)
-- `extractVanillaTextures` — extract this project's pinned Minecraft client textures into `.vanilla-textures/` for visual references (also runs with `extractMcSources`)
-
-# Datagen cache and game lock
-
-Run datagen with `.\gradlew runData` from the repo root (never `clean` / `--rerun-tasks` / `--refresh-dependencies` / `--offline`).
-
-A running `runClient` / `runServer` locks `build/`. Datagen cannot run in parallel.
-
-**Do not** kill Java/Gradle, `gradlew --stop`, or start/restart the client. Do not wait for the game to close.
-
-If `runData` fails because the client is still running (file-in-use / lock / unable to delete): tell the user Minecraft is locking `build/`, ask them to close the game, and have them run datagen and the client themselves. Give these exact commands:
+**Final report**, also for partial work:
 
 ```
-.\gradlew.bat runData
-.\gradlew.bat runClient
+## Done
+1. <requested item> — done | partial | not done — <one line>
+## Verified
+<item> — compile / datagen / GameTest / preview render / needs the game
+## Check in game (up to 3 steps)
+1. <command or coordinates> — <what should be visible>
+## Decisions I made myself
+- <decision> — <why>; <risk>
+## Branch
+<branch>, <worktree path>, output of `git status --short --branch`
 ```
 
-Do not:
+End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`. Copy "Decisions I made myself" into the commit message body so it outlives the chat.
 
-- `gradlew clean` / `clean runData`
-- `--rerun-tasks`, `--refresh-dependencies`, `--offline`
-- delete `src/generated/` or `src/generated/resources/.cache`
-- hand-write `src/generated/**` JSON to avoid running datagen
+## Commits and code
 
-`build.gradle` pins NeoForm Runtime to `%USERPROFILE%\.gradle\caches\neoformruntime` so a Cursor sandbox (temp `GRADLE_USER_HOME`) still reuses Minecraft assets and decompiles.
+- Commit subject in the imperative, no prefix: `Make floating moss sink under creatures that stand still`. No attribution lines (`Co-Authored-By`, "Generated with …").
+- Reduce code rather than grow it: fix existing code instead of adding more, change an algorithm instead of adding another condition, comment only important points. Keep the surrounding style; packing code onto one line is not less code.
+- Imports one per line, sorted, no wildcards: the shared registry files then merge cleanly.
 
-Abort if logs show `cursor-sandbox-cache` **and** `downloadAssets` counting thousands of files — that is a cache miss. Fix the pin or rerun so NFRT uses the user Gradle cache; do not wait out a full asset download.
+## Gradle, datagen and the game
 
-## Vanilla / NeoForge sources
+Gradle needs any installed JDK; the wrapper downloads Java 25.
 
-This mod compiles against **Minecraft 26.2.0 + NeoForge 26.2.0.59** with **official Mojang mappings**. Do not use APIs from memory.
+| Task | Purpose |
+|------|---------|
+| `runClient` | game with the mod; game dir `~/.runeruin/game`, shared by all checkouts |
+| `runServer` | dedicated server (`--nogui`) |
+| `runGameTestServer` | run GameTests, exit non-zero on failure |
+| `runPreview` | headless shape export into `exports/` (`headless-preview` skill) |
+| `runData` | datagen into `src/generated/resources` |
+| `build` | mod jar |
+| `extractMcSources` | Minecraft + NeoForge sources into `.mc-sources/`, textures into `.vanilla-textures/` |
 
-Exploded sources (after `./gradlew extractMcSources` or IDE Gradle sync) live in **`.mc-sources/`**. If there is no `.mc-sources/`, use `extractMcSources` gradle task:
+- Never `clean`, `--rerun-tasks`, `--refresh-dependencies`, `--offline` or `--stop`; never kill Java or Gradle; never start, restart or wait for the game. A Claude Code hook blocks these.
+- `src/generated` is not in git. Never delete it or `src/generated/resources/.cache`, never hand-write `src/generated/**`: change the Java bootstrap and run `runData` yourself.
+- A running game locks `build/` of the checkout it was started from. If Gradle fails on a locked file, tell the user the game is locking `build/`, ask them to close it, and give the single-line absolute `runData` and `runClient` commands for the task worktree.
+- `build.gradle` pins NeoForm Runtime to `%USERPROFILE%\.gradle\caches\neoformruntime`. If `downloadAssets` starts downloading thousands of files, stop: the pin failed.
+- Headless runs use `<checkout>/run`; in the main checkout `run` links to the shared game directory.
 
-- `VERSION.txt` — pinned versions
-- `net/minecraft/`, `com/mojang/` — decompiled vanilla with NeoForge patches
-- `net/neoforged/` — NeoForge API
+## Minecraft and NeoForge sources
 
-**Always search `.mc-sources` for vanilla/NeoForge types** (official mappings, this version only). `.ignore` un-ignores that folder for ripgrep; do not search `~/.gradle` (multiple Minecraft versions, mostly jars). If Grep still skips it, use Shell `rg` or `rg --no-ignore-vcs`. Do not treat `.mc-sources` as mod source — never edit it, never add it to `src/`.
+Do not use Minecraft or NeoForge APIs from memory. Search `.mc-sources/` (`net/minecraft`, `com/mojang`, `net/neoforged`, `VERSION.txt`), a junction to the shared cache `~/.runeruin/mc-sources/<version>`. Never edit it or copy it into `src/`.
 
-Pinned Minecraft texture references are extracted to **`.vanilla-textures/assets/minecraft/textures/`** by `extractVanillaTextures` or automatically with `extractMcSources`. `scripts/setup-codex-worktree.ps1` also ensures this export exists when it reuses an already-populated sources cache. The directory is gitignored but visible to `rg`; use it instead of searching client jars or the Gradle cache for vanilla PNGs. Its `VERSION.txt` identifies the Minecraft version.
+- No `.mc-sources/VERSION.txt`: run `.\scripts\setup-codex-worktree.ps1`. If it fails or the file is still missing, find the cause in the script's output, report it to the user and stop the task.
+- `.ignore` un-ignores `.mc-sources` for ripgrep; if Grep still skips it, use `rg --no-ignore-vcs`. Do not search `~/.gradle`.
+- Vanilla textures: `.vanilla-textures/assets/minecraft/textures/`.
 
-## Packages
+## Skills
+
+Step-by-step procedures live in skills; load the matching one before starting such work. Skills are in `.agents/skills/`; Claude Code reads stubs in `.claude/skills/`, keep their `description` in sync.
+
+| Skill | Use for |
+|-------|---------|
+| `block-and-item` | adding, renaming or removing a block or item |
+| `worldgen-feature` | decoration features: plants, rocks, vines, mushrooms, spikes |
+| `worldgen-biome` | adding, reweighting, moving or changing biomes |
+| `worldgen-structure` | multi-piece structures such as Giant Goblet and Baobab |
+| `headless-preview` | checking feature and structure shapes without the game; new preview jobs |
+| `region-export-compare` | `/rrexport` dumps and terrain replay (`world_region`, was → expected) |
+| `minecraft-pixel-texture-generation` | creating, recoloring, quantizing and validating textures |
+| `minecraft-model-texture-analysis` | model geometry and texture UVs |
+
+## Packages (`src/main/java/ioann/uwu/runeruin/`)
 
 | Path | Role |
 |------|------|
-| `blocks/`, `items/`, `creativetab/` | Content registries |
-| `datagen/` | Models, tags, recipes, loot + **worldgen bootstrap** |
-| `dimension/` | Almost all worldgen |
-| `dimension/biomes/<layer>/` | Biome definitions (one class per biome) |
-| `dimension/features/` | Custom `Feature<?>` implementations |
-| `dimension/chunkgenerator/` | Terrain fill (floors/ceilings/plates) |
-| `dimension/structures/` | Structure + piece classes |
-| `dimension/noise/` | Noise used by chunkgen + biome picking |
-| `client/` | Clouds / renderers |
-| `mixin/` | Vanilla tweaks |
+| `blocks/`, `items/`, `entities/` | `RRBlocks` (also registers BlockItems), `RRItems`, `RREntityTypes`; teleport item `RuneOfSpaceItem` |
+| `creativetab/` | creative tab; its item list is manual |
+| `datagen/` | models, blockstates, tags, loot, recipes, worldgen bootstrap (`DatagenMain`) |
+| `client/` | renderers, models, tints, clouds (`RuneRuinClient`) |
+| `portal/`, `loottables/`, `mixin/` | dimension portal, `RRLootTables`, vanilla tweaks |
+| `region/` | `/rrpos1` `/rrpos2` `/rrexport` `/rrclear` |
+| `preview/` | headless previews and GameTests |
+| `dimension/` | worldgen registries: `RRFeatures`, `RRConfiguredFeatures`, `RRPlacedFeatures`, `RRBiomes`, `RRBiomeSource`, `RRChunkGenerator`, `RRDimension`, `RRStructure*`, `RRPlacementModifierTypes` |
+| `dimension/biomes/<layer>/` | one class per biome |
+| `dimension/features/` | `Feature<?>` implementations |
+| `dimension/placements/` | placement modifiers |
+| `dimension/chunkgenerator/` | terrain fill, `RRTerrainSurfaces`, `HangingTerrainGenerator` |
+| `dimension/structures/` | structures and pieces |
+| `dimension/noise/` | noise for terrain and biome choice |
+| `dimension/runes/` | rune patterns on pillars |
 
-Generated JSON lands under `src/generated/` (and mirrors in `bin/`); **edit Java bootstrap, then run datagen** — don’t hand-edit generated worldgen unless intentional.
+Translations are hand-written in both `assets/runeruin/lang/en_us.json` and `ru_ru.json`.
 
-## Vertical layers (`Const`)
+## Worldgen
 
-Bottom → top (Y ≈): Void `0…50` → Lost caves → Deep caves → Blooming caves → Top layer (build limit 512).
-
-Key Y constants: `LOST_CAVES_Y`, `LOST_CAVES_CEILING_Y`, `DEEP_CAVES_Y`, `DEEP_CAVES_CEILING_Y`, `BLOOMING_CAVES_Y`, `BLOOMING_CAVES_CEILING_Y`, `TOP_LAYER_Y`. Arcane stone plates sit between layers (`ArcaneStructureGen`).
-
-## How generation splits
+Layers bottom → top (`Const`): Void `0…50` → arcane plate → Lost caves `LOST_CAVES_Y` 56 … `LOST_CAVES_CEILING_Y` 131 → plate → Deep caves 137 … 212 → plate → Blooming caves 218 … 293 → Top layer from `TOP_LAYER_Y` 294 to the build limit 512.
 
 Two independent systems:
 
-1. **Terrain shape** — `RRChunkGenerator.fillFromNoise` → `chunkgenerator/*Gen` (noise floors/ceilings) + `ArcaneStructureGen` (plates/pillars/runes). Biomes do **not** carve the stacked caves.
-2. **Decoration** — vanilla feature pipeline after terrain: biome → placed features.
+1. **Terrain**: `RRChunkGenerator.fillFromNoise` → `TopLayerAndBloomingCavesGen`, `DeepCavesGen` (ceiling only), `DeepCavesAndLostCavesGen`, `VoidGen`; plates, pillars and runes in `ArcaneStructureGen`; surface blocks per biome in `RRTerrainSurfaces`. `LostCavesGen` and `DeepCavesGen.generateDeepCavesFloor` are only called from commented-out code. Biomes do not carve the caves.
+2. **Decoration**: the vanilla feature pipeline per biome. `RRBiomeSource.getNoiseBiome` picks a biome by Y and noise from the lists in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`); weights are repeated entries.
 
-Biome pick by Y (+ noise within layer): `RRBiomeSource.getNoiseBiome`. Layer biome lists wired in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`).
+These change existing worlds, so design them first: adding, removing or reordering a biome list entry (shifts every border in the layer), renaming noise seed strings, changing `RRTerrainSurfaces`, changing a structure algorithm (seams in half-generated structures).
 
-```
-RRDimension (stem + type)
-    └─ RRChunkGenerator + RRBiomeSource
-         ├─ terrain: TopLayerAndBloomingCavesGen / DeepCaves* / LostCaves* / VoidGen / ArcaneStructureGen
-         └─ biomes: RRBiomes → biomes/<layer>/*.java → RRPlacedFeatures
-```
-
-## Feature pipeline (add decoration here)
-
-```
-Feature class          → register type     → configure (blocks/params) → place (count/height/scan) → attach to biome
-dimension/features/X   RRFeatures          RRConfiguredFeatures          RRPlacedFeatures           biomes/... + RRBiomes
-```
-
-Order matters in datagen (`DatagenMain.DATAPACK_REGISTRY_BUILDER`): configured → placed → structures → biomes → dimension.
-
-| Step | File | What to do |
-|------|------|------------|
-| 1 | `features/FooFeature.java` | Implement `Feature` + config |
-| 2 | `RRFeatures` | `REGISTRY.register(...)` (runtime) |
-| 3 | `RRConfiguredFeatures` | Key + `bootstrap` entry |
-| 4 | `RRPlacedFeatures` | Key + placement; heights often use `Const.*` |
-| 5 | `biomes/<layer>/Bar.java` | `generation.addFeature(..., RRPlacedFeatures.FOO)` |
-| 6 | `RRBiomes` | Key + `ctx.register` if new biome |
-
-Custom placement mods: `placements/` + `RRPlacementModifierTypes`.
-
-Vanilla features OK in configured/placed (e.g. `Feature.BLOCK_COLUMN`, `CavePlacements.*`).
-
-## Biomes (add biome here)
-
-1. Class under `dimension/biomes/<layer>/` with `bootstrap(placedFeatures, carvers)` → builds `Biome` (mobs, effects, `addFeature`).
-2. Key + register in `RRBiomes`.
-3. Put holder into the right list in `RRBiomeSource.newDefault` or it never spawns.
-4. Tags (structures etc.): `RRBiomeTags` + `DatagenBiomeTagProvider`.
-
-Layer folders match vertical bands: `toplayer`, `bloomingcaves` / `bloomingcavesceiling`, `deepcaves` / `deepcavesceiling`, `lostcaves` / `lostcavesceiling`.
-
-## Structures (separate from Features)
-
-For large/jigsaw-style pieces (e.g. Giant Goblet):
-
-- Type: `RRStructureTypes` + `structures/*Structure.java` / `*Piece.java` + `RRStructurePieceTypes`
-- Datapack: `RRStructures` + `RRStructureSets`
-- Biome filter via tag (`RRBiomeTags.HAS_GIANT_GOBLET`)
-
-Giant Goblet is a structure (`GiantGobletStructure` / `GiantGobletPiece`), not a feature.
-
-## Datagen
-
-After changing Java bootstrap (`datagen/*`, worldgen registries, block models/tags/loot), the agent must run datagen itself. Do not skip it and do not ask the user to type `gradlew` unless datagen cannot run.
-
-`runClient` / `runServer` lock `build/` — datagen cannot run in parallel. **Never** kill Java/Gradle, never `gradlew --stop`, never start or restart the game.
-
-If `runData` fails because the client is still running (file-in-use / unable to delete / lock timeout): tell the user Minecraft is locking `build/`, ask them to close the game, and have them run datagen and the client themselves. Give these exact commands:
-
-```
-.\gradlew.bat runData
-.\gradlew.bat runClient
-```
-
-Do not wait for the game to close. Do not hand-write `src/generated/**`.
-
-Reuse caches: never `clean`, `--rerun-tasks`, `--refresh-dependencies`, or `--offline`. Do not delete `src/generated/` (Minecraft’s incremental cache is `src/generated/resources/.cache`).
-
-NFRT (Minecraft assets + decompile) is pinned to `%USERPROFILE%\.gradle\caches\neoformruntime` in `build.gradle` so Cursor sandbox cannot force a full redownload. If `downloadAssets` still starts thousands of downloads, stop — the pin failed.
-
-## Content outside worldgen
-
-- Blocks/items: `RRBlocks`, `RRItems` (+ lang under `resources/assets/runeruin/lang/`)
-- Models/loot/recipes/tags: `datagen/*`
-- Teleport item: `items/RuneOfSpaceItem`
-- Region export commands: `region/RegionCommands` → `exports/`; each `/rrexport` JSON includes the dimension seed as `worldSeed`
-- Headless preview: `preview/PreviewJobs` → `exports/preview_*.txt` (same `runeruin.region/1` format)
-
-## Headless structure / feature preview
-
-Generates a **named job** into an in-memory world (no terrain, no client) and writes `exports/` in the same format as `/rrexport`. The job is chosen at launch — do not hardcode Giant Goblet when testing something else.
-
-```
-.\gradlew.bat runPreview -Ppreview=list
-.\gradlew.bat runPreview -Ppreview=giant_goblet
-.\gradlew.bat runPreview -Ppreview=giant_goblet -Pseed=42 -Pheight=75 -Pradius=40
-.\gradlew.bat runPreview -Ppreview=boulder -Pseed=3 -Pradius=10
-.\gradlew.bat runPreview -Ppreview=monolith -Pradius=6
-```
-
-Default job is `giant_goblet` if `-Ppreview` is omitted. Extra params: `-Pheight` `-Pradius` `-Pseed` `-PpreviewName=…`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`).
-
-Outputs (name defaults to `preview_<job>`):
-
-- `exports/preview_<job>.json` — full volume
-- `exports/preview_<job>_yz.txt` — midplane looking +X
-- `exports/preview_<job>_xy.txt` / `_xz.txt` — the other midplanes
-- `python scripts/render_preview.py out.png exports/preview_<job>.json [...]` — optional front/side/top silhouette PNG of the full volume; use it to judge shape (bends, tilt, gaps) since midplanes can miss the subject. The JSON/text stay the exact source of truth.
-- `exports/preview_<job>_info.txt` — seed, params, block counts
-
-For terrain-generator experiments, keep two full JSON exports with matching seed/dimension/origin/size: `was` is the untouched world region; `expected` is the user's edited target. Compare them first, then replay `was` before changing code to prove the current generator reproduces the original terrain. Only after that baseline is close, edit the generator and iterate toward `expected`:
-
-```powershell
-python .agents/skills/region-export-compare/scripts/compare_region.py exports/was.json exports/expected.json
-.\gradlew.bat runPreview -Ppreview=world_region '-Pregion=exports/was.json' -Pstage=generated
-python .agents/skills/region-export-compare/scripts/compare_terrain.py exports/was_generated.json exports/was.json
-python .agents/skills/region-export-compare/scripts/compare_terrain.py exports/was_generated.json exports/expected.json
-.\gradlew.bat runPreview -Ppreview=world_region '-Pregion=exports/was.json' -Pstage=generated_after_modify
-python .agents/skills/region-export-compare/scripts/compare_region.py exports/was_generated.json exports/expected.json exports/was_generated_after_modify.json
-python .agents/skills/region-export-compare/scripts/compare_terrain.py exports/was_generated_after_modify.json exports/expected.json
-```
-
-`world_region` replays `RRChunkGenerator.fillFromNoise` into temporary in-memory chunks using the exact chunk bounds and seed in the export. This runs terrain and arcane plates, not carvers, biome features (including ores/vegetation), or structure placement. Before editing, require the terrain-only `generated` result to be nearly identical to `was`; if not, investigate the replay inputs/version before tuning. Keep `generated` as the baseline; compare its distance to `expected`, then compare `generated_after_modify` to `expected` on each iteration. For a full in-game export versus a terrain-only replay, run the regular `compare_region.py` raw diff and then `compare_terrain.py` to report terrain agreement while masking known post-terrain feature blocks; always report both results because features can replace terrain blocks.
-
-In-game: `/rrpreview list` or `/rrpreview <job> [seed] [name] [k=v]…` (e.g. `/rrpreview boulder 3 radius=10`).
-
-`runPreview` / `runGameTestServer` lock `build/` — do not run them while the client is open. If the lock fails, ask the user to close the game; do not kill Java.
-
-To add a new testable shape: class in `preview/jobs/` implementing `PreviewJob`, then `PreviewCatalog.register(...)`. For write-only features, construct config and call `PreviewJobs.placeFeature`. If the feature scans terrain, `PreviewWorld.fillBox` a floor/ceiling first.
-
-## Quick “where?”
-
-| Want… | Open… |
-|-------|--------|
-| Vanilla / NeoForge API (this version) | `.mc-sources/` (run `extractMcSources`) |
-| Layer Y heights | `Const` |
-| Terrain look of a layer | matching `chunkgenerator/*Gen` |
-| Which biome at Y | `RRBiomeSource` |
-| Biome colors/mobs/features list | `biomes/<layer>/…` |
-| New worldgen blob | `features/` → Features → Configured → Placed → biome |
-| Dimension registration | `RRDimension` + `DatagenMain` |
-| Pillars / arcane plates / runes | `ArcaneStructureGen`, `runes/Runes` |
+Procedures for features, biomes and structures: the `worldgen-*` skills.

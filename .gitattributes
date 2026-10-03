@@ -2,6 +2,10 @@
 # (CRLF on Windows, LF on Linux/macOS). Commit always stores LF.
 * text=auto
 
+# Hooks run under sh: keep LF on checkout.
+.githooks/* text eol=lf
+*.sh text eol=lf
+
 # Generated files always emit LF; keep checkout as LF so they never look dirty.
 src/generated/**/.cache/* text eol=lf
 src/generated/**/*.json text eol=lf
