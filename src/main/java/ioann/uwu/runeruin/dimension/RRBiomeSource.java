@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.*;
@@ -161,14 +162,18 @@ public class RRBiomeSource extends BiomeSource {
     private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT + 15;
     // private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
 
-    private static final Noise topLevelBiomesNoise = new SingleNoise(Noise.hashString("topLevelBiomeNoise"), 0.2f);
-    private static final Noise bloomingCavesCeilingBiomesNoise = new SingleNoise(Noise.hashString("bloomingCavesCeilingBiomeNoise"), 0.4f);
-    private static final Noise bloomingCavesBiomesNoise = new SingleNoise(Noise.hashString("bloomingCavesBiomeNoise"), 0.2f);
-    private static final Noise deepCavesCeilingBiomesNoise = new SingleNoise(Noise.hashString("deepCavesCeilingBiomesNoise"), 0.4f);
-    private static final Noise deepCavesBiomesNoise = new SingleNoise(Noise.hashString("deepCavesBiomesNoise"), 0.2f);
-    private static final Noise lostCavesCeilingBiomesNoise = new SingleNoise(Noise.hashString("lostCavesCeilingBiomesNoise"), 0.4f);
-    private static final Noise lostCavesBiomesNoise = new SingleNoise(Noise.hashString("lostCavesBiomesNoise"), 0.2f);
-    private static final Noise voidCeilingBiomesNoise = new SingleNoise(Noise.hashString("voidCeilingBiomesNoise"), 0.4f);
+    private static final LazyNoise topLevelBiomesNoise = biomeNoise("topLevelBiomeNoise", 0.2f);
+    private static final LazyNoise bloomingCavesCeilingBiomesNoise = biomeNoise("bloomingCavesCeilingBiomeNoise", 0.4f);
+    private static final LazyNoise bloomingCavesBiomesNoise = biomeNoise("bloomingCavesBiomeNoise", 0.2f);
+    private static final LazyNoise deepCavesCeilingBiomesNoise = biomeNoise("deepCavesCeilingBiomesNoise", 0.4f);
+    private static final LazyNoise deepCavesBiomesNoise = biomeNoise("deepCavesBiomesNoise", 0.2f);
+    private static final LazyNoise lostCavesCeilingBiomesNoise = biomeNoise("lostCavesCeilingBiomesNoise", 0.4f);
+    private static final LazyNoise lostCavesBiomesNoise = biomeNoise("lostCavesBiomesNoise", 0.2f);
+    private static final LazyNoise voidCeilingBiomesNoise = biomeNoise("voidCeilingBiomesNoise", 0.4f);
+
+    private static LazyNoise biomeNoise(String name, float frequency) {
+        return new LazyNoise(name, seed -> new SingleNoise(Noise.hashString(name + seed), frequency));
+    }
 
     @Override
     public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
@@ -189,49 +194,49 @@ public class RRBiomeSource extends BiomeSource {
 
         if (y > baseLine) {
 
-            float noise = topLevelBiomesNoise.noise(x, z);
+            float noise = topLevelBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
             int idx = (int) (topLevelBiomes.size() * noise * 0.99999f);
             return this.topLevelBiomes.get(idx);
 
         } else if (y > BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
 
-            float noise = bloomingCavesCeilingBiomesNoise.noise(x, z);
+            float noise = bloomingCavesCeilingBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
             int idx = (int) (bloomingCavesCeilingBiomes.size() * noise * 0.99999f);
             return this.bloomingCavesCeilingBiomes.get(idx);
 
         } else if (y > BLOOMING_CAVES_Y) {
 
-            float noise = bloomingCavesBiomesNoise.noise(x, z);
+            float noise = bloomingCavesBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
             int idx = (int) (bloomingCavesBiomes.size() * noise * 0.99999f);
             return this.bloomingCavesBiomes.get(idx);
 
         } else if (y > DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
 
-            float noise = deepCavesCeilingBiomesNoise.noise(x, z);
+            float noise = deepCavesCeilingBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
             int idx = (int) (deepCavesCeilingBiomes.size() * noise * 0.99999f);
             return this.deepCavesCeilingBiomes.get(idx);
 
         } else if (y > lostBaseLine) {
 
-            float noise = deepCavesBiomesNoise.noise(x, z);
+            float noise = deepCavesBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
             int idx = (int) (deepCavesBiomes.size() * noise * 0.99999f);
             return this.deepCavesBiomes.get(idx);
 
         } else if (y > LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
 
-            float noise = lostCavesCeilingBiomesNoise.noise(x, z);
+            float noise = lostCavesCeilingBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
             int idx = (int) (lostCavesCeilingBiomes.size() * noise * 0.99999f);
             return this.lostCavesCeilingBiomes.get(idx);
 
         } else if (y > LOST_CAVES_Y) {
 
-            float noise = lostCavesBiomesNoise.noise(x, z);
+            float noise = lostCavesBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
             int idx = (int) (lostCavesBiomes.size() * noise * 0.99999f);
             return this.lostCavesBiomes.get(idx);
 
         } else {
 
-            float noise = voidCeilingBiomesNoise.noise(x, z);
+            float noise = voidCeilingBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
             int idx = (int) (voidBiomes.size() * noise * 0.99999f);
             return this.voidBiomes.get(idx);
 

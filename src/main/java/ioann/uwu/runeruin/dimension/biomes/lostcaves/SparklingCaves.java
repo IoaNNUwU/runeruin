@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension.biomes.lostcaves;
 
 import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
+import ioann.uwu.runeruin.dimension.biomes.WaterDecorations;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
 import net.minecraft.data.worldgen.features.CaveFeatures;
@@ -30,14 +31,7 @@ public class SparklingCaves {
         BiomeDefaultFeatures.addExtraGold(generation);
 
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_DECORATION, RRPlacedFeatures.DEEPSLATE_SPIKE);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_MOSS_PATCH);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_MOSS_PATCH_UNDERWATER);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_SEAGRASS);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_KELP);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.SMALL_LILY_PAD_PATCH);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.BIG_LILY_PAD_PATCH);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.WATER_LILY);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.GOBLET_DEEP_ROOTS);
+        WaterDecorations.add(generation);
 
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_DECORATION, NetherPlacements.BASALT_BLOBS);
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_DECORATION, NetherPlacements.BASALT_PILLAR);

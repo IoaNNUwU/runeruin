@@ -130,6 +130,10 @@ public final class RRTerrainSurfaces {
                 || state.is(RRBlocks.GLOWING_MOSS.get());
     }
 
+    public static boolean hasProfile(ResourceKey<Biome> biome) {
+        return PROFILES.containsKey(biome);
+    }
+
     public static boolean usesGrassySubfloor(Holder<Biome> biome) {
         return biome.is(RRBiomes.ELDEN_GARDEN)
                 || biome.is(RRBiomes.SIMILAR_FOREST)
