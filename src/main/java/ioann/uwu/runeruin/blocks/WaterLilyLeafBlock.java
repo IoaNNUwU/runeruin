@@ -19,7 +19,8 @@ import java.util.Comparator;
 import java.util.Optional;
 
 /**
- * A water lily leaf held above the water by a stem.
+ * A water lily leaf held above the water by a stem. The flower is the same
+ * block with a bloom in its model.
  *
  * <p>The stem is not a block: the {@link WaterLilyRootBlock} model draws it.
  * The leaf stores where it sits relative to its root, so every leaf has one

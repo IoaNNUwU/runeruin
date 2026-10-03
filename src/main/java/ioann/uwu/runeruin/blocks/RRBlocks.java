@@ -329,7 +329,7 @@ public class RRBlocks {
     );
 
     public static final DeferredBlock<Block> WATER_LILY_ROOT = registerInWater("water_lily_root",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD).noCollision(),
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
             WaterLilyRootBlock::new);
 
     public static final DeferredBlock<Block> WATER_LILY_LEAF = register("water_lily_leaf",
@@ -338,7 +338,7 @@ public class RRBlocks {
 
     public static final DeferredBlock<Block> WATER_LILY_FLOWER = register("water_lily_flower",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
-            WaterLilyFlowerBlock::new);
+            WaterLilyLeafBlock::new);
 
     /** Interior portal block; no BlockItem (like nether portal). */
     public static final DeferredBlock<Block> RUNE_RUIN_PORTAL = REGISTRY.registerBlock(

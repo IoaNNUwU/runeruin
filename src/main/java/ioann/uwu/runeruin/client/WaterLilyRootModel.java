@@ -22,6 +22,8 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ioann.uwu.runeruin.blocks.WaterLilyLeafBlock.MAX_HEIGHT;
+import static ioann.uwu.runeruin.blocks.WaterLilyLeafBlock.REACH;
 import static ioann.uwu.runeruin.client.WaterLilyStemTexture.*;
 
 /**
@@ -58,7 +60,15 @@ public class WaterLilyRootModel implements DynamicBlockStateModel {
 
     private void addStem(List<BakedQuad> quads, int dx, int dy, int dz, int variant) {
         Vector3f along = dx == 0 && dz == 0 ? new Vector3f(1, 0, 0) : new Vector3f(dx, 0, dz).normalize();
-        Vector3f bottomLeft = new Vector3f(0.5F, START_Y - BELOW / 16.0F, 0.5F).fma(-MARGIN / 16.0F, along);
+        Vector3f normal = along.cross(0, 1, 0, new Vector3f());
+        // Stems towards or away from the same direction share a plane. Each gets a
+        // tiny sideways shift from its own offset (signed reach along the plane and
+        // height), so shifts are distinct, stay put when other leaves change, and
+        // all stems still seem to leave one point of the root.
+        int side = dx < 0 || dx == 0 && dz < 0 ? -1 : 1;
+        int code = (side * Math.max(Math.abs(dx), Math.abs(dz)) + REACH) * MAX_HEIGHT + dy - 1;
+        float shift = side * (code - (2 * REACH + 1) * MAX_HEIGHT / 2.0F) / 256.0F;
+        Vector3f bottomLeft = new Vector3f(0.5F, START_Y - BELOW / 16.0F, 0.5F).fma(-MARGIN / 16.0F, along).fma(shift, normal);
         Vector3f bottomRight = new Vector3f(bottomLeft).fma(CELL_WIDTH / 16.0F, along);
         Vector3f topRight = new Vector3f(bottomRight).add(0, CELL_HEIGHT / 16.0F, 0);
         Vector3f topLeft = new Vector3f(bottomLeft).add(0, CELL_HEIGHT / 16.0F, 0);
@@ -72,7 +82,6 @@ public class WaterLilyRootModel implements DynamicBlockStateModel {
         long tr = UVPair.pack(u1, v0);
         long tl = UVPair.pack(u0, v0);
 
-        Vector3f normal = along.cross(0, 1, 0, new Vector3f());
         Direction front = Direction.getApproximateNearest(normal.x, normal.y, normal.z);
         quads.add(new BakedQuad(bottomLeft, bottomRight, topRight, topLeft, bl, br, tr, tl, front, this.material));
         quads.add(new BakedQuad(bottomLeft, topLeft, topRight, bottomRight, bl, tl, tr, br, front.getOpposite(), this.material));

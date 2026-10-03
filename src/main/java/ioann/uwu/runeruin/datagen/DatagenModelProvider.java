@@ -175,14 +175,22 @@ public class DatagenModelProvider extends ModelProvider {
         JsonArray elements = new JsonArray();
         addJarElement(elements, "rhizome", new double[]{5, 9, 5}, new double[]{11, 13, 11}, "rhizome", 0,
                 "north", "south", "east", "west", "up", "down");
-        // Hair roots hang from the rhizome below the block, like on a real water lily.
-        addJarElement(elements, "roots_north_south", new double[]{1, -3, 8}, new double[]{15, 13, 8}, "roots", 0,
-                "north", "south");
-        addJarElement(elements, "roots_east_west", new double[]{8, -3, 1}, new double[]{8, 13, 15}, "roots", 0,
-                "east", "west");
+        // Two tiers of hair roots hang from the rhizome below the block in an X,
+        // like on a real water lily. Stems run in planes through the root axis
+        // towards whole-block offsets, never at 40 or 50 degrees, so the root
+        // planes never z-fight a stem.
+        for (double[] plane : new double[][]{{-7, 40}, {-7, -50}, {-15, -40}, {-15, 50}}) {
+            addJarElement(elements, "roots", new double[]{0, plane[0], 8}, new double[]{16, plane[0] + 16, 8},
+                    "roots", 0, "north", "south");
+            JsonObject rotation = new JsonObject();
+            rotation.add("origin", vector(new double[]{8, 8, 8}));
+            rotation.addProperty("axis", "y");
+            rotation.addProperty("angle", plane[1]);
+            elements.get(elements.size() - 1).getAsJsonObject().add("rotation", rotation);
+        }
         for (int i = 1; i < elements.size(); i++) {
             for (var face : elements.get(i).getAsJsonObject().getAsJsonObject("faces").entrySet()) {
-                face.getValue().getAsJsonObject().add("uv", vector(new double[]{1, 0, 15, 16}));
+                face.getValue().getAsJsonObject().add("uv", vector(new double[]{0, 0, 16, 16}));
             }
         }
         model.add("elements", elements);
@@ -205,7 +213,7 @@ public class DatagenModelProvider extends ModelProvider {
                 ItemModelUtils.constantTint(-12012264)
         );
 
-        // The flower lies flat on its own pad, slightly above it.
+        // The flower lies flat just above its own pad.
         JsonObject flowerModel = new JsonObject();
         flowerModel.addProperty("ambientocclusion", false);
         JsonObject flowerTextures = new JsonObject();
@@ -221,7 +229,7 @@ public class DatagenModelProvider extends ModelProvider {
         }
         JsonArray flowerElements = new JsonArray();
         flowerElements.add(horizontalPlane(0.25, planeFace(0, 16, 16, 0), planeFace(0, 0, 16, 16)));
-        flowerElements.add(horizontalPlane(2.0, flowerDown, flowerUp));
+        flowerElements.add(horizontalPlane(0.75, flowerDown, flowerUp));
         flowerModel.add("elements", flowerElements);
 
         Identifier flowerModelId = RR.id("block/water_lily_flower");

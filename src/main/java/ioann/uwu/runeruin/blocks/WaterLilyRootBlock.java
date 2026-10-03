@@ -46,7 +46,7 @@ public class WaterLilyRootBlock extends Block implements SimpleWaterloggedBlock,
     private static final int FLOWER_MIN_LEAVES = 6;
     private static final int FLOWER_CHANCE = 4;
     private static final int SPOT_ATTEMPTS = 32;
-    private static final VoxelShape SHAPE = Block.box(4.0, 8.0, 4.0, 12.0, 14.0, 12.0);
+    private static final VoxelShape SHAPE = Block.box(5.0, 9.0, 5.0, 11.0, 13.0, 11.0);
 
     public WaterLilyRootBlock(BlockBehaviour.Properties properties) {
         super(properties);
