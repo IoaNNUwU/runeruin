@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.dimension.RRTags;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.items.FloatingMossItem;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
+import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.HangingSignItem;
 import net.minecraft.world.item.PlaceOnWaterBlockItem;
@@ -167,16 +168,16 @@ public class RRBlocks {
             EldenVinesBlock::new
     );
 
-    /** Temporary inverted-tree leaves: Cherry Leaves for the first variant. */
+    /** Pink inverted-tree leaves with light pink falling particles. */
     public static final DeferredBlock<Block> INVERTED_LEAVES_1 = register("inverted_leaves_1",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES),
-            p -> new UntintedParticleLeavesBlock(0.1F, ParticleTypes.CHERRY_LEAVES, p)
+            p -> new UntintedParticleLeavesBlock(0.1F, ColorParticleOption.create(ParticleTypes.TINTED_LEAVES, 0xFFF08EBE), p)
     );
 
-    /** Temporary inverted-tree leaves: Pink Glazed Terracotta texture with leaf behavior. */
+    /** Violet inverted-tree leaves with violet falling particles. */
     public static final DeferredBlock<Block> INVERTED_LEAVES_2 = register("inverted_leaves_2",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES),
-            p -> new UntintedParticleLeavesBlock(0.1F, ParticleTypes.CHERRY_LEAVES, p)
+            p -> new UntintedParticleLeavesBlock(0.1F, ColorParticleOption.create(ParticleTypes.TINTED_LEAVES, 0xFF9C5FDC), p)
     );
 
     public static final DeferredBlock<Block> INVERTED_TREE_WOOD = register("inverted_tree_wood",
