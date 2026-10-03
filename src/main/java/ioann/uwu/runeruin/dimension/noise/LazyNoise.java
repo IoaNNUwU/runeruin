@@ -1,23 +1,31 @@
 package ioann.uwu.runeruin.dimension.noise;
 
-import net.minecraft.world.level.biome.Climate;
-import net.minecraft.world.level.levelgen.RandomState;
-
+import com.google.common.collect.MapMaker;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.levelgen.RandomState;
 
 public class LazyNoise {
 
-    // TODO: This causes memory leak because noises never removed from the map on world exit
-    private static final ConcurrentHashMap<String, Noise> REGISTRY = new ConcurrentHashMap<>();
+    // A non-noise generator gets a RandomState with a dummy noise router, and the biome source only
+    // sees its climate sampler, so neither carries the world seed. RRChunkGenerator.createState binds
+    // the seed to the sampler of each level's RandomState. Weak identity keys: one entry per level.
+    private static final Map<Climate.Sampler, Long> SEEDS = new MapMaker().weakKeys().makeMap();
 
     private final String noiseName;
     private final Function<Long, Noise> seedToNoise;
+    private final Map<Long, Noise> noisesBySeed = new ConcurrentHashMap<>();
 
     public LazyNoise(String noiseName, Function<Long, Noise> seedToNoise) {
         this.noiseName = noiseName;
         this.seedToNoise = seedToNoise;
+    }
+
+    public static void bindSeed(RandomState randomState, long seed) {
+        SEEDS.put(randomState.sampler(), seed);
     }
 
     public Noise getOrCreateNoise(RandomState randomState) {
@@ -25,15 +33,11 @@ public class LazyNoise {
     }
 
     public Noise getOrCreateNoise(Climate.Sampler sampler) {
-
-        long worldSeed = extractWorldSeed(sampler);
-        String mapKey = this.noiseName + worldSeed;
-
-        return REGISTRY.computeIfAbsent(mapKey, _ -> this.seedToNoise.apply(worldSeed));
-    }
-
-    private static long extractWorldSeed(Climate.Sampler sampler) {
-        return sampler.sample(98, 3, 67).erosion();
+        Long seed = SEEDS.get(sampler);
+        if (seed == null) {
+            throw new IllegalStateException("No world seed is bound to this RandomState; call LazyNoise.bindSeed first");
+        }
+        return noisesBySeed.computeIfAbsent(seed, this.seedToNoise);
     }
 
     public static LazyNoise chain(String noiseName, LazyNoise base, Function<Noise, Noise> transform) {
