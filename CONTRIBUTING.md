@@ -6,15 +6,15 @@ The maintainer is [@IoaNNUwU](https://github.com/IoaNNUwU): they triage issues, 
 
 ## In short
 
-1. Pick an issue that is free to take, or open a new one.
+1. Pick an issue that is free to take, or open a new one. A small obvious fix can skip this step.
 2. Fork the repository and clone your fork.
 3. Make a branch, do the work, run the checks.
-4. Open a pull request into `main` with `Fixes #<issue>` in its description.
+4. Open a pull request into `main`, with `Fixes #<issue>` in its description if there is an issue.
 5. The maintainer reviews it and squash-merges it.
 
 ## Issues
 
-Every piece of work starts with an issue, so that everyone can see what is planned, what is taken and what is done. Use the issue forms: a bug report or a feature idea.
+Work starts with an issue, so that everyone can see what is planned, what is taken and what is done. Use the issue forms: a bug report or a feature idea. A small change that needs no discussion (a typo, documentation, an obvious fix, an urgent hotfix) can go straight to a pull request; anything that needs a design proposal (see [AGENTS.md](AGENTS.md)) starts with an issue.
 
 Labels show where an issue stands:
 
@@ -80,7 +80,7 @@ gh pr create --draft
 ```
 
 - Open it as a **draft** early: it shows that the issue is taken.
-- The **title** reads like a commit subject, and the **description** follows the template: `Fixes #<issue>`, what was done, how it was verified, what to check in the game and the decisions made along the way. The title and the description become the commit on `main`, so write them for someone reading the history a year from now.
+- The **title** reads like a commit subject, and the **description** follows the template: `Fixes #<issue>` (drop the line when there is no issue), what was done, how it was verified, what to check in the game and the decisions made along the way. The title and the description become the commit on `main`, so write them for someone reading the history a year from now.
 - Before marking it **ready for review**, merge the latest `main` (`git fetch upstream`, then `git merge upstream/main`), run the checks again and make sure CI is green.
 - If an AI agent did the work, review its changes and its decisions yourself before marking the pull request ready. By doing so you take responsibility for them, as for your own code.
 - The maintainer reviews the pull request and squash-merges it. The branch is deleted after the merge, so further work goes into a new branch.
@@ -91,7 +91,7 @@ When you are done, update your `main` again and remove the task folder with `.\s
 
 Agents read [AGENTS.md](AGENTS.md) and by default only work on your computer: they create a branch in a separate folder, commit, run the checks and report in the chat. They touch GitHub only when you ask them to, and then they follow this file:
 
-- They may create issues and comment on them, push the task branch to `origin`, and open and edit draft pull requests. Right after the first commit they push it and open a draft pull request with `Fixes #<issue>`, so the issue shows as taken.
+- They may create issues and comment on them, push the task branch to `origin`, and open and edit draft pull requests. Right after the first commit they push it and open a draft pull request with `Fixes #<issue>`, so the issue shows as taken. Without an issue they work only on a change that needs no design proposal.
 - A design proposal goes into the issue as a comment as well as into the chat, so the decision stays with the issue.
 - The final report goes into the chat first. Only after you approve it does it go into the pull request description, and only then is the pull request marked ready (`gh pr ready`).
 - They never merge pull requests, push to `main` or close issues.
