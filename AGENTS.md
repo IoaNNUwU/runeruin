@@ -21,7 +21,7 @@ Several agents work in this repository at once. Every change, documentation incl
 5. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
 6. Merge into `main`, cherry-pick or remove worktrees only when the user asks. Merge from the main checkout, then remove the worktree only with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` deletes the shared sources cache through the junction.
 
-Git hooks in `.githooks` (enabled by the setup script) reject commits to `main` other than merges, cherry-picks and reverts, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Set `RUNERUIN_ALLOW_MAIN_COMMIT=1` for a commit only when the user explicitly asks to commit directly to `main`; never use `--no-verify`.
+Git hooks in `.githooks` (enabled by the setup script) reject commits to `main` other than merges, cherry-picks and reverts, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
 
 ## Questions, designs, reports
 
