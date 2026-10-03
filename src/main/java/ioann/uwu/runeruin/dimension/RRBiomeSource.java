@@ -4,8 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
-import ioann.uwu.runeruin.dimension.noise.Noise;
-import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.biome.Biome;
@@ -31,14 +29,14 @@ public class RRBiomeSource extends BiomeSource {
     // Biome choice noise of each layer, top to bottom like the biome lists. The name seeds the noise:
     // renaming one reshapes that layer's biome map.
     private static final List<LazyNoise> LAYER_NOISES = List.of(
-            biomeNoise("topLevelBiomeNoise", 0.2f),
-            biomeNoise("bloomingCavesCeilingBiomeNoise", 0.4f),
-            biomeNoise("bloomingCavesBiomeNoise", 0.2f),
-            biomeNoise("deepCavesCeilingBiomesNoise", 0.4f),
-            biomeNoise("deepCavesBiomesNoise", 0.2f),
-            biomeNoise("lostCavesCeilingBiomesNoise", 0.4f),
-            biomeNoise("lostCavesBiomesNoise", 0.2f),
-            biomeNoise("voidCeilingBiomesNoise", 0.4f)
+            LazyNoise.single("topLevelBiomeNoise", 0.2f),
+            LazyNoise.single("bloomingCavesCeilingBiomeNoise", 0.4f),
+            LazyNoise.single("bloomingCavesBiomeNoise", 0.2f),
+            LazyNoise.single("deepCavesCeilingBiomesNoise", 0.4f),
+            LazyNoise.single("deepCavesBiomesNoise", 0.2f),
+            LazyNoise.single("lostCavesCeilingBiomesNoise", 0.4f),
+            LazyNoise.single("lostCavesBiomesNoise", 0.2f),
+            LazyNoise.single("voidCeilingBiomesNoise", 0.4f)
     );
 
     private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT + 15;
@@ -122,10 +120,6 @@ public class RRBiomeSource extends BiomeSource {
                         biomeRegistry.getOrThrow(Biomes.THE_VOID)
                 )
         ));
-    }
-
-    private static LazyNoise biomeNoise(String name, float frequency) {
-        return new LazyNoise(name, seed -> new SingleNoise(Noise.hashString(name + seed), frequency));
     }
 
     @Override

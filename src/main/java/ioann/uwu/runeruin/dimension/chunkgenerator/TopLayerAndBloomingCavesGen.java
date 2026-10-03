@@ -20,7 +20,7 @@ import static ioann.uwu.runeruin.dimension.Const.*;
 
 public class TopLayerAndBloomingCavesGen {
 
-    private static final LazyNoise floorNoise = new LazyNoise("bloomingCavesFloorNoise", SingleNoise::new);
+    private static final LazyNoise floorNoise = LazyNoise.single("bloomingCavesFloorNoise", 1f);
 
     private static final HangingTerrainGenerator.Profile HANGING_SOIL = new HangingTerrainGenerator.Profile(
             TopLayerAndBloomingCavesGen::topLayerColumnAt,

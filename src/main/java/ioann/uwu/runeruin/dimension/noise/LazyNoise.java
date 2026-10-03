@@ -24,6 +24,11 @@ public class LazyNoise {
         this.seedToNoise = seedToNoise;
     }
 
+    /** A noise seeded by its name and the world seed, so two noises with different names never repeat each other. */
+    public static LazyNoise single(String noiseName, float frequency) {
+        return new LazyNoise(noiseName, seed -> new SingleNoise(Noise.hashString(noiseName + seed), frequency));
+    }
+
     public static void bindSeed(RandomState randomState, long seed) {
         SEEDS.put(randomState.sampler(), seed);
     }

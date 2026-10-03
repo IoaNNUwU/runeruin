@@ -3,11 +3,14 @@ package ioann.uwu.runeruin.preview;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.RRBiomes;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
@@ -73,6 +76,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("world_seed_changes_generation", () -> RRGameTests::worldSeedChangesGeneration);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_REGISTRY_COMPLETE =
         TEST_FUNCTIONS.register("biome_registry_complete", () -> RRGameTests::biomeRegistryComplete);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LAYER_FLOORS_DIFFER =
+        TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -183,6 +188,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("layer_floors_differ"),
+            new FunctionGameTestInstance(
+                LAYER_FLOORS_DIFFER.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -233,6 +245,26 @@ public final class RRGameTests {
             RRChunkGenerator.topLevelNoise.getOrCreateNoise(levelRandom);
             helper.succeed();
         } catch (IOException | IllegalStateException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // The lost and blooming cave floors used one unnamed noise and had the same relief, one layer apart.
+    private static void layerFloorsDiffer(GameTestHelper helper) {
+        try {
+            RandomState randomState = HeadlessTerrainGenerator.randomState(helper.getLevel().getServer(), 1);
+            int same = 0;
+            for (int i = 0; i < 64; i++) {
+                int x = i * 37;
+                int z = i * 53;
+                if (DeepCavesAndLostCavesGen.lostCavesFloorY(x, z, randomState) - Const.LOST_CAVES_Y
+                        == TopLayerAndBloomingCavesGen.bloomingCavesFloorY(x, z, randomState) - Const.BLOOMING_CAVES_Y) {
+                    same++;
+                }
+            }
+            helper.assertTrue(same < 32, "lost and blooming cave floors have the same height at " + same + " of 64 points");
+            helper.succeed();
+        } catch (IOException e) {
             helper.fail(e.toString());
         }
     }
