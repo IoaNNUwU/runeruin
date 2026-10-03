@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.datagen;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.ArcaneStonePortalBlock;
 import ioann.uwu.runeruin.blocks.BigLilyPadBlock;
@@ -117,15 +118,31 @@ public class DatagenModelProvider extends ModelProvider {
         createFireflyInJar(blockModels);
         createBigLilyPad(blockModels);
 
+        var deepRoots = RRBlocks.DEEP_ROOTS.get();
         blockModels.registerSimpleItemModel(
-                RRBlocks.DEEP_ROOTS.get().asItem(),
-                ModelLocationUtils.getModelLocation(Blocks.WARPED_ROOTS.asItem())
+                deepRoots.asItem(),
+                BlockModelGenerators.PlantType.NOT_TINTED.createItemModel(blockModels, deepRoots)
         );
-        blockModels.createCrossBlock(
-                RRBlocks.DEEP_ROOTS.get(),
-                BlockModelGenerators.PlantType.NOT_TINTED,
-                TextureMapping.cross(TextureMapping.getBlockTexture(Blocks.WARPED_ROOTS))
-        );
+        Identifier deepRootsModel = RR.id("block/deep_roots");
+        blockModels.modelOutput.accept(deepRootsModel, () -> JsonParser.parseString("""
+                {
+                  "ambientocclusion": false,
+                  "textures": {"particle": "runeruin:block/deep_roots", "cross": "runeruin:block/deep_roots"},
+                  "elements": [
+                    {"from": [0.8, 0, 8], "to": [15.2, 16, 8], "shade": false,
+                     "rotation": {"origin": [8, 8, 8], "axis": "y", "angle": 45, "rescale": true},
+                     "faces": {"north": {"uv": [0, 0, 16, 16], "texture": "#cross"},
+                               "south": {"uv": [16, 0, 0, 16], "texture": "#cross"}}},
+                    {"from": [8, 0, 0.8], "to": [8, 16, 15.2], "shade": false,
+                     "rotation": {"origin": [8, 8, 8], "axis": "y", "angle": 45, "rescale": true},
+                     "faces": {"west": {"uv": [0, 0, 16, 16], "texture": "#cross"},
+                               "east": {"uv": [16, 0, 0, 16], "texture": "#cross"}}}
+                  ]
+                }"""));
+        blockModels.blockStateOutput.accept(MultiVariantGenerator.dispatch(
+                deepRoots,
+                BlockModelGenerators.createRotatedVariants(BlockModelGenerators.plainModel(deepRootsModel))
+        ));
 
         createRuneRuinPortal(blockModels);
         createMossBerry(blockModels, itemModels);
