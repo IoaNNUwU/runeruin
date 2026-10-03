@@ -43,37 +43,13 @@
      VOID LAYER          `                + Y = 0
 ```
 
-## TODO
+## Tasks
 
-- [ ] **TOP** Layer
-  - [ ] Add more biomes, such as a yellow one.
-  - [X] Improve generation of the top layer so it isn't too flat.
-  - [X] Improve pillar generation and put runes on them.
-  - [X] Improve rune designs.
-- [ ] **Blooming Caves** Layer
-  - [ ] Add a `Hive` biome consisting of a large stone hanging from the top layer, and add other types of hanging stones.
-  - [ ] Add a `Frog` boss and magical abilities.
-  - [ ] Add a `Pirate Ship` boss, a related invasion, and its crew.
-  - [X] Divide into two biomes: jungle and stone forest.
-  - [X] Add another type of glowing flora to the dark parts of the Blooming Caves beneath the top layer.
-- [ ] **Deep Caves** Layer
-  - [ ] Add more spike types (mossy, stone, etc.).
-  - [ ] Add more variety to buds on inverted trees.
-    - [ ] Bird nests
-    - [ ] Mini-lake?
-    - [ ] Spider nests?
-  - [ ] Add a magenta mushroom biome with giant worms.
-  - [ ] Add a regular mushroom biome with gnomes.
-  - [ ] Add a spider cave biome with a giant spider boss.
-- [ ] **Lost Caves** Layer
-  - [ ] Add an ice biome.
-  - [ ] Add Giant Goblets that extend beyond the Lost Caves layer and contain their own ecosystems.
-  - [X] Add a lava biome.
-- [ ] **Void** Layer
-  - [ ] Add stars made of stardust blocks. Stardust is a useful material that is difficult to mine above the abyss.
-  - [ ] Maybe add a radioactive flesh biome.
-- [ ] **Equipment**
-  - [ ] Add a `Blowpipe` that shoots `mossberries` or `glowberries` and applies an effect to enemies.
-  - [ ] Add a `ring` that doubles the damage all tools deal to poisoned enemies, so it can be used with the `blowpipe` or a `sword`.
-  - [ ] Add a `Grappling Hook`.
-  - [ ] Add other rock-climbing equipment.
+Tasks are [issues](https://github.com/IoaNNUwU/runeruin/issues); labels show the stage, a linked pull request shows the work.
+
+- [Bugs to triage](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+triage%22) and [ideas](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3Aidea)
+- [Free to take](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3Aconfirmed%2Caccepted+-linked%3Apr): `confirmed` bugs and `accepted` features without a pull request
+- [In progress](https://github.com/IoaNNUwU/runeruin/pulls?q=is%3Apr+is%3Aopen+draft%3Atrue) and [waiting for merge](https://github.com/IoaNNUwU/runeruin/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse)
+- By layer: [top](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+top%22), [blooming caves](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+blooming+caves%22), [deep caves](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+deep+caves%22), [lost caves](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+lost+caves%22), [void](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3A%22layer%3A+void%22)
+
+Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).

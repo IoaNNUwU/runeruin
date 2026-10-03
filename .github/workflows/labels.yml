@@ -1,0 +1,31 @@
+name: Labels
+
+# Creates or updates the repository labels listed in .github/labels.json. Labels missing from the file are kept.
+on:
+  push:
+    branches: [main]
+    paths: [.github/labels.json]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'EOF'
+          import json, subprocess
+          for group in json.load(open('.github/labels.json', encoding='utf-8')):
+              for name, description in group['labels'].items():
+                  subprocess.run(['gh', 'label', 'create', name, '--color', group['color'],
+                                  '--description', description, '--force'], check=True)
+          EOF

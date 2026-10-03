@@ -52,6 +52,6 @@ Invoke-Git -C $projectRoot worktree remove $worktree
 Write-Host "Removed worktree $worktree"
 
 if ($branch) {
-    # -d (not -D) keeps branches that are not merged yet.
+    # -d (not -D) keeps a branch with commits that are neither pushed to its upstream nor in main.
     Invoke-Git -C $projectRoot branch -d $branch
 }

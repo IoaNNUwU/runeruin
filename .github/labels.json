@@ -1,0 +1,16 @@
+[
+  { "group": "bug",         "color": "d73a4a", "labels": { "bug": "Something isn't working" } },
+  { "group": "enhancement", "color": "a2eeef", "labels": { "enhancement": "New feature or request" } },
+  { "group": "waiting",     "color": "fbca04", "labels": { "needs triage": "Bug not reproduced yet", "idea": "Feature not agreed yet" } },
+  { "group": "confirmed",   "color": "b60205", "labels": { "confirmed": "Bug reproduced, free to fix" } },
+  { "group": "accepted",    "color": "0e8a16", "labels": { "accepted": "Feature agreed, free to build" } },
+  { "group": "layer",       "color": "5319e7", "labels": {
+      "layer: top": "Top layer",
+      "layer: blooming caves": "Blooming caves layer",
+      "layer: deep caves": "Deep caves layer",
+      "layer: lost caves": "Lost caves layer",
+      "layer: void": "Void layer"
+  } },
+  { "group": "biome",       "color": "c5def5", "labels": {} },
+  { "group": "infra",       "color": "6e7781", "labels": { "infra": "Scripts, build, CI, agent docs" } }
+]

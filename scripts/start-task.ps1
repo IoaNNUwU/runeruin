@@ -20,7 +20,7 @@ if (Test-Path -LiteralPath $worktree) {
     throw "Directory already exists, choose another task name: $worktree"
 }
 
-& git -C $projectRoot worktree add -b $branch $worktree HEAD
+& git -C $projectRoot worktree add -b $branch $worktree main
 if ($LASTEXITCODE -ne 0) {
     throw "Could not create $branch at $worktree. If the branch exists, choose another task name."
 }

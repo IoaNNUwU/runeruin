@@ -1,0 +1,11 @@
+#!/bin/sh
+# AGENTS.md: main changes only through pull requests merged on GitHub.
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+        echo "ERROR: do not push to main; push the task branch and open a pull request." >&2
+        exit 1
+    fi
+done
+
+exit 0

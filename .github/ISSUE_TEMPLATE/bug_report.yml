@@ -1,0 +1,20 @@
+name: Bug report
+description: Something in the mod works wrong
+labels: ["bug", "needs triage"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what you saw instead. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: Coordinates, layer and biome, or a command that leads there.
+  - type: input
+    id: version
+    attributes:
+      label: Mod version

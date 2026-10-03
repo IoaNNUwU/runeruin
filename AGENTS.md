@@ -15,13 +15,15 @@ Several agents work in this repository at once. Every change, documentation incl
    .\scripts\start-task.ps1 feature giant_goblet
    ```
 
-   It creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from the current `HEAD`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option).
+   It creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from the local `main`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option).
 3. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
 4. Follow-ups after a commit stay in the same branch and worktree. Start a new branch only for an unrelated feature or bug.
 5. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
-6. Merge into `main`, cherry-pick or remove worktrees only when the user asks. Merge from the main checkout, then remove the worktree only with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` deletes the shared sources cache through the junction.
+6. Remove a worktree only when the user asks, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` deletes the shared sources cache through the junction, and it keeps the branch unless its commits are pushed or in `main`.
 
-Git hooks in `.githooks` (enabled by the setup script) reject commits to `main` other than merges, cherry-picks and reverts, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
+`main` changes only through pull requests on GitHub: never commit on it, merge into it or push to it. Git hooks in `.githooks` (enabled by the setup script) reject commits on `main`, pushes to `main`, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
+
+Work with GitHub, in this repository or in the user's fork (issues, pushing, pull requests), only when the user asks for it, in the chat or in their personal agent instructions; then follow [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Questions, designs, reports
 
@@ -39,22 +41,7 @@ Git hooks in `.githooks` (enabled by the setup script) reject commits to `main` 
 
 Lighting, render layers, interaction and biome placement need the game: list them under "Check in game".
 
-**Final report**, also for partial work:
-
-```
-## Done
-1. <requested item> — done | partial | not done — <one line>
-## Verified
-<item> — compile / datagen / GameTest / preview render / needs the game
-## Check in game (up to 3 steps)
-1. <command or coordinates> — <what should be visible>
-## Decisions I made myself
-- <decision> — <why>; <risk>
-## Branch
-<branch>, <worktree path>, output of `git status --short --branch`
-```
-
-End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`. Copy "Decisions I made myself" into the commit message body so it outlives the chat.
+**Final report**, also for partial work: in the chat, in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions), with the branch, the worktree path and the output of `git status --short --branch`. The user reviews the changes and the Decisions and approves them; only then may a pull request become ready for review. End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
 
 ## Commits and code
 

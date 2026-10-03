@@ -1,0 +1,11 @@
+name: Feature idea
+description: A new block, biome, structure, creature or mechanic
+labels: ["enhancement", "idea"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: What it is, where it appears and what the player does with it.
+    validations:
+      required: true
