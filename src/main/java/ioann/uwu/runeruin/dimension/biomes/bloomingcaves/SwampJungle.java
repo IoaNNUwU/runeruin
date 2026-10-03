@@ -44,15 +44,11 @@ public class SwampJungle {
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
-        //.grassColorOverride(0xFFAA70);
 
         Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
                 .hasPrecipitation(true)
                 .temperature(1f)
                 .downfall(0.5f)
-                //.setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
-                //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
-                //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
                 .mobSpawnSettings(mobs.build())

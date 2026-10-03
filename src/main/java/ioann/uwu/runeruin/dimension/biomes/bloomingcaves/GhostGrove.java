@@ -9,6 +9,10 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
+/**
+ * Parked: registered, but not in RRBiomeSource, so it never generates (see PARKED_BIOMES in RRGameTests).
+ * Do not edit it as part of other tasks; only when the user brings it back.
+ */
 public class GhostGrove {
 
     public static Biome bootstrap(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
@@ -18,15 +22,11 @@ public class GhostGrove {
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
-        //.grassColorOverride(0xFFAA70);
 
         Biome.BiomeBuilder biomeBuilder = new Biome.BiomeBuilder()
                 .hasPrecipitation(true)
                 .temperature(1f)
                 .downfall(0.5f)
-                //.setAttribute(EnvironmentAttributes.SKY_COLOR, 0xFFAA70)
-                //.setAttribute(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, 0xFF0000)
-                //.setAttribute(EnvironmentAttributes.CLOUD_COLOR, 0xFF0000)
                 .setAttribute(EnvironmentAttributes.AMBIENT_LIGHT_COLOR, 0x0A0A0A)
                 .setAttribute(EnvironmentAttributes.FOG_COLOR, 0x88AA60)
                 .mobSpawnSettings(mobs.build())

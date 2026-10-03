@@ -13,27 +13,6 @@ import static ioann.uwu.runeruin.dimension.Const.*;
 
 public class DeepCavesGen {
 
-    private static final LazyNoise floorNoise = new LazyNoise("deepCavesFloorNoise", SingleNoise::new);
-
-    public static void generateDeepCavesFloor(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        BlockState stone = Blocks.STONE.defaultBlockState();
-
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-
-                float noise = floorNoise.getOrCreateNoise(randomState)
-                        .noise(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z);
-
-                int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
-
-                for (int y = DEEP_CAVES_Y; y < DEEP_CAVES_Y + biomeHeight + 1; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), stone);
-                }
-            }
-        }
-    }
-
     private static final LazyNoise ceilingNoise = new LazyNoise("deepCavesCeilingNoise",
             (seed) -> Noise.multi(
                     new SingleNoise(Noise.hashString("deepCavesCeilingNoise1" + seed), 10f),
