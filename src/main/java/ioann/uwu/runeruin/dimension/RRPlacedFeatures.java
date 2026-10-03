@@ -217,7 +217,8 @@ public class RRPlacedFeatures {
                         BlockPredicate.hasSturdyFace(Direction.DOWN),
                         BlockPredicate.ONLY_IN_AIR_PREDICATE,
                         16
-                )
+                ),
+                BiomeFilter.biome()
         );
 
         ctx.register(LONG_CEILING_BLOCK_VINE, new PlacedFeature(
@@ -237,7 +238,8 @@ public class RRPlacedFeatures {
                         BlockPredicate.hasSturdyFace(Direction.DOWN),
                         BlockPredicate.ONLY_IN_AIR_PREDICATE,
                         16
-                )
+                ),
+                BiomeFilter.biome()
         );
 
         ctx.register(CEILING_BALL, new PlacedFeature(
@@ -260,7 +262,8 @@ public class RRPlacedFeatures {
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-1))
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-1)),
+                        BiomeFilter.biome()
                 )
         ));
 
@@ -289,7 +292,8 @@ public class RRPlacedFeatures {
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-2))
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-2)),
+                        BiomeFilter.biome()
                 )
         ));
 
@@ -308,7 +312,8 @@ public class RRPlacedFeatures {
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-2))
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-2)),
+                        BiomeFilter.biome()
                 )
         ));
 
@@ -478,7 +483,8 @@ public class RRPlacedFeatures {
                                 BlockPredicate.ONLY_IN_AIR_PREDICATE,
                                 16
                         ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(-1))
+                        RandomOffsetPlacement.vertical(ConstantInt.of(-1)),
+                        BiomeFilter.biome()
                 )
         ));
 
@@ -494,7 +500,8 @@ public class RRPlacedFeatures {
                         BlockPredicate.hasSturdyFace(Direction.DOWN),
                         BlockPredicate.ONLY_IN_AIR_PREDICATE,
                         16
-                )
+                ),
+                BiomeFilter.biome()
         );
 
         ctx.register(DEEP_CEILING_BLOCK_VINE, new PlacedFeature(
@@ -514,7 +521,8 @@ public class RRPlacedFeatures {
                         BlockPredicate.hasSturdyFace(Direction.DOWN),
                         BlockPredicate.ONLY_IN_AIR_PREDICATE,
                         16
-                )
+                ),
+                BiomeFilter.biome()
         );
 
         ctx.register(INVERTED_TREE, new PlacedFeature(
@@ -625,7 +633,8 @@ public class RRPlacedFeatures {
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(DEEP_CAVES_Y),
                                 VerticalAnchor.absolute(DEEP_CAVES_CEILING_Y)
-                        )
+                        ),
+                        BiomeFilter.biome()
                 )
         ));
 
@@ -650,7 +659,8 @@ public class RRPlacedFeatures {
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(LOST_CAVES_Y),
                                 VerticalAnchor.absolute(LOST_CAVES_CEILING_Y)
-                        )
+                        ),
+                        BiomeFilter.biome()
                 )
         ));
 
