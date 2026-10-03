@@ -3,11 +3,13 @@ package ioann.uwu.runeruin.preview;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
@@ -20,6 +22,7 @@ import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.world.level.biome.FeatureSorter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
@@ -45,6 +48,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
         TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_FEATURE_ORDER =
+        TEST_FUNCTIONS.register("biome_feature_order", () -> RRGameTests::biomeFeatureOrder);
 
     private RRGameTests() {}
 
@@ -86,6 +91,29 @@ public final class RRGameTests {
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
+        event.registerTest(
+            RR.id("biome_feature_order"),
+            new FunctionGameTestInstance(
+                BIOME_FEATURE_ORDER.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+    }
+
+    // Vanilla sorts features lazily, when the dimension decorates its first chunk, and a cycle there
+    // stops the world from loading. Run the same sort over every biome the dimension can pick.
+    private static void biomeFeatureOrder(GameTestHelper helper) {
+        try {
+            RRBiomeSource biomes = RRBiomeSource.newDefault(helper.getLevel().registryAccess().lookupOrThrow(Registries.BIOME));
+            FeatureSorter.buildFeaturesPerStep(
+                List.copyOf(biomes.possibleBiomes()),
+                biome -> biome.value().getGenerationSettings().features(),
+                true
+            );
+            helper.succeed();
+        } catch (IllegalStateException e) {
+            helper.fail(e.getMessage());
+        }
     }
 
     private static void previewGiantGoblet(GameTestHelper helper) {

@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.dimension.biomes.deepcaves;
 
+import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.placement.CavePlacements;
@@ -40,6 +41,8 @@ public class DeepDripstoneCaves {
 
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, CavePlacements.POINTED_DRIPSTONE);
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, CavePlacements.DRIPSTONE_CLUSTER);
+
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.BROWN_DOME.placedKey());
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);

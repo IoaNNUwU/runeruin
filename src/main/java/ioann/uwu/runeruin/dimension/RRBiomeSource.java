@@ -118,11 +118,12 @@ public class RRBiomeSource extends BiomeSource {
                         biomeRegistry.getOrThrow(RRBiomes.DEEP_INVERTED_FOREST)
                 ),
                 HolderSet.direct(
-                        // The old two-biome distribution gave glowing moss half of the level.
-                        // Keep one sixth for it and split the remaining five sixths evenly:
-                        // 2/12 glowing moss, 5/12 stone spikes, 5/12 deepslate spikes.
+                        // Glowing moss keeps one sixth, the three spike biomes split the rest evenly:
+                        // 3/18 glowing moss, 5/18 stone, 5/18 deepslate, 5/18 dripstone spikes.
+                        // The moss stays first so its regions did not move when dripstone was appended.
                         biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES),
                         biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES),
                         biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
                         biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
                         biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
@@ -132,7 +133,12 @@ public class RRBiomeSource extends BiomeSource {
                         biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
                         biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
                         biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES)
+                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
+                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES)
                 ),
                 HolderSet.direct(
                         // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
