@@ -28,57 +28,37 @@ public class RRBiomeSource extends BiomeSource {
     public static final DeferredHolder<MapCodec<? extends BiomeSource>, MapCodec<RRBiomeSource>> BIOME_SOURCE =
             REGISTRY.register("runeruin_biome_source", () -> RRBiomeSource.CODEC);
 
-    private final HolderSet<Biome> topLevelBiomes;
-    private final HolderSet<Biome> bloomingCavesCeilingBiomes;
-    private final HolderSet<Biome> bloomingCavesBiomes;
-    private final HolderSet<Biome> deepCavesCeilingBiomes;
-    private final HolderSet<Biome> deepCavesBiomes;
-    private final HolderSet<Biome> lostCavesCeilingBiomes;
-    private final HolderSet<Biome> lostCavesBiomes;
-    private final HolderSet<Biome> voidBiomes;
+    // Biome choice noise of each layer, top to bottom like the biome lists. The name seeds the noise:
+    // renaming one reshapes that layer's biome map.
+    private static final List<LazyNoise> LAYER_NOISES = List.of(
+            biomeNoise("topLevelBiomeNoise", 0.2f),
+            biomeNoise("bloomingCavesCeilingBiomeNoise", 0.4f),
+            biomeNoise("bloomingCavesBiomeNoise", 0.2f),
+            biomeNoise("deepCavesCeilingBiomesNoise", 0.4f),
+            biomeNoise("deepCavesBiomesNoise", 0.2f),
+            biomeNoise("lostCavesCeilingBiomesNoise", 0.4f),
+            biomeNoise("lostCavesBiomesNoise", 0.2f),
+            biomeNoise("voidCeilingBiomesNoise", 0.4f)
+    );
 
-    public RRBiomeSource(
-            HolderSet<Biome> topLevelBiomes,
-            HolderSet<Biome> bloomingCavesCeilingBiomes,
-            HolderSet<Biome> bloomingCavesBiomes,
-            HolderSet<Biome> deepCavesCeilingBiomes,
-            HolderSet<Biome> deepCavesBiomes,
-            HolderSet<Biome> lostCavesCeilingBiomes,
-            HolderSet<Biome> lostCavesBiomes,
-            HolderSet<Biome> voidBiomes
-    ) {
-        this.topLevelBiomes = topLevelBiomes;
-        this.bloomingCavesBiomes = bloomingCavesBiomes;
-        this.bloomingCavesCeilingBiomes = bloomingCavesCeilingBiomes;
-        this.deepCavesBiomes = deepCavesBiomes;
-        this.deepCavesCeilingBiomes = deepCavesCeilingBiomes;
-        this.lostCavesBiomes = lostCavesBiomes;
-        this.lostCavesCeilingBiomes = lostCavesCeilingBiomes;
-        this.voidBiomes = voidBiomes;
+    private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT + 15;
+
+    /**
+     * Biome lists top to bottom: top layer, blooming caves ceiling, blooming caves, deep caves ceiling,
+     * deep caves, lost caves ceiling, lost caves, void.
+     */
+    private final List<HolderSet<Biome>> layers;
+
+    public RRBiomeSource(List<HolderSet<Biome>> layers) {
+        if (layers.size() != LAYER_NOISES.size()) {
+            throw new IllegalArgumentException("Expected " + LAYER_NOISES.size() + " biome lists, got " + layers.size());
+        }
+        this.layers = List.copyOf(layers);
     }
 
-    public static final MapCodec<RRBiomeSource> CODEC = Codec.list(Biome.LIST_CODEC).xmap(
-            list -> new RRBiomeSource(
-                    list.get(0),
-                    list.get(1),
-                    list.get(2),
-                    list.get(3),
-                    list.get(4),
-                    list.get(5),
-                    list.get(6),
-                    list.get(7)
-            ),
-            biomeSource -> List.of(
-                    biomeSource.topLevelBiomes,
-                    biomeSource.bloomingCavesCeilingBiomes,
-                    biomeSource.bloomingCavesBiomes,
-                    biomeSource.deepCavesCeilingBiomes,
-                    biomeSource.deepCavesBiomes,
-                    biomeSource.lostCavesCeilingBiomes,
-                    biomeSource.lostCavesBiomes,
-                    biomeSource.voidBiomes
-            )
-    ).fieldOf("top_to_bottom_biomes");
+    public static final MapCodec<RRBiomeSource> CODEC = Codec.list(Biome.LIST_CODEC)
+            .xmap(RRBiomeSource::new, biomeSource -> biomeSource.layers)
+            .fieldOf("top_to_bottom_biomes");
 
     @Override
     protected MapCodec<? extends BiomeSource> codec() {
@@ -87,20 +67,11 @@ public class RRBiomeSource extends BiomeSource {
 
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return Stream.of(
-                topLevelBiomes,
-                bloomingCavesCeilingBiomes,
-                bloomingCavesBiomes,
-                deepCavesCeilingBiomes,
-                deepCavesBiomes,
-                lostCavesCeilingBiomes,
-                lostCavesBiomes,
-                voidBiomes
-        ).flatMap(HolderSet::stream);
+        return layers.stream().flatMap(HolderSet::stream);
     }
 
     public static RRBiomeSource newDefault(HolderGetter<Biome> biomeRegistry) {
-        return new RRBiomeSource(
+        return new RRBiomeSource(List.of(
                 HolderSet.direct(
                         biomeRegistry.getOrThrow(RRBiomes.ELDEN_GARDEN),
                         biomeRegistry.getOrThrow(RRBiomes.SIMILAR_FOREST)
@@ -142,34 +113,16 @@ public class RRBiomeSource extends BiomeSource {
                         biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES)
                 ),
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
-                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
                         biomeRegistry.getOrThrow(RRBiomes.SPARKLING_CAVES_CEILING)
                 ),
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.WARPED_FOREST),
-                        // biomeRegistry.getOrThrow(Biomes.CRIMSON_FOREST),
                         biomeRegistry.getOrThrow(RRBiomes.SPARKLING_CAVES)
                 ),
                 HolderSet.direct(
-                        // biomeRegistry.getOrThrow(Biomes.THE_END),
-                        // biomeRegistry.getOrThrow(Biomes.SMALL_END_ISLANDS),
                         biomeRegistry.getOrThrow(Biomes.THE_VOID)
                 )
-        );
+        ));
     }
-
-    private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT + 15;
-    // private static final int ARCANE_PLATE_BIOME_HEIGHT = RRChunkGenerator.ARCANE_PLATE_HEIGHT / 2;
-
-    private static final LazyNoise topLevelBiomesNoise = biomeNoise("topLevelBiomeNoise", 0.2f);
-    private static final LazyNoise bloomingCavesCeilingBiomesNoise = biomeNoise("bloomingCavesCeilingBiomeNoise", 0.4f);
-    private static final LazyNoise bloomingCavesBiomesNoise = biomeNoise("bloomingCavesBiomeNoise", 0.2f);
-    private static final LazyNoise deepCavesCeilingBiomesNoise = biomeNoise("deepCavesCeilingBiomesNoise", 0.4f);
-    private static final LazyNoise deepCavesBiomesNoise = biomeNoise("deepCavesBiomesNoise", 0.2f);
-    private static final LazyNoise lostCavesCeilingBiomesNoise = biomeNoise("lostCavesCeilingBiomesNoise", 0.4f);
-    private static final LazyNoise lostCavesBiomesNoise = biomeNoise("lostCavesBiomesNoise", 0.2f);
-    private static final LazyNoise voidCeilingBiomesNoise = biomeNoise("voidCeilingBiomesNoise", 0.4f);
 
     private static LazyNoise biomeNoise(String name, float frequency) {
         return new LazyNoise(name, seed -> new SingleNoise(Noise.hashString(name + seed), frequency));
@@ -192,54 +145,24 @@ public class RRBiomeSource extends BiomeSource {
                 (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * lostBaselineNoise) +
                 TOP_LAYER_OFFSET - 10;
 
-        if (y > baseLine) {
-
-            float noise = topLevelBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
-            int idx = (int) (topLevelBiomes.size() * noise * 0.99999f);
-            return this.topLevelBiomes.get(idx);
-
-        } else if (y > BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-
-            float noise = bloomingCavesCeilingBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
-            int idx = (int) (bloomingCavesCeilingBiomes.size() * noise * 0.99999f);
-            return this.bloomingCavesCeilingBiomes.get(idx);
-
-        } else if (y > BLOOMING_CAVES_Y) {
-
-            float noise = bloomingCavesBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
-            int idx = (int) (bloomingCavesBiomes.size() * noise * 0.99999f);
-            return this.bloomingCavesBiomes.get(idx);
-
-        } else if (y > DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-
-            float noise = deepCavesCeilingBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
-            int idx = (int) (deepCavesCeilingBiomes.size() * noise * 0.99999f);
-            return this.deepCavesCeilingBiomes.get(idx);
-
-        } else if (y > lostBaseLine) {
-
-            float noise = deepCavesBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
-            int idx = (int) (deepCavesBiomes.size() * noise * 0.99999f);
-            return this.deepCavesBiomes.get(idx);
-
-        } else if (y > LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT) {
-
-            float noise = lostCavesCeilingBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
-            int idx = (int) (lostCavesCeilingBiomes.size() * noise * 0.99999f);
-            return this.lostCavesCeilingBiomes.get(idx);
-
-        } else if (y > LOST_CAVES_Y) {
-
-            float noise = lostCavesBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
-            int idx = (int) (lostCavesBiomes.size() * noise * 0.99999f);
-            return this.lostCavesBiomes.get(idx);
-
-        } else {
-
-            float noise = voidCeilingBiomesNoise.getOrCreateNoise(sampler).noise(x, z);
-            int idx = (int) (voidBiomes.size() * noise * 0.99999f);
-            return this.voidBiomes.get(idx);
-
+        // Each layer starts above this Y, top to bottom like `layers`.
+        int[] layerBottoms = {
+                baseLine,
+                BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
+                BLOOMING_CAVES_Y,
+                DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
+                lostBaseLine,
+                LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
+                LOST_CAVES_Y,
+                Integer.MIN_VALUE
+        };
+        int layer = 0;
+        while (y <= layerBottoms[layer]) {
+            layer++;
         }
+
+        HolderSet<Biome> biomes = layers.get(layer);
+        float noise = LAYER_NOISES.get(layer).getOrCreateNoise(sampler).noise(x, z);
+        return biomes.get((int) (biomes.size() * noise * 0.99999f));
     }
 }

@@ -15,7 +15,7 @@ Decoration runs after terrain, through the vanilla feature pipeline of each biom
 | 1 | `dimension/features/FooFeature.java` | `Feature` + config |
 | 2 | `dimension/RRFeatures` | `REGISTRY.register(...)` (runtime type) |
 | 3 | `dimension/RRConfiguredFeatures` | key + `bootstrap` entry: blocks and parameters |
-| 4 | `dimension/RRPlacedFeatures` | key + placement: count, height, scan; heights from `Const` |
+| 4 | `dimension/RRPlacedFeatures` | key + placement, usually from the factories there: `floorPlacement` (scan down to ground), `ceilingPlacement` (scan up to a ceiling), `bandPlacement` (height band only); heights from `Const` and the band constants at the top of the class |
 | 5 | `dimension/biomes/<layer>/Bar.java` | `generation.addFeature(<step>, RRPlacedFeatures.FOO)` |
 | 6 | `preview/jobs/` + `PreviewCatalog` | preview job, see the `headless-preview` skill |
 
