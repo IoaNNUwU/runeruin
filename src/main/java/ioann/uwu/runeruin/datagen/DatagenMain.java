@@ -55,8 +55,6 @@ public class DatagenMain {
 
         gen.addProvider(true, new DatagenModelProvider(packOutput));
 
-        gen.addProvider(true, new DatagenWaterLilyStemProvider(packOutput));
-
         gen.addProvider(true, new DatagenBlockTagProvider(packOutput, lookupProvider));
 
         gen.addProvider(true, new DatagenItemTagProvider(packOutput, lookupProvider));

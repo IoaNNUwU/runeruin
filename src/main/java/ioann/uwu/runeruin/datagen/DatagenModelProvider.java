@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.datagen;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.ArcaneStonePortalBlock;
@@ -9,6 +10,7 @@ import ioann.uwu.runeruin.blocks.EldenVinesBlock;
 import ioann.uwu.runeruin.blocks.FloatingMossBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.blocks.WaterLilyLeafBlock;
+import ioann.uwu.runeruin.client.WaterLilyStemTexture;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.client.data.models.BlockModelGenerators;
@@ -162,6 +164,9 @@ public class DatagenModelProvider extends ModelProvider {
         );
     }
 
+    private static final double ITEM_STEM_SCALE = 0.35;
+    private static final double ITEM_LEAF_HALF = 3.6;
+
     private static void createWaterLily(@NonNull BlockModelGenerators blockModels) {
         JsonObject model = new JsonObject();
         model.addProperty("ambientocclusion", false);
@@ -182,11 +187,7 @@ public class DatagenModelProvider extends ModelProvider {
         for (double[] plane : new double[][]{{-7, 40}, {-7, -50}, {-15, -40}, {-15, 50}}) {
             addJarElement(elements, "roots", new double[]{0, plane[0], 8}, new double[]{16, plane[0] + 16, 8},
                     "roots", 0, "north", "south");
-            JsonObject rotation = new JsonObject();
-            rotation.add("origin", vector(new double[]{8, 8, 8}));
-            rotation.addProperty("axis", "y");
-            rotation.addProperty("angle", plane[1]);
-            elements.get(elements.size() - 1).getAsJsonObject().add("rotation", rotation);
+            rotateY(elements.get(elements.size() - 1), plane[1]);
         }
         for (int i = 1; i < elements.size(); i++) {
             for (var face : elements.get(i).getAsJsonObject().getAsJsonObject("faces").entrySet()) {
@@ -200,7 +201,61 @@ public class DatagenModelProvider extends ModelProvider {
         blockModels.blockStateOutput.accept(
                 BlockModelGenerators.createSimpleBlock(RRBlocks.WATER_LILY_ROOT.get(), BlockModelGenerators.plainVariant(rootModel))
         );
-        blockModels.registerSimpleItemModel(RRBlocks.WATER_LILY_ROOT.get(), rootModel);
+
+        // The item shows a young plant: the rhizome, short roots and five small
+        // leaves on stems. The block parent gives it the usual block rotation.
+        JsonObject item = new JsonObject();
+        item.addProperty("parent", "minecraft:block/block");
+        JsonObject itemTextures = textures.deepCopy();
+        itemTextures.addProperty("pad", "minecraft:block/lily_pad");
+        itemTextures.addProperty("stem", "runeruin:block/water_lily_stems");
+        item.add("textures", itemTextures);
+        JsonArray itemElements = new JsonArray();
+        addJarElement(itemElements, "rhizome", new double[]{5, 8, 5}, new double[]{11, 11, 11}, "rhizome", 0,
+                "north", "south", "east", "west", "up", "down");
+        // Seen from the item's diagonal angle, axis-aligned planes read as an X.
+        addJarElement(itemElements, "roots", new double[]{2, 0, 8}, new double[]{14, 8, 8}, "roots", 0, "north", "south");
+        addJarElement(itemElements, "roots", new double[]{8, 0, 2}, new double[]{8, 8, 14}, "roots", 0, "east", "west");
+        // Three leaves around the root on flat U-shaped stems and two higher ones on
+        // S-shaped stems, all cut from the stem sheet at ITEM_STEM_SCALE model pixels
+        // per texel. Each stem is drawn along x (mirrored by side) and turned
+        // together with its leaf; no two stems or root planes share a plane, and
+        // distinct heights keep overlapping leaves from z-fighting.
+        // Each stem: side along x, turn, start height, then the sheet cell: dx, dz, dy, variant.
+        for (double[] stem : new double[][]{
+                {1, 45, 8.5, 1, 1, 2, 0}, {-1, 45, 10, 1, 1, 1, 0}, {-1, -45, 7.5, 1, 1, 2, 2},
+                {1, -15, 9.5, 1, 0, 2, 1}, {-1, 15, 9, 1, 0, 2, 2}}) {
+            int dx = (int) stem[3];
+            int dz = (int) stem[4];
+            int dy = (int) stem[5];
+            itemElements.add(itemStem(stem[0], stem[2], dx, dz, dy, (int) stem[6]));
+            rotateY(itemElements.get(itemElements.size() - 1), stem[1]);
+            double leafX = 8 + stem[0] * Math.sqrt(dx * dx + dz * dz) * 16 * ITEM_STEM_SCALE;
+            double height = stem[2] + (dy * 16 - 13) * ITEM_STEM_SCALE;
+            addJarElement(itemElements, "leaf", new double[]{leafX - ITEM_LEAF_HALF, height, 8 - ITEM_LEAF_HALF},
+                    new double[]{leafX + ITEM_LEAF_HALF, height, 8 + ITEM_LEAF_HALF}, "pad", 0, "up", "down");
+            rotateY(itemElements.get(itemElements.size() - 1), stem[1]);
+        }
+        for (var element : itemElements) {
+            String name = element.getAsJsonObject().get("name").getAsString();
+            double[] uv = switch (name) {
+                case "roots" -> new double[]{2, 0, 14, 8};
+                case "leaf" -> new double[]{0, 0, 16, 16};
+                default -> null;
+            };
+            for (var face : element.getAsJsonObject().getAsJsonObject("faces").entrySet()) {
+                if (uv != null) {
+                    face.getValue().getAsJsonObject().add("uv", vector(uv));
+                }
+                if (name.equals("leaf") || name.equals("stem")) {
+                    face.getValue().getAsJsonObject().addProperty("tintindex", 0);
+                }
+            }
+        }
+        item.add("elements", itemElements);
+        Identifier itemModel = RR.id("item/water_lily_root");
+        blockModels.modelOutput.accept(itemModel, () -> item);
+        blockModels.registerSimpleTintedItemModel(RRBlocks.WATER_LILY_ROOT.get(), itemModel, ItemModelUtils.constantTint(-12012264));
 
         blockModels.blockStateOutput.accept(
                 MultiVariantGenerator.dispatch(RRBlocks.WATER_LILY_LEAF.get())
@@ -519,6 +574,46 @@ public class DatagenModelProvider extends ModelProvider {
         result.add(y);
         result.add(z);
         return result;
+    }
+
+    /**
+     * A flat stem plane along +x ({@code side} 1) or -x from the root axis, cut
+     * from rows 44-80 of the stem sheet cell for a leaf at (dx, dy, dz), from
+     * just left of the root axis to just past the leaf. The stem leaves the root
+     * at {@code start}; both faces show each texel at the same spot.
+     */
+    private static JsonObject itemStem(double side, double start, int dx, int dz, int dy, int variant) {
+        int cellX = WaterLilyStemTexture.cellX(dx, dz);
+        int cellY = WaterLilyStemTexture.cellY(dy, variant);
+        int startRow = WaterLilyStemTexture.CELL_HEIGHT - WaterLilyStemTexture.BELOW;
+        int right = WaterLilyStemTexture.MARGIN + (int) Math.ceil(Math.sqrt(dx * dx + dz * dz) * 16) + 4;
+        double x0 = 8 + side * (2 - WaterLilyStemTexture.MARGIN) * ITEM_STEM_SCALE;
+        double x1 = 8 + side * (right - WaterLilyStemTexture.MARGIN) * ITEM_STEM_SCALE;
+        double u0 = 16.0 * (cellX + 2) / WaterLilyStemTexture.WIDTH;
+        double u1 = 16.0 * (cellX + right) / WaterLilyStemTexture.WIDTH;
+        double v0 = 16.0 * (cellY + 44) / WaterLilyStemTexture.HEIGHT;
+        double v1 = 16.0 * (cellY + WaterLilyStemTexture.CELL_HEIGHT) / WaterLilyStemTexture.HEIGHT;
+
+        JsonArray elements = new JsonArray();
+        addJarElement(elements, "stem",
+                new double[]{Math.min(x0, x1), start - (WaterLilyStemTexture.CELL_HEIGHT - startRow) * ITEM_STEM_SCALE, 8},
+                new double[]{Math.max(x0, x1), start + (startRow - 44) * ITEM_STEM_SCALE, 8},
+                "stem", 0, "north", "south");
+        JsonObject stem = elements.get(0).getAsJsonObject();
+        // The south face runs u along +x, the north face along -x.
+        double[] alongPlusX = {u0, v0, u1, v1};
+        double[] alongMinusX = {u1, v0, u0, v1};
+        stem.getAsJsonObject("faces").getAsJsonObject("south").add("uv", vector(side > 0 ? alongPlusX : alongMinusX));
+        stem.getAsJsonObject("faces").getAsJsonObject("north").add("uv", vector(side > 0 ? alongMinusX : alongPlusX));
+        return stem;
+    }
+
+    private static void rotateY(JsonElement element, double angle) {
+        JsonObject rotation = new JsonObject();
+        rotation.add("origin", vector(new double[]{8, 8, 8}));
+        rotation.addProperty("axis", "y");
+        rotation.addProperty("angle", angle);
+        element.getAsJsonObject().add("rotation", rotation);
     }
 
     private static JsonObject horizontalPlane(double y, JsonObject down, JsonObject up) {

@@ -75,6 +75,7 @@ public class WaterLilyLeafBlock extends Block {
         BlockState state = this.defaultBlockState().setValue(FACING, context.getHorizontalDirection());
         return BlockPos.betweenClosedStream(pos.offset(-REACH, -MAX_HEIGHT, -REACH), pos.offset(REACH, -1, REACH))
                 .filter(candidate -> context.getLevel().getBlockState(candidate).getBlock() instanceof WaterLilyRootBlock)
+                .map(BlockPos::immutable)
                 .min(Comparator.comparingDouble(candidate -> candidate.distSqr(pos)))
                 .map(root -> attach(state, pos, root))
                 .orElse(state);
