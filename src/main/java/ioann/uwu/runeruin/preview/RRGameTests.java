@@ -34,6 +34,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.biome.FeatureSorter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -62,13 +63,15 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
         TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_FEATURE_ORDER =
+        TEST_FUNCTIONS.register("biome_feature_order", () -> RRGameTests::biomeFeatureOrder);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> WORLD_SEED_CHANGES_GENERATION =
         TEST_FUNCTIONS.register("world_seed_changes_generation", () -> RRGameTests::worldSeedChangesGeneration);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_REGISTRY_COMPLETE =
         TEST_FUNCTIONS.register("biome_registry_complete", () -> RRGameTests::biomeRegistryComplete);
 
     // Registered biomes that never generate. biome_registry_complete fails if one of them generates.
-    private static final Set<ResourceKey<Biome>> PARKED_BIOMES = Set.of(RRBiomes.GHOST_GROVE, RRBiomes.DEEP_DRIPSTONE_CAVES);
+    private static final Set<ResourceKey<Biome>> PARKED_BIOMES = Set.of(RRBiomes.GHOST_GROVE);
 
     private RRGameTests() {}
 
@@ -111,6 +114,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("biome_feature_order"),
+            new FunctionGameTestInstance(
+                BIOME_FEATURE_ORDER.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("world_seed_changes_generation"),
             new FunctionGameTestInstance(
                 WORLD_SEED_CHANGES_GENERATION.getKey(),
@@ -124,6 +134,22 @@ public final class RRGameTests {
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
+    }
+
+    // Vanilla sorts features lazily, when the dimension decorates its first chunk, and a cycle there
+    // stops the world from loading. Run the same sort over every biome the dimension can pick.
+    private static void biomeFeatureOrder(GameTestHelper helper) {
+        try {
+            RRBiomeSource biomes = RRBiomeSource.newDefault(helper.getLevel().registryAccess().lookupOrThrow(Registries.BIOME));
+            FeatureSorter.buildFeaturesPerStep(
+                List.copyOf(biomes.possibleBiomes()),
+                biome -> biome.value().getGenerationSettings().features(),
+                true
+            );
+            helper.succeed();
+        } catch (IllegalStateException e) {
+            helper.fail(e.getMessage());
+        }
     }
 
     // Terrain and the biome map must follow the world seed: one seed regenerates the same world,
