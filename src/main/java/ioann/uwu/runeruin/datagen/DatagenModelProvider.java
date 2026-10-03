@@ -509,18 +509,8 @@ public class DatagenModelProvider extends ModelProvider {
     }
 
     private static void createInvertedTreeBlocks(@NonNull BlockModelGenerators blockModels) {
-        // Temporary textures: keep the custom block IDs while reusing vanilla assets.
-        Material cherryLeaves = TextureMapping.getBlockTexture(Blocks.CHERRY_LEAVES);
-        blockModels.createTrivialBlock(
-                RRBlocks.INVERTED_LEAVES_1.get(),
-                _ -> new TexturedModel(TextureMapping.cube(cherryLeaves), ModelTemplates.LEAVES)
-        );
-
-        Material pinkGlazedTerracotta = TextureMapping.getBlockTexture(Blocks.GLAZED_TERRACOTTA.pick(net.minecraft.world.item.DyeColor.PINK));
-        blockModels.createTrivialBlock(
-                RRBlocks.INVERTED_LEAVES_2.get(),
-                _ -> TexturedModel.createAllSame(pinkGlazedTerracotta)
-        );
+        blockModels.createTrivialBlock(RRBlocks.INVERTED_LEAVES_1.get(), TexturedModel.LEAVES);
+        blockModels.createTrivialBlock(RRBlocks.INVERTED_LEAVES_2.get(), TexturedModel.LEAVES);
 
         Material invertedWood = new Material(RR.id("block/inverted_tree_wood"));
         blockModels.new WoodProvider(TextureMapping.column(invertedWood, invertedWood))
