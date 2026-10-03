@@ -19,6 +19,8 @@ For a bug fix, use a `bug/<name>` branch instead. If the proposed branch or dire
 
 In Claude Code, then call `EnterWorktree` with `path` set to the new worktree's absolute path so the whole session runs there. Do not use the built-in worktree option or `EnterWorktree` with `name`: they create worktrees under `.claude/worktrees/` with branch names that do not follow these rules.
 
+One branch per feature or bug. If you are already working in a task worktree and the user asks for further changes after a commit, make them in the same branch and worktree; do not create a new branch, even if the follow-up looks like a separate change. Create a new branch only when the user starts an unrelated feature or bug.
+
 ## Commits and PRs
 
 Do not add attribution lines (`Co-Authored-By`, "Generated with Claude Code", etc.) to commit messages or pull request descriptions.
