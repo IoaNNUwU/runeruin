@@ -174,7 +174,7 @@ def vanillaTexturesDir = layout.projectDirectory.dir('.vanilla-textures')
 def vanillaTexturesStamp = layout.buildDirectory.file('tmp/vanilla-textures-VERSION.txt')
 // NeoForm Runtime stores the 26.2.0 client archive under its release id, 26.2.
 def minecraftClientVersion = minecraft_version.replaceAll(/\.0$/, '')
-def vanillaTexturesVersionText = "minecraft=${minecraftClientVersion}\nsource=minecraft_${minecraftClientVersion}_client.jar\n"
+def vanillaTexturesVersionText = "minecraft=${minecraftClientVersion}\nsource=minecraft_${minecraftClientVersion}_client.jar\ncontent=textures,models\n"
 def minecraftClientJar = new File(persistentNfrtHome, "artifacts/minecraft_${minecraftClientVersion}_client.jar")
 
 tasks.register('writeMcSourcesVersion') {
@@ -203,10 +203,10 @@ tasks.register('writeVanillaTexturesVersion') {
 
 tasks.register('extractVanillaTextures', Sync) {
     group = 'documentation'
-    description = 'Extract the pinned Minecraft client textures into .vanilla-textures for agents.'
+    description = 'Extract the pinned Minecraft client textures and models into .vanilla-textures for agents.'
     dependsOn 'createMinecraftArtifacts', 'writeVanillaTexturesVersion'
     from(provider { extractArchives.zipTree(minecraftClientJar) }) {
-        include 'assets/minecraft/textures/**'
+        include 'assets/minecraft/textures/**', 'assets/minecraft/models/**'
     }
     from(vanillaTexturesStamp) {
         rename { 'VERSION.txt' }

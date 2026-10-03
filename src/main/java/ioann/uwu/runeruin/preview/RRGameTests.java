@@ -9,6 +9,8 @@ import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
+import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
+import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -35,6 +37,7 @@ import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FeatureSorter;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -71,6 +74,50 @@ public final class RRGameTests {
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_REGISTRY_COMPLETE =
         TEST_FUNCTIONS.register("biome_registry_complete", () -> RRGameTests::biomeRegistryComplete);
 
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
+        TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
+
+    private record FeatureCase(String id, Surface surface, Block ground, int offset) {}
+
+    // Configured features without a preview job of their own, each on the surface its placement finds
+    // in the world. Built in the test: mod blocks do not exist yet when the class loads.
+    private static void featurePlacement(GameTestHelper helper) {
+        Block glowingMoss = RRBlocks.GLOWING_MOSS.get();
+        List<FeatureCase> cases = List.of(
+            new FeatureCase("ashen_wall_mushroom_cluster", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("ashen_wall_mushroom_cluster_upper", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("powdered_moss", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("stone_lily", Surface.FLOOR, Blocks.STONE, 1),
+            new FeatureCase("deep_roots_grass", Surface.FLOOR, glowingMoss, 1),
+            new FeatureCase("goblet_deep_roots", Surface.FLOOR, RRBlocks.GIANT_GOBLET_BUD.get(), 1),
+            new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
+            new FeatureCase("moss_berry_bush_patch", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("small_glowing_mushroom", Surface.FLOOR, glowingMoss, 1),
+            new FeatureCase("elden_giant_tree", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
+            new FeatureCase("swamp_jungle_trees", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
+            new FeatureCase("inverted_tree", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
+            new FeatureCase("long_ceiling_block_vine", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
+            new FeatureCase("ceiling_vine", Surface.CEILING, Blocks.MOSS_BLOCK, -1),
+            new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
+            new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
+            new FeatureCase("goblet_kelp", Surface.UNDERWATER, Blocks.STONE, 1),
+            new FeatureCase("goblet_seagrass", Surface.UNDERWATER, Blocks.STONE, 1),
+            new FeatureCase("stone_spike", Surface.CAVE, Blocks.STONE, 0),
+            new FeatureCase("dripstone_spike", Surface.CAVE, Blocks.STONE, 0),
+            new FeatureCase("deepslate_spike", Surface.CAVE, Blocks.STONE, 0)
+        );
+        MinecraftServer server = helper.getLevel().getServer();
+        List<String> failed = new ArrayList<>();
+        for (FeatureCase c : cases) {
+            if (FeaturePreviewJob.place(server, RR.id(c.id()), c.surface(), c.ground().defaultBlockState(),
+                    c.offset(), 1, 16).changedBlocks() == 0) {
+                failed.add(c.id() + " on " + c.surface());
+            }
+        }
+        helper.assertTrue(failed.isEmpty(), "placed nothing: " + String.join(", ", failed));
+        helper.succeed();
+    }
     // Registered biomes that never generate. biome_registry_complete fails if one of them generates.
     private static final Set<ResourceKey<Biome>> PARKED_BIOMES = Set.of(RRBiomes.GHOST_GROVE);
 
@@ -132,6 +179,13 @@ public final class RRGameTests {
             RR.id("biome_registry_complete"),
             new FunctionGameTestInstance(
                 BIOME_REGISTRY_COMPLETE.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("feature_placement"),
+            new FunctionGameTestInstance(
+                FEATURE_PLACEMENT.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );

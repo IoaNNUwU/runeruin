@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -13,6 +14,7 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.material.FluidState;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -117,6 +119,7 @@ public final class PreviewWorld {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Object invoke(Object proxy, Method method, Object @Nullable [] args) throws Throwable {
         return switch (method.getName()) {
             case "setBlock" -> {
@@ -125,6 +128,8 @@ public final class PreviewWorld {
             }
             case "getBlockState" -> get((BlockPos) args[0]);
             case "getFluidState" -> get((BlockPos) args[0]).getFluidState();
+            case "isStateAtPosition" -> ((Predicate<BlockState>) args[1]).test(get((BlockPos) args[0]));
+            case "isFluidAtPosition" -> ((Predicate<FluidState>) args[1]).test(get((BlockPos) args[0]).getFluidState());
             case "getRawBrightness" -> 0;
             case "removeBlock", "destroyBlock" -> {
                 set((BlockPos) args[0], Blocks.AIR.defaultBlockState());
