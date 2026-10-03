@@ -129,7 +129,8 @@ public final class FeaturePreviewJob implements PreviewJob {
         if (waterBox != null) {
             world.fillBox(waterBox, Blocks.WATER.defaultBlockState());
         }
-        feature.place(world.asLevel(), null, world.random(), origin);
+        // Selectors place nested placed features, whose PlacementContext needs a generator.
+        feature.place(world.asLevel(), server.overworld().getChunkSource().getGenerator(), world.random(), origin);
 
         List<BoundingBox> prepared = new ArrayList<>(groundBoxes);
         if (waterBox != null) {

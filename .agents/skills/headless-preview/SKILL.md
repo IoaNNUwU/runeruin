@@ -37,7 +37,7 @@ The `feature` job places a configured feature from the registry on a prepared su
 | `wall` | ground x 1–4, y 48–80 | the wall block 1 64 0 (`offset=0`), as wall placements expect |
 | `cave` | floor y 53–56, ceiling y 72–75 | air at 0 64 0, for spikes that scan both ways |
 
-`offset` shifts the origin from the surface block, like the scan of a placed feature: features rooted in the ceiling block itself (`inverted_tree`, `long_ceiling_block_vine`) need `offset=0`. `ground` defaults to stone. The GameTest `feature_placement` runs the features without their own job through this table (`FEATURE_CASES` in `RRGameTests`); add a row for a new feature that has no preview job.
+`offset` shifts the origin from the surface block, like the scan of a placed feature: features rooted in the ceiling block itself (`inverted_tree`, `long_ceiling_block_vine`) need `offset=0`. `ground` defaults to stone. The GameTest `feature_placement` runs every configured feature without a job of its own this way (the table in `RRGameTests.featurePlacement`); add a row for a new feature that has no preview job.
 
 `render_preview.py` (needs Pillow) draws front, side and top silhouettes of the full volume: use it to judge bends, tilt and gaps, since midplanes can miss the subject. The JSON and text files stay the source of truth. Previews skip placement modifiers and use their own random source: they reproduce a shape, not a real chunk.
 

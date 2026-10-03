@@ -79,28 +79,37 @@ public final class RRGameTests {
 
     private record FeatureCase(String id, Surface surface, Block ground, int offset) {}
 
-    // Features without their own preview job, each on the surface its placement finds in the world.
-    private static final List<FeatureCase> FEATURE_CASES = List.of(
-        new FeatureCase("ashen_wall_mushroom_cluster", Surface.WALL, Blocks.STONE, 0),
-        new FeatureCase("ashen_wall_mushroom_cluster_upper", Surface.WALL, Blocks.STONE, 0),
-        new FeatureCase("powdered_moss", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
-        new FeatureCase("stone_lily", Surface.FLOOR, Blocks.STONE, 1),
-        new FeatureCase("elden_giant_tree", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
-        new FeatureCase("inverted_tree", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
-        new FeatureCase("long_ceiling_block_vine", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
-        new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
-        new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
-        new FeatureCase("goblet_kelp", Surface.UNDERWATER, Blocks.STONE, 1),
-        new FeatureCase("goblet_seagrass", Surface.UNDERWATER, Blocks.STONE, 1),
-        new FeatureCase("stone_spike", Surface.CAVE, Blocks.STONE, 0),
-        new FeatureCase("dripstone_spike", Surface.CAVE, Blocks.STONE, 0),
-        new FeatureCase("deepslate_spike", Surface.CAVE, Blocks.STONE, 0)
-    );
-
+    // Configured features without a preview job of their own, each on the surface its placement finds
+    // in the world. Built in the test: mod blocks do not exist yet when the class loads.
     private static void featurePlacement(GameTestHelper helper) {
+        Block glowingMoss = RRBlocks.GLOWING_MOSS.get();
+        List<FeatureCase> cases = List.of(
+            new FeatureCase("ashen_wall_mushroom_cluster", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("ashen_wall_mushroom_cluster_upper", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("powdered_moss", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("stone_lily", Surface.FLOOR, Blocks.STONE, 1),
+            new FeatureCase("deep_roots_grass", Surface.FLOOR, glowingMoss, 1),
+            new FeatureCase("goblet_deep_roots", Surface.FLOOR, RRBlocks.GIANT_GOBLET_BUD.get(), 1),
+            new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
+            new FeatureCase("moss_berry_bush_patch", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("small_glowing_mushroom", Surface.FLOOR, glowingMoss, 1),
+            new FeatureCase("elden_giant_tree", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
+            new FeatureCase("swamp_jungle_trees", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
+            new FeatureCase("inverted_tree", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
+            new FeatureCase("long_ceiling_block_vine", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
+            new FeatureCase("ceiling_vine", Surface.CEILING, Blocks.MOSS_BLOCK, -1),
+            new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
+            new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
+            new FeatureCase("goblet_kelp", Surface.UNDERWATER, Blocks.STONE, 1),
+            new FeatureCase("goblet_seagrass", Surface.UNDERWATER, Blocks.STONE, 1),
+            new FeatureCase("stone_spike", Surface.CAVE, Blocks.STONE, 0),
+            new FeatureCase("dripstone_spike", Surface.CAVE, Blocks.STONE, 0),
+            new FeatureCase("deepslate_spike", Surface.CAVE, Blocks.STONE, 0)
+        );
         MinecraftServer server = helper.getLevel().getServer();
         List<String> failed = new ArrayList<>();
-        for (FeatureCase c : FEATURE_CASES) {
+        for (FeatureCase c : cases) {
             if (FeaturePreviewJob.place(server, RR.id(c.id()), c.surface(), c.ground().defaultBlockState(),
                     c.offset(), 1, 16).changedBlocks() == 0) {
                 failed.add(c.id() + " on " + c.surface());
