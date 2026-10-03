@@ -98,7 +98,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
         tag(BlockTags.REPLACEABLE_BY_TREES).add(RRBlocks.ELDEN_LEAF_LITTER.getKey());
         tag(BlockTags.REPLACEABLE_BY_MUSHROOMS).add(RRBlocks.ELDEN_LEAF_LITTER.getKey());
 
-        tag(BlockTags.FROG_PREFER_JUMP_TO).add(RRBlocks.BIG_LILY_PAD.getKey());
+        tag(BlockTags.FROG_PREFER_JUMP_TO).add(RRBlocks.BIG_LILY_PAD.getKey(), RRBlocks.WATER_LILY_LEAF.getKey(), RRBlocks.WATER_LILY_FLOWER.getKey());
 
         tag(BlockTags.LOGS).add(
                 RRBlocks.INVERTED_TREE_WOOD.getKey(),

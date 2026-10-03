@@ -11,6 +11,7 @@ import ioann.uwu.runeruin.preview.jobs.GobletMossPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.MiniVolcanoPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.MonolithPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.TerrainRegionPreviewJob;
+import ioann.uwu.runeruin.preview.jobs.WaterLilyPreviewJob;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ public final class PreviewCatalog {
         register(new GlowingMushroomPreviewJob());
         register(new AshenMushroomPreviewJob());
         register(new CaveMushroomPreviewJob());
+        register(new WaterLilyPreviewJob());
         register(new TerrainRegionPreviewJob());
     }
 

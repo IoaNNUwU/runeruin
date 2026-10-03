@@ -38,5 +38,6 @@ public class RRFeatures {
 
     public static final DeferredHolder<Feature<?>, LilyPadPatchFeature> SMALL_LILY_PAD_PATCH = REGISTRY.register("small_lily_pad_patch", LilyPadPatchFeature::new);
     public static final DeferredHolder<Feature<?>, LilyPadPatchFeature> BIG_LILY_PAD_PATCH = REGISTRY.register("big_lily_pad_patch", LilyPadPatchFeature::new);
+    public static final DeferredHolder<Feature<?>, WaterLilyFeature> WATER_LILY = REGISTRY.register("water_lily", WaterLilyFeature::new);
     public static final DeferredHolder<Feature<?>, PowderedMossVeinFeature> POWDERED_MOSS_VEIN = REGISTRY.register("powdered_moss_vein", PowderedMossVeinFeature::new);
 }

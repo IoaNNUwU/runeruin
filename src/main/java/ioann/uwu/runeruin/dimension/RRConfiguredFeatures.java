@@ -79,6 +79,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deep_roots_grass");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_lily_pad_patch");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> WATER_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "water_lily");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "swamp_jungle_trees");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
@@ -431,6 +432,8 @@ public class RRConfiguredFeatures {
                         32
                 )
         ));
+
+        ctx.register(WATER_LILY, new ConfiguredFeature<>(RRFeatures.WATER_LILY.get(), NoneFeatureConfiguration.INSTANCE));
     }
 
     private static WallMushroomFeature.Config ashenMushroomConfig(int minimumDiameter, int maximumDiameter) {

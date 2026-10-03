@@ -101,6 +101,9 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.GLOWING_MUSHROOM.get());
         dropSelf(RRBlocks.LAPIS_LIGHT.get());
         dropSelf(RRBlocks.BIG_LILY_PAD.get());
+        dropSelf(RRBlocks.WATER_LILY_ROOT.get());
+        add(RRBlocks.WATER_LILY_LEAF.get(), createShearsOnlyDrop(RRBlocks.WATER_LILY_LEAF.get()));
+        dropSelf(RRBlocks.WATER_LILY_FLOWER.get());
 
         add(RRBlocks.RUNE_RUIN_PORTAL.get(), noDrop());
 

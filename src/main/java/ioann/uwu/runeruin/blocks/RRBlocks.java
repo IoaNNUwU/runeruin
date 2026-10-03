@@ -291,7 +291,7 @@ public class RRBlocks {
     public static final DeferredBlock<Block> GLOWING_MOSS = registerGlowingMoss("glowing_moss", MapColor.COLOR_CYAN);
     public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = registerGlowingMossCarpet("glowing_moss_carpet", MapColor.COLOR_CYAN);
 
-    public static final DeferredBlock<Block> FLOATING_MOSS = registerFloatingMoss("floating_moss",
+    public static final DeferredBlock<Block> FLOATING_MOSS = registerInWater("floating_moss",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)
                     .noOcclusion(),
             FloatingMossBlock::new);
@@ -328,6 +328,18 @@ public class RRBlocks {
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
             BigLilyPadBlock::new
     );
+
+    public static final DeferredBlock<Block> WATER_LILY_ROOT = registerInWater("water_lily_root",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
+            WaterLilyRootBlock::new);
+
+    public static final DeferredBlock<Block> WATER_LILY_LEAF = register("water_lily_leaf",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
+            WaterLilyLeafBlock::new);
+
+    public static final DeferredBlock<Block> WATER_LILY_FLOWER = register("water_lily_flower",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
+            WaterLilyLeafBlock::new);
 
     /** Interior portal block; no BlockItem (like nether portal). */
     public static final DeferredBlock<Block> RUNE_RUIN_PORTAL = REGISTRY.registerBlock(
@@ -367,7 +379,7 @@ public class RRBlocks {
         return blockRecord;
     }
 
-    private static DeferredBlock<Block> registerFloatingMoss(
+    private static DeferredBlock<Block> registerInWater(
             String name,
             UnaryOperator<BlockBehaviour.Properties> props,
             Function<BlockBehaviour.Properties, ? extends Block> block
