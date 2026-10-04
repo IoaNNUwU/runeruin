@@ -10,7 +10,7 @@ A maintainer clones the main repository itself, without a fork, so `origin` is t
 
 ## Issues and labels
 
-- Agents work with GitHub by default, without asking for each step: they create issues, comment on and label them, push task branches, and open and edit draft pull requests.
+- Agents work with GitHub by default, without asking for each step: they create issues and label them, push task branches, and open and edit draft pull requests. A comment on an issue needs the maintainer's agreement in the chat, as for everyone ([CONTRIBUTING.md](CONTRIBUTING.md#working-with-an-ai-agent)).
 - Stages: a bug goes from `needs triage` to `confirmed` once it is reproduced, a feature from `idea` to `accepted` once the maintainer agrees with it.
 - A new label is created on GitHub right away (`gh label create`) and added to [.github/labels.json](.github/labels.json) in the next pull request.
 - Only on an explicit request: closing issues and changing repository settings. Nobody pushes to `main`.

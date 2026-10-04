@@ -98,8 +98,8 @@ When you are done, update your `main` again and remove the task folder with `.\s
 
 Agents read [AGENTS.md](AGENTS.md) and by default only work on your computer: they create a branch in a separate folder, commit, run the checks and report in the chat. They touch GitHub only when you ask them to (giving them an issue counts), and then they follow this file:
 
-- They may create issues and comment on them, push the task branch to `origin`, and open and edit draft pull requests. When you give them an issue, they first check that it is free and claim it with a draft pull request right after creating the branch, as described above. Without an issue they work only on a change that needs no design proposal.
-- A design proposal goes into the issue as a comment as well as into the chat, so the decision stays with the issue.
+- They may create issues, push the task branch to `origin`, and open and edit draft pull requests. When you give them an issue, they first check that it is free and claim it with a draft pull request right after creating the branch, as described above. Without an issue they work only on a change that needs no design proposal.
+- While they work, their pull request is where the work shows: they push commits to it, and the decisions go into its description with the final report. A design proposal stays in the chat. They comment on an issue only after you agree to that comment in the chat.
 - The final report goes into the chat first. Only after you approve it does it go into the pull request description, and only then is the pull request marked ready (`gh pr ready`).
 - They never push to `main`. They merge pull requests or close issues only when you allow it explicitly, in the chat or in your personal agent instructions, and only where your own GitHub rights allow it.
 
