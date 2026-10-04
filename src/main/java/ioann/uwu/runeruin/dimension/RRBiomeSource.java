@@ -129,15 +129,13 @@ public class RRBiomeSource extends BiomeSource {
         y = QuartPos.toBlock(y);
         z = QuartPos.toBlock(z);
 
-        float baselineNoise = RRChunkGenerator.topLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, y, z);
-        int baseLine = BLOOMING_CAVES_CEILING_Y +
-                (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise) +
-                TOP_LAYER_OFFSET - 10;
+        // The upper layer starts above the top block of the ceiling below it, computed as the terrain does,
+        // so the whole ceiling and the air under it are in the ceiling biome.
+        float baselineNoise = RRChunkGenerator.topLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, z);
+        int baseLine = (int) (BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET);
 
-        float lostBaselineNoise = RRChunkGenerator.lostTopLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, y, z);
-        int lostBaseLine = LOST_CAVES_CEILING_Y +
-                (int) (TOP_LAYER_MAX_BASELINE_HEIGHT * lostBaselineNoise) +
-                TOP_LAYER_OFFSET - 10;
+        float lostBaselineNoise = RRChunkGenerator.lostTopLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, z);
+        int lostBaseLine = (int) (LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * lostBaselineNoise + TOP_LAYER_OFFSET);
 
         // Each layer starts above this Y, top to bottom like `layers`.
         int[] layerBottoms = {
