@@ -43,15 +43,15 @@ public class DeepCavesAndLostCavesGen {
         return LOST_CAVES_Y + biomeHeight;
     }
 
-    public static void generateLostCavesFloor(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    public static void generateLostCavesFloor(TerrainWriter terrain, RandomState randomState) {
+        ChunkAccess chunk = terrain.chunk();
         BlockState deepslate = Blocks.DEEPSLATE.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int topY = lostCavesFloorY(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z, randomState);
                 for (int y = LOST_CAVES_Y; y <= topY; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), deepslate);
+                    terrain.set(x, y, z, deepslate);
                 }
             }
         }
@@ -71,8 +71,8 @@ public class DeepCavesAndLostCavesGen {
     private static final LazyNoise lostTopLevelBaselineNoise = RRChunkGenerator.lostTopLevelBaselineNoise;
     private static final LazyNoise flattenedBaseLostTopLevelNoise = RRChunkGenerator.flattenedLostBaseTopLevelNoise;
 
-    public static void generateLostCavesCeiling(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    public static void generateLostCavesCeiling(TerrainWriter terrain, RandomState randomState) {
+        ChunkAccess chunk = terrain.chunk();
         BlockState deepslate = Blocks.DEEPSLATE.defaultBlockState();
         BlockState stone = Blocks.STONE.defaultBlockState();
 
@@ -97,18 +97,18 @@ public class DeepCavesAndLostCavesGen {
                 BlockState blockState = bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f
                         ? deepslate
                         : stone;
-                chunk.setBlockState(pos.set(x, (int) baseLine, z), blockState);
+                terrain.set(x, (int) baseLine, z, blockState);
 
                 for (int y = (int) (baseLine - ceilingHeight + 1); y < baseLine - 1; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), deepslate);
+                    terrain.set(x, y, z, deepslate);
                 }
-                chunk.setBlockState(pos.set(x, (int) (baseLine - ceilingHeight), z), deepslate);
+                terrain.set(x, (int) (baseLine - ceilingHeight), z, deepslate);
             }
         }
     }
 
-    public static void generateDeepCavesFloor(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    public static void generateDeepCavesFloor(TerrainWriter terrain, RandomState randomState) {
+        ChunkAccess chunk = terrain.chunk();
         BlockState stone = Blocks.STONE.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
@@ -130,21 +130,21 @@ public class DeepCavesAndLostCavesGen {
                 int topY = (int) (baseLine + biomeHeight);
 
                 for (int y = (int) (baseLine); y < baseLine + biomeHeight - 2; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), stone);
+                    terrain.set(x, y, z, stone);
                 }
                 for (int y = (int) (baseLine + biomeHeight) - 2; y < baseLine + biomeHeight; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), stone);
+                    terrain.set(x, y, z, stone);
                 }
 
                 RRTerrainSurfaces.placeFloorSurface(
-                        chunk, pos, x, topY, z, RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState)
+                        terrain, x, topY, z, RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState)
                 );
             }
         }
     }
 
-    public static void generateHangingMoss(ChunkAccess chunk, RandomState randomState) {
-        HangingTerrainGenerator.generate(chunk, randomState, HANGING_MOSS);
+    public static void generateHangingMoss(TerrainWriter terrain, RandomState randomState) {
+        HangingTerrainGenerator.generate(terrain, randomState, HANGING_MOSS);
     }
 
     private static HangingTerrainGenerator.TerrainColumn deepCavesFloorColumnAt(

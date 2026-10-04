@@ -140,29 +140,30 @@ public class RRChunkGenerator extends ChunkGenerator {
     public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
 
         return CompletableFuture.supplyAsync(() -> {
-            // TODO: Split chunk into sections to avoid unnecessary blocking
-            generateTerrain(chunk, randomState);
-            ArcaneStructureGen.generateArcaneStructure(chunk, randomState);
-            TopLayerAndBloomingCavesGen.generateHangingSoil(chunk, randomState);
-            DeepCavesAndLostCavesGen.generateHangingMoss(chunk, randomState);
+            try (TerrainWriter terrain = new TerrainWriter(chunk)) {
+                generateTerrain(terrain, randomState);
+                ArcaneStructureGen.generateArcaneStructure(terrain, randomState);
+                TopLayerAndBloomingCavesGen.generateHangingSoil(terrain, randomState);
+                DeepCavesAndLostCavesGen.generateHangingMoss(terrain, randomState);
+            }
             return chunk;
         }, Util.backgroundExecutor().forName("wgen_fill_noise"));
     }
 
-    private static void generateTerrain(ChunkAccess chunk, RandomState randomState) {
+    private static void generateTerrain(TerrainWriter terrain, RandomState randomState) {
 
-        TopLayerAndBloomingCavesGen.generateTopLayerFloor(chunk, randomState);
-        TopLayerAndBloomingCavesGen.generateBloomingCavesCeiling(chunk, randomState);
+        TopLayerAndBloomingCavesGen.generateTopLayerFloor(terrain, randomState);
+        TopLayerAndBloomingCavesGen.generateBloomingCavesCeiling(terrain, randomState);
 
-        TopLayerAndBloomingCavesGen.generateBloomingCavesFloor(chunk, randomState);
+        TopLayerAndBloomingCavesGen.generateBloomingCavesFloor(terrain, randomState);
 
-        DeepCavesGen.generateDeepCavesCeiling(chunk, randomState);
+        DeepCavesGen.generateDeepCavesCeiling(terrain, randomState);
 
-        DeepCavesAndLostCavesGen.generateDeepCavesFloor(chunk, randomState);
-        DeepCavesAndLostCavesGen.generateLostCavesCeiling(chunk, randomState);
-        DeepCavesAndLostCavesGen.generateLostCavesFloor(chunk, randomState);
+        DeepCavesAndLostCavesGen.generateDeepCavesFloor(terrain, randomState);
+        DeepCavesAndLostCavesGen.generateLostCavesCeiling(terrain, randomState);
+        DeepCavesAndLostCavesGen.generateLostCavesFloor(terrain, randomState);
 
-        VoidGen.generateVoidCeiling(chunk, randomState);
+        VoidGen.generateVoidCeiling(terrain, randomState);
     }
 
     @Override

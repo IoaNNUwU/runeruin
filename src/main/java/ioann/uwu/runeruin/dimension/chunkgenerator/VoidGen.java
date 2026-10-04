@@ -1,7 +1,6 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -13,8 +12,8 @@ public class VoidGen {
 
     private static final LazyNoise ceilingNoise = LazyNoise.single("voidCeilingNoise", 1f);
 
-    public static void generateVoidCeiling(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    public static void generateVoidCeiling(TerrainWriter terrain, RandomState randomState) {
+        ChunkAccess chunk = terrain.chunk();
         BlockState stone = Blocks.STONE.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
@@ -26,7 +25,7 @@ public class VoidGen {
                 int biomeHeight = (int) (CEILING_TERRAIN_MIN_HEIGHT + noise * (CEILING_TERRAIN_HEIGHT - CEILING_TERRAIN_MIN_HEIGHT));
 
                 for (int y = 0; y < biomeHeight + 1; y++) {
-                    chunk.setBlockState(pos.set(x, CEILING_VOID_Y - y, z), stone);
+                    terrain.set(x, CEILING_VOID_Y - y, z, stone);
                 }
             }
         }

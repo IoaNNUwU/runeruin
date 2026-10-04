@@ -3,7 +3,6 @@ package ioann.uwu.runeruin.dimension.chunkgenerator;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -21,8 +20,8 @@ public class DeepCavesGen {
             )
     );
 
-    public static void generateDeepCavesCeiling(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    public static void generateDeepCavesCeiling(TerrainWriter terrain, RandomState randomState) {
+        ChunkAccess chunk = terrain.chunk();
         BlockState stone = Blocks.STONE.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
@@ -37,10 +36,10 @@ public class DeepCavesGen {
                 int ceilingSurfaceY = DEEP_CAVES_CEILING_Y - biomeHeight;
 
                 for (int y = 0; y < biomeHeight; y++) {
-                    chunk.setBlockState(pos.set(x, DEEP_CAVES_CEILING_Y - y, z), stone);
+                    terrain.set(x, DEEP_CAVES_CEILING_Y - y, z, stone);
                 }
                 RRTerrainSurfaces.placeCeilingSurface(
-                        chunk, pos, x, ceilingSurfaceY, z,
+                        terrain, x, ceilingSurfaceY, z,
                         RRTerrainSurfaces.ceilingAt(chunk, xx, ceilingSurfaceY, zz, randomState)
                 );
             }

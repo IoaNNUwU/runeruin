@@ -4,7 +4,6 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMossBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRBiomes;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.resources.ResourceKey;
@@ -103,24 +102,18 @@ public final class RRTerrainSurfaces {
         return ceiling(biome, surfaceRandom(randomState, x, y, z));
     }
 
-    public static void placeFloorSurface(
-            ChunkAccess chunk, BlockPos.MutableBlockPos pos, int x, int y, int z, BlockState state
-    ) {
-        placeSurface(chunk, pos, x, y, z, state, -1);
+    public static void placeFloorSurface(TerrainWriter terrain, int x, int y, int z, BlockState state) {
+        placeSurface(terrain, x, y, z, state, -1);
     }
 
-    public static void placeCeilingSurface(
-            ChunkAccess chunk, BlockPos.MutableBlockPos pos, int x, int y, int z, BlockState state
-    ) {
-        placeSurface(chunk, pos, x, y, z, state, 1);
+    public static void placeCeilingSurface(TerrainWriter terrain, int x, int y, int z, BlockState state) {
+        placeSurface(terrain, x, y, z, state, 1);
     }
 
-    private static void placeSurface(
-            ChunkAccess chunk, BlockPos.MutableBlockPos pos, int x, int y, int z, BlockState state, int inwardDirection
-    ) {
-        chunk.setBlockState(pos.set(x, y, z), state);
+    private static void placeSurface(TerrainWriter terrain, int x, int y, int z, BlockState state, int inwardDirection) {
+        terrain.set(x, y, z, state);
         if (isMoss(state)) {
-            chunk.setBlockState(pos.set(x, y + inwardDirection, z), state);
+            terrain.set(x, y + inwardDirection, z, state);
         }
     }
 
