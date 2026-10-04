@@ -6,7 +6,6 @@ import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.tags.BlockTags;
@@ -45,8 +44,8 @@ public class TopLayerAndBloomingCavesGen {
         return BLOOMING_CAVES_Y + biomeHeight;
     }
 
-    public static void generateBloomingCavesFloor(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    public static void generateBloomingCavesFloor(TerrainWriter terrain, RandomState randomState) {
+        ChunkAccess chunk = terrain.chunk();
         BlockState stone = Blocks.STONE.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
@@ -55,10 +54,10 @@ public class TopLayerAndBloomingCavesGen {
                 int zz = chunk.getPos().getMiddleBlockZ() + z;
                 int topY = bloomingCavesFloorY(xx, zz, randomState);
                 for (int y = BLOOMING_CAVES_Y; y < topY; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), stone);
+                    terrain.set(x, y, z, stone);
                 }
                 RRTerrainSurfaces.placeFloorSurface(
-                        chunk, pos, x, topY, z, RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState)
+                        terrain, x, topY, z, RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState)
                 );
             }
         }
@@ -76,8 +75,8 @@ public class TopLayerAndBloomingCavesGen {
     private static final LazyNoise topLevelBaselineNoise = RRChunkGenerator.topLevelBaselineNoise;
     private static final LazyNoise flattenedBaseTopLevelNoise = RRChunkGenerator.flattenedBaseTopLevelNoise;
 
-    public static void generateBloomingCavesCeiling(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    public static void generateBloomingCavesCeiling(TerrainWriter terrain, RandomState randomState) {
+        ChunkAccess chunk = terrain.chunk();
         BlockState deepslate = Blocks.DEEPSLATE.defaultBlockState();
         BlockState stone = Blocks.STONE.defaultBlockState();
 
@@ -98,19 +97,19 @@ public class TopLayerAndBloomingCavesGen {
                 BlockState blockState = bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f
                         ? deepslate
                         : stone;
-                chunk.setBlockState(pos.set(x, (int) baseLine, z), blockState);
+                terrain.set(x, (int) baseLine, z, blockState);
                 for (int y = (int) (baseLine - ceilingHeight + 1); y < baseLine - 1; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), deepslate);
+                    terrain.set(x, y, z, deepslate);
                 }
                 RRTerrainSurfaces.placeCeilingSurface(
-                        chunk, pos, x, ceilingSurfaceY, z, underside(chunk, xx, zz, ceilingSurfaceY, randomState)
+                        terrain, x, ceilingSurfaceY, z, underside(chunk, xx, zz, ceilingSurfaceY, randomState)
                 );
             }
         }
     }
 
-    public static void generateTopLayerFloor(ChunkAccess chunk, RandomState randomState) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    public static void generateTopLayerFloor(TerrainWriter terrain, RandomState randomState) {
+        ChunkAccess chunk = terrain.chunk();
         BlockState stone = Blocks.STONE.defaultBlockState();
         BlockState dirt = Blocks.DIRT.defaultBlockState();
 
@@ -130,18 +129,18 @@ public class TopLayerAndBloomingCavesGen {
                 int bottomY = (int) baseLine;
                 int subfloorStartY = Math.max(bottomY, topY - 2);
                 for (int y = bottomY; y < subfloorStartY; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), stone);
+                    terrain.set(x, y, z, stone);
                 }
                 for (int y = subfloorStartY; y < topY; y++) {
-                    chunk.setBlockState(pos.set(x, y, z), subfloor);
+                    terrain.set(x, y, z, subfloor);
                 }
-                chunk.setBlockState(pos.set(x, topY, z), RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState));
+                terrain.set(x, topY, z, RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState));
             }
         }
     }
 
-    public static void generateHangingSoil(ChunkAccess chunk, RandomState randomState) {
-        HangingTerrainGenerator.generate(chunk, randomState, HANGING_SOIL);
+    public static void generateHangingSoil(TerrainWriter terrain, RandomState randomState) {
+        HangingTerrainGenerator.generate(terrain, randomState, HANGING_SOIL);
     }
 
     private static HangingTerrainGenerator.TerrainColumn topLayerColumnAt(int x, int z, RandomState randomState) {

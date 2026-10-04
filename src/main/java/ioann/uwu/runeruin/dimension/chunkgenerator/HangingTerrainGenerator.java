@@ -28,7 +28,8 @@ public final class HangingTerrainGenerator {
 
     private HangingTerrainGenerator() {}
 
-    public static void generate(ChunkAccess chunk, RandomState randomState, Profile profile) {
+    public static void generate(TerrainWriter terrain, RandomState randomState, Profile profile) {
+        ChunkAccess chunk = terrain.chunk();
         int chunkMinX = chunk.getPos().getMinBlockX();
         int chunkMinZ = chunk.getPos().getMinBlockZ();
         Map<Column, Candidate> coreCandidates = new LinkedHashMap<>();
@@ -100,7 +101,6 @@ public final class HangingTerrainGenerator {
             );
         }
 
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (Candidate candidate : candidates.values()) {
             BlockPos start = candidate.start();
             int shapeLength = shapeLengths.get(new Column(start.getX(), start.getZ()));
@@ -121,21 +121,14 @@ public final class HangingTerrainGenerator {
             BlockState cap = profile.materials().cap().at(chunk, start, randomState);
             BlockState body = profile.materials().body().at(chunk, start, randomState);
             for (int i = 0; i <= hangingLength; i++) {
-                pos.set(start.getX() - chunkMinX, start.getY() - i, start.getZ() - chunkMinZ);
-                chunk.setBlockState(pos, i == 0 ? cap : body);
+                terrain.set(start.getX() - chunkMinX, start.getY() - i, start.getZ() - chunkMinZ, i == 0 ? cap : body);
             }
             if (plan.joinsNearbyTerrain()) {
-                pos.set(
-                        start.getX() - chunkMinX,
-                        start.getY() - candidate.clearLength(),
-                        start.getZ() - chunkMinZ
-                );
-                chunk.setBlockState(pos, body);
+                terrain.set(start.getX() - chunkMinX, start.getY() - candidate.clearLength(), start.getZ() - chunkMinZ, body);
             }
             if (candidate.bridge()) {
                 for (int i = hangingLength + 1; i < candidate.clearLength(); i++) {
-                    pos.set(start.getX() - chunkMinX, start.getY() - i, start.getZ() - chunkMinZ);
-                    chunk.setBlockState(pos, profile.materials().bridge());
+                    terrain.set(start.getX() - chunkMinX, start.getY() - i, start.getZ() - chunkMinZ, profile.materials().bridge());
                 }
             }
         }
