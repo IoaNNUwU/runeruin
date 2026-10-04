@@ -26,6 +26,7 @@ Labels show where an issue stands:
 | layer         | `layer: top`, `layer: blooming caves`, `layer: deep caves`, …             | the part of the dimension it touches          |
 | biome         | `biome: <name>`                                                           | a specific biome                              |
 | infra         | `infra`                                                                   | scripts, build, CI, agent docs                |
+| perf          | `perf`                                                                    | speed and memory use                          |
 
 Only the maintainer can change labels. A bug becomes `confirmed` once it is reproduced, a feature becomes `accepted` once the maintainer agrees with it. Issues that will not be done are closed with the reason "not planned".
 

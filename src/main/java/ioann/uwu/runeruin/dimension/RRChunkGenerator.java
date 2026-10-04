@@ -11,6 +11,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
@@ -145,7 +146,7 @@ public class RRChunkGenerator extends ChunkGenerator {
             TopLayerAndBloomingCavesGen.generateHangingSoil(chunk, randomState);
             DeepCavesAndLostCavesGen.generateHangingMoss(chunk, randomState);
             return chunk;
-        });
+        }, Util.backgroundExecutor().forName("wgen_fill_noise"));
     }
 
     private static void generateTerrain(ChunkAccess chunk, RandomState randomState) {
