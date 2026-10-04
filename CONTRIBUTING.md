@@ -2,7 +2,7 @@
 
 Thanks for wanting to help! This file explains how work moves through GitHub: issues, branches and pull requests. How to build, generate data and check the mod is described in [AGENTS.md](AGENTS.md). It is written for AI coding agents, but its checklists are the same for people.
 
-The maintainer is [@IoaNNUwU](https://github.com/IoaNNUwU): they triage issues, review pull requests and merge them.
+The maintainer is [@IoaNNUwU](https://github.com/IoaNNUwU): they triage issues, review pull requests and merge them, as described in [MAINTAINING.md](MAINTAINING.md).
 
 ## In short
 

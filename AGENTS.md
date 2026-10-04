@@ -19,11 +19,11 @@ Several agents work in this repository at once. Every change, documentation incl
 3. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
 4. Follow-ups after a commit stay in the same branch and worktree. Start a new branch only for an unrelated feature or bug.
 5. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
-6. Remove a worktree only when the user asks, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` deletes the shared sources cache through the junction, and it keeps the branch unless its commits are pushed or in `main`.
+6. Remove a worktree only when the user asks, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` and `gh pr merge --delete-branch` delete the shared sources cache through the junction, and it keeps the branch unless its commits are pushed or in `main`.
 
 `main` changes only through pull requests on GitHub: never commit on it, merge into it or push to it. Git hooks in `.githooks` (enabled by the setup script) reject commits on `main`, pushes to `main`, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
 
-Work with GitHub, in this repository or in the user's fork (issues, pushing, pull requests), only when the user asks for it, in the chat or in their personal agent instructions; then follow [CONTRIBUTING.md](CONTRIBUTING.md).
+Work with GitHub, in this repository or in the user's fork (issues, pushing, pull requests), only when the user asks for it, in the chat or in their personal agent instructions; then follow [CONTRIBUTING.md](CONTRIBUTING.md), and for a maintainer also [MAINTAINING.md](MAINTAINING.md).
 
 ## Questions, designs, reports
 
