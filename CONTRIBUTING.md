@@ -74,7 +74,7 @@ Right after that, before any other work, claim the issue with a draft pull reque
 ```powershell
 git commit --allow-empty -m "<issue title>"
 git push -u origin HEAD
-gh pr create --draft --title "<issue title>" --body "Fixes #<issue>"
+gh pr create --draft --title "<issue title>" --body "Fixes #<issue>`n`nWork has started, but there are no changes yet."
 ```
 
 If someone opened another pull request for the same issue at the same time, the later one gives way and is closed.
