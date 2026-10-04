@@ -2,8 +2,9 @@
 name: headless-preview
 description: >-
   Check the shape of a RuneRuin feature or structure without the game: runPreview jobs, parameters,
-  exports/ outputs, render_preview.py, in-game /rrpreview, and adding a new PreviewJob. Use after
-  changing a feature or structure, or when a new one needs a preview.
+  exports/ outputs, render_preview.py, in-game /rrpreview, the terrain_bench speed benchmark, and adding
+  a new PreviewJob. Use after changing a feature or structure, when a new one needs a preview, or to
+  measure terrain generation speed.
 ---
 
 # Headless preview
@@ -16,7 +17,7 @@ description: >-
 python scripts/render_preview.py out.png exports/preview_boulder.json
 ```
 
-Jobs: `giant_goblet` (default), `baobab`, `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below) and `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill).
+Jobs: `giant_goblet` (default), `baobab`, `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below), `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill) and `terrain_bench` (terrain generation speed, below).
 
 Parameters: `-Pseed`, `-Pheight`, `-Pradius`, `-PminRadius`, `-PmaxRadius`, `-Pstage`, `-Pregion=<export.json>`, `-PpreviewName=<name>`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`). In PowerShell quote the `-Parg.` ones: `'-Parg.id=runeruin:stone_spike'`; unquoted, PowerShell splits them at the dot and Gradle looks for a task.
 
@@ -42,6 +43,20 @@ The `feature` job places a configured feature from the registry on a prepared su
 `render_preview.py` (needs Pillow) draws front, side and top silhouettes of the full volume: use it to judge bends, tilt and gaps, since midplanes can miss the subject. The JSON and text files stay the source of truth. Previews skip placement modifiers and use their own random source: they reproduce a shape, not a real chunk.
 
 In game: `/rrpreview list`, `/rrpreview <job> [seed] [key=value | name]…`. The client writes `/rrpreview` and `/rrexport` output to `~/.runeruin/game/runeruin-exports/`, not `exports/`.
+
+## Terrain generation speed
+
+`terrain_bench` runs `RRChunkGenerator.fillFromNoise` on (2·radius+1)² chunks around chunk 0 0 (default radius 8, 10 rounds after 2 warm-up rounds) and writes `exports/<name>.txt` and `exports/<name>.jfr`:
+
+```powershell
+.\gradlew.bat runPreview -Ppreview=terrain_bench -PpreviewName=bench_main '-Parg.rounds=10'
+```
+
+- `sequential ms/chunk`: one chunk at a time, CPU cost of a chunk. `parallel chunks/s`: all chunks at once on the generator's executor; it varies by about 10% between runs.
+- `checksum` of all blocks and heightmaps of the last round. A speed-up must keep it; the job fails when parallel generation gives other blocks than sequential.
+- `hot methods` is a command for the JFR recording of the measured rounds: methods by CPU samples (block writes, heightmaps, noise).
+
+Measure before and after a change on the same machine with the same parameters, run each side twice and compare medians. It times only terrain fill: carvers, features and the scheduling of a running server need `/jfr start` … `/jfr stop` in game with `/neoforge generate`.
 
 ## New preview job
 

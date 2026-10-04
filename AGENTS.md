@@ -87,7 +87,7 @@ Step-by-step procedures live in skills; load the matching one before starting su
 | `worldgen-feature` | decoration features: plants, rocks, vines, mushrooms, spikes |
 | `worldgen-biome` | adding, reweighting, moving or changing biomes |
 | `worldgen-structure` | multi-piece structures such as Giant Goblet and Baobab |
-| `headless-preview` | checking feature and structure shapes without the game; new preview jobs |
+| `headless-preview` | checking feature and structure shapes without the game; terrain generation speed; new preview jobs |
 | `region-export-compare` | `/rrexport` dumps and terrain replay (`world_region`, was → expected) |
 | `minecraft-pixel-texture-generation` | creating, recoloring, quantizing and validating textures |
 | `minecraft-model-texture-analysis` | model geometry and texture UVs |

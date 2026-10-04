@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
@@ -29,15 +30,7 @@ public final class HeadlessTerrainGenerator {
     private HeadlessTerrainGenerator() {}
 
     public static PreviewWorld generate(MinecraftServer server, long seed, BoundingBox box) throws IOException {
-        RRChunkGenerator generator;
-        try {
-            generator = new RRChunkGenerator(
-                RRBiomeSource.newDefault(server.registryAccess().lookupOrThrow(Registries.BIOME))
-            );
-        } catch (IllegalStateException e) {
-            throw new IOException("Runeruin biomes are missing from the loaded registries", e);
-        }
-
+        RRChunkGenerator generator = generator(server);
         int minY = generator.getMinY();
         int maxY = minY + generator.getGenDepth() - 1;
         if (box.minY() < minY || box.maxY() > maxY) {
@@ -62,6 +55,26 @@ public final class HeadlessTerrainGenerator {
         return world;
     }
 
+    public static RRChunkGenerator generator(MinecraftServer server) throws IOException {
+        try {
+            return new RRChunkGenerator(RRBiomeSource.newDefault(server.registryAccess().lookupOrThrow(Registries.BIOME)));
+        } catch (IllegalStateException e) {
+            throw new IOException("Runeruin biomes are missing from the loaded registries", e);
+        }
+    }
+
+    /** Empty chunks with biomes, as a level hands them to {@code fillFromNoise}. */
+    public static Function<ChunkPos, ProtoChunk> chunkFactory(RRChunkGenerator generator, MinecraftServer server, RandomState randomState) {
+        PalettedContainerFactory containers = PalettedContainerFactory.create(server.registryAccess());
+        LevelHeightAccessor height = LevelHeightAccessor.create(generator.getMinY(), generator.getGenDepth());
+        return pos -> {
+            ProtoChunk chunk = new ProtoChunk(pos, UpgradeData.EMPTY, height, containers, null);
+            chunk.fillBiomesFromNoise(generator.getBiomeSource(), randomState.sampler());
+            chunk.setPersistedStatus(ChunkStatus.BIOMES);
+            return chunk;
+        };
+    }
+
     /** The RandomState a level with this seed gets, with the seed bound for {@link LazyNoise} like in-game. */
     public static RandomState randomState(MinecraftServer server, long seed) throws IOException {
         try {
@@ -84,8 +97,7 @@ public final class HeadlessTerrainGenerator {
         BoundingBox box
     ) {
         Map<Long, ChunkAccess> chunks = new HashMap<>();
-        PalettedContainerFactory containers = PalettedContainerFactory.create(server.registryAccess());
-        LevelHeightAccessor height = LevelHeightAccessor.create(generator.getMinY(), generator.getGenDepth());
+        Function<ChunkPos, ProtoChunk> chunkFactory = chunkFactory(generator, server, randomState);
         int minChunkX = box.minX() >> 4;
         int maxChunkX = box.maxX() >> 4;
         int minChunkZ = box.minZ() >> 4;
@@ -97,15 +109,7 @@ public final class HeadlessTerrainGenerator {
 
         for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
             for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                ProtoChunk chunk = new ProtoChunk(
-                    new ChunkPos(chunkX, chunkZ),
-                    UpgradeData.EMPTY,
-                    height,
-                    containers,
-                    null
-                );
-                chunk.fillBiomesFromNoise(generator.getBiomeSource(), randomState.sampler());
-                chunk.setPersistedStatus(ChunkStatus.BIOMES);
+                ProtoChunk chunk = chunkFactory.apply(new ChunkPos(chunkX, chunkZ));
                 generator.fillFromNoise(Blender.empty(), randomState, null, chunk).join();
                 chunks.put(chunk.getPos().pack(), chunk);
             }
