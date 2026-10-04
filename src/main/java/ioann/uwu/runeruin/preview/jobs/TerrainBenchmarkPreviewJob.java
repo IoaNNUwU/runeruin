@@ -9,6 +9,8 @@ import ioann.uwu.runeruin.preview.PreviewJobs;
 import ioann.uwu.runeruin.preview.PreviewWorld;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +21,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import jdk.jfr.Recording;
@@ -33,8 +36,9 @@ import net.minecraft.world.level.levelgen.blending.Blender;
 
 /**
  * Times {@link RRChunkGenerator#fillFromNoise} on headless chunks, one at a time and all at once on the
- * generator's executor, under a JFR recording. The checksum of blocks and heightmaps must not change
- * when generation only gets faster.
+ * generator's executor, under a JFR recording. With {@code before=<name>} it compares with a saved result
+ * in a before / after / gain table. The checksum of blocks and heightmaps must not change when generation
+ * only gets faster.
  */
 public final class TerrainBenchmarkPreviewJob implements PreviewJob {
     @Override
@@ -44,7 +48,7 @@ public final class TerrainBenchmarkPreviewJob implements PreviewJob {
 
     @Override
     public String description() {
-        return "Time RRChunkGenerator.fillFromNoise, write a checksum and a JFR recording. params: radius, rounds, warmup";
+        return "Time RRChunkGenerator.fillFromNoise, compare with a saved result. params: before, radius, rounds, warmup";
     }
 
     @Override
@@ -71,8 +75,12 @@ public final class TerrainBenchmarkPreviewJob implements PreviewJob {
         }
 
         String name = RegionExport.sanitizeName(args.name("terrain_bench"));
+        // Results are kept outside the checkout, so a task folder can compare with one measured in another.
+        Path savedDir = Path.of(System.getProperty("user.home"), ".runeruin", "bench");
+        String before = args.get("before", "");
+        Properties beforeResult = before.isEmpty() ? null : load(savedDir, before, args.seed(), positions.size());
         Files.createDirectories(args.exportDir());
-        Path reportPath = args.exportDir().resolve(name + ".txt");
+        Path reportPath = args.exportDir().resolve(name + ".md");
         Path jfrPath = args.exportDir().resolve(name + ".jfr");
         long[] chunkNanos = new long[rounds * positions.size()];
         long[] roundNanos = new long[rounds];
@@ -107,22 +115,26 @@ public final class TerrainBenchmarkPreviewJob implements PreviewJob {
         long parallelChecksum = checksum(parallel);
         Arrays.sort(chunkNanos);
         Arrays.sort(roundNanos);
-        double medianRoundMs = roundNanos[rounds / 2] / 1e6;
+        Properties result = new Properties();
+        result.setProperty("seed", Long.toString(args.seed()));
+        result.setProperty("chunks", Integer.toString(positions.size()));
+        result.setProperty("one_ms", Double.toString(chunkNanos[chunkNanos.length / 2] / 1e6));
+        result.setProperty("all_ms", Double.toString(roundNanos[rounds / 2] / 1e6));
+        result.setProperty("checksum", Long.toHexString(sequentialChecksum));
+        String table = beforeResult == null ? table(result) : table(beforeResult, before, result, name);
+        Files.createDirectories(savedDir);
+        try (Writer writer = Files.newBufferedWriter(savedDir.resolve(name + ".properties"))) {
+            result.store(writer, null);
+        }
+
         String jfrTool = ProcessHandle.current().info().command().orElse("java").replaceFirst("java(\\.exe)?$", "jfr$1");
-        String report = String.join("\n",
-            "# runeruin.terrain_bench/1",
-            "seed: " + args.seed(),
-            "chunks: " + positions.size() + " (radius " + radius + " around chunk 0 0)",
-            "rounds: " + rounds + " measured after " + warmup + " warmup",
-            "processors: " + Runtime.getRuntime().availableProcessors(),
-            "java: " + Runtime.version(),
-            String.format(Locale.ROOT, "sequential ms/chunk: median %.2f, p90 %.2f, mean %.2f",
-                chunkNanos[chunkNanos.length / 2] / 1e6, chunkNanos[chunkNanos.length * 9 / 10] / 1e6, Arrays.stream(chunkNanos).average().orElse(0) / 1e6),
-            String.format(Locale.ROOT, "parallel chunks/s: %.1f (median round %.1f ms, best %.1f ms)",
-                positions.size() / (medianRoundMs / 1e3), medianRoundMs, roundNanos[0] / 1e6),
-            "checksum: " + Long.toHexString(sequentialChecksum),
-            "jfr: " + jfrPath.toAbsolutePath(),
-            "hot methods: " + jfrTool + " view hot-methods " + jfrPath.toAbsolutePath(),
+        String report = table + "\n" + String.join("\n",
+            "- one chunk at a time: median " + ms(chunkNanos[chunkNanos.length / 2]) + ", p90 " + ms(chunkNanos[chunkNanos.length * 9 / 10]),
+            "- all chunks at once: median " + ms(roundNanos[rounds / 2]) + ", best " + ms(roundNanos[0]),
+            "- " + rounds + " rounds after " + warmup + " warm-up, chunks within " + radius + " of chunk 0 0, "
+                + Runtime.getRuntime().availableProcessors() + " processors, Java " + Runtime.version(),
+            "- checksum " + Long.toHexString(sequentialChecksum),
+            "- CPU profile: `" + jfrTool + " view hot-methods " + jfrPath.toAbsolutePath() + "`",
             ""
         );
         Files.writeString(reportPath, report, StandardCharsets.UTF_8);
@@ -132,6 +144,52 @@ public final class TerrainBenchmarkPreviewJob implements PreviewJob {
                 + " instead of " + Long.toHexString(sequentialChecksum));
         }
         return new PreviewJobs.Result(PreviewWorld.create(args.seed()), null, reportPath, List.of(reportPath, jfrPath));
+    }
+
+    private static Properties load(Path savedDir, String name, long seed, int chunks) throws IOException {
+        Path path = savedDir.resolve(name + ".properties");
+        if (!Files.isRegularFile(path)) {
+            throw new IOException("No saved result '" + name + "': run terrain_bench with -PpreviewName=" + name + " first");
+        }
+        Properties saved = new Properties();
+        try (Reader reader = Files.newBufferedReader(path)) {
+            saved.load(reader);
+        }
+        if (!Long.toString(seed).equals(saved.getProperty("seed")) || !Integer.toString(chunks).equals(saved.getProperty("chunks"))) {
+            throw new IOException("'" + name + "' was measured with another seed or radius");
+        }
+        return saved;
+    }
+
+    private static String table(Properties result) {
+        return "| " + title(result) + " | Time |\n|---|---:|\n"
+            + "| One chunk at a time, ms per chunk | " + value(result, "one_ms") + " |\n"
+            + "| All chunks at once, ms | " + value(result, "all_ms") + " |\n";
+    }
+
+    private static String table(Properties before, String beforeName, Properties after, String afterName) {
+        return "| " + title(after) + " | Before: " + beforeName + " | After: " + afterName + " | Gain |\n|---|---:|---:|---:|\n"
+            + row("One chunk at a time, ms per chunk", before, after, "one_ms")
+            + row("All chunks at once, ms", before, after, "all_ms")
+            + "\nTerrain: " + (before.getProperty("checksum").equals(after.getProperty("checksum")) ? "identical" : "DIFFERENT from " + beforeName)
+            + ". Gain is how much faster it got; up to 5% (one at a time) and 10% (all at once) either way it is measurement noise.\n";
+    }
+
+    private static String title(Properties result) {
+        return "Terrain fill, seed " + result.getProperty("seed") + ", " + result.getProperty("chunks") + " chunks";
+    }
+
+    private static String row(String label, Properties before, Properties after, String key) {
+        double gain = Double.parseDouble(before.getProperty(key)) / Double.parseDouble(after.getProperty(key)) - 1;
+        return "| " + label + " | " + value(before, key) + " | " + value(after, key) + " | " + String.format(Locale.ROOT, "%+.0f%%", gain * 100) + " |\n";
+    }
+
+    private static String value(Properties result, String key) {
+        return String.format(Locale.ROOT, "%.2f", Double.parseDouble(result.getProperty(key)));
+    }
+
+    private static String ms(long nanos) {
+        return String.format(Locale.ROOT, "%.2f ms", nanos / 1e6);
     }
 
     private static CompletableFuture<?> fill(RRChunkGenerator generator, RandomState randomState, ProtoChunk chunk) {

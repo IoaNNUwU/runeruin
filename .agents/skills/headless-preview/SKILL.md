@@ -46,17 +46,29 @@ In game: `/rrpreview list`, `/rrpreview <job> [seed] [key=value | name]…`. The
 
 ## Terrain generation speed
 
-`terrain_bench` runs `RRChunkGenerator.fillFromNoise` on (2·radius+1)² chunks around chunk 0 0 (default radius 8, 10 rounds after 2 warm-up rounds) and writes `exports/<name>.txt` and `exports/<name>.jfr`:
+`terrain_bench` times `RRChunkGenerator.fillFromNoise` on 289 chunks (radius 8 around chunk 0 0, 10 rounds after 2 warm-up rounds). Every result is saved as `~/.runeruin/bench/<name>.properties`, outside the checkout, so a task folder can compare with a result measured in another one.
+
+Measure every speed-up as before / after, on the same machine with the same parameters:
 
 ```powershell
-.\gradlew.bat runPreview -Ppreview=terrain_bench -PpreviewName=bench_main '-Parg.rounds=10'
+# before the change, on main code (in a fresh task folder, before editing):
+.\gradlew.bat runPreview -Ppreview=terrain_bench -PpreviewName=giant_goblet_before
+# after the change:
+.\gradlew.bat runPreview -Ppreview=terrain_bench -PpreviewName=giant_goblet_after '-Parg.before=giant_goblet_before'
 ```
 
-- `sequential ms/chunk`: one chunk at a time, CPU cost of a chunk. `parallel chunks/s`: all chunks at once on the generator's executor; it varies by about 10% between runs.
-- `checksum` of all blocks and heightmaps of the last round. A speed-up must keep it; the job fails when parallel generation gives other blocks than sequential.
-- `hot methods` is a command for the JFR recording of the measured rounds: methods by CPU samples (block writes, heightmaps, noise).
+The second run writes `exports/<name>.md`, a table to paste into the report and the pull request:
 
-Measure before and after a change on the same machine with the same parameters, run each side twice and compare medians. It times only terrain fill: carvers, features and the scheduling of a running server need `/jfr start` … `/jfr stop` in game with `/neoforge generate`.
+| Terrain fill, seed 1, 289 chunks | Before | After | Gain |
+|---|---:|---:|---:|
+| One chunk at a time, ms per chunk | 3.01 | 2.97 | +1% |
+| All chunks at once, ms | 138.03 | 130.38 | +6% |
+
+- Gain is how much faster it got (before / after − 1); a slowdown is negative. Up to 5% (one at a time) and 10% (all at once) either way is noise.
+- `Terrain: identical` compares the checksum of all blocks and heightmaps with the before run. A pure speed-up must keep it. The job also fails when parallel generation gives other blocks than sequential.
+- Below the table: medians, p90, the checksum and a command that lists the hottest methods of the JFR recording `exports/<name>.jfr` (block writes, heightmaps, noise).
+
+It times only terrain fill: carvers, features and the scheduling of a running server need `/jfr start` … `/jfr stop` in game with `/neoforge generate`.
 
 ## New preview job
 
