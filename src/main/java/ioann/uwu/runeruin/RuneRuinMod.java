@@ -12,6 +12,7 @@ import ioann.uwu.runeruin.dimension.RRStructureTypes;
 import ioann.uwu.runeruin.entities.RREntityTypes;
 import ioann.uwu.runeruin.entities.Snail;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.particles.RRParticleTypes;
 import ioann.uwu.runeruin.preview.RRGameTests;
 import ioann.uwu.runeruin.portal.RRPoiTypes;
 import net.minecraft.world.level.block.entity.BlockEntityTypes;
@@ -33,6 +34,7 @@ public class RuneRuinMod {
         modEventBus.addListener(Snail::registerAttributes);
         modEventBus.addListener(Snail::registerSpawnPlacements);
 
+        RRParticleTypes.REGISTRY.register(modEventBus);
         RRBlocks.REGISTRY.register(modEventBus);
         RRItems.REGISTRY.register(modEventBus);
         RREntityTypes.REGISTRY.register(modEventBus);

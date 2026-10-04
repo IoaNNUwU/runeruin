@@ -97,7 +97,7 @@ Step-by-step procedures live in skills; load the matching one before starting su
 
 | Path | Role |
 |------|------|
-| `blocks/`, `items/`, `entities/` | `RRBlocks` (also registers BlockItems), `RRItems`, `RREntityTypes`; teleport item `RuneOfSpaceItem` |
+| `blocks/`, `items/`, `entities/`, `particles/` | `RRBlocks` (also registers BlockItems), `RRItems`, `RREntityTypes`, `RRParticleTypes`; teleport item `RuneOfSpaceItem` |
 | `creativetab/` | creative tab; its item list is manual |
 | `datagen/` | models, blockstates, tags, loot, recipes, worldgen bootstrap (`DatagenMain`) |
 | `client/` | renderers, models, tints, clouds (`RuneRuinClient`) |

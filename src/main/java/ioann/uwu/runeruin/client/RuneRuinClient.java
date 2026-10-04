@@ -5,9 +5,11 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.client.model.SnailModel;
 import ioann.uwu.runeruin.datagen.DatagenBiomeTagProvider;
 import ioann.uwu.runeruin.entities.RREntityTypes;
+import ioann.uwu.runeruin.particles.RRParticleTypes;
 import java.util.List;
 import net.minecraft.client.Camera;
 import net.minecraft.client.color.block.BlockTintSources;
+import net.minecraft.client.particle.FallingLeavesParticle;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -19,6 +21,7 @@ import net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRender
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -75,6 +78,16 @@ public class RuneRuinClient {
     @SubscribeEvent
     static void registerCustomEnvironmentEffectRenderer(RegisterCustomEnvironmentEffectRendererEvent event) {
         event.registerCloudRenderer(Renderers.RUNE_RUIN_CLOUDS_ID, new RuneRuinCloudsRenderer());
+    }
+
+    @SubscribeEvent
+    static void registerParticleProviders(RegisterParticleProvidersEvent event) {
+        // Cherry petal motion at vanilla leaf size; the gray leaf sprites darken the tint to about half.
+        event.registerSpriteSet(RRParticleTypes.ELDEN_LEAVES.get(), sprites -> (_, level, x, y, z, _, _, _, random) -> {
+            var particle = new FallingLeavesParticle(level, x, y, z, sprites.get(random), 0.25F, 2.0F, false, true, 2.0F, 0.0F);
+            particle.setColor(1.0F, 0.88F, 0.25F);
+            return particle;
+        });
     }
 
     @SubscribeEvent
