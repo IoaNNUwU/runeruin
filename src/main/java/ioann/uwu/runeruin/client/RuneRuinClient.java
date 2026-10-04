@@ -82,12 +82,9 @@ public class RuneRuinClient {
 
     @SubscribeEvent
     static void registerParticleProviders(RegisterParticleProvidersEvent event) {
-        // Cherry petal motion at vanilla leaf size; the gray leaf sprites darken the tint to about half.
-        event.registerSpriteSet(RRParticleTypes.ELDEN_LEAVES.get(), sprites -> (_, level, x, y, z, _, _, _, random) -> {
-            var particle = new FallingLeavesParticle(level, x, y, z, sprites.get(random), 0.25F, 2.0F, false, true, 2.0F, 0.0F);
-            particle.setColor(1.0F, 0.88F, 0.25F);
-            return particle;
-        });
+        // Cherry petal motion at vanilla leaf size.
+        event.registerSpriteSet(RRParticleTypes.ELDEN_LEAVES.get(), sprites -> (_, level, x, y, z, _, _, _, random) ->
+                new FallingLeavesParticle(level, x, y, z, sprites.get(random), 0.25F, 2.0F, false, true, 2.0F, 0.0F));
     }
 
     @SubscribeEvent

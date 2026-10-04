@@ -10,7 +10,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class RRParticleTypes {
     public static final DeferredRegister<ParticleType<?>> REGISTRY = DeferredRegister.create(Registries.PARTICLE_TYPE, RR.MODID);
 
-    /** Yellow vanilla leaf sprites that fall like cherry petals; provider in {@code RuneRuinClient}. */
+    /** Vanilla leaf sprites in the Elden palette that fall like cherry petals; provider in {@code RuneRuinClient}. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> ELDEN_LEAVES = REGISTRY.register(
             "elden_leaves",
             () -> new SimpleParticleType(false)
