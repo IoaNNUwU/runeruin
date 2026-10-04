@@ -22,7 +22,7 @@ Several agents work in this repository at once. Every change, documentation incl
    ```powershell
    git commit --allow-empty -m "<issue title>"
    git push -u origin HEAD
-   gh pr create --draft --title "<issue title>" --body "Fixes #<n>`n`nWork has started, but there are no changes yet."
+   gh pr create --draft --title "<issue title>" --body "Fixes #<n>`n`nThe issue has been claimed, but there are no changes yet."
    ```
 
    Then repeat the check from step 2: if another open pull request links the issue too, the one with the higher number gives way, so close yours (`gh pr close`) and tell the user. If you cannot claim the issue, tell the user before going on.
