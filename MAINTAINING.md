@@ -4,6 +4,10 @@ How maintainers and the AI agents working for them handle issues and pull reques
 
 Maintainers: [@IoaNNUwU](https://github.com/IoaNNUwU).
 
+## Remotes
+
+A maintainer clones the main repository itself, without a fork, so `origin` is the main repository and there is no `upstream`. Wherever [CONTRIBUTING.md](CONTRIBUTING.md) says `upstream`, use `origin`: `git pull --ff-only origin main`, `git merge origin/main`. Never add an `upstream` remote: with two remotes for the same repository, `gh pr create` looks for the pushed branch under `upstream` and refuses to open the pull request.
+
 ## Issues and labels
 
 - Agents work with GitHub by default, without asking for each step: they create issues, comment on and label them, push task branches, and open and edit draft pull requests.
