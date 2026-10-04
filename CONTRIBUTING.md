@@ -38,11 +38,13 @@ Labels live in [.github/labels.json](.github/labels.json), and a workflow applie
 
 ## Setting up
 
-1. Fork the repository on GitHub and clone your fork. Your fork is `origin`. Add the main repository as `upstream`:
+1. Fork the repository on GitHub and clone your fork. Your fork is `origin`: you push your branches there. Add the main repository as `upstream`: `main` comes from there.
 
    ```powershell
    git remote add upstream https://github.com/IoaNNUwU/runeruin.git
    ```
+
+   Maintainers have no fork: their clone of the main repository has only `origin`, and they read `upstream` in this file as `origin` ([MAINTAINING.md](MAINTAINING.md#remotes)).
 
 2. Run the setup script once. It enables the git hooks and links the Minecraft and NeoForge sources:
 
