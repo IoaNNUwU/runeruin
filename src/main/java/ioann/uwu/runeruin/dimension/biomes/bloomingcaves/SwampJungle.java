@@ -36,8 +36,6 @@ public class SwampJungle {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.SWAMP_JUNGLE_TREES);
         BiomeDefaultFeatures.addExtraEmeralds(generation);
 
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
-        // generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.RARE_STONE_LILY);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.RED_ARCH.placedKey());

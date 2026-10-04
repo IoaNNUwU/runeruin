@@ -2,8 +2,9 @@
 name: headless-preview
 description: >-
   Check the shape of a RuneRuin feature or structure without the game: runPreview jobs, parameters,
-  exports/ outputs, render_preview.py, in-game /rrpreview, and adding a new PreviewJob. Use after
-  changing a feature or structure, or when a new one needs a preview.
+  exports/ outputs, render_preview.py, in-game /rrpreview, the terrain_bench speed benchmark, and adding
+  a new PreviewJob. Use after changing a feature or structure, when a new one needs a preview, or to
+  measure terrain generation speed.
 ---
 
 # Headless preview
@@ -16,7 +17,7 @@ description: >-
 python scripts/render_preview.py out.png exports/preview_boulder.json
 ```
 
-Jobs: `giant_goblet` (default), `baobab`, `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below) and `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill).
+Jobs: `giant_goblet` (default), `baobab`, `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below), `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill) and `terrain_bench` (terrain generation speed, below).
 
 Parameters: `-Pseed`, `-Pheight`, `-Pradius`, `-PminRadius`, `-PmaxRadius`, `-Pstage`, `-Pregion=<export.json>`, `-PpreviewName=<name>`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`). In PowerShell quote the `-Parg.` ones: `'-Parg.id=runeruin:stone_spike'`; unquoted, PowerShell splits them at the dot and Gradle looks for a task.
 
@@ -42,6 +43,34 @@ The `feature` job places a configured feature from the registry on a prepared su
 `render_preview.py` (needs Pillow) draws front, side and top silhouettes of the full volume: use it to judge bends, tilt and gaps, since midplanes can miss the subject. The JSON and text files stay the source of truth. Previews skip placement modifiers and use their own random source: they reproduce a shape, not a real chunk.
 
 In game: `/rrpreview list`, `/rrpreview <job> [seed] [key=value | name]…`. The client writes `/rrpreview` and `/rrexport` output to `~/.runeruin/game/runeruin-exports/`, not `exports/`.
+
+## Terrain generation speed
+
+`terrain_bench` times `RRChunkGenerator.fillFromNoise` on 289 chunks (radius 8 around chunk 0 0, 40 rounds after 2 warm-up rounds); a run takes about a minute. Every result is saved as `~/.runeruin/bench/<name>.properties`, outside the checkout, so a task folder can compare with a result measured in another one.
+
+Benchmarks run only on the user's command. Other programs on the computer (the game, other agents' Gradle runs, a browser) skew the numbers, so the user closes them first. Never run `terrain_bench` on your own or as a check: prepare the checkouts, give the user the single-line commands and run them yourself only when the user says the computer is ready.
+
+Measure every speed-up as before / after, on the same machine with the same parameters:
+
+```powershell
+# before the change, on main code (in a fresh task folder, before editing):
+.\gradlew.bat runPreview -Ppreview=terrain_bench -PpreviewName=giant_goblet_before
+# after the change:
+.\gradlew.bat runPreview -Ppreview=terrain_bench -PpreviewName=giant_goblet_after '-Parg.before=giant_goblet_before'
+```
+
+The second run writes `exports/<name>.md`, a table to paste into the report and the pull request:
+
+| Terrain fill, seed 1, 289 chunks | Before | After | Gain |
+|---|---:|---:|---:|
+| One chunk at a time, ms per chunk | 3.01 | 2.97 | +1% |
+| All chunks at once, ms | 138.03 | 130.38 | +6% |
+
+- Gain is how much faster it got (before / after − 1); a slowdown is negative. Up to 5% (one at a time) and 10% (all at once) either way is noise.
+- `Terrain: identical` compares the checksum of all blocks and heightmaps with the before run. A pure speed-up must keep it. The job also fails when parallel generation gives other blocks than sequential.
+- Below the table: medians, p90, the checksum and a command that lists the hottest methods of the JFR recording `exports/<name>.jfr` (block writes, heightmaps, noise).
+
+It times only terrain fill: carvers, features and the scheduling of a running server need `/jfr start` … `/jfr stop` in game with `/neoforge generate`.
 
 ## New preview job
 
