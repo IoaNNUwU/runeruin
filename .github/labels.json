@@ -12,5 +12,6 @@
       "layer: void": "Void layer"
   } },
   { "group": "biome",       "color": "c5def5", "labels": {} },
-  { "group": "infra",       "color": "6e7781", "labels": { "infra": "Scripts, build, CI, agent docs" } }
+  { "group": "infra",       "color": "6e7781", "labels": { "infra": "Scripts, build, CI, agent docs" } },
+  { "group": "perf",        "color": "e4572e", "labels": { "perf": "Performance: speed and memory" } }
 ]
