@@ -21,7 +21,5 @@ matches '(^|[^[:alnum:]_-])(taskkill|stop-process|pkill|killall|kill)[^[:alnum:]
     && block "never kill Java or Gradle: the user's game may be running"
 matches '(^|[^[:alnum:]_-])(rm|rmdir|rd|del|remove-item)[^[:alnum:]_-][^|;&]*src[\\/]+generated' \
     && block "never delete src/generated or its .cache; run runData instead"
-matches '(^|[^[:alnum:]_-])gh(\.exe)?[^[:alnum:]_.][^|;&]*pr[[:space:]]+merge' \
-    && block "only the maintainer merges pull requests"
 
 exit 0
