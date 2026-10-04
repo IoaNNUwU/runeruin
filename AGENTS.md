@@ -39,7 +39,7 @@ Work with GitHub, in this repository or in the user's fork (issues, pushing, pul
 4. shapes: `runPreview` of the matching job (`headless-preview` skill); models, textures, translations: `python scripts/lint_assets.py` after `runData`, and renders from `scripts/render_model.py` / `scripts/render_texture_tile.py`
 5. `gradlew.bat build`
 
-Lighting, render layers, interaction and biome placement need the game: list them under "Check in game".
+Lighting, render layers, interaction and biome placement need the game: list them under "Check in game". Speed benchmarks (`benchmark` skill) are not a check: they run only on the user's command, once the user has closed other programs.
 
 **Final report**, also for partial work: in the chat, in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions), with the branch, the worktree path and the output of `git status --short --branch`. The user reviews the changes and the Decisions and approves them; only then may a pull request become ready for review. End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
 
@@ -88,6 +88,7 @@ Step-by-step procedures live in skills; load the matching one before starting su
 | `worldgen-biome` | adding, reweighting, moving or changing biomes |
 | `worldgen-structure` | multi-piece structures such as Giant Goblet and Baobab |
 | `headless-preview` | checking feature and structure shapes without the game; new preview jobs |
+| `benchmark` | measuring generation speed before and after a change; only on the user's command |
 | `region-export-compare` | `/rrexport` dumps and terrain replay (`world_region`, was → expected) |
 | `minecraft-pixel-texture-generation` | creating, recoloring, quantizing and validating textures |
 | `minecraft-model-texture-analysis` | model geometry and texture UVs |

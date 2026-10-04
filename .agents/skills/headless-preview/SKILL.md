@@ -16,7 +16,7 @@ description: >-
 python scripts/render_preview.py out.png exports/preview_boulder.json
 ```
 
-Jobs: `giant_goblet` (default), `baobab`, `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below) and `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill).
+Jobs: `giant_goblet` (default), `baobab`, `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below) and `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill). `terrain_bench` is in the list too, but it measures speed, not shapes: follow the `benchmark` skill.
 
 Parameters: `-Pseed`, `-Pheight`, `-Pradius`, `-PminRadius`, `-PmaxRadius`, `-Pstage`, `-Pregion=<export.json>`, `-PpreviewName=<name>`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`). In PowerShell quote the `-Parg.` ones: `'-Parg.id=runeruin:stone_spike'`; unquoted, PowerShell splits them at the dot and Gradle looks for a task.
 
