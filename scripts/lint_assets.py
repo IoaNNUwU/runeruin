@@ -4,7 +4,7 @@
     python scripts/lint_assets.py
 
 - blockstates, item definitions and models refer only to models that exist;
-- every texture a model uses exists (vanilla ones only when .vanilla-textures is extracted);
+- every texture a model uses exists, vanilla ones in .vanilla-textures (gradlew extractVanillaTextures);
 - en_us and ru_ru have the same keys, and every block and item has a name in both;
 - block and item textures are 16x16, or 16 wide with a .mcmeta animation of whole frames, or listed in OTHER_SIZES.
 
@@ -80,38 +80,36 @@ def model_refs(node):
             yield from model_refs(value)
 
 
-def check_model_ref(owner, model_id, problems):
-    namespace, path = split_id(model_id)
-    if path in BUILTIN_PARENTS or not can_check(namespace, "models"):
+def check_ref(owner, kind, ref, suffix, problems, missing):
+    namespace, path = split_id(ref)
+    if kind == "models" and path in BUILTIN_PARENTS:
         return
-    if find_asset(namespace, "models", path, ".json") is None:
-        problems.append(f"{rel(owner)}: model {namespace}:{path} does not exist")
+    if not can_check(namespace, kind):
+        missing.add(f"{namespace} {kind}")
+    elif find_asset(namespace, kind, path, suffix) is None:
+        problems.append(f"{rel(owner)}: {kind[:-1]} {namespace}:{path} does not exist")
 
 
 def check_models(problems):
+    missing = set()
     for path in asset_files("blockstates", "*.json"):
         for model_id in model_refs(read_json(path, problems)):
-            check_model_ref(path, model_id, problems)
+            check_ref(path, "models", model_id, ".json", problems, missing)
     for path in asset_files("items", "*.json"):
         for model_id in model_refs(read_json(path, problems)):
-            check_model_ref(path, model_id, problems)
-    skipped = set()
+            check_ref(path, "models", model_id, ".json", problems, missing)
     for path in asset_files("models", "*.json"):
         model = read_json(path, problems)
         if not isinstance(model, dict):
             continue
         if isinstance(model.get("parent"), str):
-            check_model_ref(path, model["parent"], problems)
+            check_ref(path, "models", model["parent"], ".json", problems, missing)
         for texture in (model.get("textures") or {}).values():
-            if not isinstance(texture, str) or texture.startswith("#"):
-                continue
-            namespace, texture_path = split_id(texture)
-            if not can_check(namespace, "textures"):
-                skipped.add(namespace)
-            elif find_asset(namespace, "textures", texture_path, ".png") is None:
-                problems.append(f"{rel(path)}: texture {namespace}:{texture_path} does not exist")
-    for namespace in sorted(skipped):
-        print(f"note: {namespace} textures not checked; extract them with gradlew extractMcSources")
+            if isinstance(texture, str) and not texture.startswith("#"):
+                check_ref(path, "textures", texture, ".png", problems, missing)
+    # An old or missing .vanilla-textures must not turn unchecked references into "assets OK".
+    for assets in sorted(missing):
+        problems.append(f"{assets} not checked: missing in .vanilla-textures, run gradlew extractVanillaTextures")
 
 
 def check_langs(problems):
