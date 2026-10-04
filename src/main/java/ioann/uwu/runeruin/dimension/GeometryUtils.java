@@ -59,7 +59,7 @@ public class GeometryUtils {
                 }
                 int xx = ox + x;
                 for (int z = -maxZ; z <= maxZ; z++) {
-                    set(level, mutable.set(xx, yy, oz + z), block, SOLID_FLAG);
+                    setSolid(level, mutable, xx, yy, oz + z, block);
                 }
             }
         }
@@ -67,12 +67,12 @@ public class GeometryUtils {
 
     public static void sphere(WorldGenLevel level, BlockPos origin, BlockState block, int radius) {
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        forEachInSphere(origin, radius, (x, y, z, d2) -> set(level, mutable.set(x, y, z), block, SOLID_FLAG));
+        forEachInSphere(origin, radius, (x, y, z, d2) -> setSolid(level, mutable, x, y, z, block));
     }
 
     public static void sphere(WorldGenLevel level, BlockPos origin, Supplier<BlockState> block, int radius) {
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        forEachInSphere(origin, radius, (x, y, z, d2) -> set(level, mutable.set(x, y, z), block.get(), BULK_FLAG));
+        forEachInSphere(origin, radius, (x, y, z, d2) -> level.setBlock(mutable.set(x, y, z), block.get(), BULK_FLAG));
     }
 
     public static void forEachInSphere(BlockPos origin, int radius, SphereVisitor visitor) {
@@ -132,7 +132,7 @@ public class GeometryUtils {
                 for (int z = -zBound; z <= zBound; z++) {
                     int d2 = x2 + y2 + z * z;
                     if (d2 > inner2 && d2 * 20 < outer2 * 19) {
-                        set(level, mutable.set(xx, yy, oz + z), block.get(), BULK_FLAG);
+                        level.setBlock(mutable.set(xx, yy, oz + z), block.get(), BULK_FLAG);
                     }
                 }
             }
@@ -163,7 +163,7 @@ public class GeometryUtils {
             for (int z = -zBound; z <= zBound; z++) {
                 int d2 = x2 + z * z;
                 if (d2 > inner2 && d2 * 20 < outer2 * 19) {
-                    set(level, mutable.set(xx, oy, oz + z), block.get(), BULK_FLAG);
+                    level.setBlock(mutable.set(xx, oy, oz + z), block.get(), BULK_FLAG);
                 }
             }
         }
@@ -212,7 +212,7 @@ public class GeometryUtils {
                         if (blockState.isAir()) {
                             continue;
                         }
-                        set(level, mutable.set(xx, yy, oz + z), blockState, flags);
+                        level.setBlock(mutable.set(xx, yy, oz + z), blockState, flags);
                     }
                 }
             }
@@ -239,7 +239,7 @@ public class GeometryUtils {
                     if (blockState.isAir()) {
                         continue;
                     }
-                    set(level, mutable.set(xx, yy, zz), blockState, flags);
+                    level.setBlock(mutable.set(xx, yy, zz), blockState, flags);
                 }
             }
         }
@@ -269,8 +269,8 @@ public class GeometryUtils {
 
         if (dm == 0) {
             BlockState block = blockSupplier.apply(x0, y0, z0);
-            set(level, mutable.set(x0, y0, z0), block, flags);
-            set(level, mutable.set(x0, y0 - 1, z0), block, flags);
+            level.setBlock(mutable.set(x0, y0, z0), block, flags);
+            level.setBlock(mutable.set(x0, y0 - 1, z0), block, flags);
             return;
         }
 
@@ -283,8 +283,8 @@ public class GeometryUtils {
 
         for (int i = 0; i <= dm; i++) {
             BlockState block = blockSupplier.apply(x, y, z);
-            set(level, mutable.set(x, y, z), block, flags);
-            set(level, mutable.set(x, y - 1, z), block, flags);
+            level.setBlock(mutable.set(x, y, z), block, flags);
+            level.setBlock(mutable.set(x, y - 1, z), block, flags);
 
             if (i == dm) {
                 break;
@@ -313,11 +313,11 @@ public class GeometryUtils {
 
         BlockState block = blockSupplier.apply(target.getX(), target.getY(), target.getZ());
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        set(level, mutable.set(target.getX(), target.getY() - 1, target.getZ()), block, SOLID_FLAG);
+        setSolid(level, mutable, target.getX(), target.getY() - 1, target.getZ(), block);
     }
 
-    private static void set(WorldGenLevel level, BlockPos.MutableBlockPos pos, BlockState state, int flags) {
-        level.setBlock(pos, state, flags);
+    public static void setSolid(WorldGenLevel level, BlockPos.MutableBlockPos mutable, int x, int y, int z, BlockState state) {
+        level.setBlock(mutable.set(x, y, z), state, SOLID_FLAG);
     }
 
     private static int[] diskZLimit(int radius, int r2) {

@@ -166,7 +166,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                     int xx = ox + x - trunkDiameter / 2 + 1;
                     int yy = oy + y - trunkDiameter / 2;
                     int zz = oz + z - trunkDiameter / 2 + 1;
-                    setSolid(level, mutable, xx, yy, zz, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, xx, yy, zz, trunkBlock);
                 }
             }
         }
@@ -176,7 +176,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                     int xx = ox + x - trunkDiameter / 2 + 1;
                     int yy = oy + y - trunkDiameter / 2;
                     int zz = oz + z - trunkDiameter / 2 + 1;
-                    setSolid(level, mutable, xx, yy, zz, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, xx, yy, zz, trunkBlock);
                 }
             }
         }
@@ -184,7 +184,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
             for (int x = -1; x < trunkDiameter - 1; x++) {
                 int xx = ox + x - trunkDiameter / 2 + 1;
                 int zz = oz + z - trunkDiameter / 2 + 1;
-                setSolid(level, mutable, xx, oy + 1, zz, trunkBlock);
+                GeometryUtils.setSolid(level, mutable, xx, oy + 1, zz, trunkBlock);
             }
         }
 
@@ -194,7 +194,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                     int xx = ox + x - trunkDiameter / 2 + 1;
                     int zz = oz + z - trunkDiameter / 2 + 1;
                     int yy = oy - trunkDiameter / 2 + 2;
-                    setSolid(level, mutable, xx, yy, zz, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, xx, yy, zz, trunkBlock);
                 }
             }
         }
@@ -204,13 +204,13 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                     int xx = ox + x - trunkDiameter / 2 + 1;
                     int zz = oz + z - trunkDiameter / 2 + 1;
                     int yy = oy - trunkDiameter / 2 + 2;
-                    setSolid(level, mutable, xx, yy, zz, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, xx, yy, zz, trunkBlock);
                 }
             }
         }
 
         for (int[] offset : EXTRA_TRUNK) {
-            setSolid(level, mutable, ox + offset[0], oy + offset[1], oz + offset[2], trunkBlock);
+            GeometryUtils.setSolid(level, mutable, ox + offset[0], oy + offset[1], oz + offset[2], trunkBlock);
         }
 
         int bx = ox;
@@ -220,20 +220,20 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 for (int y = -1; y <= 1; y++) {
-                    setSolid(level, mutable, bx + x, by + y, bz + z, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, bx + x, by + y, bz + z, trunkBlock);
                 }
             }
         }
 
         int[][] moreBlocks = random.nextBoolean() ? TRUNK_BOTTOM_A : TRUNK_BOTTOM_B;
         for (int[] offset : moreBlocks) {
-            setSolid(level, mutable, bx + offset[0], by + offset[1], bz + offset[2], trunkBlock);
+            GeometryUtils.setSolid(level, mutable, bx + offset[0], by + offset[1], bz + offset[2], trunkBlock);
         }
 
         for (int y = 0; y < trunkLength; y++) {
             int yy = oy - y;
             for (int[] offset : TRUNK_CROSS) {
-                setSolid(level, mutable, ox + offset[0], yy, oz + offset[1], trunkBlock);
+                GeometryUtils.setSolid(level, mutable, ox + offset[0], yy, oz + offset[1], trunkBlock);
             }
         }
 
@@ -243,7 +243,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
             int yy = oy - (nSegment * segmentLength + segmentLength / 2 - trunkLength % segmentCount);
             int[][] thorns = random.nextBoolean() ? THORNS_A : THORNS_B;
             for (int[] offset : thorns) {
-                setSolid(level, mutable, ox + offset[0], yy + offset[1], oz + offset[2], trunkBlock);
+                GeometryUtils.setSolid(level, mutable, ox + offset[0], yy + offset[1], oz + offset[2], trunkBlock);
             }
         }
 
@@ -320,7 +320,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                         level.setBlock(mutable.set(cx - 1, yy, cz + 1), bar.setValue(north, true).setValue(east, true), Block.UPDATE_ALL);
                     }
 
-                    setSolid(level, mutable, cx, cy + 1, cz, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, cx, cy + 1, cz, trunkBlock);
 
                     BlockPos chestPos = center.below();
                     level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), Block.UPDATE_ALL);
@@ -339,15 +339,11 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
 
         for (int x = -2; x <= 2; x++) {
             for (int z = -2; z <= 2; z++) {
-                setSolid(level, mutable, bx + x, by - 1, bz + z, trunkBlock);
+                GeometryUtils.setSolid(level, mutable, bx + x, by - 1, bz + z, trunkBlock);
             }
         }
 
         return true;
-    }
-
-    private static void setSolid(WorldGenLevel level, BlockPos.MutableBlockPos mutable, int x, int y, int z, BlockState state) {
-        level.setBlock(mutable.set(x, y, z), state, GeometryUtils.SOLID_FLAG);
     }
 
     /** Builds a lightly irregular geodesic lattice just outside the ball's shell. */

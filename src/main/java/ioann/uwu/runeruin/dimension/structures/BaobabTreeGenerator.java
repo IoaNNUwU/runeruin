@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.LeavesBlock;
@@ -696,7 +697,7 @@ public final class BaobabTreeGenerator {
         for (PendingLeafVines pending : pendingVines) {
             RandomSource random = RandomSource.create(pending.seed());
             List<BlockPos> candidates = new ArrayList<>(pending.candidates());
-            shufflePositions(candidates, random);
+            Util.shuffle(candidates, random);
             List<BlockPos> selected = new ArrayList<>(pending.baseSelection());
             int added = 0;
 
@@ -722,7 +723,7 @@ public final class BaobabTreeGenerator {
 
             RandomSource additionalRandom = RandomSource.create(pending.seed() ^ 0xD1B54A32D192ED03L);
             List<BlockPos> expandedCandidates = new ArrayList<>(pending.expandedCandidates());
-            shufflePositions(expandedCandidates, additionalRandom);
+            Util.shuffle(expandedCandidates, additionalRandom);
             expandedCandidatesByCrown.add(expandedCandidates);
             additionalRandomByCrown.add(additionalRandom);
         }
@@ -979,7 +980,7 @@ public final class BaobabTreeGenerator {
         }
 
         List<BlockPos> starts = new ArrayList<>(candidates.keySet());
-        shufflePositions(starts, random);
+        Util.shuffle(starts, random);
         starts.sort((left, right) -> Integer.compare(right.getY(), left.getY()));
         List<MossStart> placedStarts = new ArrayList<>();
         for (BlockPos start : starts) {
@@ -1102,7 +1103,7 @@ public final class BaobabTreeGenerator {
             RandomSource random
     ) {
         List<BlockPos> candidates = new ArrayList<>(mossBlocks);
-        shufflePositions(candidates, random);
+        Util.shuffle(candidates, random);
         List<CanopyPool> pools = new ArrayList<>();
         Map<CanopyColumn, BlockPos> mossSurface = new LinkedHashMap<>();
         for (BlockPos moss : mossBlocks) {
@@ -1185,7 +1186,7 @@ public final class BaobabTreeGenerator {
                 }
             }
 
-            shufflePositions(banks, random);
+            Util.shuffle(banks, random);
             int dripleafTarget = Math.min(banks.size(), 3 + random.nextInt(3));
             int dripleavesPlaced = 0;
             for (BlockPos soil : banks) {
@@ -1221,7 +1222,7 @@ public final class BaobabTreeGenerator {
                     vegetationPatch.add(soil);
                 }
             }
-            shufflePositions(vegetationPatch, random);
+            Util.shuffle(vegetationPatch, random);
             int vegetationTarget = Math.min(vegetationPatch.size(), 6 + random.nextInt(5));
             int vegetationPlaced = 0;
             for (BlockPos soil : vegetationPatch) {
@@ -1241,15 +1242,6 @@ public final class BaobabTreeGenerator {
                 plantedSoils.add(soil);
                 vegetationPlaced++;
             }
-        }
-    }
-
-    private static void shufflePositions(List<BlockPos> positions, RandomSource random) {
-        for (int i = positions.size() - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
-            BlockPos temp = positions.get(i);
-            positions.set(i, positions.get(j));
-            positions.set(j, temp);
         }
     }
 
@@ -1294,7 +1286,7 @@ public final class BaobabTreeGenerator {
         }
 
         List<VineAnchor> trunkAnchors = new ArrayList<>(trunkCandidates.values());
-        shuffle(trunkAnchors, random);
+        Util.shuffle(trunkAnchors, random);
         List<BlockPos> usedAnchors = new ArrayList<>();
         int trunkVineCount = (3 + random.nextInt(4)) * 3;
         for (VineAnchor anchor : trunkAnchors) {
@@ -1310,7 +1302,7 @@ public final class BaobabTreeGenerator {
         }
 
         List<VineAnchor> leafAnchors = new ArrayList<>(leafCandidates.values());
-        shuffle(leafAnchors, random);
+        Util.shuffle(leafAnchors, random);
         usedAnchors.clear();
         int leafVineCount = (5 + radius / 10 + random.nextInt(5)) * 3;
         for (VineAnchor anchor : leafAnchors) {
@@ -1347,15 +1339,6 @@ public final class BaobabTreeGenerator {
 
     private static boolean tooClose(List<BlockPos> anchors, BlockPos candidate, double minDistanceSqr) {
         return anchors.stream().anyMatch(other -> other.distSqr(candidate) < minDistanceSqr);
-    }
-
-    private static void shuffle(List<VineAnchor> anchors, RandomSource random) {
-        for (int i = anchors.size() - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
-            VineAnchor temp = anchors.get(i);
-            anchors.set(i, anchors.get(j));
-            anchors.set(j, temp);
-        }
     }
 
     private static void put(Map<BlockPos, BlockState> tree, BlockPos pos, BlockState state) {

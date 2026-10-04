@@ -148,20 +148,20 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 for (int y = -3; y <= 2; y++) {
-                    setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
                 }
             }
         }
 
         int[][] extraRoots = random.nextBoolean() ? ROOT_EXTRA_A : ROOT_EXTRA_B;
         for (int[] offset : extraRoots) {
-            setSolid(level, mutable, ox + offset[0], oy + offset[1], oz + offset[2], trunkBlock);
+            GeometryUtils.setSolid(level, mutable, ox + offset[0], oy + offset[1], oz + offset[2], trunkBlock);
         }
 
         for (int x = -2; x <= 2; x++) {
             for (int z = -1; z <= 1; z++) {
                 for (int y = -1; y <= 1; y++) {
-                    setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
                 }
             }
         }
@@ -169,19 +169,19 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
         for (int x = -1; x <= 1; x++) {
             for (int z = -2; z <= 2; z++) {
                 for (int y = -1; y <= 1; y++) {
-                    setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, ox + x, oy + y, oz + z, trunkBlock);
                 }
             }
         }
 
         for (int[] offset : TRUNK_CROSS_FAR) {
-            setSolid(level, mutable, ox + offset[0], oy - 2, oz + offset[1], trunkBlock);
+            GeometryUtils.setSolid(level, mutable, ox + offset[0], oy - 2, oz + offset[1], trunkBlock);
         }
 
         for (int y = 0; y < height; y++) {
             int yy = oy - y;
             for (int[] offset : TRUNK_CROSS) {
-                setSolid(level, mutable, ox + offset[0], yy, oz + offset[1], trunkBlock);
+                GeometryUtils.setSolid(level, mutable, ox + offset[0], yy, oz + offset[1], trunkBlock);
             }
         }
 
@@ -261,7 +261,7 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
             int[][] extension = random.nextBoolean() ? EXTENSION_A : EXTENSION_B;
             for (int[] offset : extension) {
-                setSolid(level, mutable, tx + offset[0], ty + offset[1], tz + offset[2], trunkBlock);
+                GeometryUtils.setSolid(level, mutable, tx + offset[0], ty + offset[1], tz + offset[2], trunkBlock);
             }
 
             if (random.nextBoolean()) {
@@ -356,7 +356,7 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
 
         int[][] crownExtra = random.nextBoolean() ? CROWN_EXTRA_A : CROWN_EXTRA_B;
         for (int[] offset : crownExtra) {
-            setSolid(level, mutable, ox + offset[0], crownY + offset[1], oz + offset[2], trunkBlock);
+            GeometryUtils.setSolid(level, mutable, ox + offset[0], crownY + offset[1], oz + offset[2], trunkBlock);
         }
 
         return false;
@@ -369,10 +369,6 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             case 2 -> new int[][]{{5, randYOffset, -4}, {4, randYOffset, -5}, {4, randYOffset, 5}};
             default -> new int[][]{{-5, randYOffset, -4}, {-4, randYOffset, -5}};
         };
-    }
-
-    private static void setSolid(WorldGenLevel level, BlockPos.MutableBlockPos mutable, int x, int y, int z, BlockState state) {
-        level.setBlock(mutable.set(x, y, z), state, GeometryUtils.SOLID_FLAG);
     }
 
     private static boolean isValidPlacement(
