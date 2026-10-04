@@ -94,6 +94,6 @@ Agents read [AGENTS.md](AGENTS.md) and by default only work on your computer: th
 - They may create issues and comment on them, push the task branch to `origin`, and open and edit draft pull requests. Right after the first commit they push it and open a draft pull request with `Fixes #<issue>`, so the issue shows as taken. Without an issue they work only on a change that needs no design proposal.
 - A design proposal goes into the issue as a comment as well as into the chat, so the decision stays with the issue.
 - The final report goes into the chat first. Only after you approve it does it go into the pull request description, and only then is the pull request marked ready (`gh pr ready`).
-- They never merge pull requests, push to `main` or close issues.
+- They never push to `main`. They merge pull requests or close issues only when you allow it explicitly, in the chat or in your personal agent instructions, and only where your own GitHub rights allow it.
 
 `gh` uses `upstream` as the main repository automatically, so `gh issue list` and `gh pr create` work from a fork without extra setup.
