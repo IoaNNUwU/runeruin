@@ -46,7 +46,9 @@ In game: `/rrpreview list`, `/rrpreview <job> [seed] [key=value | name]…`. The
 
 ## Terrain generation speed
 
-`terrain_bench` times `RRChunkGenerator.fillFromNoise` on 289 chunks (radius 8 around chunk 0 0, 10 rounds after 2 warm-up rounds). Every result is saved as `~/.runeruin/bench/<name>.properties`, outside the checkout, so a task folder can compare with a result measured in another one.
+`terrain_bench` times `RRChunkGenerator.fillFromNoise` on 289 chunks (radius 8 around chunk 0 0, 40 rounds after 2 warm-up rounds); a run takes about a minute. Every result is saved as `~/.runeruin/bench/<name>.properties`, outside the checkout, so a task folder can compare with a result measured in another one.
+
+Benchmarks run only on the user's command. Other programs on the computer (the game, other agents' Gradle runs, a browser) skew the numbers, so the user closes them first. Never run `terrain_bench` on your own or as a check: prepare the checkouts, give the user the single-line commands and run them yourself only when the user says the computer is ready.
 
 Measure every speed-up as before / after, on the same machine with the same parameters:
 

@@ -59,7 +59,7 @@ public final class TerrainBenchmarkPreviewJob implements PreviewJob {
     @Override
     public PreviewJobs.Result run(PreviewArgs args, MinecraftServer server) throws IOException {
         int radius = args.getInt("radius", 8);
-        int rounds = args.getInt("rounds", 10);
+        int rounds = args.getInt("rounds", 40);
         int warmup = args.getInt("warmup", 2);
         if (radius < 0 || rounds < 1 || warmup < 0) {
             throw new IllegalArgumentException("terrain_bench needs radius >= 0, rounds >= 1, warmup >= 0");
