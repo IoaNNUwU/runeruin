@@ -11,6 +11,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderSet;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Blocks;
@@ -34,6 +35,11 @@ public final class GobletMossPreviewJob implements PreviewJob {
 
     @Override
     public PreviewJobs.Result run(PreviewArgs args) throws IOException {
+        throw new IOException("The goblet moss preview needs the server chunk generator");
+    }
+
+    @Override
+    public PreviewJobs.Result run(PreviewArgs args, MinecraftServer server) throws IOException {
         long seed = args.seed();
         PreviewWorld world = PreviewWorld.create(seed);
         world.fillBox(new BoundingBox(-6, 70, -6, 6, 74, 6), RRBlocks.GIANT_GOBLET_BUD.get().defaultBlockState());
@@ -56,7 +62,8 @@ public final class GobletMossPreviewJob implements PreviewJob {
                 UniformInt.of(4, 7),
                 0.3F
         );
-        PreviewJobs.placeFeature(new GobletMossPatchFeature(), config, new BlockPos(0, 75, 0), world, null);
+        PreviewJobs.placeFeature(new GobletMossPatchFeature(), config, new BlockPos(0, 75, 0), world,
+                server.overworld().getChunkSource().getGenerator());
 
         return PreviewJobs.export(world, PreviewJobs.paddedOccupied(world, 1), args.name("preview_goblet_moss"), args.exportDir(), List.of(
                 "job: " + id(),
