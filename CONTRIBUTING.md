@@ -8,8 +8,8 @@ The maintainer is [@IoaNNUwU](https://github.com/IoaNNUwU): they triage issues, 
 
 1. Pick an issue that is free to take, or open a new one. A small obvious fix can skip this step.
 2. Fork the repository and clone your fork.
-3. Make a branch, do the work, run the checks.
-4. Open a pull request into `main`, with `Fixes #<issue>` in its description if there is an issue.
+3. Make a branch and claim the issue at once: open a draft pull request into `main` with `Fixes #<issue>` in its description.
+4. Do the work, run the checks and mark the pull request ready for review.
 5. The maintainer reviews it and squash-merges it.
 
 ## Issues
@@ -34,7 +34,7 @@ What happens after `confirmed` or `accepted` is shown by the pull request, not b
 
 Labels live in [.github/labels.json](.github/labels.json), and a workflow applies them after every merge. If you need a new one, for example a `biome:` label, add it there in your pull request.
 
-**Free to take** are issues labelled [`confirmed` or `accepted` without a linked pull request](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3Aconfirmed%2Caccepted+-linked%3Apr). An issue with an open pull request is taken. If that pull request has had no commits or comments for two weeks, ask in it whether the work is abandoned, and take it over once its author or the maintainer agrees.
+**Free to take** are issues labelled [`confirmed` or `accepted` without a linked pull request](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3Aconfirmed%2Caccepted+-linked%3Apr), unless a comment in the issue says that someone is working on it. An issue with an open pull request is taken. If that pull request has had no commits or comments for two weeks, ask in it whether the work is abandoned, and take it over once its author or the maintainer agrees.
 
 ## Setting up
 
@@ -69,18 +69,22 @@ Branches are named `feature/<snake_case>` or `bug/<snake_case>`, for example `fe
 
 It creates the branch from your `main` in a separate folder (`..\RuneRuin-ice-biome`) with the Minecraft sources linked and data generated, so several tasks can live side by side. A plain `git switch -c feature/ice_biome` works too.
 
+Right after that, before any other work, claim the issue with a draft pull request into `main` of `IoaNNUwU/runeruin`: until it exists, nobody can see that the issue is taken, and someone else may start on it too. A pull request needs a commit, so start with an empty one:
+
+```powershell
+git commit --allow-empty -m "<issue title>"
+git push -u origin HEAD
+gh pr create --draft --title "<issue title>" --body "Fixes #<issue>"
+```
+
+If someone opened another pull request for the same issue at the same time, the later one gives way and is closed.
+
 Commit messages are short and in the imperative, without prefixes: `Add an ice biome to the lost caves`. Before asking for a review, run the checks from the "Done" list in [AGENTS.md](AGENTS.md) that apply to your change, and look at anything visual in the game (`gradlew runClient`).
 
 ## Pull requests
 
-Push your branch to your fork and open a pull request into `main` of `IoaNNUwU/runeruin`:
+Push your commits to the draft pull request as you go (`git push`). A change without an issue gets a draft pull request in the same way, just without the `Fixes` line.
 
-```powershell
-git push -u origin HEAD
-gh pr create --draft
-```
-
-- Open it as a **draft** early: it shows that the issue is taken.
 - The **title** reads like a commit subject, and the **description** follows the template: `Fixes #<issue>` (drop the line when there is no issue), what was done, how it was verified, what to check in the game and the decisions made along the way. The title and the description become the commit on `main`, so write them for someone reading the history a year from now.
 - Before marking it **ready for review**, merge the latest `main` (`git fetch upstream`, then `git merge upstream/main`), run the checks again and make sure CI is green.
 - If an AI agent did the work, review its changes and its decisions yourself before marking the pull request ready. By doing so you take responsibility for them, as for your own code.
@@ -90,9 +94,9 @@ When you are done, update your `main` again and remove the task folder with `.\s
 
 ## Working with an AI agent
 
-Agents read [AGENTS.md](AGENTS.md) and by default only work on your computer: they create a branch in a separate folder, commit, run the checks and report in the chat. They touch GitHub only when you ask them to, and then they follow this file:
+Agents read [AGENTS.md](AGENTS.md) and by default only work on your computer: they create a branch in a separate folder, commit, run the checks and report in the chat. They touch GitHub only when you ask them to (giving them an issue counts), and then they follow this file:
 
-- They may create issues and comment on them, push the task branch to `origin`, and open and edit draft pull requests. Right after the first commit they push it and open a draft pull request with `Fixes #<issue>`, so the issue shows as taken. Without an issue they work only on a change that needs no design proposal.
+- They may create issues and comment on them, push the task branch to `origin`, and open and edit draft pull requests. When you give them an issue, they first check that it is free and claim it with a draft pull request right after creating the branch, as described above. Without an issue they work only on a change that needs no design proposal.
 - A design proposal goes into the issue as a comment as well as into the chat, so the decision stays with the issue.
 - The final report goes into the chat first. Only after you approve it does it go into the pull request description, and only then is the pull request marked ready (`gh pr ready`).
 - They never push to `main`. They merge pull requests or close issues only when you allow it explicitly, in the chat or in your personal agent instructions, and only where your own GitHub rights allow it.

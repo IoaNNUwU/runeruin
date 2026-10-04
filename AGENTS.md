@@ -9,21 +9,31 @@ Commands below are for Windows PowerShell. On Linux/macOS run the `scripts/*.ps1
 Several agents work in this repository at once. Every change, documentation included, goes in its own task branch and worktree; never edit files in the shared main checkout.
 
 1. Run `git branch --show-current` and `git status --short --branch`.
-2. Create the task worktree: `feature` or `bug`, a short snake_case name from the request, no `add_` prefix.
+2. A task from a GitHub issue starts only if the issue is free: `gh issue view <n> --json closedByPullRequestsReferences,comments` shows no open pull request and no comment saying that someone is working on it. If it is taken, stop and tell the user.
+3. Create the task worktree: `feature` or `bug`, a short snake_case name from the request, no `add_` prefix.
 
    ```powershell
    .\scripts\start-task.ps1 feature giant_goblet
    ```
 
    It creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from the local `main`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option).
-3. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
-4. Follow-ups after a commit stay in the same branch and worktree. Start a new branch only for an unrelated feature or bug.
-5. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
-6. Remove a worktree only when the user asks, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` and `gh pr merge --delete-branch` delete the shared sources cache through the junction, and it keeps the branch unless its commits are pushed or in `main`.
+4. Claim the issue at once, before any other work: other agents see that it is taken only by its draft pull request. A pull request needs a commit, so start with an empty one:
+
+   ```powershell
+   git commit --allow-empty -m "<issue title>"
+   git push -u origin HEAD
+   gh pr create --draft --title "<issue title>" --body "Fixes #<n>"
+   ```
+
+   Then repeat the check from step 2: if another open pull request links the issue too, the one with the higher number gives way, so close yours (`gh pr close`) and tell the user. If you cannot claim the issue, tell the user before going on.
+5. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
+6. Follow-ups after a commit stay in the same branch and worktree. Start a new branch only for an unrelated feature or bug.
+7. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
+8. Remove a worktree only when the user asks, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` and `gh pr merge --delete-branch` delete the shared sources cache through the junction, and it keeps the branch unless its commits are pushed or in `main`.
 
 `main` changes only through pull requests on GitHub: never commit on it, merge into it or push to it. Git hooks in `.githooks` (enabled by the setup script) reject commits on `main`, pushes to `main`, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
 
-Work with GitHub, in this repository or in the user's fork (issues, pushing, pull requests), only when the user asks for it, in the chat or in their personal agent instructions; then follow [CONTRIBUTING.md](CONTRIBUTING.md), and for a maintainer also [MAINTAINING.md](MAINTAINING.md).
+Work with GitHub, in this repository or in the user's fork (issues, pushing, pull requests), only when the user asks for it, in the chat or in their personal agent instructions (a task from an issue is such a request); then follow [CONTRIBUTING.md](CONTRIBUTING.md), and for a maintainer also [MAINTAINING.md](MAINTAINING.md).
 
 ## Questions, designs, reports
 
