@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.WorldGenLevel;
@@ -208,7 +209,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     ) {
         BlockState moss = config.groundState().getState(level, random, ceiling.iterator().next());
         List<BlockPos> candidates = new ArrayList<>(ceiling);
-        shuffle(candidates, random);
+        Util.shuffle(candidates, random);
 
         int targetStrands = Math.min(candidates.size(), STRAND_COUNT.sample(random));
         int placed = 0;
@@ -320,14 +321,5 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     private static boolean canHangFrom(WorldGenLevel level, BlockPos pos, BlockState moss, Predicate<BlockState> replaceable) {
         BlockState above = level.getBlockState(pos.above());
         return above.is(moss.getBlock()) || replaceable.test(above);
-    }
-
-    private static void shuffle(List<BlockPos> list, RandomSource random) {
-        for (int i = list.size() - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
-            BlockPos tmp = list.get(i);
-            list.set(i, list.get(j));
-            list.set(j, tmp);
-        }
     }
 }
