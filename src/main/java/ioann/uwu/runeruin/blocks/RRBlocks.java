@@ -5,6 +5,7 @@ import ioann.uwu.runeruin.dimension.RRConfiguredFeatures;
 import ioann.uwu.runeruin.dimension.RRTags;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.items.FloatingMossItem;
+import ioann.uwu.runeruin.particles.RRParticleTypes;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -152,7 +153,7 @@ public class RRBlocks {
 
     public static final DeferredBlock<Block> ELDEN_LEAVES = register("elden_leaves",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_LEAVES).mapColor(MapColor.COLOR_YELLOW),
-            p -> new UntintedParticleLeavesBlock(0.1f, ParticleTypes.CLOUD, p) // TODO: ParticleType
+            p -> new UntintedParticleLeavesBlock(0.1f, RRParticleTypes.ELDEN_LEAVES.get(), p)
     );
 
     public static final DeferredBlock<Block> ELDEN_LEAF_LITTER = register("elden_leaf_litter",
