@@ -11,6 +11,7 @@ import ioann.uwu.runeruin.datagen.models.LilyPadModels;
 import ioann.uwu.runeruin.datagen.models.MossberryBushModels;
 import ioann.uwu.runeruin.datagen.models.PortalModels;
 import ioann.uwu.runeruin.datagen.models.TreeModels;
+import ioann.uwu.runeruin.datagen.models.VoidModels;
 import ioann.uwu.runeruin.items.RRItems;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
@@ -89,6 +90,7 @@ public class DatagenModelProvider extends ModelProvider {
         LilyPadModels.createBigLilyPad(blockModels);
         LilyPadModels.createWaterLily(blockModels);
         createDeepRoots(blockModels);
+        VoidModels.createVoid(blockModels);
 
         PortalModels.createRuneRuinPortal(blockModels);
         createWispberry(blockModels, itemModels);

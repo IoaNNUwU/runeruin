@@ -55,6 +55,12 @@ public class RRCreativeModeTabs {
                     RRBlocks.WATER_LILY_LEAF.toStack(),
                     RRBlocks.WATER_LILY_FLOWER.toStack(),
 
+                    RRBlocks.VOID_STONE.toStack(),
+                    RRBlocks.BEAD_VINE.toStack(),
+                    RRBlocks.DUST_BLOOM.toStack(),
+                    RRBlocks.HANGING_CHORUS_PLANT.toStack(),
+                    RRBlocks.HANGING_CHORUS_FLOWER.toStack(),
+
                     RRBlocks.ELDEN_SAPLING.toStack(),
                     RRBlocks.ELDEN_LOG.toStack(),
                     RRBlocks.ELDEN_WOOD.toStack(),

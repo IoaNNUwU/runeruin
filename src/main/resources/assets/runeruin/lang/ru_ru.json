@@ -37,6 +37,12 @@
   "block.runeruin.water_lily_leaf": "Лист водяной лилии",
   "block.runeruin.water_lily_flower": "Цветок водяной лилии",
 
+  "block.runeruin.void_stone": "Камень пустоты",
+  "block.runeruin.bead_vine": "Бусинная лоза",
+  "block.runeruin.dust_bloom": "Пыльник",
+  "block.runeruin.hanging_chorus_plant": "Висячий хорус",
+  "block.runeruin.hanging_chorus_flower": "Цветок висячего хоруса",
+
   "block.runeruin.elden_sapling": "Саженец элдена",
   "block.runeruin.potted_elden_sapling": "Саженец элдена в горшке",
   "block.runeruin.elden_log": "Элденовое бревно",
@@ -97,6 +103,7 @@
   "biome.runeruin.deepslate_spike_caves": "Пещеры с deepslate-шипами",
   "biome.runeruin.sparkling_caves_ceiling": "Потолок искрящихся пещер",
   "biome.runeruin.sparkling_caves": "Искрящиеся пещеры",
+  "biome.runeruin.void": "Пустота",
 
   "dimension.runeruin.runeruin_dimension": "Rune Ruin",
   "structure.runeruin.giant_goblet": "Гигантский кубок",

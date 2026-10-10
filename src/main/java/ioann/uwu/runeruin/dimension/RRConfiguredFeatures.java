@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.BeadVineBlock;
 import ioann.uwu.runeruin.blocks.GlowingMossBlock;
 import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
@@ -16,6 +17,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.util.valueproviders.*;
+import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVines;
@@ -83,6 +85,11 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> WATER_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "water_lily");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "swamp_jungle_trees");
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> HANGING_CHORUS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "hanging_chorus");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> VOID_AMETHYST = RR.resourceKey(Registries.CONFIGURED_FEATURE, "void_amethyst");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DUST_BLOOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dust_bloom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> BEAD_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "bead_vine");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -456,6 +463,46 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(WATER_LILY, new ConfiguredFeature<>(RRFeatures.WATER_LILY.get(), NoneFeatureConfiguration.INSTANCE));
+
+        ctx.register(HANGING_CHORUS, new ConfiguredFeature<>(RRFeatures.HANGING_CHORUS.get(), NoneFeatureConfiguration.INSTANCE));
+
+        // Amethyst of every size, pointing down from the ceiling it grows on.
+        ctx.register(VOID_AMETHYST, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(
+                        new WeightedStateProvider(
+                                WeightedList.<BlockState>builder()
+                                        .add(Blocks.AMETHYST_CLUSTER.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.DOWN), 3)
+                                        .add(Blocks.LARGE_AMETHYST_BUD.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.DOWN), 2)
+                                        .add(Blocks.MEDIUM_AMETHYST_BUD.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.DOWN), 2)
+                                        .add(Blocks.SMALL_AMETHYST_BUD.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.DOWN), 1)
+                        )
+                )
+        ));
+
+        ctx.register(DUST_BLOOM, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DUST_BLOOM.get()))
+        ));
+
+        // Every block draws its own lot, as a growing vine does: half of them glow.
+        BlockState beadVine = RRBlocks.BEAD_VINE.get().defaultBlockState();
+        ctx.register(BEAD_VINE, new ConfiguredFeature<>(
+                Feature.BLOCK_COLUMN,
+                new BlockColumnConfiguration(
+                        List.of(BlockColumnConfiguration.layer(
+                                BiasedToBottomInt.of(1, 8),
+                                new WeightedStateProvider(
+                                        WeightedList.<BlockState>builder()
+                                                .add(beadVine, 1)
+                                                .add(beadVine.setValue(BeadVineBlock.GLOWING, true), 1)
+                                )
+                        )),
+                        Direction.DOWN,
+                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                        false
+                )
+        ));
     }
 
     private static WallMushroomFeature.Config ashenMushroomConfig(int minimumDiameter, int maximumDiameter) {
