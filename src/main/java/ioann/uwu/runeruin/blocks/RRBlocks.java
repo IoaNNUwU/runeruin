@@ -161,9 +161,9 @@ public class RRBlocks {
             EldenLeafLitterBlock::new
     );
 
-    /** Green counterpart of the pink petals. */
+    /** A flat patch of clover, lying on the ground like the pink petals. */
     public static final DeferredBlock<Block> CLOVER = register("clover",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PINK_PETALS).mapColor(MapColor.PLANT),
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PINK_PETALS),
             CloverBlock::new
     );
 

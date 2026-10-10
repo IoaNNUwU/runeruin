@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.datagen;
 import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.datagen.models.CloverModels;
 import ioann.uwu.runeruin.datagen.models.FireflyJarModels;
 import ioann.uwu.runeruin.datagen.models.FloatingMossModels;
 import ioann.uwu.runeruin.datagen.models.LilyPadModels;
@@ -57,7 +58,7 @@ public class DatagenModelProvider extends ModelProvider {
         TreeModels.createBaobab(blockModels);
         TreeModels.createInvertedTree(blockModels);
 
-        blockModels.createFlowerBed(RRBlocks.CLOVER.get());
+        CloverModels.createClover(blockModels);
 
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
         blockModels.createTrivialBlock(
