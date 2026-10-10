@@ -1,7 +1,6 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
@@ -24,9 +23,9 @@ public class DeepCavesAndLostCavesGen {
             DeepCavesAndLostCavesGen::deepCavesFloorColumnAt,
             LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_OFFSET,
             new HangingTerrainGenerator.Supports(
-                    state -> state.is(Blocks.STONE) || isMoss(state),
-                    DeepCavesAndLostCavesGen::isMoss,
-                    DeepCavesAndLostCavesGen::isMoss,
+                    state -> state.is(Blocks.STONE) || state.is(BlockTags.MOSS_BLOCKS),
+                    state -> state.is(BlockTags.MOSS_BLOCKS),
+                    state -> state.is(BlockTags.MOSS_BLOCKS),
                     state -> state.is(BlockTags.BASE_STONE_OVERWORLD)
             ),
             new HangingTerrainGenerator.Materials(
@@ -162,10 +161,6 @@ public class DeepCavesAndLostCavesGen {
                 + TOP_LAYER_OFFSET - ARCANE_PLATE_HEIGHT;
         int topY = (int) (baseline + biomeHeight);
         return new HangingTerrainGenerator.TerrainColumn(true, baseline, topY);
-    }
-
-    private static boolean isMoss(BlockState state) {
-        return state.is(Blocks.MOSS_BLOCK) || state.is(RRBlocks.GLOWING_MOSS.get());
     }
 
     private static BlockState mossAt(ChunkAccess chunk, BlockPos start, RandomState randomState) {
