@@ -73,9 +73,9 @@ public final class MossLayerModels {
         rotation.addProperty("x", plant.tilt());
         rotation.addProperty("y", Math.round(Math.toDegrees(Math.atan2(plant.x() - 8, plant.z() - 8))));
         JsonArray elements = new JsonArray();
-        elements.add(element(center, half, half, half, rotation, tile(plant.size(), false), "down", "up", "north", "south", "west", "east"));
-        elements.add(element(center, rim, rim, 0, rotation, tile(plant.size(), true), "north", "south"));
-        elements.add(element(center, 0, rim, rim, rotation, tile(plant.size(), true), "west", "east"));
+        elements.add(element(center, half, half, half, rotation, tile(plant.size(), false, false), "down", "up", "north", "south", "west", "east"));
+        elements.add(spikePlane(center, rim, rim, 0, rotation, plant.size(), "north", "south"));
+        elements.add(spikePlane(center, 0, rim, rim, rotation, plant.size(), "west", "east"));
         JsonObject model = new JsonObject();
         // No smooth lighting: it is meant for block faces, not for cubes this small and tilted.
         model.addProperty("ambientocclusion", false);
@@ -101,16 +101,24 @@ public final class MossLayerModels {
         return element;
     }
 
+    /** A plane seen from both sides. Its back face mirrors the tile: unmirrored, it would show the spikes in other places than the front. */
+    private static JsonObject spikePlane(double[] center, double x, double y, double z, JsonObject rotation,
+                                         int size, String front, String back) {
+        JsonObject plane = element(center, x, y, z, rotation, tile(size, true, false), front);
+        plane.getAsJsonObject("faces").add(back, tile(size, true, true));
+        return plane;
+    }
+
     /**
      * moss_hedgehog.png, per cube size a row of two tiles: the cube face at u 0, as wide as the cube, and the
      * spike plane at u 4, two pixels wider. The rows start at v 0 (4x4), 6 (3x3) and 11 (2x2).
      */
-    private static JsonObject tile(int size, boolean spikes) {
+    private static JsonObject tile(int size, boolean spikes, boolean mirrored) {
         int u = spikes ? 4 : 0;
         int v = size == 4 ? 0 : size == 3 ? 6 : 11;
         int width = spikes ? size + 2 : size;
         JsonObject face = new JsonObject();
-        face.add("uv", vector(u, v, u + width, v + width));
+        face.add("uv", mirrored ? vector(u + width, v, u, v + width) : vector(u, v, u + width, v + width));
         face.addProperty("texture", "#plant");
         return face;
     }
