@@ -112,6 +112,15 @@ public class RuneRuinClient {
     }
 
     @SubscribeEvent
+    static void registerCloverTintSources(RegisterColorHandlersEvent.BlockTintSources event) {
+        // Like the pink petals: the petals are untinted, only the grey stem takes the grass color.
+        event.register(
+                List.of(BlockTintSources.constant(-1), BlockTintSources.grass()),
+                RRBlocks.CLOVER.get()
+        );
+    }
+
+    @SubscribeEvent
     static void addWaterLilyStems(ModelEvent.ModifyBakingResult event) {
         var sprite = event.getTextureGetter().apply(WaterLilyStemTexture.SPRITE);
         for (var state : RRBlocks.WATER_LILY_ROOT.get().getStateDefinition().getPossibleStates()) {

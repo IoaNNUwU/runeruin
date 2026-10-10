@@ -57,6 +57,8 @@ public class DatagenModelProvider extends ModelProvider {
         TreeModels.createBaobab(blockModels);
         TreeModels.createInvertedTree(blockModels);
 
+        blockModels.createFlowerBed(RRBlocks.CLOVER.get());
+
         blockModels.createTrivialCube(RRBlocks.MOSS_LIGHT.get());
         blockModels.createTrivialBlock(
                 RRBlocks.POWDERED_MOSS.get(),

@@ -161,6 +161,12 @@ public class RRBlocks {
             EldenLeafLitterBlock::new
     );
 
+    /** Green counterpart of the pink petals. */
+    public static final DeferredBlock<Block> CLOVER = register("clover",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PINK_PETALS).mapColor(MapColor.PLANT),
+            CloverBlock::new
+    );
+
     public static final DeferredBlock<Block> ELDEN_VINES = register("elden_vines",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CAVE_VINES_PLANT)
                     .mapColor(MapColor.COLOR_BROWN)
