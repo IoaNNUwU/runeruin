@@ -21,7 +21,7 @@ public final class CloverModels {
      * The texture is the whole patch seen from above.
      */
     private static final int[][][] SEGMENTS = {
-            {{0, 0, 4, 2}, {4, 4, 4, 3}, {5, 0, 3, 1}},
+            {{0, 0, 4, 2}, {4, 4, 4, 3}, {5, 0, 3, 1}, {0, 5, 3, 1}},
             {{0, 9, 7, 2}},
             {{12, 8, 4, 3}, {8, 12, 4, 2}, {8, 8, 3, 1}, {13, 13, 3, 1}},
             {{9, 0, 7, 3}},
