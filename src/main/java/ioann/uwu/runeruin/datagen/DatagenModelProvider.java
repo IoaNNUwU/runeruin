@@ -12,12 +12,12 @@ import ioann.uwu.runeruin.datagen.models.MossberryBushModels;
 import ioann.uwu.runeruin.datagen.models.PortalModels;
 import ioann.uwu.runeruin.datagen.models.TreeModels;
 import ioann.uwu.runeruin.datagen.models.VoidModels;
+import ioann.uwu.runeruin.datagen.models.WispberryBushModels;
 import ioann.uwu.runeruin.items.RRItems;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
-import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TextureSlot;
@@ -25,7 +25,6 @@ import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -44,7 +43,9 @@ public class DatagenModelProvider extends ModelProvider {
         // --- Items ---
         itemModels.generateFlatItem(RRItems.RUNE_OF_SPACE.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.SNAIL_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(RRItems.WISPBERRY.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.MOSSBERRY.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(RRItems.POWDERED_MOSS_BUCKET.get(), ModelTemplates.FLAT_ITEM);
 
         // --- Blocks ---
         blockModels.createTrivialCube(RRBlocks.ARCANE_STONE.get());
@@ -95,7 +96,7 @@ public class DatagenModelProvider extends ModelProvider {
         VoidModels.createVoid(blockModels);
 
         PortalModels.createRuneRuinPortal(blockModels);
-        createWispberry(blockModels, itemModels);
+        WispberryBushModels.createWispberryBush(blockModels);
     }
 
     private static void createAshenMushroomBlock(@NonNull BlockModelGenerators blockModels) {
@@ -144,24 +145,5 @@ public class DatagenModelProvider extends ModelProvider {
                 deepRoots,
                 BlockModelGenerators.createRotatedVariants(BlockModelGenerators.plainModel(deepRootsModel))
         ));
-    }
-
-    private static void createWispberry(@NonNull BlockModelGenerators blockModels, @NonNull ItemModelGenerators itemModels) {
-        itemModels.generateFlatItem(RRItems.WISPBERRY.get(), ModelTemplates.FLAT_ITEM);
-        itemModels.generateFlatItem(RRItems.POWDERED_MOSS_BUCKET.get(), ModelTemplates.FLAT_ITEM);
-
-        blockModels.blockStateOutput.accept(
-                MultiVariantGenerator.dispatch(RRBlocks.WISPBERRY_BUSH.get())
-                        .with(PropertyDispatch.initial(BlockStateProperties.AGE_3)
-                                .generate(age -> BlockModelGenerators.plainVariant(
-                                        blockModels.createSuffixedVariant(
-                                                RRBlocks.WISPBERRY_BUSH.get(),
-                                                "_stage" + age,
-                                                ModelTemplates.CROSS,
-                                                TextureMapping::cross
-                                        )
-                                ))
-                        )
-        );
     }
 }
