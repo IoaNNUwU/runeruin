@@ -82,9 +82,9 @@ The `feature` job places a configured feature from the registry on a prepared su
 | `water` | ground y 53–56, water 57–63 | air above the water |
 | `underwater` | the same pool | water above the pool floor |
 | `wall` | ground x 1–4, y 48–80 | the wall block 1 64 0 (`offset=0`), as wall placements expect |
-| `cave` | floor y 53–56, ceiling y 72–75 | air at 0 64 0, for spikes that scan both ways |
+| `cave` | floor y 32–35, ceiling y 93–96 | air at 0 64 0, for spikes that scan both ways |
 
-`offset` shifts the origin from the surface block, like the scan of a placed feature: features rooted in the ceiling block itself (`inverted_tree`, `long_ceiling_block_vine`) need `offset=0`. `ground` defaults to stone. The GameTest `feature_placement` runs every configured feature without a job of its own this way (the table in `RRGameTests.featurePlacement`); add a row for a new feature that has no preview job.
+`offset` shifts the origin from the surface block, like the scan of a placed feature: features rooted in the ceiling block itself (`inverted_tree`, `long_ceiling_block_vine`) need `offset=0`. `ground` defaults to stone. `x` and `z` (0–15) move the origin and its surface away from the chunk corner: giant spikes are wider in the middle of a chunk (`'-Parg.x=8' '-Parg.z=8'`). The GameTests `feature_placement` and `feature_reach` run every configured feature this way (the table in `RRGameTests.featureCases`); add a row for every new configured feature, `feature_reach` fails without it.
 
 In game: `/rrpreview list`, `/rrpreview <job> [seed] [key=value | name]…`. The client writes `/rrpreview` and `/rrexport` output to `~/.runeruin/game/runeruin-exports/`, not `exports/`; `render_preview.py` draws those files too.
 
