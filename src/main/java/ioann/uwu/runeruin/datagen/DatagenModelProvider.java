@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.datagen.models.FireflyJarModels;
 import ioann.uwu.runeruin.datagen.models.FloatingMossModels;
 import ioann.uwu.runeruin.datagen.models.LilyPadModels;
+import ioann.uwu.runeruin.datagen.models.MossLayerModels;
 import ioann.uwu.runeruin.datagen.models.PortalModels;
 import ioann.uwu.runeruin.datagen.models.TreeModels;
 import ioann.uwu.runeruin.items.RRItems;
@@ -66,6 +67,7 @@ public class DatagenModelProvider extends ModelProvider {
                 )
         );
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
+        MossLayerModels.createMossLayer(blockModels);
         FloatingMossModels.createFloatingMoss(blockModels);
         blockModels.createTrivialBlock(
                 RRBlocks.GLOWING_MUSHROOM_CAP.get(),

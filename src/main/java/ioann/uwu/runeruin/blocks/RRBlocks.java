@@ -292,6 +292,12 @@ public class RRBlocks {
     public static final DeferredBlock<Block> GLOWING_MOSS = registerGlowingMoss("glowing_moss", MapColor.COLOR_CYAN);
     public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = registerGlowingMossCarpet("glowing_moss_carpet", MapColor.COLOR_CYAN);
 
+    public static final DeferredBlock<Block> MOSS_LAYER = register("moss_layer",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_CARPET)
+                    .forceSolidOff()
+                    .isViewBlocking((state, _, _) -> state.getValue(MossLayerBlock.LAYERS) >= MossLayerBlock.MAX_HEIGHT),
+            MossLayerBlock::new);
+
     public static final DeferredBlock<Block> FLOATING_MOSS = registerInWater("floating_moss",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)
                     .noOcclusion(),

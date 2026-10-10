@@ -20,6 +20,10 @@ public class DatagenDataMapProvider extends DataMapProvider {
                 RRBlocks.ELDEN_LEAF_LITTER.get().asItem().builtInRegistryHolder(),
                 new Compostable(0.3F),
                 false
+        ).add(
+                RRBlocks.MOSS_LAYER.get().asItem().builtInRegistryHolder(),
+                new Compostable(0.3F),
+                false
         );
     }
 }

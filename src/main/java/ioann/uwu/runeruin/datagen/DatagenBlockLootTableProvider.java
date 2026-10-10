@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
+import ioann.uwu.runeruin.blocks.MossLayerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
 import net.minecraft.advancements.predicates.StatePropertiesPredicate;
@@ -20,6 +21,7 @@ import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.providers.number.BinomialDistributionGenerator;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import org.jspecify.annotations.NonNull;
 
@@ -95,6 +97,7 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.FIREFLY_IN_A_JAR.get());
         dropSelf(RRBlocks.GLOWING_MOSS.get());
         dropSelf(RRBlocks.GLOWING_MOSS_CARPET.get());
+        add(RRBlocks.MOSS_LAYER.get(), this::createMossLayerDrop);
         dropSelf(RRBlocks.FLOATING_MOSS.get());
         add(RRBlocks.GLOWING_MUSHROOM_CAP.get(), this::createGlowingMushroomBlockDrop);
         add(RRBlocks.GLOWING_MUSHROOM_STEM.get(), this::createGlowingMushroomBlockDrop);
@@ -126,6 +129,24 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
                         )
                 )
         );
+    }
+
+    /** One item per layer. */
+    private LootTable.Builder createMossLayerDrop(Block block) {
+        return LootTable.lootTable().withPool(LootPool.lootPool().add(
+                (LootPoolEntryContainer.Builder<?>) applyExplosionDecay(
+                        block,
+                        LootItem.lootTableItem(block).apply(
+                                MossLayerBlock.LAYERS.getPossibleValues(),
+                                layers -> SetItemCountFunction.setCount(ConstantValue.exactly(layers))
+                                        .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
+                                                .setProperties(StatePropertiesPredicate.Builder.properties()
+                                                        .hasProperty(MossLayerBlock.LAYERS, layers)
+                                                )
+                                        )
+                        )
+                )
+        ));
     }
 
     private void createMossBerry() {

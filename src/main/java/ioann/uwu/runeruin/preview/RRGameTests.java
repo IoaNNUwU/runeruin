@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
+import ioann.uwu.runeruin.blocks.MossLayerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
@@ -73,6 +74,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("ashen_mushroom_large_radii", () -> RRGameTests::ashenMushroomLargeRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_BONEMEAL =
         TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSS_LAYER_BONEMEAL =
+        TEST_FUNCTIONS.register("moss_layer_bonemeal", () -> RRGameTests::mossLayerBonemeal);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
         TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_FEATURE_ORDER =
@@ -99,6 +102,7 @@ public final class RRGameTests {
             new FeatureCase("ashen_wall_mushroom_cluster", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("ashen_wall_mushroom_cluster_upper", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("powdered_moss", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("moss_hummock", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
             new FeatureCase("stone_lily", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("deep_roots_grass", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("goblet_deep_roots", Surface.FLOOR, RRBlocks.GIANT_GOBLET_BUD.get(), 1),
@@ -209,6 +213,13 @@ public final class RRGameTests {
             RR.id("glowing_mushroom_bonemeal"),
             new FunctionGameTestInstance(
                 GLOWING_MUSHROOM_BONEMEAL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("moss_layer_bonemeal"),
+            new FunctionGameTestInstance(
+                MOSS_LAYER_BONEMEAL.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -478,6 +489,33 @@ public final class RRGameTests {
             }
         }
         helper.assertTrue(grew, "bonemeal did not grow a glowing mushroom");
+        helper.succeed();
+    }
+
+    // Bone meal adds one or two plants to the block and at most one to each moss layer around it, up to the limit.
+    private static void mossLayerBonemeal(GameTestHelper helper) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
+        var level = helper.getLevel();
+        var moss = (MossLayerBlock) RRBlocks.MOSS_LAYER.get();
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(pos, moss.defaultBlockState());
+        }
+        var state = moss.defaultBlockState().setValue(MossLayerBlock.PLANTS, MossLayerBlock.MAX_PLANTS - 1);
+        level.setBlockAndUpdate(base, state);
+        helper.assertTrue(moss.isValidBonemealTarget(level, base, state), "moss layer rejected bonemeal");
+        moss.performBonemeal(level, RandomSource.create(42), base, state);
+
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            var grown = level.getBlockState(pos);
+            helper.assertTrue(grown.is(moss), "bonemeal replaced a moss layer with " + grown);
+            int plants = grown.getValue(MossLayerBlock.PLANTS);
+            if (pos.equals(base)) {
+                helper.assertTrue(plants == MossLayerBlock.MAX_PLANTS, "bonemeal left " + plants + " plants on its block");
+            } else {
+                helper.assertTrue(plants <= 1, "bonemeal grew " + plants + " plants on a neighbour");
+            }
+        }
         helper.succeed();
     }
 
