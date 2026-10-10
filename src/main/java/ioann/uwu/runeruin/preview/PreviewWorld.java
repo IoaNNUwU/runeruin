@@ -27,10 +27,12 @@ public final class PreviewWorld {
     public static final int HEIGHT = 512;
 
     private final Map<Long, BlockState> blocks = new HashMap<>();
+    private final Map<Long, BlockState> prepared = new HashMap<>();
     private final long seed;
     private final RandomSource random;
     private final WorldGenLevel view;
     private final @Nullable ServerLevel server;
+    private @Nullable BoundingBox written;
 
     private PreviewWorld(long seed, @Nullable ServerLevel server) {
         this.seed = seed;
@@ -77,6 +79,20 @@ public final class PreviewWorld {
         }
     }
 
+    /**
+     * The box around every block written through {@link #asLevel()}, also where the state stayed the same;
+     * null before the first write. Blocks prepared with {@link #set} and {@link #fillBox} do not count.
+     */
+    public @Nullable BoundingBox writtenBox() {
+        return written;
+    }
+
+    private void write(BlockPos pos, BlockState state) {
+        BoundingBox box = new BoundingBox(pos);
+        written = written == null ? box : BoundingBox.encapsulating(written, box);
+        set(pos, state);
+    }
+
     public int placedCount() {
         return blocks.size();
     }
@@ -105,25 +121,52 @@ public final class PreviewWorld {
     }
 
     public RegionExport.Snapshot capture(String dimension, BoundingBox box) {
-        return RegionExport.capture(dimension, box, seed, this::get);
+        return RegionExport.capture(dimension, box, seed, this::get, this::isPrepared);
     }
 
+    /**
+     * Fills what a job prepares for its subject: ground, ceiling, pool. The export marks these blocks,
+     * so the renderer can fade or hide them whatever they are made of.
+     */
     public void fillBox(BoundingBox box, BlockState state) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int y = box.minY(); y <= box.maxY(); y++) {
             for (int z = box.minZ(); z <= box.maxZ(); z++) {
                 for (int x = box.minX(); x <= box.maxX(); x++) {
                     set(cursor.set(x, y, z), state);
+                    prepared.put(cursor.asLong(), state);
                 }
             }
         }
+    }
+
+    /** True while the block that {@link #fillBox} put here is still in place. */
+    public boolean isPrepared(BlockPos pos) {
+        BlockState state = prepared.get(pos.asLong());
+        return state != null && state == blocks.get(pos.asLong());
+    }
+
+    /** How many blocks differ from what {@link #fillBox} prepared: the size of the subject. */
+    public int changedCount() {
+        int changed = 0;
+        for (Map.Entry<Long, BlockState> entry : blocks.entrySet()) {
+            if (prepared.get(entry.getKey()) != entry.getValue()) {
+                changed++;
+            }
+        }
+        for (Long key : prepared.keySet()) {
+            if (!blocks.containsKey(key)) {
+                changed++;
+            }
+        }
+        return changed;
     }
 
     @SuppressWarnings("unchecked")
     private Object invoke(Object proxy, Method method, Object @Nullable [] args) throws Throwable {
         return switch (method.getName()) {
             case "setBlock" -> {
-                set((BlockPos) args[0], (BlockState) args[1]);
+                write((BlockPos) args[0], (BlockState) args[1]);
                 yield true;
             }
             case "getBlockState" -> get((BlockPos) args[0]);
@@ -132,7 +175,7 @@ public final class PreviewWorld {
             case "isFluidAtPosition" -> ((Predicate<FluidState>) args[1]).test(get((BlockPos) args[0]).getFluidState());
             case "getRawBrightness" -> 0;
             case "removeBlock", "destroyBlock" -> {
-                set((BlockPos) args[0], Blocks.AIR.defaultBlockState());
+                write((BlockPos) args[0], Blocks.AIR.defaultBlockState());
                 yield true;
             }
             case "scheduleTick" -> null;

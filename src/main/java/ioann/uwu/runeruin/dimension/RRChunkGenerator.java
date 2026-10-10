@@ -176,11 +176,17 @@ public class RRChunkGenerator extends ChunkGenerator {
         return 0;
     }
 
-    private static final LazyNoise baseTopLevelNoise = new LazyNoise("baseTopLevelNoise", seed -> Noise.multi(
+    // Islands too small for an arcane column to stand under them would float, so they are not generated.
+    // The deep caves floor has no columns but takes the same size limit.
+    private static Noise withoutSmallIslands(Noise base) {
+        return new SupportedIslandsNoise(base, ArcaneStructureGen::doGenerateColumn);
+    }
+
+    private static final LazyNoise baseTopLevelNoise = new LazyNoise("baseTopLevelNoise", seed -> withoutSmallIslands(Noise.multi(
             new SingleNoise(Noise.hashString("bigNoise1" + seed), 0.5f),
             new SingleNoise(Noise.hashString("bigNoise2" + seed), 0.4f),
             new SingleNoise(Noise.hashString("bigNoise3" + seed), 0.3f)
-    ));
+    )));
 
     public static final LazyNoise flattenedBaseTopLevelNoise = LazyNoise.chain(
             "flattenedBaseTopLevelNoise",
@@ -204,11 +210,11 @@ public class RRChunkGenerator extends ChunkGenerator {
             )
     );
 
-    private static final LazyNoise baseLostTopLevelNoise = new LazyNoise("baseLostTopLevelNoise", seed -> Noise.multi(
+    private static final LazyNoise baseLostTopLevelNoise = new LazyNoise("baseLostTopLevelNoise", seed -> withoutSmallIslands(Noise.multi(
             new SingleNoise(Noise.hashString("bigLostNoise1" + seed), 0.5f),
             new SingleNoise(Noise.hashString("bigLostNoise2" + seed), 0.4f),
             new SingleNoise(Noise.hashString("bigLostNoise3" + seed), 0.3f)
-    ));
+    )));
 
     public static final LazyNoise flattenedLostBaseTopLevelNoise = LazyNoise.chain(
             "flattenedLostBaseTopLevelNoise",

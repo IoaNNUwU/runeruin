@@ -5,7 +5,6 @@ import ioann.uwu.runeruin.preview.PreviewJob;
 import ioann.uwu.runeruin.preview.PreviewJobs;
 import ioann.uwu.runeruin.preview.PreviewWorld;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
@@ -21,7 +20,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Any configured feature by id, placed on a prepared surface. Like a placed feature's scan, the origin is
- * the surface block shifted by {@code offset}. Fails when the feature changes no block.
+ * the surface block shifted by {@code offset}. {@code x} and {@code z} move the origin with its surface
+ * away from the chunk corner. Fails when the feature changes no block.
  */
 public final class FeaturePreviewJob implements PreviewJob {
 
@@ -37,7 +37,7 @@ public final class FeaturePreviewJob implements PreviewJob {
         UNDERWATER(1),
         /** Wall at x 1-4; the default origin is the wall block at 1 64 0, as wall placements expect. */
         WALL(0),
-        /** Floor at y 53-56 and ceiling at y 72-75; the default origin is the air at 0 64 0. */
+        /** Floor at y 32-35 and ceiling at y 93-96, high enough for the widest spikes; the default origin is the air at 0 64 0. */
         CAVE(0);
 
         private final int defaultOffset;
@@ -62,7 +62,7 @@ public final class FeaturePreviewJob implements PreviewJob {
     @Override
     public String description() {
         return "Any configured feature. params: id=<namespace:path>, surface=floor|ceiling|water|underwater|wall|cave, "
-            + "ground=<block id>, offset=<dy from the surface block>, radius";
+            + "ground=<block id>, offset=<dy from the surface block>, radius, x, z=<origin in its chunk>";
     }
 
     @Override
@@ -81,7 +81,8 @@ public final class FeaturePreviewJob implements PreviewJob {
         int offset = args.getInt("offset", surface.defaultOffset());
         int radius = args.getInt("radius", 16);
         Placement placement = place(server, Identifier.parse(id), surface,
-            BuiltInRegistries.BLOCK.getValue(Identifier.parse(ground)).defaultBlockState(), offset, args.seed(), radius);
+            BuiltInRegistries.BLOCK.getValue(Identifier.parse(ground)).defaultBlockState(), offset, args.seed(), radius,
+            args.getInt("x", 0), args.getInt("z", 0));
         if (placement.changedBlocks() == 0) {
             throw new IOException(id + " changed no block on " + surface + " of " + ground + " at offset " + offset
                 + "; try another surface=, ground= or offset=");
@@ -100,7 +101,7 @@ public final class FeaturePreviewJob implements PreviewJob {
     }
 
     public static Placement place(MinecraftServer server, Identifier id, Surface surface, BlockState ground,
-                                  int offset, long seed, int radius) {
+                                  int offset, long seed, int radius, int x, int z) {
         ConfiguredFeature<?, ?> feature = server.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE)
             .getOptional(id)
             .orElseThrow(() -> new IllegalArgumentException("Unknown configured feature " + id));
@@ -110,10 +111,11 @@ public final class FeaturePreviewJob implements PreviewJob {
             case CEILING -> List.of(layer(65, radius));
             case WATER, UNDERWATER -> List.of(layer(53, radius));
             case WALL -> List.of(new BoundingBox(1, 48, -radius, 4, 80, radius));
-            case CAVE -> List.of(layer(53, radius), layer(72, radius));
+            case CAVE -> List.of(layer(32, radius), layer(93, radius));
         };
+        groundBoxes = groundBoxes.stream().map(box -> box.moved(x, 0, z)).toList();
         @Nullable BoundingBox waterBox = surface == Surface.WATER || surface == Surface.UNDERWATER
-            ? new BoundingBox(-radius, 57, -radius, radius, 63, radius)
+            ? new BoundingBox(-radius, 57, -radius, radius, 63, radius).moved(x, 0, z)
             : null;
         BlockPos surfaceBlock = switch (surface) {
             case FLOOR, WATER -> new BlockPos(0, 63, 0);
@@ -122,7 +124,7 @@ public final class FeaturePreviewJob implements PreviewJob {
             case WALL -> new BlockPos(1, 64, 0);
             case CAVE -> new BlockPos(0, 64, 0);
         };
-        BlockPos origin = surfaceBlock.above(offset);
+        BlockPos origin = surfaceBlock.offset(x, offset, z);
 
         PreviewWorld world = PreviewWorld.create(seed, server.overworld());
         groundBoxes.forEach(box -> world.fillBox(box, ground));
@@ -131,29 +133,7 @@ public final class FeaturePreviewJob implements PreviewJob {
         }
         // Selectors place nested placed features, whose PlacementContext needs a generator.
         feature.place(world.asLevel(), server.overworld().getChunkSource().getGenerator(), world.random(), origin);
-
-        List<BoundingBox> prepared = new ArrayList<>(groundBoxes);
-        if (waterBox != null) {
-            prepared.add(waterBox);
-        }
-        prepared.add(world.occupiedBox());
-        BoundingBox scan = BoundingBox.encapsulatingBoxes(prepared).orElseThrow();
-        int changed = 0;
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int y = scan.minY(); y <= scan.maxY(); y++) {
-            for (int z = scan.minZ(); z <= scan.maxZ(); z++) {
-                for (int x = scan.minX(); x <= scan.maxX(); x++) {
-                    pos.set(x, y, z);
-                    BlockState expected = groundBoxes.stream().anyMatch(box -> box.isInside(pos)) ? ground
-                        : waterBox != null && waterBox.isInside(pos) ? Blocks.WATER.defaultBlockState()
-                        : Blocks.AIR.defaultBlockState();
-                    if (world.get(pos) != expected) {
-                        changed++;
-                    }
-                }
-            }
-        }
-        return new Placement(world, origin, changed);
+        return new Placement(world, origin, world.changedCount());
     }
 
     /** Four blocks thick: features check that their base is embedded in solid ground. */

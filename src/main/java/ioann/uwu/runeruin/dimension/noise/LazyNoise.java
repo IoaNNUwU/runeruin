@@ -42,29 +42,25 @@ public class LazyNoise {
         if (seed == null) {
             throw new IllegalStateException("No world seed is bound to this RandomState; call LazyNoise.bindSeed first");
         }
+        return forSeed(seed);
+    }
+
+    // Chained noises share the base instance, and with it what the base caches.
+    private Noise forSeed(long seed) {
         return noisesBySeed.computeIfAbsent(seed, this.seedToNoise);
     }
 
     public static LazyNoise chain(String noiseName, LazyNoise base, Function<Noise, Noise> transform) {
         return new LazyNoise(
                 base.noiseName + ":" + noiseName,
-                seed -> {
-                    Noise baseNoise = base.seedToNoise.apply(seed);
-                    return transform.apply(baseNoise);
-                }
+                seed -> transform.apply(base.forSeed(seed))
         );
     }
 
     public static LazyNoise chain(String noiseName, LazyNoise base1, LazyNoise base2, BiFunction<Noise, Noise, Noise> transform) {
         return new LazyNoise(
                 base1.noiseName + "/" + base2.noiseName + ":" + noiseName,
-
-                seed -> {
-                    Noise baseNoise1 = base1.seedToNoise.apply(seed);
-                    Noise baseNoise2 = base2.seedToNoise.apply(seed);
-
-                    return transform.apply(baseNoise1, baseNoise2);
-                }
+                seed -> transform.apply(base1.forSeed(seed), base2.forSeed(seed))
         );
     }
 }

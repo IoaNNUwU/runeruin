@@ -77,6 +77,7 @@ neoForge {
         // Headless preview: pick a job with -Ppreview=<id> (or list).
         //   .\gradlew.bat runPreview
         //   .\gradlew.bat runPreview -Ppreview=boulder -Pseed=3 -Pradius=10
+        //   .\gradlew.bat runPreview -Ppreview=boulder -Pseeds=1-9
         //   .\gradlew.bat runPreview -Ppreview=list
         //   .\gradlew.bat runPreview -Ppreview=world_region '-Pregion=exports/terrain_expected.json' -Pstage=generated
         preview {
@@ -87,7 +88,7 @@ neoForge {
             if (findProperty('previewName') != null) {
                 systemProperty 'runeruin.preview.name', findProperty('previewName')
             }
-            ['height', 'radius', 'minRadius', 'maxRadius', 'stage'].each { key ->
+            ['seeds', 'height', 'radius', 'minRadius', 'maxRadius', 'stage'].each { key ->
                 if (findProperty(key) != null) {
                     systemProperty "runeruin.preview.${key}", findProperty(key)
                 }

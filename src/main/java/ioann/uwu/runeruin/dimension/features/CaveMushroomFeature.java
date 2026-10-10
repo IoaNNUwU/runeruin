@@ -105,7 +105,7 @@ public class CaveMushroomFeature extends Feature<CaveMushroomFeature.Config> {
         int blocked = 0;
         for (Set<BlockPos> part : List.of(stem, cap, rim)) {
             for (BlockPos pos : part) {
-                if (level.isOutsideBuildHeight(pos) || !level.ensureCanWrite(pos)) {
+                if (level.isOutsideBuildHeight(pos)) {
                     return false;
                 }
                 if (part == stem && pos.getY() - origin.getY() < 2) {
