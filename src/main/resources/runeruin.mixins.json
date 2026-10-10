@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "SlimeMixin",
-    "BaseFireBlockMixin"
+    "BaseFireBlockMixin",
+    "RunicRailMixin"
   ],
   "client": [
     "ClientLevelMixin"

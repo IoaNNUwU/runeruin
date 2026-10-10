@@ -51,6 +51,7 @@ public class DatagenModelProvider extends ModelProvider {
         PortalModels.createArcaneStonePortal(blockModels);
 
         blockModels.createTrivialCube(RRBlocks.DIAMOND_ARCANE_STONE.get());
+        blockModels.createPassiveRail(RRBlocks.RUNIC_RAIL.get());
         createAshenMushroomBlock(blockModels);
 
         TreeModels.createElden(blockModels);

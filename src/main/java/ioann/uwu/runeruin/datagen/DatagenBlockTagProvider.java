@@ -28,11 +28,14 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.ARCANE_STONE_COLUMN.getKey(),
                 RRBlocks.ARCANE_STONE_PORTAL.getKey(),
                 RRBlocks.DIAMOND_ARCANE_STONE.getKey(),
+                RRBlocks.RUNIC_RAIL.getKey(),
 
                 RRBlocks.MOSS_LIGHT.getKey(),
                 RRBlocks.LAPIS_LIGHT.getKey(),
                 RRBlocks.FIREFLY_IN_A_JAR.getKey()
         );
+
+        tag(BlockTags.RAILS).add(RRBlocks.RUNIC_RAIL.getKey());
 
         tag(BlockTags.MINEABLE_WITH_AXE).add(
                 RRBlocks.ELDEN_LOG.getKey(),
