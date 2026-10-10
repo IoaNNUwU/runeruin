@@ -35,11 +35,11 @@ public class DatagenRecipeProvider extends RecipeProvider {
 
         this.shaped(RecipeCategory.DECORATIONS, RRBlocks.MOSS_LIGHT, 1)
                 .define('#', Blocks.COBBLESTONE)
-                .define('M', RRItems.MOSS_BERRY)
+                .define('M', RRItems.WISPBERRY)
                 .pattern("###")
                 .pattern("#M#")
                 .pattern("###")
-                .unlockedBy(getHasName(RRItems.MOSS_BERRY), has(RRItems.MOSS_BERRY))
+                .unlockedBy(getHasName(RRItems.WISPBERRY), has(RRItems.WISPBERRY))
                 .save(this.output);
 
         this.shaped(RecipeCategory.BUILDING_BLOCKS, RRBlocks.DIAMOND_ARCANE_STONE, 2)

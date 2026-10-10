@@ -1,6 +1,6 @@
 package ioann.uwu.runeruin.datagen;
 
-import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
+import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
 import net.minecraft.advancements.predicates.StatePropertiesPredicate;
@@ -108,7 +108,7 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
 
         add(RRBlocks.RUNE_RUIN_PORTAL.get(), noDrop());
 
-        createMossBerry();
+        createWispberry();
 
         add(RRBlocks.ELDEN_LEAVES.get(), block -> createLeavesDrops(
                 block,
@@ -129,30 +129,30 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         );
     }
 
-    private void createMossBerry() {
+    private void createWispberry() {
 
         HolderLookup.RegistryLookup<Enchantment> enchantments = this.registries.lookupOrThrow(Registries.ENCHANTMENT);
 
-        add(RRBlocks.MOSS_BERRY_BUSH.get(), block -> applyExplosionDecay(
+        add(RRBlocks.WISPBERRY_BUSH.get(), block -> applyExplosionDecay(
                 block,
                 LootTable.lootTable()
                         .withPool(LootPool.lootPool()
-                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.MOSS_BERRY_BUSH.get())
+                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.WISPBERRY_BUSH.get())
                                         .setProperties(StatePropertiesPredicate.Builder.properties()
-                                                .hasProperty(MossBerryBushBlock.AGE, 3)
+                                                .hasProperty(WispberryBushBlock.AGE, 3)
                                         )
                                 )
-                                .add(LootItem.lootTableItem(RRItems.MOSS_BERRY))
+                                .add(LootItem.lootTableItem(RRItems.WISPBERRY))
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(2f, 4f)))
                                 .apply(ApplyBonusCount.addUniformBonusCount(enchantments.getOrThrow(Enchantments.FORTUNE)))
                         )
                         .withPool(LootPool.lootPool()
-                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.MOSS_BERRY_BUSH.get())
+                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.WISPBERRY_BUSH.get())
                                         .setProperties(StatePropertiesPredicate.Builder.properties()
-                                                .hasProperty(MossBerryBushBlock.AGE, 2)
+                                                .hasProperty(WispberryBushBlock.AGE, 2)
                                         )
                                 )
-                                .add(LootItem.lootTableItem(RRItems.MOSS_BERRY))
+                                .add(LootItem.lootTableItem(RRItems.WISPBERRY))
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 2f)))
                                 .apply(ApplyBonusCount.addUniformBonusCount(enchantments.getOrThrow(Enchantments.FORTUNE)))
                         )

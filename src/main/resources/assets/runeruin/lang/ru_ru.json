@@ -2,7 +2,7 @@
   "itemGroup.runeruin": "Rune Ruin",
 
   "item.runeruin.rune_of_space": "Руна пространства",
-  "item.runeruin.moss_berry": "Моховая ягода",
+  "item.runeruin.wispberry": "Блуждающая ягода",
   "item.runeruin.powdered_moss_bucket": "Ведро порошкового мха",
   "item.runeruin.snail_spawn_egg": "Яйцо призыва улитки",
   "entity.runeruin.snail": "Улитка",
@@ -27,7 +27,7 @@
   "block.runeruin.glowing_mushroom_cap": "Светящаяся шляпка гриба",
   "block.runeruin.glowing_mushroom_stem": "Белая ножка светящегося гриба",
   "block.runeruin.glowing_mushroom": "Светящийся гриб",
-  "block.runeruin.moss_berry_bush": "Куст моховой ягоды",
+  "block.runeruin.wispberry_bush": "Куст блуждающей ягоды",
   "block.runeruin.big_lily_pad": "Большая кувшинка",
   "block.runeruin.water_lily_root": "Корень водяной лилии",
   "block.runeruin.water_lily_leaf": "Лист водяной лилии",
