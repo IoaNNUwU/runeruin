@@ -109,6 +109,8 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         // The berries of a broken bush come from MossberryBushBlock.spawnAfterBreak.
         add(RRBlocks.MOSSBERRY_BUSH.get(), noDrop());
         dropSelf(RRBlocks.FLOATING_MOSS.get());
+        add(RRBlocks.MOSS_SPROUTS.get(), block -> createShearsOnlyDrop(block));
+        add(RRBlocks.SMALL_MOSS_SPROUTS.get(), block -> createShearsOnlyDrop(block));
         add(RRBlocks.GLOWING_MUSHROOM_CAP.get(), this::createGlowingMushroomBlockDrop);
         add(RRBlocks.GLOWING_MUSHROOM_STEM.get(), this::createGlowingMushroomBlockDrop);
         dropSelf(RRBlocks.GLOWING_MUSHROOM.get());

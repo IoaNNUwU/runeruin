@@ -48,6 +48,8 @@ public class RRCreativeModeTabs {
                     RRBlocks.DEEP_MOSS.toStack(),
                     RRBlocks.DEEP_MOSS_LAYER.toStack(),
                     RRBlocks.FLOATING_MOSS.toStack(),
+                    RRBlocks.MOSS_SPROUTS.toStack(),
+                    RRBlocks.SMALL_MOSS_SPROUTS.toStack(),
                     RRBlocks.GLOWING_MUSHROOM_CAP.toStack(),
                     RRBlocks.GLOWING_MUSHROOM_STEM.toStack(),
                     RRBlocks.GLOWING_MUSHROOM.toStack(),

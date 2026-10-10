@@ -65,6 +65,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> GLOWING_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_mushroom");
     public static final ResourceKey<PlacedFeature> SMALL_GLOWING_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "small_glowing_mushroom");
     public static final ResourceKey<PlacedFeature> MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "moss_vegetation");
+    public static final ResourceKey<PlacedFeature> DEEP_MOSS_SPROUTS = RR.resourceKey(Registries.PLACED_FEATURE, "deep_moss_sprouts");
 
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_vine");
     public static final ResourceKey<PlacedFeature> DEEP_CEILING_BLOCK_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_ceiling_block_vine");
@@ -332,6 +333,12 @@ public class RRPlacedFeatures {
         ctx.register(MOSS_VEGETATION, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_VEGETATION),
                 floorPlacement(CountPlacement.of(200), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.solid(), 12, 1)
+        ));
+
+        ctx.register(DEEP_MOSS_SPROUTS, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_SPROUTS),
+                floorPlacement(CountPlacement.of(96), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y,
+                        BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 32, 1)
         ));
 
         ctx.register(DRIPSTONE_SPIKE, new PlacedFeature(

@@ -29,6 +29,7 @@ public class StoneSpikeCaves {
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.STONE_SPIKE);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.YELLOW_HAT.placedKey());
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.DEEP_MOSS_SPROUTS);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);

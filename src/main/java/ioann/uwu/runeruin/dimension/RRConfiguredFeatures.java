@@ -64,6 +64,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_vegetation");
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_HUMMOCK = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_hummock");
 
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_SPROUTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_sprouts");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_glowing_mushroom");
@@ -289,7 +290,7 @@ public class RRConfiguredFeatures {
                 NoneFeatureConfiguration.INSTANCE
         ));
 
-        // Vanilla moss vegetation with a deep moss layer in place of the moss carpet.
+        // Vanilla moss vegetation with a deep moss layer in place of the moss carpet and moss sprouts in place of grass.
         ctx.register(MOSS_VEGETATION, new ConfiguredFeature<>(
                 Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(
@@ -298,8 +299,8 @@ public class RRConfiguredFeatures {
                                         .add(Blocks.FLOWERING_AZALEA.defaultBlockState(), 4)
                                         .add(Blocks.AZALEA.defaultBlockState(), 7)
                                         .add(RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState(), 25)
-                                        .add(Blocks.SHORT_GRASS.defaultBlockState(), 50)
-                                        .add(Blocks.TALL_GRASS.defaultBlockState(), 10)
+                                        .add(RRBlocks.MOSS_SPROUTS.get().defaultBlockState(), 35)
+                                        .add(RRBlocks.SMALL_MOSS_SPROUTS.get().defaultBlockState(), 25)
                         )
                 )
         ));
@@ -307,6 +308,17 @@ public class RRConfiguredFeatures {
         ctx.register(MOSS_HUMMOCK, new ConfiguredFeature<>(
                 RRFeatures.MOSS_HUMMOCK.get(),
                 NoneFeatureConfiguration.INSTANCE
+        ));
+
+        ctx.register(MOSS_SPROUTS, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(
+                        new WeightedStateProvider(
+                                WeightedList.<BlockState>builder()
+                                        .add(RRBlocks.MOSS_SPROUTS.get().defaultBlockState(), 35)
+                                        .add(RRBlocks.SMALL_MOSS_SPROUTS.get().defaultBlockState(), 25)
+                        )
+                )
         ));
 
         ctx.register(GLOWING_MOSS_VEGETATION, new ConfiguredFeature<>(

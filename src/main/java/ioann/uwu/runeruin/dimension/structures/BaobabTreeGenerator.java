@@ -1236,7 +1236,8 @@ public final class BaobabTreeGenerator {
                 }
 
                 float plantChoice = random.nextFloat();
-                BlockState plant = plantChoice < 0.38F ? Blocks.SHORT_GRASS.defaultBlockState()
+                BlockState plant = plantChoice < 0.19F ? RRBlocks.SMALL_MOSS_SPROUTS.get().defaultBlockState()
+                        : plantChoice < 0.38F ? RRBlocks.MOSS_SPROUTS.get().defaultBlockState()
                         : plantChoice < 0.72F ? Blocks.FERN.defaultBlockState()
                         : Blocks.PINK_PETALS.defaultBlockState();
                 tree.put(plantPos.immutable(), plant);

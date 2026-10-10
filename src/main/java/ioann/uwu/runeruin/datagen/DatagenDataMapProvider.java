@@ -22,6 +22,8 @@ public class DatagenDataMapProvider extends DataMapProvider {
                 .add(RRBlocks.DEEP_MOSS.get().asItem().builtInRegistryHolder(), new Compostable(0.65F), false)
                 .add(RRBlocks.DEEP_MOSS_LAYER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false)
                 .add(RRItems.MOSSBERRY, new Compostable(0.3F), false)
-                .add(RRBlocks.CLOVER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false);
+                .add(RRBlocks.CLOVER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false)
+                .add(RRBlocks.MOSS_SPROUTS.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false)
+                .add(RRBlocks.SMALL_MOSS_SPROUTS.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false);
     }
 }

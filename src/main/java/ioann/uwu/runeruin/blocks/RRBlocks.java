@@ -334,6 +334,15 @@ public class RRBlocks {
                     .noOcclusion(),
             FloatingMossBlock::new);
 
+    /** Grass of the mossy caves, in two heights. */
+    public static final DeferredBlock<Block> MOSS_SPROUTS = register("moss_sprouts",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS),
+            p -> new MossSproutsBlock(13, p));
+
+    public static final DeferredBlock<Block> SMALL_MOSS_SPROUTS = register("small_moss_sprouts",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS),
+            p -> new MossSproutsBlock(8, p));
+
     public static final DeferredBlock<Block> POWDERED_MOSS = registerNoItem("powdered_moss",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.POWDER_SNOW)
                     .mapColor(MapColor.COLOR_GREEN),
