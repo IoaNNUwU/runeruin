@@ -16,8 +16,8 @@ import org.jspecify.annotations.NonNull;
 
 /**
  * Wispberry bush: a stem under one big box of leaves that reaches the top of the block, as an azalea has, and a
- * smaller box at each of two opposite lower corners, a pixel up its sides. A bush with berries carries them as
- * cubes sunk into the boxes.
+ * smaller box at each of two opposite lower corners, showing a pixel below it. A bush with berries carries them
+ * as cubes sunk into the boxes; the one on top stands two pixels out of the block.
  */
 public final class WispberryBushModels {
 
@@ -25,15 +25,15 @@ public final class WispberryBushModels {
 
     // Boxes as {from, to}, in pixels.
     private static final double[][][] SAPLING_STEM = {{{7, 0, 7}, {9, 4, 9}}};
-    private static final double[][][] SAPLING_LEAVES = {{{5, 3, 5}, {11, 9, 11}}, {{3, 0, 3}, {7, 4, 7}}};
+    private static final double[][][] SAPLING_LEAVES = {{{5, 3, 5}, {11, 9, 11}}, {{3, 2, 3}, {7, 6, 7}}};
     private static final double[][][] STEM = {{{7, 0, 7}, {9, 6, 9}}};
-    private static final double[][][] LEAVES = {{{3, 5, 3}, {13, 16, 13}}, {{1, 0, 1}, {7, 6, 7}}, {{10, 1, 10}, {15, 6, 15}}};
+    private static final double[][][] LEAVES = {{{3, 5, 3}, {13, 16, 13}}, {{1, 4, 1}, {7, 11, 7}}, {{10, 4, 10}, {15, 9, 15}}};
 
     /**
      * Berries as x, y, z of the low corner and the size of a ripe one. Two faces of the model that overlap in
      * one plane flicker, so no berry, ripe or unripe, shares a plane with a box of leaves or another berry.
      */
-    private static final int[][] BERRIES = {{4, 10, 11, 4}, {12, 9, 5, 3}, {8, 14, 5, 4}, {1, 11, 6, 4}, {4, 4, 0, 4}, {12, 4, 12, 4}, {9, 11, 1, 3}};
+    private static final int[][] BERRIES = {{6, 9, 11, 4}, {5, 14, 6, 4}, {2, 10, 2, 3}, {12, 11, 5, 3}, {1, 6, 8, 4}, {9, 8, 1, 3}, {11, 8, 11, 3}};
 
     /** An unripe bush has the first few of them, each a pixel smaller. */
     private static final int UNRIPE_BERRIES = 3;
