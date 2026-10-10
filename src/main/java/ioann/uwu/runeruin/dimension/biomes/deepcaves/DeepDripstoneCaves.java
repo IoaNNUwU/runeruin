@@ -33,6 +33,7 @@ public class DeepDripstoneCaves {
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, CavePlacements.DRIPSTONE_CLUSTER);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.BROWN_DOME.placedKey());
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.DEEP_MOSS_SPROUTS);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);

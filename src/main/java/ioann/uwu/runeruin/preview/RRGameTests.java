@@ -139,6 +139,7 @@ public final class RRGameTests {
             new FeatureCase("deep_roots_grass", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("goblet_deep_roots", Surface.FLOOR, gobletBud, 1),
             new FeatureCase("moss_vegetation", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("moss_sprouts", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
             new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("wispberry_bush_patch", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
             new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),

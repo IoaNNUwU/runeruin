@@ -61,6 +61,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> POWDERED_MOSS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "powdered_moss");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_vegetation");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_SPROUTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_sprouts");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_glowing_mushroom");
@@ -290,6 +291,17 @@ public class RRConfiguredFeatures {
                                         .add(Blocks.FLOWERING_AZALEA.defaultBlockState(), 4)
                                         .add(Blocks.AZALEA.defaultBlockState(), 7)
                                         .add(Blocks.MOSS_CARPET.defaultBlockState(), 25)
+                                        .add(RRBlocks.MOSS_SPROUTS.get().defaultBlockState(), 35)
+                                        .add(RRBlocks.SMALL_MOSS_SPROUTS.get().defaultBlockState(), 25)
+                        )
+                )
+        ));
+
+        ctx.register(MOSS_SPROUTS, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(
+                        new WeightedStateProvider(
+                                WeightedList.<BlockState>builder()
                                         .add(RRBlocks.MOSS_SPROUTS.get().defaultBlockState(), 35)
                                         .add(RRBlocks.SMALL_MOSS_SPROUTS.get().defaultBlockState(), 25)
                         )
