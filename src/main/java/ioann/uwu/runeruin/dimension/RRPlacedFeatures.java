@@ -60,6 +60,7 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "wispberry_bush_patch");
     public static final ResourceKey<PlacedFeature> POWDERED_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "powdered_moss");
+    public static final ResourceKey<PlacedFeature> MOSS_HUMMOCK = RR.resourceKey(Registries.PLACED_FEATURE, "moss_hummock");
 
     public static final ResourceKey<PlacedFeature> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<PlacedFeature> GLOWING_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_mushroom");
@@ -255,6 +256,13 @@ public class RRPlacedFeatures {
         ctx.register(POWDERED_MOSS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.POWDERED_MOSS),
                 floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK), 16, 0)
+        ));
+
+        // The count follows a slow noise: glades with several groups of mounds, and none between them.
+        ctx.register(MOSS_HUMMOCK, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_HUMMOCK),
+                floorPlacement(NoiseBasedCountPlacement.of(4, 40.0, 0.0), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP,
+                        BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK), 16, 1)
         ));
 
         ctx.register(DEEP_CEILING_VINE, new PlacedFeature(

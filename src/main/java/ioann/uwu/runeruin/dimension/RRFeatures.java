@@ -33,6 +33,7 @@ public class RRFeatures {
     public static final DeferredHolder<Feature<?>, MossySpikeFeature> GIANT_SPIKE = REGISTRY.register("giant_spike", MossySpikeFeature::new);
 
     public static final DeferredHolder<Feature<?>, GobletMossPatchFeature> GOBLET_MOSS_PATCH = REGISTRY.register("goblet_moss_patch", GobletMossPatchFeature::new);
+    public static final DeferredHolder<Feature<?>, MossHummockFeature> MOSS_HUMMOCK = REGISTRY.register("moss_hummock", MossHummockFeature::new);
     public static final DeferredHolder<Feature<?>, GobletSeagrassFeature> GOBLET_SEAGRASS = REGISTRY.register("goblet_seagrass", GobletSeagrassFeature::new);
     public static final DeferredHolder<Feature<?>, GobletKelpFeature> GOBLET_KELP = REGISTRY.register("goblet_kelp", GobletKelpFeature::new);
 

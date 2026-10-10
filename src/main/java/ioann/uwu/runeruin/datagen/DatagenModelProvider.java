@@ -4,9 +4,11 @@ import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.datagen.models.CloverModels;
+import ioann.uwu.runeruin.datagen.models.DeepMossModels;
 import ioann.uwu.runeruin.datagen.models.FireflyJarModels;
 import ioann.uwu.runeruin.datagen.models.FloatingMossModels;
 import ioann.uwu.runeruin.datagen.models.LilyPadModels;
+import ioann.uwu.runeruin.datagen.models.MossberryBushModels;
 import ioann.uwu.runeruin.datagen.models.PortalModels;
 import ioann.uwu.runeruin.datagen.models.TreeModels;
 import ioann.uwu.runeruin.items.RRItems;
@@ -41,6 +43,7 @@ public class DatagenModelProvider extends ModelProvider {
         // --- Items ---
         itemModels.generateFlatItem(RRItems.RUNE_OF_SPACE.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.SNAIL_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(RRItems.MOSSBERRY.get(), ModelTemplates.FLAT_ITEM);
 
         // --- Blocks ---
         blockModels.createTrivialCube(RRBlocks.ARCANE_STONE.get());
@@ -69,6 +72,8 @@ public class DatagenModelProvider extends ModelProvider {
                 )
         );
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
+        DeepMossModels.createDeepMoss(blockModels);
+        MossberryBushModels.createMossberryBush(blockModels);
         FloatingMossModels.createFloatingMoss(blockModels);
         blockModels.createTrivialBlock(
                 RRBlocks.GLOWING_MUSHROOM_CAP.get(),
