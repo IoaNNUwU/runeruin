@@ -35,6 +35,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.FIREFLY_IN_A_JAR.getKey()
         );
 
+        tag(BlockTags.NEEDS_DIAMOND_TOOL).add(RRBlocks.VOID_STONE.getKey());
+
         tag(BlockTags.MINEABLE_WITH_AXE).add(
                 RRBlocks.ELDEN_LOG.getKey(),
                 RRBlocks.ELDEN_WOOD.getKey(),

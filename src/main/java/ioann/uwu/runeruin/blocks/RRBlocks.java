@@ -375,9 +375,9 @@ public class RRBlocks {
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
             WaterLilyLeafBlock::new);
 
-    /** What the Void ceiling is made of. */
+    /** What the Void ceiling is made of; as hard to break and to blow up as obsidian. */
     public static final DeferredBlock<Block> VOID_STONE = register("void_stone",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OBSIDIAN)
                     .mapColor(MapColor.COLOR_PURPLE));
 
     /** A thread of beads hanging from a ceiling; about half of its blocks glow. */
