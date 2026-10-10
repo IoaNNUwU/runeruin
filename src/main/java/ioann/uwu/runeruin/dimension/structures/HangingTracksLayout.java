@@ -87,7 +87,7 @@ public final class HangingTracksLayout {
         }
         int deckY = ceiling - 1 - random.nextIntBetweenInclusive(8, 14);
         Port start = new Port(centerX, deckY, centerZ + STATION_EXTENT, Direction.NORTH);
-        HangingTrackPiece.Junction station = new HangingTrackPiece.Junction(start, STATION_EXTENT, 0, layout.look());
+        HangingTrackPiece.Junction station = new HangingTrackPiece.Junction(start, STATION_EXTENT, 0, layout.look(null));
         if (!layout.fits(station, null)) {
             return List.of();
         }
@@ -105,9 +105,13 @@ public final class HangingTracksLayout {
         return layout.pieces;
     }
 
-    private Look look() {
+    /** The look of a piece that grows from this one. Moss spreads: an overgrown piece often has overgrown neighbours. */
+    private Look look(HangingPiece parent) {
         int roll = this.random.nextInt(10);
         Wear wear = roll < 5 ? Wear.INTACT : roll < 8 ? Wear.DECAYED : Wear.OVERGROWN;
+        if (parent != null && parent.wear == Wear.OVERGROWN && this.random.nextBoolean()) {
+            wear = Wear.OVERGROWN;
+        }
         return new Look(this.wood, wear, this.random.nextLong());
     }
 
@@ -121,7 +125,7 @@ public final class HangingTracksLayout {
         // The further from the station, the sooner a track ends.
         boolean end = depth > MAX_DEPTH || this.pieces.size() >= MAX_PIECES || this.random.nextInt(2 * MAX_DEPTH) < depth - 3;
         for (int attempt = 0; attempt < 4 && !end; attempt++) {
-            HangingTrackPiece track = randomTrack(port, depth);
+            HangingTrackPiece track = randomTrack(parent, port, depth);
             if (fits(track, parent)) {
                 add(track, parent);
                 growFrom(track, depth);
@@ -130,7 +134,7 @@ public final class HangingTracksLayout {
         }
         // A track that cannot go on ends with a platform.
         for (int attempt = 0; attempt < 3; attempt++) {
-            HangingPlatformPiece platform = randomPlatform(port, true, attempt);
+            HangingPlatformPiece platform = randomPlatform(parent, port, true, attempt);
             if (fits(platform, parent)) {
                 add(platform, parent);
                 return true;
@@ -157,32 +161,34 @@ public final class HangingTracksLayout {
         return this.terrain.ceilingY(port.x(), port.z()) - port.y() - 1;
     }
 
-    private HangingTrackPiece randomTrack(Port port, int depth) {
+    private HangingTrackPiece randomTrack(HangingPiece parent, Port port, int depth) {
         int roll = this.random.nextInt(100);
         int left = 1 + this.random.nextInt(this.extent);
         int right = 1 + this.random.nextInt(this.extent);
-        if (roll < 34) {
-            return new HangingTrackPiece.Straight(port, 6 + this.random.nextInt(13), left, right, look());
+        Look look = look(parent);
+        if (roll < 30) {
+            return new HangingTrackPiece.Straight(port, 6 + this.random.nextInt(13), left, right, look);
         }
-        if (roll < 48) {
-            int steps = 2 + this.random.nextInt(4);
+        if (roll < 54) {
+            // A staircase climbs or drops 3 to 7 blocks.
+            int steps = 3 + this.random.nextInt(5);
             // Stairs lead back to the middle of the allowed heights.
             int gap = gap(port);
             boolean up = gap - steps < MIN_GAP + 2 ? false : gap + steps > MAX_GAP - 2 || this.random.nextBoolean();
-            return new HangingTrackPiece.Stairs(port, up ? steps : -steps, left, right, look());
+            return new HangingTrackPiece.Stairs(port, up ? steps : -steps, left, right, look);
         }
-        if (roll < 62) {
+        if (roll < 66) {
             int shift = 4 + this.random.nextInt(9);
-            return new HangingTrackPiece.Diagonal(port, this.random.nextBoolean() ? shift : -shift, this.extent, look());
+            return new HangingTrackPiece.Diagonal(port, this.random.nextBoolean() ? shift : -shift, this.extent, look);
         }
-        if (roll < 75 || depth > MAX_DEPTH - 2) {
-            return new HangingTrackPiece.Corner(port, this.random.nextBoolean() ? 1 : -1, this.extent, look());
+        if (roll < 78 || depth > MAX_DEPTH - 2) {
+            return new HangingTrackPiece.Corner(port, this.random.nextBoolean() ? 1 : -1, this.extent, look);
         }
-        return new HangingTrackPiece.Junction(port, this.extent, HangingTrackPiece.BACK, look());
+        return new HangingTrackPiece.Junction(port, this.extent, HangingTrackPiece.BACK, look);
     }
 
     /** A platform for this place; each further attempt makes a smaller one, down to 7 by 7 blocks. */
-    private HangingPlatformPiece randomPlatform(Port port, boolean connected, int attempt) {
+    private HangingPlatformPiece randomPlatform(HangingPiece parent, Port port, boolean connected, int attempt) {
         Shape shape = Shape.RECTANGLE;
         int width = 7;
         int depth = 7;
@@ -196,7 +202,7 @@ public final class HangingTracksLayout {
             depth = 9 + this.random.nextInt(3);
         }
         Theme theme = randomTheme(shape, depth, connected, gap(port) >= HangingPlatformPiece.ROOF + 2);
-        return new HangingPlatformPiece(port, shape, width, depth, this.random.nextBoolean() ? 1 : -1, theme, connected, look());
+        return new HangingPlatformPiece(port, shape, width, depth, this.random.nextBoolean() ? 1 : -1, theme, connected, look(parent));
     }
 
     /** A theme that the platform has room for. */
@@ -241,7 +247,7 @@ public final class HangingTracksLayout {
                 default -> this.random.nextIntBetweenInclusive(area.minZ(), area.maxZ());
             };
             int y = near.origin.y() + this.random.nextIntBetweenInclusive(-5, 5);
-            HangingPlatformPiece platform = randomPlatform(new Port(x, y, z, away), false, this.random.nextInt(3));
+            HangingPlatformPiece platform = randomPlatform(near, new Port(x, y, z, away), false, this.random.nextInt(3));
             if (fits(platform, null)) {
                 add(platform, null);
                 wanted--;

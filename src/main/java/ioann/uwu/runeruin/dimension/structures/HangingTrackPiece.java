@@ -126,10 +126,13 @@ public abstract class HangingTrackPiece extends HangingPiece {
         }
     }
 
-    /** One row of a deck across the track, with fences along the edges that are a block away from the rails. */
-    protected void row(Canvas canvas, int f, int u, boolean mossy, boolean hanger) {
+    /**
+     * One row of a deck across a track of {@code length} blocks, with fences along the edges that are a block
+     * away from the rails.
+     */
+    protected void row(Canvas canvas, int f, int u, int length, boolean hanger) {
         for (int r = -this.left; r <= this.right; r++) {
-            canvas.deck(f, u, r, mossy, 1);
+            canvas.deck(f, u, r, mossy(f, r, length));
         }
         if (hanger) {
             hanger(canvas, f, u);
@@ -140,7 +143,7 @@ public abstract class HangingTrackPiece extends HangingPiece {
                 canvas.fence(f, u + 1, sign * extent);
             }
             if (!hanger) {
-                canvas.vines(f, u, sign * (extent + 1), side(-sign), mossy);
+                canvas.vines(f, u, sign * (extent + 1), side(-sign), mossy(f, sign * extent, length));
             }
         }
     }
@@ -149,7 +152,7 @@ public abstract class HangingTrackPiece extends HangingPiece {
     protected void squareDeck(Canvas canvas, int e) {
         for (int f = 0; f <= 2 * e; f++) {
             for (int r = -e; r <= e; r++) {
-                canvas.deck(f, 0, r, mossy(f, 2 * e + 1), 1);
+                canvas.deck(f, 0, r, mossy(f, r, 2 * e + 1));
             }
         }
         for (int f = 0; f <= 2 * e; f += 2 * e) {
@@ -191,7 +194,7 @@ public abstract class HangingTrackPiece extends HangingPiece {
                 path[f + 1] = new int[]{f, 0, 0};
             }
             for (int f = 0; f < this.size; f++) {
-                row(canvas, f, 0, mossy(f, this.size), f % 5 == 2);
+                row(canvas, f, 0, this.size, f % 5 == 2);
             }
             rails(canvas, path);
         }
@@ -248,7 +251,7 @@ public abstract class HangingTrackPiece extends HangingPiece {
                 int level = level(f);
                 path[f + 1] = new int[]{f, 0, level};
                 // A beam needs a flat rail above it: the upper block of a step going up, the lower one going down.
-                row(canvas, f, level, mossy(f, length), f % 4 == (this.size > 0 ? 1 : 0));
+                row(canvas, f, level, length, f % 4 == (this.size > 0 ? 1 : 0));
             }
             rails(canvas, path);
         }
@@ -321,7 +324,7 @@ public abstract class HangingTrackPiece extends HangingPiece {
             for (int f = 0; f <= steps + 1; f++) {
                 for (int r = Math.min(0, this.size) - extent; r <= Math.max(0, this.size) + extent; r++) {
                     if (distance(path, f, r) <= extent) {
-                        canvas.deck(f, 0, r, mossy(f, steps + 2), 1);
+                        canvas.deck(f, 0, r, mossy(f, r, steps + 2));
                     }
                 }
             }

@@ -27,8 +27,8 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSeriali
 import net.minecraft.world.level.storage.loot.LootTable;
 
 /**
- * A wide platform, two blocks thick, on log beams that hang on chains: at the end of a track, with the rails
- * running onto it, or on its own near a track. What stands on it is its theme.
+ * A wide platform on log beams that hang on chains: at the end of a track, with the rails running onto it,
+ * or on its own near a track. What stands on it is its theme. Moss lies on the planks as a second block.
  */
 public final class HangingPlatformPiece extends HangingPiece {
 
@@ -46,7 +46,6 @@ public final class HangingPlatformPiece extends HangingPiece {
     /** The roof of a hut lies this high above the deck. */
     public static final int ROOF = 4;
 
-    private static final int THICKNESS = 2;
     /** The arms of the L, the T and the plus are 7 blocks wide: this far to each side of their middle. */
     private static final int ARM = 3;
     private static final int HUT = 5;
@@ -155,27 +154,37 @@ public final class HangingPlatformPiece extends HangingPiece {
         return this.theme == Theme.LOOKOUT || this.theme == Theme.TREASURE_HUT || chance(0, 0, 40) < 0.45f;
     }
 
-    /** A moss pond is all moss; an overgrown platform has a round patch of it. */
-    private boolean moss(int f, int r) {
+    /**
+     * Whether a second block lies on the deck here: a bed of moss inside the plank rim, clear of the way in.
+     * A moss pond is all bed; an overgrown platform has a round patch of it.
+     */
+    private boolean bed(int f, int r) {
+        if (!contains(f, r) || border(f, r) || Math.abs(r) <= 1 && f <= rails() + 1) {
+            return false;
+        }
         if (this.theme == Theme.MOSS_POND) {
             return true;
         }
         if (this.wear != Wear.OVERGROWN) {
             return false;
         }
-        double df = f - chance(0, 0, 32) * this.depth;
-        double dr = r - (chance(0, 0, 33) - 0.5) * this.width;
-        double radius = 3 + chance(0, 0, 34) * 3 + chance(f, r, 35);
+        double df = f - (0.3 + chance(0, 0, 32) * 0.5) * this.depth;
+        double dr = r - (chance(0, 0, 33) - 0.5) * this.width * 0.6;
+        double radius = 3 + chance(0, 0, 34) * 2;
         return df * df + dr * dr <= radius * radius;
     }
 
-    /** The pond lies behind the middle, clear of the rails, with at least a block of moss around it. */
+    private boolean bedEdge(int f, int r) {
+        return !bed(f - 1, r) || !bed(f + 1, r) || !bed(f, r - 1) || !bed(f, r + 1);
+    }
+
+    /** The pond lies in the bed behind the middle of the platform, with moss all around it. */
     private boolean pond(int f, int r) {
-        if (this.theme != Theme.MOSS_POND || !contains(f, r) || border(f, r)) {
+        if (this.theme != Theme.MOSS_POND || !bed(f, r) || bedEdge(f, r)) {
             return false;
         }
         int middle = this.depth / 2 + 1;
-        double radius = Math.min(3, middle - rails() - 2) - 0.6 + chance(f, r, 24);
+        double radius = 1.6 + chance(0, 0, 37) + chance(f, r, 24) * 0.8;
         return (f - middle) * (f - middle) + r * r <= radius * radius;
     }
 
@@ -184,6 +193,7 @@ public final class HangingPlatformPiece extends HangingPiece {
         int[] sides = sides(this.shape, this.width, this.mirror);
         boolean railing = railing();
         List<int[]> spots = new ArrayList<>();
+        List<int[]> mossSpots = new ArrayList<>();
 
         for (int f = 0; f < this.depth; f++) {
             // Beams two blocks from the near and the far edge, and one more under the middle of a long platform.
@@ -192,16 +202,23 @@ public final class HangingPlatformPiece extends HangingPiece {
                 if (!contains(f, r)) {
                     continue;
                 }
+                canvas.deck(f, 0, r, false);
                 if (pond(f, r)) {
-                    canvas.put(f, 0, r, Blocks.WATER.defaultBlockState());
-                    canvas.put(f, -1, r, this.wood.planks());
+                    canvas.put(f, 1, r, Blocks.WATER.defaultBlockState());
                     if (chance(f, r, 25) < 0.2f) {
-                        canvas.put(f, 1, r, Blocks.LILY_PAD.defaultBlockState());
+                        canvas.put(f, 2, r, Blocks.LILY_PAD.defaultBlockState());
                     }
                     continue;
                 }
-                boolean moss = moss(f, r);
-                canvas.deck(f, 0, r, moss, THICKNESS);
+                if (bed(f, r)) {
+                    // Planks and moss mix along the edge of the bed, so the step up does not look laid on.
+                    boolean moss = !bedEdge(f, r) || chance(f, r, 36) < 0.5f;
+                    canvas.block(f, 1, r, moss);
+                    if (moss) {
+                        mossSpots.add(new int[]{f, r});
+                    }
+                    continue;
+                }
                 if (!border(f, r)) {
                     if (!lane(f, r)) {
                         spots.add(new int[]{f, r});
@@ -216,7 +233,7 @@ public final class HangingPlatformPiece extends HangingPiece {
                     int nr = r + step(direction, side(1));
                     // Not in front, where the track is, and not where the chains of a beam hang.
                     if (nf >= 0 && !contains(nf, nr) && !beam) {
-                        canvas.vines(nf, 0, nr, direction.getOpposite(), moss);
+                        canvas.vines(nf, 0, nr, direction.getOpposite(), this.wear == Wear.OVERGROWN);
                     }
                 }
             }
@@ -232,7 +249,19 @@ public final class HangingPlatformPiece extends HangingPiece {
         if (this.connected) {
             canvas.buffer(rails, 1, 0, side(1).getAxis());
         }
+        if (this.theme == Theme.MOSS_POND) {
+            lanternPosts(canvas, mossSpots);
+        }
         furnish(canvas, spots);
+    }
+
+    /** Two fence posts with lanterns on the moss around the pond. */
+    private void lanternPosts(Canvas canvas, List<int[]> mossSpots) {
+        for (int i = 0; i < 2 && !mossSpots.isEmpty(); i++) {
+            int[] spot = mossSpots.get((int) (chance(i, 0, 38) * mossSpots.size()));
+            canvas.fence(spot[0], 2, spot[1]);
+            canvas.put(spot[0], 3, spot[1], Blocks.LANTERN.defaultBlockState());
+        }
     }
 
     /** How far a step in a world direction goes along a local axis. */
@@ -251,12 +280,12 @@ public final class HangingPlatformPiece extends HangingPiece {
                 r++;
             }
             for (int i = start - 1; i <= r + 1; i++) {
-                canvas.put(f, -THICKNESS, i, this.wood.log(side(1).getAxis()));
+                canvas.put(f, -1, i, this.wood.log(side(1).getAxis()));
             }
-            canvas.chain(f, 1 - THICKNESS, start - 1);
-            canvas.chain(f, 1 - THICKNESS, r + 1);
+            canvas.chain(f, 0, start - 1);
+            canvas.chain(f, 0, r + 1);
             if (chance(f, start, 8) < 0.5f) {
-                canvas.hangingLantern(f, -THICKNESS - 1, chance(f, start, 9) < 0.5f ? start - 1 : r + 1);
+                canvas.hangingLantern(f, -2, chance(f, start, 9) < 0.5f ? start - 1 : r + 1);
             }
         }
     }
@@ -274,14 +303,7 @@ public final class HangingPlatformPiece extends HangingPiece {
         Direction front = this.facing.getOpposite();
 
         switch (this.theme) {
-            case MOSS_POND -> {
-                Iterator<int[]> free = spots.iterator();
-                for (int i = 0; i < 2 && free.hasNext(); i++) {
-                    int[] spot = free.next();
-                    canvas.fence(spot[0], 1, spot[1]);
-                    canvas.put(spot[0], 2, spot[1], Blocks.LANTERN.defaultBlockState());
-                }
-            }
+            case MOSS_POND -> { }
             case HUTS -> {
                 int[] first = site(spots, sites, HUT);
                 if (first != null) {
@@ -376,7 +398,7 @@ public final class HangingPlatformPiece extends HangingPiece {
         // A building opens towards the way in, so the row in front of it stays free too.
         for (int f = f0 - 1; f < f0 + length; f++) {
             for (int r = r0; r < r0 + HUT; r++) {
-                if (!contains(f, r) || border(f, r) || lane(f, r) || pond(f, r)) {
+                if (!contains(f, r) || border(f, r) || lane(f, r) || bed(f, r)) {
                     return false;
                 }
             }
