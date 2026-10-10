@@ -16,6 +16,7 @@ import ioann.uwu.runeruin.dimension.biomes.lostcaves.SparklingCaves;
 import ioann.uwu.runeruin.dimension.biomes.lostcavesceiling.SparklingCavesCeiling;
 import ioann.uwu.runeruin.dimension.biomes.toplayer.EldenGarden;
 import ioann.uwu.runeruin.dimension.biomes.toplayer.SimilarForest;
+import ioann.uwu.runeruin.dimension.biomes.voidlayer.VoidBiome;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
@@ -52,6 +53,9 @@ public class RRBiomes {
     // Lost caves
     public static final ResourceKey<Biome> SPARKLING_CAVES = RR.resourceKey(Registries.BIOME, "sparkling_caves");
 
+    // Void
+    public static final ResourceKey<Biome> VOID = RR.resourceKey(Registries.BIOME, "void");
+
 
     public static void bootstrap(BootstrapContext<Biome> ctx) {
 
@@ -86,5 +90,8 @@ public class RRBiomes {
 
         // Lost caves
         ctx.register(SPARKLING_CAVES, SparklingCaves.bootstrap(placedFeatures, configuredCravers));
+
+        // Void
+        ctx.register(VOID, VoidBiome.bootstrap(placedFeatures, configuredCravers));
     }
 }

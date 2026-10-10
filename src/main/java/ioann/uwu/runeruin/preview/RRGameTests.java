@@ -133,6 +133,7 @@ public final class RRGameTests {
         Block glowingMoss = RRBlocks.GLOWING_MOSS.get();
         Block gobletBud = RRBlocks.GIANT_GOBLET_BUD.get();
         Block deepMoss = RRBlocks.DEEP_MOSS.get();
+        Block voidStone = RRBlocks.VOID_STONE.get();
         return List.of(
             new FeatureCase("brown_dome_mushroom", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("trumpet_mushroom", Surface.FLOOR, Blocks.STONE, 1),
@@ -170,6 +171,10 @@ public final class RRGameTests {
             new FeatureCase("inverted_tree", Surface.CEILING, deepMoss, 0),
             new FeatureCase("long_ceiling_block_vine", Surface.CEILING, deepMoss, 0),
             new FeatureCase("ceiling_vine", Surface.CEILING, deepMoss, -1),
+            new FeatureCase("hanging_chorus", Surface.CEILING, voidStone, -1),
+            new FeatureCase("void_amethyst", Surface.CEILING, voidStone, -1),
+            new FeatureCase("dust_bloom", Surface.CEILING, voidStone, -1),
+            new FeatureCase("bead_vine", Surface.CEILING, voidStone, -1),
             new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("goblet_kelp", Surface.UNDERWATER, Blocks.STONE, 1),

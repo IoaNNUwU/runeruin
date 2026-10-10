@@ -9,7 +9,7 @@ description: >-
 
 Biomes do not shape the stacked caves (`RRChunkGenerator` does); they choose surface blocks, decoration, mobs and effects.
 
-1. Class in `dimension/biomes/<layer>/` with `bootstrap(placedFeatures, carvers)` that builds the `Biome` (mobs, effects, `addFeature`). Layer folders: `toplayer`, `bloomingcaves` / `bloomingcavesceiling`, `deepcaves` / `deepcavesceiling`, `lostcaves` / `lostcavesceiling`. Copy the closest biome of the same layer.
+1. Class in `dimension/biomes/<layer>/` with `bootstrap(placedFeatures, carvers)` that builds the `Biome` (mobs, effects, `addFeature`). Layer folders: `toplayer`, `bloomingcaves` / `bloomingcavesceiling`, `deepcaves` / `deepcavesceiling`, `lostcaves` / `lostcavesceiling`, `voidlayer`. Copy the closest biome of the same layer.
 2. Key + `ctx.register` in `RRBiomes`.
 3. Entry in the layer list in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`), or it never generates. Weights are repeated entries.
 4. Surface blocks in `dimension/chunkgenerator/RRTerrainSurfaces`, or it silently gets the default surface.
