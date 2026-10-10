@@ -1,20 +1,26 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
+import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
+
+import java.util.Optional;
 
 public class RRStructureSets {
 
     public static final ResourceKey<StructureSet> GIANT_GOBLETS = RR.resourceKey(Registries.STRUCTURE_SET, "giant_goblets");
     public static final ResourceKey<StructureSet> BAOBABS = RR.resourceKey(Registries.STRUCTURE_SET, "baobabs");
+    public static final ResourceKey<StructureSet> DINOSAUR_SKELETONS = RR.resourceKey(Registries.STRUCTURE_SET, "dinosaur_skeletons");
 
     public static void bootstrap(BootstrapContext<StructureSet> ctx) {
         var structures = ctx.lookup(Registries.STRUCTURE);
+        var structureSets = ctx.lookup(Registries.STRUCTURE_SET);
 
         ctx.register(
                 GIANT_GOBLETS,
@@ -29,6 +35,19 @@ public class RRStructureSets {
                 new StructureSet(
                         structures.getOrThrow(RRStructures.BAOBAB),
                         new RandomSpreadStructurePlacement(5, 3, RandomSpreadType.LINEAR, 2819815)
+                )
+        );
+
+        ctx.register(
+                DINOSAUR_SKELETONS,
+                new StructureSet(
+                        structures.getOrThrow(RRStructures.DINOSAUR_SKELETON),
+                        // Not in the chunks next to a giant goblet: its stem would stand in the skeleton.
+                        new RandomSpreadStructurePlacement(
+                                Vec3i.ZERO, StructurePlacement.FrequencyReductionMethod.DEFAULT, 1.0F, 7361529,
+                                Optional.of(new StructurePlacement.ExclusionZone(structureSets.getOrThrow(GIANT_GOBLETS), 1)),
+                                8, 4, RandomSpreadType.LINEAR
+                        )
                 )
         );
     }
