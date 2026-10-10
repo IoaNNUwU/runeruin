@@ -57,7 +57,7 @@ public class StoneForest {
         BiomeDefaultFeatures.addLushCavesSpecialOres(generation);
         BiomeDefaultFeatures.addExtraEmeralds(generation);
 
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.MOSS_BERRY_BUSH_PATCH);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.WISPBERRY_BUSH_PATCH);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.COMMON_STONE_LILY);
 

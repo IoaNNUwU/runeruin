@@ -24,7 +24,7 @@ public class RRCreativeModeTabs {
                     // --- Items ---
                     RRItems.RUNE_OF_SPACE.toStack(),
 
-                    RRItems.MOSS_BERRY.toStack(),
+                    RRItems.WISPBERRY.toStack(),
                     RRItems.POWDERED_MOSS_BUCKET.toStack(),
                     RRItems.SNAIL_SPAWN_EGG.toStack(),
                     RRBlocks.LAPIS_LIGHT.toStack(),
