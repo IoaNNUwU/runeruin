@@ -64,7 +64,9 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
 
         // Caps take precedence where tilted or paired stems cross the solid cap volume.
         placedStem.removeAll(placedCap);
-        if (!canPlace(level, new ArrayList<>(placedStem)) || !canPlace(level, new ArrayList<>(placedCap))) {
+        FeatureChunkBounds chunkBounds = new FeatureChunkBounds(base);
+        if (!canPlace(level, chunkBounds, new ArrayList<>(placedStem))
+                || !canPlace(level, chunkBounds, new ArrayList<>(placedCap))) {
             return false;
         }
 
@@ -191,7 +193,6 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
                     || cap.contains(lowered)
                     || level.isOutsideBuildHeight(lowered)
                     || level.isOutsideBuildHeight(support)
-                    || !level.ensureCanWrite(lowered)
                     || !isAirLike(level, lowered)) {
                 continue;
             }
@@ -607,9 +608,9 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
         }
     }
 
-    private static boolean canPlace(WorldGenLevel level, List<BlockPos> positions) {
+    private static boolean canPlace(WorldGenLevel level, FeatureChunkBounds chunkBounds, List<BlockPos> positions) {
         for (BlockPos pos : positions) {
-            if (level.isOutsideBuildHeight(pos) || !level.ensureCanWrite(pos)) {
+            if (level.isOutsideBuildHeight(pos) || !chunkBounds.contains(pos)) {
                 return false;
             }
             BlockState existing = level.getBlockState(pos);

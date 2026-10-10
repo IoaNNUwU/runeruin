@@ -101,11 +101,12 @@ public class CaveMushroomFeature extends Feature<CaveMushroomFeature.Config> {
             }
         }
 
+        FeatureChunkBounds chunkBounds = new FeatureChunkBounds(origin);
         int checked = 0;
         int blocked = 0;
         for (Set<BlockPos> part : List.of(stem, cap, rim)) {
             for (BlockPos pos : part) {
-                if (level.isOutsideBuildHeight(pos) || !level.ensureCanWrite(pos)) {
+                if (level.isOutsideBuildHeight(pos) || !chunkBounds.contains(pos)) {
                     return false;
                 }
                 if (part == stem && pos.getY() - origin.getY() < 2) {
