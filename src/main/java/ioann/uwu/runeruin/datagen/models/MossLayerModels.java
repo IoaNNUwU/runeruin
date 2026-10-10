@@ -61,11 +61,11 @@ public final class MossLayerModels {
 
     /**
      * One cube, leaning away from the middle of the block: side by side the cubes read as a dome. Two upright
-     * planes through its middle, a tenth wider than the cube, show their dark rim around it as spikes.
+     * planes through its middle reach a pixel out of it on every side: what is drawn there shows as spikes.
      */
     private static JsonObject plantModel(MossLayerBlock.Plant plant, int mossHeight) {
         double half = plant.size() / 2.0;
-        double rim = half * 1.1;
+        double rim = half + 1;
         double[] center = {plant.x(), mossHeight + plant.lift(), plant.z()};
         JsonObject rotation = new JsonObject();
         rotation.add("origin", vector(center));
@@ -73,9 +73,9 @@ public final class MossLayerModels {
         rotation.addProperty("x", plant.tilt());
         rotation.addProperty("y", Math.round(Math.toDegrees(Math.atan2(plant.x() - 8, plant.z() - 8))));
         JsonArray elements = new JsonArray();
-        elements.add(element(center, half, half, half, rotation, tile(plant.size(), 0), "down", "up", "north", "south", "west", "east"));
-        elements.add(element(center, rim, rim, 0, rotation, tile(plant.size(), 4), "north", "south"));
-        elements.add(element(center, 0, rim, rim, rotation, tile(plant.size(), 4), "west", "east"));
+        elements.add(element(center, half, half, half, rotation, tile(plant.size(), false), "down", "up", "north", "south", "west", "east"));
+        elements.add(element(center, rim, rim, 0, rotation, tile(plant.size(), true), "north", "south"));
+        elements.add(element(center, 0, rim, rim, rotation, tile(plant.size(), true), "west", "east"));
         JsonObject model = new JsonObject();
         // No smooth lighting: it is meant for block faces, not for cubes this small and tilted.
         model.addProperty("ambientocclusion", false);
@@ -102,13 +102,15 @@ public final class MossLayerModels {
     }
 
     /**
-     * moss_hedgehog.png, per cube size a row of two tiles as wide as the cube: its face at u 0 and its spike
-     * plane at u 4. The rows start at v 0 (4x4), 4 (3x3) and 7 (2x2).
+     * moss_hedgehog.png, per cube size a row of two tiles: the cube face at u 0, as wide as the cube, and the
+     * spike plane at u 4, two pixels wider. The rows start at v 0 (4x4), 6 (3x3) and 11 (2x2).
      */
-    private static JsonObject tile(int size, int u) {
-        int v = size == 4 ? 0 : size == 3 ? 4 : 7;
+    private static JsonObject tile(int size, boolean spikes) {
+        int u = spikes ? 4 : 0;
+        int v = size == 4 ? 0 : size == 3 ? 6 : 11;
+        int width = spikes ? size + 2 : size;
         JsonObject face = new JsonObject();
-        face.add("uv", vector(u, v, u + size, v + size));
+        face.add("uv", vector(u, v, u + width, v + width));
         face.addProperty("texture", "#plant");
         return face;
     }
