@@ -15,32 +15,26 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 
 /**
- * Wispberry bush: a stem with leaf clumps of several sizes around it, which keeps it from looking like one
- * leafy box. A bush with berries carries them as cubes sunk a pixel into the clumps.
+ * Wispberry bush: a stem under one big box of leaves that reaches the top of the block, as an azalea has, and a
+ * smaller box at each of two opposite lower corners. A bush with berries carries them as cubes sunk into the boxes.
  */
 public final class WispberryBushModels {
 
     private static final String[] SIDES = {"down", "up", "north", "south", "west", "east"};
 
     // Boxes as {from, to}, in pixels.
-    private static final double[][][] SAPLING_STEM = {{{7, 0, 7}, {9, 2, 9}}};
-    private static final double[][][] SAPLING_LEAVES = {{{5, 2, 5}, {10, 6, 10}}, {{8, 1, 9}, {12, 4, 12}}};
-    private static final double[][][] STEM = {{{7, 0, 7}, {9, 6, 9}}, {{8, 2, 5}, {9, 3, 7}}, {{9, 3, 8}, {10, 4, 9}}};
-    private static final double[][][] LEAVES = {
-            {{5, 5, 4}, {12, 10, 11}},
-            {{7, 9, 5}, {11, 12, 9}},
-            {{1, 1, 7}, {7, 6, 13}},
-            {{10, 2, 8}, {15, 6, 14}},
-            {{6, 1, 1}, {11, 4, 5}}
-    };
+    private static final double[][][] SAPLING_STEM = {{{7, 0, 7}, {9, 4, 9}}};
+    private static final double[][][] SAPLING_LEAVES = {{{5, 3, 5}, {11, 9, 11}}, {{3, 1, 3}, {7, 5, 7}}};
+    private static final double[][][] STEM = {{{7, 0, 7}, {9, 6, 9}}};
+    private static final double[][][] LEAVES = {{{3, 5, 3}, {13, 16, 13}}, {{1, 1, 1}, {7, 8, 7}}, {{10, 2, 10}, {15, 7, 15}}};
 
     /**
-     * Berries as x, y, z of the low corner and the size of a ripe one. No face of a berry may lie in the plane
-     * of a clump face that looks the same way: the two would flicker.
+     * Berries as x, y, z of the low corner and the size of a ripe one. Two faces of the model that overlap in
+     * one plane flicker, so no berry, ripe or unripe, shares a plane with a box of leaves or another berry.
      */
-    private static final int[][] BERRIES = {{8, 6, 10, 3}, {2, 5, 9, 2}, {8, 3, 2, 2}, {0, 2, 10, 2}, {14, 3, 10, 2}, {4, 9, 6, 2}, {11, 3, 4, 2}};
+    private static final int[][] BERRIES = {{4, 10, 11, 4}, {12, 8, 5, 3}, {2, 7, 2, 3}, {1, 11, 6, 4}, {8, 12, 1, 3}, {11, 6, 11, 3}};
 
-    /** An unripe bush has the first few of them, each two pixels wide. */
+    /** An unripe bush has the first few of them, each a pixel smaller. */
     private static final int UNRIPE_BERRIES = 3;
 
     private WispberryBushModels() {}
@@ -82,12 +76,12 @@ public final class WispberryBushModels {
     }
 
     /**
-     * block/wispberry_bush_berries.png holds one tile per kind of berry in its top row: ripe 3x3 at u 0, ripe 2x2
-     * at u 4 and unripe 2x2 at u 8. Ripe berries glow.
+     * block/wispberry_bush_berries.png holds one tile per kind of berry in its top row: ripe 4x4 at u 0, ripe 3x3
+     * at u 5, unripe 3x3 at u 9 and unripe 2x2 at u 13. Ripe berries glow.
      */
     private static void addBerry(JsonArray elements, int[] berry, boolean ripe) {
-        int size = ripe ? berry[3] : 2;
-        int u = !ripe ? 8 : size == 3 ? 0 : 4;
+        int size = ripe ? berry[3] : berry[3] - 1;
+        int u = ripe ? (size == 4 ? 0 : 5) : (size == 3 ? 9 : 13);
         addElement(elements, "berry", new double[]{berry[0], berry[1], berry[2]},
                 new double[]{berry[0] + size, berry[1] + size, berry[2] + size}, "berries", ripe ? 10 : 0, SIDES);
         JsonObject faces = elements.get(elements.size() - 1).getAsJsonObject().getAsJsonObject("faces");

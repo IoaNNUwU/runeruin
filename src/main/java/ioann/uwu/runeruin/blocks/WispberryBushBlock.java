@@ -37,11 +37,11 @@ import net.neoforged.neoforge.common.CommonHooks;
 public class WispberryBushBlock extends VegetationBlock implements BonemealableBlock {
 
     public static final IntegerProperty AGE = BlockStateProperties.AGE_3;
-    private static final VoxelShape SHAPE_SAPLING = Block.column(8.0F, 0.0F, 6.0F);
-    private static final VoxelShape SHAPE_GROWN = Block.column(14.0F, 0.0F, 12.0F);
+    private static final VoxelShape SHAPE_SAPLING = Block.column(8.0F, 0.0F, 9.0F);
+    private static final VoxelShape SHAPE_GROWN = Block.column(14.0F, 0.0F, 16.0F);
     // Only the middle of the bush holds whoever walks into it: its edge can be brushed past.
-    private static final VoxelShape CORE_SAPLING = Block.column(4.0F, 0.0F, 6.0F);
-    private static final VoxelShape CORE_GROWN = Block.column(8.0F, 0.0F, 10.0F);
+    private static final VoxelShape CORE_SAPLING = Block.column(4.0F, 0.0F, 9.0F);
+    private static final VoxelShape CORE_GROWN = Block.column(8.0F, 0.0F, 16.0F);
 
     public WispberryBushBlock(Properties properties) {
         super(properties);
