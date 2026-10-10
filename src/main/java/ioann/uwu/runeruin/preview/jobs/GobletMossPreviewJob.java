@@ -43,9 +43,7 @@ public final class GobletMossPreviewJob implements PreviewJob {
         long seed = args.seed();
         PreviewWorld world = PreviewWorld.create(seed);
         world.fillBox(new BoundingBox(-6, 70, -6, 6, 74, 6), RRBlocks.GIANT_GOBLET_BUD.get().defaultBlockState());
-        for (int y = 68; y <= 74; y++) {
-            world.set(new BlockPos(2, y, 0), RRBlocks.GIANT_GOBLET_STEM.get().defaultBlockState());
-        }
+        world.fillBox(new BoundingBox(2, 68, 0, 2, 74, 0), RRBlocks.GIANT_GOBLET_STEM.get().defaultBlockState());
 
         VegetationPatchConfiguration config = new VegetationPatchConfiguration(
                 HolderSet.direct(RRBlocks.GIANT_GOBLET_BUD.get().builtInRegistryHolder()),

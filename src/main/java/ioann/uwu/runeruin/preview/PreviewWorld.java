@@ -27,6 +27,7 @@ public final class PreviewWorld {
     public static final int HEIGHT = 512;
 
     private final Map<Long, BlockState> blocks = new HashMap<>();
+    private final Map<Long, BlockState> prepared = new HashMap<>();
     private final long seed;
     private final RandomSource random;
     private final WorldGenLevel view;
@@ -120,18 +121,45 @@ public final class PreviewWorld {
     }
 
     public RegionExport.Snapshot capture(String dimension, BoundingBox box) {
-        return RegionExport.capture(dimension, box, seed, this::get);
+        return RegionExport.capture(dimension, box, seed, this::get, this::isPrepared);
     }
 
+    /**
+     * Fills what a job prepares for its subject: ground, ceiling, pool. The export marks these blocks,
+     * so the renderer can fade or hide them whatever they are made of.
+     */
     public void fillBox(BoundingBox box, BlockState state) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int y = box.minY(); y <= box.maxY(); y++) {
             for (int z = box.minZ(); z <= box.maxZ(); z++) {
                 for (int x = box.minX(); x <= box.maxX(); x++) {
                     set(cursor.set(x, y, z), state);
+                    prepared.put(cursor.asLong(), state);
                 }
             }
         }
+    }
+
+    /** True while the block that {@link #fillBox} put here is still in place. */
+    public boolean isPrepared(BlockPos pos) {
+        BlockState state = prepared.get(pos.asLong());
+        return state != null && state == blocks.get(pos.asLong());
+    }
+
+    /** How many blocks differ from what {@link #fillBox} prepared: the size of the subject. */
+    public int changedCount() {
+        int changed = 0;
+        for (Map.Entry<Long, BlockState> entry : blocks.entrySet()) {
+            if (prepared.get(entry.getKey()) != entry.getValue()) {
+                changed++;
+            }
+        }
+        for (Long key : prepared.keySet()) {
+            if (!blocks.containsKey(key)) {
+                changed++;
+            }
+        }
+        return changed;
     }
 
     @SuppressWarnings("unchecked")

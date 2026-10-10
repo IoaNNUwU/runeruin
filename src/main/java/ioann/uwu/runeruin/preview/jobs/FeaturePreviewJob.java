@@ -5,7 +5,6 @@ import ioann.uwu.runeruin.preview.PreviewJob;
 import ioann.uwu.runeruin.preview.PreviewJobs;
 import ioann.uwu.runeruin.preview.PreviewWorld;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
@@ -131,29 +130,7 @@ public final class FeaturePreviewJob implements PreviewJob {
         }
         // Selectors place nested placed features, whose PlacementContext needs a generator.
         feature.place(world.asLevel(), server.overworld().getChunkSource().getGenerator(), world.random(), origin);
-
-        List<BoundingBox> prepared = new ArrayList<>(groundBoxes);
-        if (waterBox != null) {
-            prepared.add(waterBox);
-        }
-        prepared.add(world.occupiedBox());
-        BoundingBox scan = BoundingBox.encapsulatingBoxes(prepared).orElseThrow();
-        int changed = 0;
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int y = scan.minY(); y <= scan.maxY(); y++) {
-            for (int z = scan.minZ(); z <= scan.maxZ(); z++) {
-                for (int x = scan.minX(); x <= scan.maxX(); x++) {
-                    pos.set(x, y, z);
-                    BlockState expected = groundBoxes.stream().anyMatch(box -> box.isInside(pos)) ? ground
-                        : waterBox != null && waterBox.isInside(pos) ? Blocks.WATER.defaultBlockState()
-                        : Blocks.AIR.defaultBlockState();
-                    if (world.get(pos) != expected) {
-                        changed++;
-                    }
-                }
-            }
-        }
-        return new Placement(world, origin, changed);
+        return new Placement(world, origin, world.changedCount());
     }
 
     /** Four blocks thick: features check that their base is embedded in solid ground. */

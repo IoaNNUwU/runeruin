@@ -1,17 +1,20 @@
 package ioann.uwu.runeruin.preview;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
  * Seed, output name, and free-form params ({@code height}, {@code radius}, …).
- * Headless: {@code -Pseed=1 -Pheight=75} or {@code -Parg.bluntness=1.2}.
+ * Headless: {@code -Pseed=1 -Pheight=75}, {@code -Pseeds=1-9} or {@code -Parg.bluntness=1.2}.
  * In-game: {@code /rrpreview <job> [seed] [name] [k=v]…}.
  */
 public final class PreviewArgs {
     public static final String PROPERTY_PREFIX = "runeruin.preview.";
+    private static final int MAX_SEEDS = 64;
 
     private final Path exportDir;
     private final Map<String, String> values;
@@ -55,12 +58,30 @@ public final class PreviewArgs {
         return getLong("seed", PreviewJobs.DEFAULT_SEED);
     }
 
-    public String name(String defaultName) {
-        String raw = values.get("name");
-        if (raw == null || raw.isBlank()) {
-            return defaultName;
+    /**
+     * One run per seed of {@code seeds=1-9} or {@code seeds=1,4,7}, each exporting as {@code <name>_s<seed>};
+     * without {@code seeds}, this run alone.
+     */
+    public List<PreviewArgs> perSeed() {
+        List<PreviewArgs> runs = new ArrayList<>();
+        for (String part : get("seeds", "").split(",")) {
+            String[] range = part.trim().split("-", 2);
+            if (range[0].isEmpty()) {
+                continue;
+            }
+            long last = Long.parseLong(range[range.length - 1]);
+            for (long seed = Long.parseLong(range[0]); seed <= last; seed++) {
+                if (runs.size() == MAX_SEEDS) {
+                    throw new IllegalArgumentException("seeds: at most " + MAX_SEEDS + " per run");
+                }
+                runs.add(new PreviewArgs(exportDir, values).with("seed", Long.toString(seed)).with("nameSuffix", "_s" + seed));
+            }
         }
-        return raw.trim();
+        return runs.isEmpty() ? List.of(this) : runs;
+    }
+
+    public String name(String defaultName) {
+        return get("name", defaultName) + get("nameSuffix", "");
     }
 
     public boolean has(String key) {
