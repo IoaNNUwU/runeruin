@@ -95,11 +95,10 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
         return SHAPE;
     }
 
-    /** Only moss: any moss block, deep moss and a deep moss layer of full height. */
+    /** Only moss: any moss block, deep moss among them, and a deep moss layer of full height. */
     @Override
     protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
         return state.is(BlockTags.MOSS_BLOCKS)
-                || state.is(RRBlocks.DEEP_MOSS)
                 || state.is(RRBlocks.DEEP_MOSS_LAYER) && state.getValue(DeepMossLayerBlock.LAYERS) == DeepMossLayerBlock.MAX_HEIGHT;
     }
 

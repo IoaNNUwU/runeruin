@@ -59,6 +59,7 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "wispberry_bush_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> POWDERED_MOSS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "powdered_moss");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_vegetation");
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_HUMMOCK = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_hummock");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
@@ -154,7 +155,7 @@ public class RRConfiguredFeatures {
         ctx.register(LONG_CEILING_BLOCK_VINE, new ConfiguredFeature<>(
                 RRFeatures.CEILING_BLOCK_VINE.get(),
                 new CeilingBlockVineFeature.Config(
-                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                         BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
                         List.of(
                                 BlockStateProvider.simple(Blocks.OCHRE_FROGLIGHT),
@@ -243,7 +244,7 @@ public class RRConfiguredFeatures {
                 Feature.WATERLOGGED_VEGETATION_PATCH,
                 new VegetationPatchConfiguration(
                         blocks.getOrThrow(BlockTags.LUSH_GROUND_REPLACEABLE),
-                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                         PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.DRIPLEAF)),
                         CaveSurface.FLOOR,
                         ConstantInt.of(3),
@@ -261,7 +262,7 @@ public class RRConfiguredFeatures {
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE),
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_WALL),
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_SLAB),
-                        BlockStateProvider.simple(Blocks.MOSS_CARPET)
+                        BlockStateProvider.simple(RRBlocks.DEEP_MOSS_LAYER.get())
                 )
         ));
 
@@ -279,6 +280,21 @@ public class RRConfiguredFeatures {
         ctx.register(POWDERED_MOSS, new ConfiguredFeature<>(
                 RRFeatures.POWDERED_MOSS_VEIN.get(),
                 NoneFeatureConfiguration.INSTANCE
+        ));
+
+        // Vanilla moss vegetation with a deep moss layer in place of the moss carpet.
+        ctx.register(MOSS_VEGETATION, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(
+                        new WeightedStateProvider(
+                                WeightedList.<BlockState>builder()
+                                        .add(Blocks.FLOWERING_AZALEA.defaultBlockState(), 4)
+                                        .add(Blocks.AZALEA.defaultBlockState(), 7)
+                                        .add(RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState(), 25)
+                                        .add(Blocks.SHORT_GRASS.defaultBlockState(), 50)
+                                        .add(Blocks.TALL_GRASS.defaultBlockState(), 10)
+                        )
+                )
         ));
 
         ctx.register(MOSS_HUMMOCK, new ConfiguredFeature<>(
@@ -322,7 +338,7 @@ public class RRConfiguredFeatures {
         ctx.register(INVERTED_TREE, new ConfiguredFeature<>(
                 RRFeatures.INVERTED_TREE.get(),
                 new InvertedTreeFeature.Config(
-                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                         BlockStateProvider.simple(RRBlocks.INVERTED_TREE_WOOD.get()),
                         List.of(
                                 BlockStateProvider.simple(RRBlocks.INVERTED_LEAVES_1.get()),
@@ -456,8 +472,8 @@ public class RRConfiguredFeatures {
     ) {
         return new VegetationPatchConfiguration(
                 blocks.getOrThrow(RRTags.GOBLET_MOSS_REPLACEABLE),
-                BlockStateProvider.simple(Blocks.MOSS_BLOCK),
-                PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION)),
+                BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
+                PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(MOSS_VEGETATION)),
                 CaveSurface.FLOOR,
                 ConstantInt.of(32),
                 0.0F,

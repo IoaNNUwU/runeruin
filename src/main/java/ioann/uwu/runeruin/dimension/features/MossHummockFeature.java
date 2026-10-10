@@ -8,7 +8,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -17,14 +16,13 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A group of deep moss mounds standing together: a main one and a few smaller ones against its side, each
- * tallest in the middle. Around them, on the moss floor, lie moss carpets and grow mossberry bushes.
+ * tallest in the middle. Around them, on the moss floor, grow mossberry bushes.
  */
 public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
 
     /** Columns around the origin that a group can reach; small enough to stay inside the neighbouring chunks. */
     private static final int REACH = 10;
     private static final int FLOOR_SEARCH = 3;
-    private static final float CARPET_CHANCE = 0.35F;
     private static final float BUSH_CHANCE = 0.25F;
 
     public MossHummockFeature() {
@@ -56,8 +54,8 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
                 boolean rim = height == 0 && (layers[x + REACH - 1][z + REACH] | layers[x + REACH + 1][z + REACH]
                         | layers[x + REACH][z + REACH - 1] | layers[x + REACH][z + REACH + 1]) > 0;
                 float roll = random.nextFloat();
-                // A ragged edge instead of a drawn circle; around it, something on a part of the columns.
-                if (height == 1 && roll < 0.25F || height == 0 && (!rim || roll >= CARPET_CHANCE + BUSH_CHANCE)) {
+                // A ragged edge instead of a drawn circle; around it, a bush on a part of the columns.
+                if (height == 1 && roll < 0.25F || height == 0 && (!rim || roll >= BUSH_CHANCE)) {
                     continue;
                 }
                 BlockPos pos = findFloor(level, origin.offset(x, 0, z), moss);
@@ -67,8 +65,6 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
                 if (height > 0) {
                     level.setBlock(pos, moss.setValue(DeepMossLayerBlock.LAYERS, height), 2);
                     placed = true;
-                } else if (roll < CARPET_CHANCE) {
-                    level.setBlock(pos, Blocks.MOSS_CARPET.defaultBlockState(), 2);
                 } else {
                     BlockState bush = RRBlocks.MOSSBERRY_BUSH.get().defaultBlockState().setValue(MossberryBushBlock.TWIGS, random.nextBoolean());
                     // One to three berries; a place that comes up twice still holds one.
@@ -95,7 +91,7 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
         }
     }
 
-    /** The highest free block near the origin level that moss can lie on; carpets and bushes keep to the same ground. */
+    /** The highest free block near the origin level that moss can lie on; the bushes keep to the same ground. */
     private static @Nullable BlockPos findFloor(WorldGenLevel level, BlockPos column, BlockState moss) {
         for (int dy = FLOOR_SEARCH; dy >= -FLOOR_SEARCH; dy--) {
             BlockPos pos = column.above(dy);

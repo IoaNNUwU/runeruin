@@ -133,6 +133,12 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
                         .setRotation(rotation)
                         .setMirror(mirror)
                         .addProcessor(blockProcessor)
+                        // The template is built with vanilla moss carpets.
+                        .addProcessor(new RuleProcessor(List.of(new ProcessorRule(
+                                new BlockMatchTest(Blocks.MOSS_CARPET),
+                                AlwaysTrueTest.INSTANCE,
+                                config.mossCarpet.getState(level, random, origin)
+                        ))))
                 ,
                 random,
                 1

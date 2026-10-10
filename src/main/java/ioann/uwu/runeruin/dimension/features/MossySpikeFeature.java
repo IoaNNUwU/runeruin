@@ -109,6 +109,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
     private static boolean isMossCarpet(BlockState state) {
         return state.is(RRBlocks.GLOWING_MOSS_CARPET.get())
+                || state.is(RRBlocks.DEEP_MOSS_LAYER.get())
                 || state.is(Blocks.MOSS_CARPET)
                 || state.is(Blocks.PALE_MOSS_CARPET);
     }

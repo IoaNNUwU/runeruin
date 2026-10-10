@@ -124,6 +124,7 @@ public final class RRGameTests {
     private static List<FeatureCase> featureCases() {
         Block glowingMoss = RRBlocks.GLOWING_MOSS.get();
         Block gobletBud = RRBlocks.GIANT_GOBLET_BUD.get();
+        Block deepMoss = RRBlocks.DEEP_MOSS.get();
         return List.of(
             new FeatureCase("brown_dome_mushroom", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("trumpet_mushroom", Surface.FLOOR, Blocks.STONE, 1),
@@ -146,20 +147,21 @@ public final class RRGameTests {
             new FeatureCase("water_lily", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("ashen_wall_mushroom_cluster", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("ashen_wall_mushroom_cluster_upper", Surface.WALL, Blocks.STONE, 0),
-            new FeatureCase("powdered_moss", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
-            new FeatureCase("moss_hummock", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("powdered_moss", Surface.FLOOR, deepMoss, 1),
+            new FeatureCase("moss_hummock", Surface.FLOOR, deepMoss, 1),
+            new FeatureCase("moss_vegetation", Surface.FLOOR, deepMoss, 1),
             new FeatureCase("stone_lily", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("deep_roots_grass", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("goblet_deep_roots", Surface.FLOOR, gobletBud, 1),
             new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
-            new FeatureCase("wispberry_bush_patch", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
-            new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("wispberry_bush_patch", Surface.FLOOR, deepMoss, 1),
+            new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, deepMoss, 1),
             new FeatureCase("small_glowing_mushroom", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("elden_giant_tree", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
             new FeatureCase("swamp_jungle_trees", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
-            new FeatureCase("inverted_tree", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
-            new FeatureCase("long_ceiling_block_vine", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
-            new FeatureCase("ceiling_vine", Surface.CEILING, Blocks.MOSS_BLOCK, -1),
+            new FeatureCase("inverted_tree", Surface.CEILING, deepMoss, 0),
+            new FeatureCase("long_ceiling_block_vine", Surface.CEILING, deepMoss, 0),
+            new FeatureCase("ceiling_vine", Surface.CEILING, deepMoss, -1),
             new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("goblet_kelp", Surface.UNDERWATER, Blocks.STONE, 1),
@@ -413,6 +415,13 @@ public final class RRGameTests {
                 "seed 1 generated different terrain twice");
             helper.assertTrue(!sameBlocks(seed1, HeadlessTerrainGenerator.generate(server, 2, column), column),
                 "seeds 1 and 2 generated the same terrain");
+            // The moss of floors and ceilings is deep moss; vanilla moss is not generated.
+            int deepMoss = 0;
+            for (BlockPos pos : BlockPos.betweenClosed(column.minX(), column.minY(), column.minZ(), column.maxX(), column.maxY(), column.maxZ())) {
+                helper.assertTrue(!seed1.get(pos).is(Blocks.MOSS_BLOCK), "the terrain has vanilla moss at " + pos.toShortString());
+                deepMoss += seed1.get(pos).is(RRBlocks.DEEP_MOSS.get()) ? 1 : 0;
+            }
+            helper.assertTrue(deepMoss > 0, "the terrain has no deep moss");
             // Plates, hanging terrain and surfaces already followed the seed; the layer shapes did not.
             helper.assertTrue(RRChunkGenerator.topLevelNoise.getOrCreateNoise(HeadlessTerrainGenerator.randomState(server, 1)).noise(100, 100)
                     != RRChunkGenerator.topLevelNoise.getOrCreateNoise(HeadlessTerrainGenerator.randomState(server, 2)).noise(100, 100),

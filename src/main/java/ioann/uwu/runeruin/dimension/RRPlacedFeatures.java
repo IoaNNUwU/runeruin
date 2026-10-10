@@ -10,7 +10,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
-import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.data.worldgen.features.TreeFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.data.worldgen.placement.VegetationPlacements;
@@ -108,7 +107,7 @@ public class RRPlacedFeatures {
                 ))
         );
         BlockPredicate bloomingGround = BlockPredicate.matchesBlocks(
-                Blocks.MOSS_BLOCK,
+                RRBlocks.DEEP_MOSS.get(),
                 Blocks.MOSSY_COBBLESTONE,
                 Blocks.STONE,
                 Blocks.CLAY,
@@ -131,7 +130,7 @@ public class RRPlacedFeatures {
                 List.of(
                         PlacementUtils.filteredByBlockSurvival(Blocks.JUNGLE_SAPLING),
                         BlockPredicateFilter.forPredicate(BlockPredicate.not(
-                                BlockPredicate.matchesBlocks(Direction.DOWN.getUnitVec3i(), Blocks.MOSS_BLOCK)
+                                BlockPredicate.matchesBlocks(Direction.DOWN.getUnitVec3i(), RRBlocks.DEEP_MOSS.get())
                         ))
                 )
         ));
@@ -195,7 +194,7 @@ public class RRPlacedFeatures {
         ctx.register(MINI_VOLCANO, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.MINI_VOLCANO),
                 floorPlacement(CountPlacement.of(4), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP,
-                        BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK, Blocks.MOSSY_COBBLESTONE, Blocks.STONE, Blocks.CLAY), 16, -2)
+                        BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get(), Blocks.MOSSY_COBBLESTONE, Blocks.STONE, Blocks.CLAY), 16, -2)
         ));
 
         ctx.register(MONOLITH, new PlacedFeature(
@@ -242,7 +241,7 @@ public class RRPlacedFeatures {
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,
                                 BlockPredicate.matchesBlocks(
-                                        Blocks.MOSS_BLOCK,
+                                        RRBlocks.DEEP_MOSS.get(),
                                         Blocks.MOSSY_COBBLESTONE,
                                         Blocks.STONE
                                 ),
@@ -255,14 +254,14 @@ public class RRPlacedFeatures {
 
         ctx.register(POWDERED_MOSS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.POWDERED_MOSS),
-                floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK), 16, 0)
+                floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 0)
         ));
 
         // The count follows a slow noise: glades with several groups of mounds, and none between them.
         ctx.register(MOSS_HUMMOCK, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_HUMMOCK),
                 floorPlacement(NoiseBasedCountPlacement.of(4, 40.0, 0.0), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP,
-                        BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK), 16, 1)
+                        BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 1)
         ));
 
         ctx.register(DEEP_CEILING_VINE, new PlacedFeature(
@@ -323,7 +322,7 @@ public class RRPlacedFeatures {
         ));
 
         ctx.register(MOSS_VEGETATION, new PlacedFeature(
-                configuredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION),
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_VEGETATION),
                 floorPlacement(CountPlacement.of(200), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.solid(), 12, 1)
         ));
 

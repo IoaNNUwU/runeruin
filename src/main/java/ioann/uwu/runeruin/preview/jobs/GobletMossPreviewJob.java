@@ -47,10 +47,10 @@ public final class GobletMossPreviewJob implements PreviewJob {
 
         VegetationPatchConfiguration config = new VegetationPatchConfiguration(
                 HolderSet.direct(RRBlocks.GIANT_GOBLET_BUD.get().builtInRegistryHolder()),
-                BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                 PlacementUtils.inlinePlaced(
                         Feature.SIMPLE_BLOCK,
-                        new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.MOSS_CARPET))
+                        new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DEEP_MOSS_LAYER.get()))
                 ),
                 CaveSurface.FLOOR,
                 ConstantInt.of(32),
