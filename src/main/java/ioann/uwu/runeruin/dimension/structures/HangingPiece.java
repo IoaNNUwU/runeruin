@@ -223,6 +223,9 @@ public abstract class HangingPiece extends StructurePiece {
          * and hangs under it, and in the cobwebs of a decayed piece.
          */
         void deck(int f, int u, int r, boolean mossy) {
+            for (int i = 1; i <= HangingTracksLayout.MIN_GAP; i++) {
+                clear(f, u + i, r);
+            }
             block(f, u, r, mossy);
             if (mossy) {
                 if (chance(f, r, 3) < 0.2f) {
@@ -235,6 +238,16 @@ public abstract class HangingPiece extends StructurePiece {
                 if (chance(f, r, 13) < 0.03f) {
                     put(f, u + 1, r, Blocks.COBWEB.defaultBlockState());
                 }
+            }
+        }
+
+        /**
+         * Cuts the way through whatever stands here: the spikes of the cave grow before the tracks are built,
+         * and a deck keeps three blocks of air over it.
+         */
+        void clear(int f, int u, int r) {
+            if (at(f, u, r) && !this.level.getBlockState(this.cursor).isAir()) {
+                this.level.setBlock(this.cursor, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
         }
 

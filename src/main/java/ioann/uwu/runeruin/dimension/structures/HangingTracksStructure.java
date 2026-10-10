@@ -26,6 +26,10 @@ import net.minecraft.world.level.levelgen.structure.StructureType;
 public final class HangingTracksStructure extends Structure {
     public static final MapCodec<HangingTracksStructure> CODEC = simpleCodec(HangingTracksStructure::new);
 
+    /** Nothing of a network is lower than this: the lowest deck under the thickest ceiling, and what hangs under it. */
+    private static final int LOWEST_Y = Const.DEEP_CAVES_CEILING_Y - Const.CEILING_TERRAIN_HEIGHT
+            - HangingTracksLayout.MAX_GAP - HangingPiece.BELOW_DECK - 1;
+
     public HangingTracksStructure(StructureSettings settings) {
         super(settings);
     }
@@ -67,7 +71,7 @@ public final class HangingTracksStructure extends Structure {
      * before any of its chunks is decorated. Only chunk generation can ask; a tree planted later sees the blocks.
      */
     public static boolean reaches(WorldGenLevel level, BoundingBox box) {
-        if (box.minY() > Const.DEEP_CAVES_CEILING_Y || !(level instanceof WorldGenRegion region)) {
+        if (box.maxY() < LOWEST_Y || box.minY() > Const.DEEP_CAVES_CEILING_Y || !(level instanceof WorldGenRegion region)) {
             return false;
         }
         Structure tracks = region.registryAccess().lookupOrThrow(Registries.STRUCTURE).getValueOrThrow(RRStructures.HANGING_TRACKS);

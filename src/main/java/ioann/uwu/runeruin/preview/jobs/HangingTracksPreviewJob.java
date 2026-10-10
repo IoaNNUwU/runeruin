@@ -41,7 +41,7 @@ public final class HangingTracksPreviewJob implements PreviewJob {
                 + "junction, platform), size, extent (1-2), links (junction sides, 1-15), wood (oak, inverted_tree), "
                 + "wear (intact, decayed, overgrown), shape (rectangle, round, l, t, plus) with width and depth, "
                 + "theme (moss_pond, huts, treasure_hut, camp, storage, spawner, workshop, depot, lookout), gap (3-20), "
-                + "terrain=real with x and z (the ceiling and the floor of the Deep caves for the seed, around that block)";
+                + "rock=true (a rock through the middle of a single piece), terrain=real with x and z (the ceiling and the floor of the Deep caves for the seed, around that block)";
     }
 
     /** A ceiling like the one of the Deep caves, its lowest block 3 to 10 blocks under the plate, and no floor. */
@@ -93,6 +93,13 @@ public final class HangingTracksPreviewJob implements PreviewJob {
                     world.fillBox(new BoundingBox(x, y, z, x, y + 1, z), Blocks.STONE.defaultBlockState());
                 }
             }
+        }
+        // A rock in the way, as a spike of the cave would stand: the piece has to cut through it.
+        if (Boolean.parseBoolean(args.get("rock", "false"))) {
+            BoundingBox box = pieces.get(0).getBoundingBox();
+            int x = (box.minX() + box.maxX()) / 2;
+            int z = (box.minZ() + box.maxZ()) / 2;
+            world.fillBox(new BoundingBox(x - 2, box.minY() + 1, z - 2, x + 2, terrain.ceilingY(x, z), z + 2), Blocks.STONE.defaultBlockState());
         }
         Map<String, Integer> kinds = new TreeMap<>();
         for (HangingPiece piece : pieces) {

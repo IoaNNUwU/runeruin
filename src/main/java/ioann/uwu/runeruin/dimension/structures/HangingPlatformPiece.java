@@ -213,6 +213,7 @@ public final class HangingPlatformPiece extends HangingPiece {
                 if (bed(f, r)) {
                     // Planks and moss mix along the edge of the bed, so the step up does not look laid on.
                     boolean moss = !bedEdge(f, r) || chance(f, r, 36) < 0.5f;
+                    canvas.clear(f, 1 + HangingTracksLayout.MIN_GAP, r);
                     canvas.block(f, 1, r, moss);
                     if (moss) {
                         mossSpots.add(new int[]{f, r});
