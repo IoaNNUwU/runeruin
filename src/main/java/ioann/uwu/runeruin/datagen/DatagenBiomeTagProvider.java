@@ -28,5 +28,8 @@ public class DatagenBiomeTagProvider extends BiomeTagsProvider {
         this.tag(RRBiomeTags.HAS_BAOBAB)
                 .add(RRBiomes.JUNGLE_SWAMP);
 
+        this.tag(RRBiomeTags.HAS_DINOSAUR_SKELETON)
+                .add(RRBiomes.SPARKLING_CAVES);
+
     }
 }

@@ -96,6 +96,7 @@
 
   "dimension.runeruin.runeruin_dimension": "Rune Ruin",
   "structure.runeruin.giant_goblet": "Giant Goblet",
+  "structure.runeruin.dinosaur_skeleton": "Dinosaur Skeleton",
 
   "runeruin.configuration.title": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",
