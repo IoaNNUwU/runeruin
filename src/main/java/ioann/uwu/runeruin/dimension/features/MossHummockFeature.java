@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension.features;
 
-import ioann.uwu.runeruin.blocks.MossLayerBlock;
+import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
+import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -15,8 +16,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 import org.jspecify.annotations.Nullable;
 
 /**
- * A group of moss layer mounds standing together: a main one and a few smaller ones against its side, each
- * tallest in the middle. Plants grow mostly near the tops, moss carpets lie around the rim.
+ * A group of deep moss mounds standing together: a main one and a few smaller ones against its side, each
+ * tallest in the middle. Around them, on the moss floor, lie moss carpets and grow mossberry bushes.
  */
 public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
 
@@ -24,6 +25,7 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
     private static final int REACH = 10;
     private static final int FLOOR_SEARCH = 3;
     private static final float CARPET_CHANCE = 0.35F;
+    private static final float BUSH_CHANCE = 0.25F;
 
     public MossHummockFeature() {
         super(NoneFeatureConfiguration.CODEC);
@@ -46,36 +48,35 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
             addMound(layers, Mth.cos(angle) * distance, Mth.sin(angle) * distance, radius, 2 + random.nextInt(3));
         }
 
-        BlockState moss = RRBlocks.MOSS_LAYER.get().defaultBlockState();
+        BlockState moss = RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState();
         boolean placed = false;
         for (int x = 1 - REACH; x < REACH; x++) {
             for (int z = 1 - REACH; z < REACH; z++) {
                 int height = layers[x + REACH][z + REACH];
-                BlockPos column = origin.offset(x, 0, z);
+                boolean rim = height == 0 && (layers[x + REACH - 1][z + REACH] | layers[x + REACH + 1][z + REACH]
+                        | layers[x + REACH][z + REACH - 1] | layers[x + REACH][z + REACH + 1]) > 0;
+                float roll = random.nextFloat();
+                // A ragged edge instead of a drawn circle; around it, something on a part of the columns.
+                if (height == 1 && roll < 0.25F || height == 0 && (!rim || roll >= CARPET_CHANCE + BUSH_CHANCE)) {
+                    continue;
+                }
+                BlockPos pos = findFloor(level, origin.offset(x, 0, z), moss);
+                if (pos == null) {
+                    continue;
+                }
                 if (height > 0) {
-                    // A ragged edge instead of a drawn circle.
-                    if (height == 1 && random.nextFloat() < 0.25F) {
-                        continue;
+                    level.setBlock(pos, moss.setValue(DeepMossLayerBlock.LAYERS, height), 2);
+                    placed = true;
+                } else if (roll < CARPET_CHANCE) {
+                    level.setBlock(pos, Blocks.MOSS_CARPET.defaultBlockState(), 2);
+                } else {
+                    BlockState bush = RRBlocks.MOSSBERRY_BUSH.get().defaultBlockState().setValue(MossberryBushBlock.TWIGS, random.nextBoolean());
+                    // One to three berries; a place that comes up twice still holds one.
+                    for (int i = 1 + random.nextInt(3); i > 0; i--) {
+                        bush = bush.setValue(Util.getRandom(MossberryBushBlock.BERRIES, random).property(), true);
                     }
-                    BlockPos pos = findFloor(level, column, moss);
-                    if (pos != null) {
-                        BlockState state = moss.setValue(MossLayerBlock.LAYERS, height);
-                        if (random.nextFloat() < 0.1F + 0.13F * height) {
-                            // Up to four plants, fewer on low moss; a place that comes up twice still holds one.
-                            for (int i = 1 + random.nextInt(Math.min(height, 4)); i > 0; i--) {
-                                state = state.setValue(Util.getRandom(MossLayerBlock.PLANTS, random).property(), true);
-                            }
-                            state = state.setValue(MossLayerBlock.TWIGS, random.nextBoolean());
-                        }
-                        level.setBlock(pos, state, 2);
-                        placed = true;
-                    }
-                } else if ((layers[x + REACH - 1][z + REACH] | layers[x + REACH + 1][z + REACH]
-                        | layers[x + REACH][z + REACH - 1] | layers[x + REACH][z + REACH + 1]) > 0
-                        && random.nextFloat() < CARPET_CHANCE) {
-                    BlockPos pos = findFloor(level, column, moss);
-                    if (pos != null) {
-                        level.setBlock(pos, Blocks.MOSS_CARPET.defaultBlockState(), 2);
+                    if (bush.canSurvive(level, pos)) {
+                        level.setBlock(pos, bush, 2);
                     }
                 }
             }
@@ -94,7 +95,7 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
         }
     }
 
-    /** The highest free block near the origin level that moss can lie on; the carpets keep to the same ground. */
+    /** The highest free block near the origin level that moss can lie on; carpets and bushes keep to the same ground. */
     private static @Nullable BlockPos findFloor(WorldGenLevel level, BlockPos column, BlockState moss) {
         for (int dy = FLOOR_SEARCH; dy >= -FLOOR_SEARCH; dy--) {
             BlockPos pos = column.above(dy);

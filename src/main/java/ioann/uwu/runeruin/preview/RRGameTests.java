@@ -4,8 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
-import ioann.uwu.runeruin.blocks.MossLayerBlock;
+import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
@@ -84,10 +85,10 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("wispberry_aliases", () -> RRGameTests::wispberryAliases);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_BONEMEAL =
         TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
-    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSS_LAYER_BONEMEAL =
-        TEST_FUNCTIONS.register("moss_layer_bonemeal", () -> RRGameTests::mossLayerBonemeal);
-    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSS_LAYER_HARVEST =
-        TEST_FUNCTIONS.register("moss_layer_harvest", () -> RRGameTests::mossLayerHarvest);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSBERRY_BUSH_BONEMEAL =
+        TEST_FUNCTIONS.register("mossberry_bush_bonemeal", () -> RRGameTests::mossberryBushBonemeal);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSBERRY_BUSH_HARVEST =
+        TEST_FUNCTIONS.register("mossberry_bush_harvest", () -> RRGameTests::mossberryBushHarvest);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
         TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_FEATURE_ORDER =
@@ -307,16 +308,16 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
-            RR.id("moss_layer_bonemeal"),
+            RR.id("mossberry_bush_bonemeal"),
             new FunctionGameTestInstance(
-                MOSS_LAYER_BONEMEAL.getKey(),
+                MOSSBERRY_BUSH_BONEMEAL.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
         event.registerTest(
-            RR.id("moss_layer_harvest"),
+            RR.id("mossberry_bush_harvest"),
             new FunctionGameTestInstance(
-                MOSS_LAYER_HARVEST.getKey(),
+                MOSSBERRY_BUSH_HARVEST.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -638,55 +639,62 @@ public final class RRGameTests {
         helper.succeed();
     }
 
-    // Bone meal grows one or two of the smallest plants on the block and, on each moss layer around it,
-    // at most one: the plant nearest to that block.
-    private static void mossLayerBonemeal(GameTestHelper helper) {
+    // Bone meal grows one or two of the smallest berries on the bush and, on each bush around it,
+    // at most one: the berry nearest to that bush.
+    private static void mossberryBushBonemeal(GameTestHelper helper) {
         BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
         var level = helper.getLevel();
-        var moss = (MossLayerBlock) RRBlocks.MOSS_LAYER.get();
+        var bush = (MossberryBushBlock) RRBlocks.MOSSBERRY_BUSH.get();
         for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
-            level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
-            level.setBlockAndUpdate(pos, moss.defaultBlockState());
+            level.setBlockAndUpdate(pos.below(), Blocks.MOSS_BLOCK.defaultBlockState());
+            level.setBlockAndUpdate(pos, bush.defaultBlockState());
         }
-        var state = moss.defaultBlockState();
-        helper.assertTrue(moss.isValidBonemealTarget(level, base, state), "moss layer rejected bonemeal");
-        moss.performBonemeal(level, RandomSource.create(42), base, state);
+        var state = bush.defaultBlockState();
+        helper.assertTrue(bush.isValidBonemealTarget(level, base, state), "mossberry bush rejected bonemeal");
+        bush.performBonemeal(level, RandomSource.create(42), base, state);
 
         for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
             var grown = level.getBlockState(pos);
-            helper.assertTrue(grown.is(moss), "bonemeal replaced a moss layer with " + grown);
-            List<MossLayerBlock.Plant> plants = MossLayerBlock.PLANTS.stream().filter(plant -> grown.getValue(plant.property())).toList();
+            helper.assertTrue(grown.is(bush), "bonemeal replaced a mossberry bush with " + grown);
+            List<MossberryBushBlock.Berry> berries = MossberryBushBlock.BERRIES.stream().filter(berry -> grown.getValue(berry.property())).toList();
             if (pos.equals(base)) {
-                helper.assertTrue(!plants.isEmpty() && plants.size() <= 2, "bonemeal grew " + plants.size() + " plants on its block");
-                helper.assertTrue(plants.stream().allMatch(plant -> plant.size() == 2), "bonemeal did not start with the smallest plants");
+                helper.assertTrue(!berries.isEmpty() && berries.size() <= 2, "bonemeal grew " + berries.size() + " berries on its bush");
+                helper.assertTrue(berries.stream().allMatch(berry -> berry.size() == 2), "bonemeal did not start with the smallest berries");
             } else {
-                helper.assertTrue(plants.size() <= 1, "bonemeal grew " + plants.size() + " plants on a neighbour");
+                helper.assertTrue(berries.size() <= 1, "bonemeal grew " + berries.size() + " berries on a neighbour");
                 double fromX = (base.getX() - pos.getX()) * 16 + 8;
                 double fromZ = (base.getZ() - pos.getZ()) * 16 + 8;
-                for (MossLayerBlock.Plant plant : plants) {
-                    double distance = Math.hypot(plant.x() - fromX, plant.z() - fromZ);
-                    helper.assertTrue(MossLayerBlock.PLANTS.stream().allMatch(other -> Math.hypot(other.x() - fromX, other.z() - fromZ) >= distance),
-                            "bonemeal grew a plant on a neighbour far from the block it was used on");
+                for (MossberryBushBlock.Berry berry : berries) {
+                    double distance = Math.hypot(berry.x() - fromX, berry.z() - fromZ);
+                    helper.assertTrue(MossberryBushBlock.BERRIES.stream().allMatch(other -> Math.hypot(other.x() - fromX, other.z() - fromZ) >= distance),
+                            "bonemeal grew a berry on a neighbour far from the bush it was used on");
                 }
             }
         }
         helper.succeed();
     }
 
-    // A block full of mossberries glows like a ripe berry bush; one click picks them all for at most
-    // three berries and leaves the twigs.
-    private static void mossLayerHarvest(GameTestHelper helper) {
+    // A mossberry bush grows on moss only. Full of berries it glows like a ripe wispberry bush; one click
+    // picks them all for at most three berries and leaves the bush with its twigs.
+    private static void mossberryBushHarvest(GameTestHelper helper) {
         BlockPos pos = helper.absolutePos(new BlockPos(0, 5, 0));
         var level = helper.getLevel();
-        var bare = RRBlocks.MOSS_LAYER.get().defaultBlockState().setValue(MossLayerBlock.TWIGS, true);
+        var bare = RRBlocks.MOSSBERRY_BUSH.get().defaultBlockState().setValue(MossberryBushBlock.TWIGS, true);
         var full = bare;
-        for (MossLayerBlock.Plant plant : MossLayerBlock.PLANTS) {
-            full = full.setValue(plant.property(), true);
+        for (MossberryBushBlock.Berry berry : MossberryBushBlock.BERRIES) {
+            full = full.setValue(berry.property(), true);
         }
-        helper.assertTrue(MossLayerBlock.lightLevel(bare) == 0, "a moss layer without plants glows");
-        helper.assertTrue(MossLayerBlock.lightLevel(full) == 9, "a full moss layer gives light " + MossLayerBlock.lightLevel(full));
+        helper.assertTrue(MossberryBushBlock.lightLevel(bare) == 0, "a mossberry bush without berries glows");
+        helper.assertTrue(MossberryBushBlock.lightLevel(full) == 9, "a full mossberry bush gives light " + MossberryBushBlock.lightLevel(full));
 
-        level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
+        var fullLayer = RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState().setValue(DeepMossLayerBlock.LAYERS, DeepMossLayerBlock.MAX_HEIGHT);
+        for (var ground : List.of(Blocks.STONE.defaultBlockState(), RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState(), fullLayer,
+                Blocks.MOSS_BLOCK.defaultBlockState(), RRBlocks.DEEP_MOSS.get().defaultBlockState())) {
+            level.setBlockAndUpdate(pos.below(2), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(pos.below(), ground);
+            boolean moss = ground != Blocks.STONE.defaultBlockState() && ground != RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState();
+            helper.assertTrue(full.canSurvive(level, pos) == moss, "a mossberry bush " + (moss ? "does not grow" : "grows") + " on " + ground);
+        }
         level.setBlockAndUpdate(pos, full);
         full.useWithoutItem(level, helper.makeMockPlayer(GameType.SURVIVAL), new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
 

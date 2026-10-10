@@ -38,7 +38,7 @@ public class PowderedMossVeinFeature extends Feature<NoneFeatureConfiguration> {
                     BlockPos surface = new BlockPos(origin.getX() + x, y, origin.getZ() + z);
                     // A moss layer needs solid ground under it.
                     if (!level.getBlockState(surface).is(Blocks.MOSS_BLOCK)
-                            || level.getBlockState(surface.above()).is(RRBlocks.MOSS_LAYER.get())) {
+                            || level.getBlockState(surface.above()).is(RRBlocks.DEEP_MOSS_LAYER.get())) {
                         continue;
                     }
 

@@ -7,80 +7,61 @@ import static ioann.uwu.runeruin.datagen.models.ModelJson.vector;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.blocks.MossLayerBlock;
+import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.blockstates.ConditionBuilder;
 import net.minecraft.client.data.models.blockstates.MultiPartGenerator;
+import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import org.jspecify.annotations.NonNull;
 
-/** Moss layer: a snow-like slab per height and, on top of it, the twigs and one model per plant, each switched on by its property. */
-public final class MossLayerModels {
+/**
+ * Mossberry bush: a small crossed bush that is always there and, switched on by their properties, the twigs
+ * around it and one cube per berry.
+ */
+public final class MossberryBushModels {
 
-    private static final String MOSS = "runeruin:block/moss_layer";
+    private static final String BUSH = "runeruin:block/mossberry_bush";
 
-    private MossLayerModels() {}
+    private MossberryBushModels() {}
 
-    public static void createMossLayer(@NonNull BlockModelGenerators blockModels) {
-        Block block = RRBlocks.MOSS_LAYER.get();
+    public static void createMossberryBush(@NonNull BlockModelGenerators blockModels) {
+        Block block = RRBlocks.MOSSBERRY_BUSH.get();
         MultiPartGenerator blockState = MultiPartGenerator.multiPart(block);
-        for (int layers = 1; layers <= MossLayerBlock.MAX_HEIGHT; layers++) {
-            int height = layers * 2;
-            Identifier layer = RR.id("block/moss_layer_height" + height);
-            JsonObject layerModel = layerModel(height);
-            blockModels.modelOutput.accept(layer, () -> layerModel);
-            blockState.with(new ConditionBuilder().term(MossLayerBlock.LAYERS, layers), BlockModelGenerators.plainVariant(layer));
+        blockState.with(BlockModelGenerators.plainVariant(ModelTemplates.CROSS.create(block, TextureMapping.cross(block), blockModels.modelOutput)));
 
-            Identifier twigs = RR.id("block/moss_layer_twigs_height" + height);
-            JsonObject twigsModel = twigsModel(height);
-            blockModels.modelOutput.accept(twigs, () -> twigsModel);
-            blockState.with(new ConditionBuilder().term(MossLayerBlock.LAYERS, layers).term(MossLayerBlock.TWIGS, true),
-                    BlockModelGenerators.plainVariant(twigs));
+        Identifier twigs = RR.id("block/mossberry_bush_twigs");
+        JsonObject twigsModel = twigsModel();
+        blockModels.modelOutput.accept(twigs, () -> twigsModel);
+        blockState.with(new ConditionBuilder().term(MossberryBushBlock.TWIGS, true), BlockModelGenerators.plainVariant(twigs));
 
-            for (int number = 0; number < MossLayerBlock.PLANTS.size(); number++) {
-                MossLayerBlock.Plant plant = MossLayerBlock.PLANTS.get(number);
-                Identifier id = RR.id("block/moss_layer_plant" + number + "_height" + height);
-                JsonObject plantModel = plantModel(plant, height);
-                blockModels.modelOutput.accept(id, () -> plantModel);
-                blockState.with(new ConditionBuilder().term(MossLayerBlock.LAYERS, layers).term(plant.property(), true),
-                        BlockModelGenerators.plainVariant(id));
-            }
+        for (int number = 0; number < MossberryBushBlock.BERRIES.size(); number++) {
+            MossberryBushBlock.Berry berry = MossberryBushBlock.BERRIES.get(number);
+            Identifier id = RR.id("block/mossberry_bush_berry" + number);
+            JsonObject berryModel = berryModel(berry);
+            blockModels.modelOutput.accept(id, () -> berryModel);
+            blockState.with(new ConditionBuilder().term(berry.property(), true), BlockModelGenerators.plainVariant(id));
         }
         blockModels.blockStateOutput.accept(blockState);
-        blockModels.registerSimpleItemModel(block, RR.id("block/moss_layer_height2"));
     }
 
-    private static JsonObject layerModel(int height) {
-        JsonObject model = new JsonObject();
-        JsonObject textures = new JsonObject();
-        if (height == 16) {
-            model.addProperty("parent", "minecraft:block/cube_all");
-            textures.addProperty("all", MOSS);
-        } else {
-            model.addProperty("parent", "minecraft:block/snow_height" + height);
-            textures.addProperty("particle", MOSS);
-            textures.addProperty("texture", MOSS);
-        }
-        model.add("textures", textures);
-        return model;
-    }
-
-    /** Twigs lie flat half a pixel above the moss, as a water lily flower lies above its pad. */
-    private static JsonObject twigsModel(int mossHeight) {
+    /** Twigs lie flat half a pixel above the ground, as a water lily flower lies above its pad. */
+    private static JsonObject twigsModel() {
         JsonObject model = new JsonObject();
         model.addProperty("ambientocclusion", false);
         JsonObject textures = new JsonObject();
-        textures.addProperty("particle", MOSS);
-        textures.addProperty("texture", "runeruin:block/moss_layer_twigs");
+        textures.addProperty("particle", BUSH);
+        textures.addProperty("texture", "runeruin:block/mossberry_bush_twigs");
         model.add("textures", textures);
         JsonObject down = planeFace(0, 16, 16, 0);
         JsonObject up = planeFace(0, 0, 16, 16);
         down.remove("tintindex");
         up.remove("tintindex");
         JsonArray elements = new JsonArray();
-        elements.add(horizontalPlane(mossHeight + 0.5, down, up));
+        elements.add(horizontalPlane(0.5, down, up));
         model.add("elements", elements);
         return model;
     }
@@ -89,25 +70,25 @@ public final class MossLayerModels {
      * One cube, leaning away from the middle of the block: side by side the cubes read as a dome. Two upright
      * planes through its middle reach a pixel out of it on every side: what is drawn there shows as spikes.
      */
-    private static JsonObject plantModel(MossLayerBlock.Plant plant, int mossHeight) {
-        double half = plant.size() / 2.0;
+    private static JsonObject berryModel(MossberryBushBlock.Berry berry) {
+        double half = berry.size() / 2.0;
         double rim = half + 1;
-        double[] center = {plant.x(), mossHeight + plant.lift(), plant.z()};
+        double[] center = {berry.x(), berry.lift(), berry.z()};
         JsonObject rotation = new JsonObject();
         rotation.add("origin", vector(center));
         // The game turns around x first: lean towards +z, then swing that lean to point away from the middle.
-        rotation.addProperty("x", plant.tilt());
-        rotation.addProperty("y", Math.round(Math.toDegrees(Math.atan2(plant.x() - 8, plant.z() - 8))));
+        rotation.addProperty("x", berry.tilt());
+        rotation.addProperty("y", Math.round(Math.toDegrees(Math.atan2(berry.x() - 8, berry.z() - 8))));
         JsonArray elements = new JsonArray();
-        elements.add(element(center, half, half, half, rotation, tile(plant.size(), false, false), "down", "up", "north", "south", "west", "east"));
-        elements.add(spikePlane(center, rim, rim, 0, rotation, plant.size(), "north", "south"));
-        elements.add(spikePlane(center, 0, rim, rim, rotation, plant.size(), "west", "east"));
+        elements.add(element(center, half, half, half, rotation, tile(berry.size(), false, false), "down", "up", "north", "south", "west", "east"));
+        elements.add(spikePlane(center, rim, rim, 0, rotation, berry.size(), "north", "south"));
+        elements.add(spikePlane(center, 0, rim, rim, rotation, berry.size(), "west", "east"));
         JsonObject model = new JsonObject();
         // No smooth lighting: it is meant for block faces, not for cubes this small and tilted.
         model.addProperty("ambientocclusion", false);
         JsonObject textures = new JsonObject();
-        textures.addProperty("particle", MOSS);
-        textures.addProperty("plant", "runeruin:block/mossberry");
+        textures.addProperty("particle", BUSH);
+        textures.addProperty("berries", "runeruin:block/mossberry_bush_berries");
         model.add("textures", textures);
         model.add("elements", elements);
         return model;
@@ -136,7 +117,7 @@ public final class MossLayerModels {
     }
 
     /**
-     * block/mossberry.png, per cube size a row of two tiles: the cube face at u 0, as wide as the cube, and the
+     * block/mossberry_bush_berries.png, per cube size a row of two tiles: the cube face at u 0, as wide as the cube, and the
      * spike plane at u 4, two pixels wider. The rows start at v 0 (4x4), 6 (3x3) and 11 (2x2).
      */
     private static JsonObject tile(int size, boolean spikes, boolean mirrored) {
@@ -145,7 +126,7 @@ public final class MossLayerModels {
         int width = spikes ? size + 2 : size;
         JsonObject face = new JsonObject();
         face.add("uv", mirrored ? vector(u + width, v, u, v + width) : vector(u, v, u + width, v + width));
-        face.addProperty("texture", "#plant");
+        face.addProperty("texture", "#berries");
         return face;
     }
 }

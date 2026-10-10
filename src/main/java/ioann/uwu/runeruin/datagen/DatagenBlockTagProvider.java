@@ -80,8 +80,12 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.MOSS_LIGHT.getKey(),
                 RRBlocks.GLOWING_MOSS.getKey(),
                 RRBlocks.GLOWING_MOSS_CARPET.getKey(),
-                RRBlocks.MOSS_LAYER.getKey(),
                 RRBlocks.LAPIS_LIGHT.getKey()
+        );
+
+        tag(BlockTags.MINEABLE_WITH_SHOVEL).add(
+                RRBlocks.DEEP_MOSS.getKey(),
+                RRBlocks.DEEP_MOSS_LAYER.getKey()
         );
 
         tag(BlockTags.LOGS).add(

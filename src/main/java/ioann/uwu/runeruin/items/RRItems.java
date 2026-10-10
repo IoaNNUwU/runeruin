@@ -57,10 +57,9 @@ public class RRItems {
                             .build())
     );
 
-    /** Picked from the plants of a moss layer and planted back on one; see {@code MossLayerBlock}. */
     public static final DeferredItem<Item> MOSSBERRY = REGISTRY.registerItem(
             "mossberry",
-            Item::new,
+            p -> new BlockItem(RRBlocks.MOSSBERRY_BUSH.get(), p.useItemDescriptionPrefix()),
             p -> p.food(Foods.SWEET_BERRIES)
     );
 

@@ -1,6 +1,6 @@
 package ioann.uwu.runeruin.datagen;
 
-import ioann.uwu.runeruin.blocks.MossLayerBlock;
+import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.items.RRItems;
@@ -13,13 +13,16 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.AlternativesEntry;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemEntityPropertyCondition;
 import net.minecraft.world.level.storage.loot.providers.number.BinomialDistributionGenerator;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
@@ -98,7 +101,10 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.FIREFLY_IN_A_JAR.get());
         dropSelf(RRBlocks.GLOWING_MOSS.get());
         dropSelf(RRBlocks.GLOWING_MOSS_CARPET.get());
-        add(RRBlocks.MOSS_LAYER.get(), this::createMossLayerDrop);
+        add(RRBlocks.DEEP_MOSS.get(), block -> createSingleItemTableWithSilkTouch(block, RRBlocks.DEEP_MOSS_LAYER.get(), ConstantValue.exactly(4.0F)));
+        add(RRBlocks.DEEP_MOSS_LAYER.get(), this::createDeepMossLayerDrop);
+        // The berries of a broken bush come from MossberryBushBlock.spawnAfterBreak.
+        add(RRBlocks.MOSSBERRY_BUSH.get(), noDrop());
         dropSelf(RRBlocks.FLOATING_MOSS.get());
         add(RRBlocks.GLOWING_MUSHROOM_CAP.get(), this::createGlowingMushroomBlockDrop);
         add(RRBlocks.GLOWING_MUSHROOM_STEM.get(), this::createGlowingMushroomBlockDrop);
@@ -132,22 +138,32 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         );
     }
 
-    /** One item per layer. */
-    private LootTable.Builder createMossLayerDrop(Block block) {
-        return LootTable.lootTable().withPool(LootPool.lootPool().add(
-                (LootPoolEntryContainer.Builder<?>) applyExplosionDecay(
-                        block,
+    /**
+     * As a snow layer: one item per layer, deep moss for a full block taken with silk touch, and nothing
+     * when no one mined it.
+     */
+    private LootTable.Builder createDeepMossLayerDrop(Block block) {
+        return LootTable.lootTable().withPool(LootPool.lootPool()
+                .when(LootItemEntityPropertyCondition.entityPresent(LootContext.EntityTarget.THIS))
+                .add(AlternativesEntry.alternatives(
+                        LootItem.lootTableItem(RRBlocks.DEEP_MOSS.get())
+                                .when(hasSilkTouch())
+                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
+                                        .setProperties(StatePropertiesPredicate.Builder.properties()
+                                                .hasProperty(DeepMossLayerBlock.LAYERS, DeepMossLayerBlock.MAX_HEIGHT)
+                                        )
+                                ),
                         LootItem.lootTableItem(block).apply(
-                                MossLayerBlock.LAYERS.getPossibleValues(),
+                                DeepMossLayerBlock.LAYERS.getPossibleValues(),
                                 layers -> SetItemCountFunction.setCount(ConstantValue.exactly(layers))
                                         .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
                                                 .setProperties(StatePropertiesPredicate.Builder.properties()
-                                                        .hasProperty(MossLayerBlock.LAYERS, layers)
+                                                        .hasProperty(DeepMossLayerBlock.LAYERS, layers)
                                                 )
                                         )
                         )
-                )
-        ));
+                ))
+        );
     }
 
     private void createWispberry() {
