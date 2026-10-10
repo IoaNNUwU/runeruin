@@ -35,11 +35,19 @@ public class DatagenRecipeProvider extends RecipeProvider {
 
         this.shaped(RecipeCategory.DECORATIONS, RRBlocks.MOSS_LIGHT, 1)
                 .define('#', Blocks.COBBLESTONE)
-                .define('M', RRItems.WISPBERRY)
+                .define('M', RRItems.MOSSBERRY)
                 .pattern("###")
                 .pattern("#M#")
                 .pattern("###")
-                .unlockedBy(getHasName(RRItems.WISPBERRY), has(RRItems.WISPBERRY))
+                .unlockedBy(getHasName(RRItems.MOSSBERRY), has(RRItems.MOSSBERRY))
+                .save(this.output);
+
+        // As snow: four layers pack into a block, three blocks make six layers.
+        this.twoByTwoPacker(RecipeCategory.BUILDING_BLOCKS, RRBlocks.DEEP_MOSS, RRBlocks.DEEP_MOSS_LAYER);
+        this.shaped(RecipeCategory.DECORATIONS, RRBlocks.DEEP_MOSS_LAYER, 6)
+                .define('#', RRBlocks.DEEP_MOSS)
+                .pattern("###")
+                .unlockedBy(getHasName(RRBlocks.DEEP_MOSS_LAYER), has(RRBlocks.DEEP_MOSS_LAYER))
                 .save(this.output);
 
         this.shaped(RecipeCategory.BUILDING_BLOCKS, RRBlocks.DIAMOND_ARCANE_STONE, 2)

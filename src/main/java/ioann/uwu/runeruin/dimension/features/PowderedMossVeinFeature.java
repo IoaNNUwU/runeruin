@@ -36,13 +36,15 @@ public class PowderedMossVeinFeature extends Feature<NoneFeatureConfiguration> {
 
                 for (int y = origin.getY() + SEARCH_RANGE; y >= origin.getY() - SEARCH_RANGE; y--) {
                     BlockPos surface = new BlockPos(origin.getX() + x, y, origin.getZ() + z);
-                    if (!level.getBlockState(surface).is(Blocks.MOSS_BLOCK)) {
+                    // A moss layer needs solid ground under it.
+                    if (!level.getBlockState(surface).is(RRBlocks.DEEP_MOSS.get())
+                            || level.getBlockState(surface.above()).is(RRBlocks.DEEP_MOSS_LAYER.get())) {
                         continue;
                     }
 
                     BlockPos lower = surface.below();
                     BlockState lowerState = level.getBlockState(lower);
-                    if (!lowerState.is(Blocks.STONE) && !lowerState.is(Blocks.MOSS_BLOCK)) {
+                    if (!lowerState.is(Blocks.STONE) && !lowerState.is(RRBlocks.DEEP_MOSS.get())) {
                         continue;
                     }
 

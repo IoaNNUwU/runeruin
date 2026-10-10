@@ -3,6 +3,7 @@
 
   "item.runeruin.rune_of_space": "Rune of Space",
   "item.runeruin.wispberry": "Wispberry",
+  "item.runeruin.mossberry": "Mossberry",
   "item.runeruin.powdered_moss_bucket": "Powdered Moss Bucket",
   "item.runeruin.snail_spawn_egg": "Snail Spawn Egg",
   "entity.runeruin.snail": "Snail",
@@ -23,6 +24,9 @@
   "block.runeruin.powdered_moss": "Powdered Moss",
   "block.runeruin.glowing_moss": "Glowing Moss",
   "block.runeruin.glowing_moss_carpet": "Glowing Moss Carpet",
+  "block.runeruin.deep_moss": "Deep Moss",
+  "block.runeruin.deep_moss_layer": "Deep Moss Layer",
+  "block.runeruin.mossberry_bush": "Mossberry Bush",
   "block.runeruin.floating_moss": "Floating Moss",
   "block.runeruin.moss_sprouts": "Moss Sprouts",
   "block.runeruin.small_moss_sprouts": "Small Moss Sprouts",
@@ -34,6 +38,12 @@
   "block.runeruin.water_lily_root": "Water Lily Root",
   "block.runeruin.water_lily_leaf": "Water Lily Leaf",
   "block.runeruin.water_lily_flower": "Water Lily Flower",
+
+  "block.runeruin.void_stone": "Void Stone",
+  "block.runeruin.bead_vine": "Bead Vine",
+  "block.runeruin.dust_bloom": "Dust Bloom",
+  "block.runeruin.hanging_chorus_plant": "Hanging Chorus Plant",
+  "block.runeruin.hanging_chorus_flower": "Hanging Chorus Flower",
 
   "block.runeruin.elden_sapling": "Elden Sapling",
   "block.runeruin.potted_elden_sapling": "Potted Elden Sapling",
@@ -95,9 +105,11 @@
   "biome.runeruin.deepslate_spike_caves": "Deepslate Spike Caves",
   "biome.runeruin.sparkling_caves_ceiling": "Sparkling Caves Ceiling",
   "biome.runeruin.sparkling_caves": "Sparkling Caves",
+  "biome.runeruin.void": "Void",
 
   "dimension.runeruin.runeruin_dimension": "Rune Ruin",
   "structure.runeruin.giant_goblet": "Giant Goblet",
+  "structure.runeruin.dinosaur_skeleton": "Dinosaur Skeleton",
 
   "runeruin.configuration.title": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",

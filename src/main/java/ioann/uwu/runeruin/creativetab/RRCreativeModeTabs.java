@@ -25,6 +25,7 @@ public class RRCreativeModeTabs {
                     RRItems.RUNE_OF_SPACE.toStack(),
 
                     RRItems.WISPBERRY.toStack(),
+                    RRItems.MOSSBERRY.toStack(),
                     RRItems.POWDERED_MOSS_BUCKET.toStack(),
                     RRItems.SNAIL_SPAWN_EGG.toStack(),
                     RRBlocks.LAPIS_LIGHT.toStack(),
@@ -43,6 +44,8 @@ public class RRCreativeModeTabs {
                     RRBlocks.FIREFLY_IN_A_JAR.toStack(),
                     RRBlocks.GLOWING_MOSS.toStack(),
                     RRBlocks.GLOWING_MOSS_CARPET.toStack(),
+                    RRBlocks.DEEP_MOSS.toStack(),
+                    RRBlocks.DEEP_MOSS_LAYER.toStack(),
                     RRBlocks.FLOATING_MOSS.toStack(),
                     RRBlocks.MOSS_SPROUTS.toStack(),
                     RRBlocks.SMALL_MOSS_SPROUTS.toStack(),
@@ -53,6 +56,12 @@ public class RRCreativeModeTabs {
                     RRBlocks.WATER_LILY_ROOT.toStack(),
                     RRBlocks.WATER_LILY_LEAF.toStack(),
                     RRBlocks.WATER_LILY_FLOWER.toStack(),
+
+                    RRBlocks.VOID_STONE.toStack(),
+                    RRBlocks.BEAD_VINE.toStack(),
+                    RRBlocks.DUST_BLOOM.toStack(),
+                    RRBlocks.HANGING_CHORUS_PLANT.toStack(),
+                    RRBlocks.HANGING_CHORUS_FLOWER.toStack(),
 
                     RRBlocks.ELDEN_SAPLING.toStack(),
                     RRBlocks.ELDEN_LOG.toStack(),

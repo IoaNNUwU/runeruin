@@ -14,7 +14,6 @@ import net.minecraft.util.Util;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.SpeleothemUtils;
@@ -94,7 +93,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                 continue;
             }
             BlockPos bushPos = ground.relative(above);
-            if (!level.isEmptyBlock(bushPos) || !level.getBlockState(ground).is(Blocks.MOSS_BLOCK)) {
+            if (!level.isEmptyBlock(bushPos) || !level.getBlockState(ground).is(RRBlocks.DEEP_MOSS.get())) {
                 continue;
             }
             int age = random.nextInt(4);
@@ -147,7 +146,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                     if (level.isStateAtPosition(pos, passable)
                             && belowState.isFaceSturdy(level, belowPos, config.surface().getDirection().getOpposite())) {
                         // Underwater: не заменяем goblet_bud мхом, только собираем поверхность для hanging moss
-                        if (replaceable.test(belowState) || belowState.is(Blocks.MOSS_BLOCK)) {
+                        if (replaceable.test(belowState) || belowState.is(RRBlocks.DEEP_MOSS.get())) {
                             surface.add(belowPos.immutable());
                         }
                     }
@@ -196,7 +195,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     }
 
     private static boolean isMossColumn(BlockState state, Predicate<BlockState> replaceable) {
-        return state.is(Blocks.MOSS_BLOCK) || replaceable.test(state);
+        return state.is(RRBlocks.DEEP_MOSS.get()) || replaceable.test(state);
     }
 
     private static void placeHangingMoss(

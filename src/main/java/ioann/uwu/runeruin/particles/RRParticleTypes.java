@@ -16,6 +16,12 @@ public final class RRParticleTypes {
             () -> new SimpleParticleType(false)
     );
 
+    /** A glowing mote that falls into the abyss, shed by dust blooms and by the Void itself. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> VOID_DUST = REGISTRY.register(
+            "void_dust",
+            () -> new SimpleParticleType(false)
+    );
+
     private RRParticleTypes() {
     }
 }

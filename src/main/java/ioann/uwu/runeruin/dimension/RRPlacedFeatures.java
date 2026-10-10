@@ -59,6 +59,7 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "wispberry_bush_patch");
     public static final ResourceKey<PlacedFeature> POWDERED_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "powdered_moss");
+    public static final ResourceKey<PlacedFeature> MOSS_HUMMOCK = RR.resourceKey(Registries.PLACED_FEATURE, "moss_hummock");
 
     public static final ResourceKey<PlacedFeature> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<PlacedFeature> GLOWING_MUSHROOM = RR.resourceKey(Registries.PLACED_FEATURE, "glowing_mushroom");
@@ -89,12 +90,20 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> JUNGLE_MEGA_TREE_ON_NON_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "jungle_mega_tree_on_non_moss");
     public static final ResourceKey<PlacedFeature> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.PLACED_FEATURE, "swamp_jungle_trees");
 
+    public static final ResourceKey<PlacedFeature> HANGING_CHORUS = RR.resourceKey(Registries.PLACED_FEATURE, "hanging_chorus");
+    public static final ResourceKey<PlacedFeature> VOID_AMETHYST = RR.resourceKey(Registries.PLACED_FEATURE, "void_amethyst");
+    public static final ResourceKey<PlacedFeature> DUST_BLOOM = RR.resourceKey(Registries.PLACED_FEATURE, "dust_bloom");
+    public static final ResourceKey<PlacedFeature> BEAD_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "bead_vine");
+
     // Height bands that decorations start their surface scan from.
     private static final int BLOOMING_FLOOR_TOP = BLOOMING_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
     private static final int BLOOMING_CEILING_BOTTOM = BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
     private static final int BLOOMING_CEILING_TOP = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
     private static final int DEEP_CEILING_BOTTOM = DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
     private static final int DEEP_CEILING_TOP = DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
+    // Always in the air under the Void ceiling, and within reach of its thinnest part.
+    private static final int VOID_AIR_TOP = CEILING_VOID_Y - CEILING_TERRAIN_HEIGHT - 1;
+    private static final int VOID_AIR_BOTTOM = VOID_AIR_TOP - 5;
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -107,7 +116,7 @@ public class RRPlacedFeatures {
                 ))
         );
         BlockPredicate bloomingGround = BlockPredicate.matchesBlocks(
-                Blocks.MOSS_BLOCK,
+                RRBlocks.DEEP_MOSS.get(),
                 Blocks.MOSSY_COBBLESTONE,
                 Blocks.STONE,
                 Blocks.CLAY,
@@ -130,7 +139,7 @@ public class RRPlacedFeatures {
                 List.of(
                         PlacementUtils.filteredByBlockSurvival(Blocks.JUNGLE_SAPLING),
                         BlockPredicateFilter.forPredicate(BlockPredicate.not(
-                                BlockPredicate.matchesBlocks(Direction.DOWN.getUnitVec3i(), Blocks.MOSS_BLOCK)
+                                BlockPredicate.matchesBlocks(Direction.DOWN.getUnitVec3i(), RRBlocks.DEEP_MOSS.get())
                         ))
                 )
         ));
@@ -194,7 +203,7 @@ public class RRPlacedFeatures {
         ctx.register(MINI_VOLCANO, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.MINI_VOLCANO),
                 floorPlacement(CountPlacement.of(4), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP,
-                        BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK, Blocks.MOSSY_COBBLESTONE, Blocks.STONE, Blocks.CLAY), 16, -2)
+                        BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get(), Blocks.MOSSY_COBBLESTONE, Blocks.STONE, Blocks.CLAY), 16, -2)
         ));
 
         ctx.register(MONOLITH, new PlacedFeature(
@@ -241,7 +250,7 @@ public class RRPlacedFeatures {
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,
                                 BlockPredicate.matchesBlocks(
-                                        Blocks.MOSS_BLOCK,
+                                        RRBlocks.DEEP_MOSS.get(),
                                         Blocks.MOSSY_COBBLESTONE,
                                         Blocks.STONE
                                 ),
@@ -254,7 +263,14 @@ public class RRPlacedFeatures {
 
         ctx.register(POWDERED_MOSS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.POWDERED_MOSS),
-                floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK), 16, 0)
+                floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 0)
+        ));
+
+        // The count follows a slow noise: glades with several groups of mounds, and none between them.
+        ctx.register(MOSS_HUMMOCK, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_HUMMOCK),
+                floorPlacement(NoiseBasedCountPlacement.of(4, 40.0, 0.0), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP,
+                        BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 1)
         ));
 
         ctx.register(DEEP_CEILING_VINE, new PlacedFeature(
@@ -322,7 +338,7 @@ public class RRPlacedFeatures {
         ctx.register(DEEP_MOSS_SPROUTS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_SPROUTS),
                 floorPlacement(CountPlacement.of(96), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y,
-                        BlockPredicate.matchesBlocks(Blocks.MOSS_BLOCK), 32, 1)
+                        BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 32, 1)
         ));
 
         ctx.register(DRIPSTONE_SPIKE, new PlacedFeature(
@@ -385,6 +401,23 @@ public class RRPlacedFeatures {
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.WATER_LILY),
                 waterSurfacePlacement(RarityFilter.onAverageOnceEvery(3))
         ));
+
+        ctx.register(HANGING_CHORUS, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.HANGING_CHORUS),
+                voidCeilingPlacement(CountPlacement.of(UniformInt.of(0, 2)))
+        ));
+        ctx.register(VOID_AMETHYST, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.VOID_AMETHYST),
+                voidCeilingPlacement(CountPlacement.of(12))
+        ));
+        ctx.register(DUST_BLOOM, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.DUST_BLOOM),
+                voidCeilingPlacement(CountPlacement.of(3))
+        ));
+        ctx.register(BEAD_VINE, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.BEAD_VINE),
+                voidCeilingPlacement(CountPlacement.of(40))
+        ));
     }
 
     /** Spread over the chunk at a random height in [minY, maxY]; spikes find their own surface. */
@@ -422,6 +455,12 @@ public class RRPlacedFeatures {
         }
         placement.add(BiomeFilter.biome());
         return List.copyOf(placement);
+    }
+
+    /** The air block under void stone: the plants of the Void hang from the stone, never from each other. */
+    private static List<PlacementModifier> voidCeilingPlacement(PlacementModifier count) {
+        return scanPlacement(count, VOID_AIR_BOTTOM, VOID_AIR_TOP, Direction.UP,
+                BlockPredicate.matchesBlocks(RRBlocks.VOID_STONE.get()), BlockPredicate.ONLY_IN_AIR_PREDICATE, 16, -1);
     }
 
     /** Lily pads and water lilies: on top of the water surface in the lost and deep caves. */

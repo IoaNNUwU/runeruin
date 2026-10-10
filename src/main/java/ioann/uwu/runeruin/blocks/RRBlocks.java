@@ -303,6 +303,28 @@ public class RRBlocks {
     public static final DeferredBlock<Block> GLOWING_MOSS = registerGlowingMoss("glowing_moss", MapColor.COLOR_CYAN);
     public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = registerGlowingMossCarpet("glowing_moss_carpet", MapColor.COLOR_CYAN);
 
+    /** Deep moss and its layers are to moss what the snow block and snow layers are to snow: shovel only. */
+    public static final DeferredBlock<Block> DEEP_MOSS = register("deep_moss",
+            _ -> BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_GREEN)
+                    .requiresCorrectToolForDrops()
+                    .strength(0.2F)
+                    .sound(SoundType.MOSS));
+
+    public static final DeferredBlock<Block> DEEP_MOSS_LAYER = register("deep_moss_layer",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_CARPET)
+                    .forceSolidOff()
+                    .requiresCorrectToolForDrops()
+                    .isViewBlocking((state, _, _) -> state.getValue(DeepMossLayerBlock.LAYERS) >= DeepMossLayerBlock.MAX_HEIGHT),
+            DeepMossLayerBlock::new);
+
+    public static final DeferredBlock<Block> MOSSBERRY_BUSH = REGISTRY.registerBlock(
+            "mossberry_bush",
+            MossberryBushBlock::new,
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
+                    .lightLevel(MossberryBushBlock::lightLevel)
+    );
+
     public static final DeferredBlock<Block> FLOATING_MOSS = registerInWater("floating_moss",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)
                     .noOcclusion(),
@@ -361,6 +383,34 @@ public class RRBlocks {
     public static final DeferredBlock<Block> WATER_LILY_FLOWER = register("water_lily_flower",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
             WaterLilyLeafBlock::new);
+
+    /** What the Void ceiling is made of; as hard to break and to blow up as obsidian. */
+    public static final DeferredBlock<Block> VOID_STONE = register("void_stone",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OBSIDIAN)
+                    .mapColor(MapColor.COLOR_PURPLE));
+
+    /** A thread of beads hanging from a ceiling; about half of its blocks glow. */
+    public static final DeferredBlock<Block> BEAD_VINE = register("bead_vine",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CAVE_VINES_PLANT)
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .lightLevel(BeadVineBlock::getLightLevel)
+                    .randomTicks(),
+            BeadVineBlock::new);
+
+    public static final DeferredBlock<Block> DUST_BLOOM = register("dust_bloom",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SPORE_BLOSSOM)
+                    .mapColor(MapColor.COLOR_MAGENTA)
+                    .lightLevel(_ -> 7),
+            DustBloomBlock::new);
+
+    /** Chorus that grows down from void stone, with the look and the fruit of the vanilla plant. */
+    public static final DeferredBlock<Block> HANGING_CHORUS_PLANT = register("hanging_chorus_plant",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHORUS_PLANT),
+            HangingChorusPlantBlock::new);
+
+    public static final DeferredBlock<Block> HANGING_CHORUS_FLOWER = register("hanging_chorus_flower",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHORUS_FLOWER),
+            HangingChorusFlowerBlock::new);
 
     /** Interior portal block; no BlockItem (like nether portal). */
     public static final DeferredBlock<Block> RUNE_RUIN_PORTAL = REGISTRY.registerBlock(

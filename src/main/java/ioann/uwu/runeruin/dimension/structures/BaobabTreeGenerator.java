@@ -919,7 +919,7 @@ public final class BaobabTreeGenerator {
         Set<BlockPos> mossBlocks = new LinkedHashSet<>();
         for (BlockPos leaf : surfaceLeaves) {
             BlockPos moss = leaf.immutable();
-            tree.put(moss, Blocks.MOSS_BLOCK.defaultBlockState());
+            tree.put(moss, RRBlocks.DEEP_MOSS.get().defaultBlockState());
             mossBlocks.add(moss);
         }
 
@@ -1018,7 +1018,7 @@ public final class BaobabTreeGenerator {
             placedStarts.add(new MossStart(start, hangingLength));
             BlockPos pos = start;
             for (int i = 0; i <= hangingLength; i++) {
-                tree.put(pos.immutable(), Blocks.MOSS_BLOCK.defaultBlockState());
+                tree.put(pos.immutable(), RRBlocks.DEEP_MOSS.get().defaultBlockState());
                 pos = pos.below();
             }
         }
@@ -1071,11 +1071,11 @@ public final class BaobabTreeGenerator {
 
     private static boolean hasMossAboveOrBeside(BlockPos pos, Map<BlockPos, BlockState> tree) {
         BlockPos above = pos.above();
-        if (tree.getOrDefault(above, Blocks.AIR.defaultBlockState()).is(Blocks.MOSS_BLOCK)) {
+        if (tree.getOrDefault(above, Blocks.AIR.defaultBlockState()).is(RRBlocks.DEEP_MOSS.get())) {
             return true;
         }
         for (Direction direction : Direction.Plane.HORIZONTAL) {
-            if (tree.getOrDefault(above.relative(direction), Blocks.AIR.defaultBlockState()).is(Blocks.MOSS_BLOCK)) {
+            if (tree.getOrDefault(above.relative(direction), Blocks.AIR.defaultBlockState()).is(RRBlocks.DEEP_MOSS.get())) {
                 return true;
             }
         }
@@ -1116,7 +1116,7 @@ public final class BaobabTreeGenerator {
             if (pools.size() >= targetPools) {
                 break;
             }
-            if (!tree.getOrDefault(first, Blocks.AIR.defaultBlockState()).is(Blocks.MOSS_BLOCK)) {
+            if (!tree.getOrDefault(first, Blocks.AIR.defaultBlockState()).is(RRBlocks.DEEP_MOSS.get())) {
                 continue;
             }
             if (tooClose(pools.stream().map(CanopyPool::center).toList(), first, 100.0)) {
@@ -1133,7 +1133,7 @@ public final class BaobabTreeGenerator {
                     BlockPos tile = mossSurface.get(new CanopyColumn(
                             first.getX() + dx, first.getZ() + dz));
                     if (tile == null || Math.abs(tile.getY() - first.getY()) > 1
-                            || !tree.getOrDefault(tile, Blocks.AIR.defaultBlockState()).is(Blocks.MOSS_BLOCK)) {
+                            || !tree.getOrDefault(tile, Blocks.AIR.defaultBlockState()).is(RRBlocks.DEEP_MOSS.get())) {
                         continue;
                     }
                     if (distanceSquared <= 2 || random.nextFloat() < 0.62F) {
@@ -1150,7 +1150,7 @@ public final class BaobabTreeGenerator {
                 BlockState below = tree.get(tile.below());
                 if (below == null || (below.getBlock() != leaves.getBlock()
                         && below.getBlock() != trunk.getBlock()
-                        && !below.is(Blocks.MOSS_BLOCK))) {
+                        && !below.is(RRBlocks.DEEP_MOSS.get()))) {
                     supported = false;
                     break;
                 }

@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.BeadVineBlock;
 import ioann.uwu.runeruin.blocks.GlowingMossBlock;
 import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
@@ -16,6 +17,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.util.valueproviders.*;
+import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVines;
@@ -59,8 +61,9 @@ public class RRConfiguredFeatures {
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "wispberry_bush_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> POWDERED_MOSS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "powdered_moss");
-
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_vegetation");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_HUMMOCK = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_hummock");
+
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_SPROUTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_sprouts");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MOSS_VEGETATION = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_moss_vegetation");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GLOWING_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "glowing_mushroom");
@@ -83,6 +86,11 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> WATER_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "water_lily");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SWAMP_JUNGLE_TREES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "swamp_jungle_trees");
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> HANGING_CHORUS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "hanging_chorus");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> VOID_AMETHYST = RR.resourceKey(Registries.CONFIGURED_FEATURE, "void_amethyst");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DUST_BLOOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dust_bloom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> BEAD_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "bead_vine");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -155,7 +163,7 @@ public class RRConfiguredFeatures {
         ctx.register(LONG_CEILING_BLOCK_VINE, new ConfiguredFeature<>(
                 RRFeatures.CEILING_BLOCK_VINE.get(),
                 new CeilingBlockVineFeature.Config(
-                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                         BlockStateProvider.simple(Blocks.PALE_OAK_WOOD),
                         List.of(
                                 BlockStateProvider.simple(Blocks.OCHRE_FROGLIGHT),
@@ -244,7 +252,7 @@ public class RRConfiguredFeatures {
                 Feature.WATERLOGGED_VEGETATION_PATCH,
                 new VegetationPatchConfiguration(
                         blocks.getOrThrow(BlockTags.LUSH_GROUND_REPLACEABLE),
-                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                         PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(CaveFeatures.DRIPLEAF)),
                         CaveSurface.FLOOR,
                         ConstantInt.of(3),
@@ -262,7 +270,7 @@ public class RRConfiguredFeatures {
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE),
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_WALL),
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_SLAB),
-                        BlockStateProvider.simple(Blocks.MOSS_CARPET)
+                        BlockStateProvider.simple(RRBlocks.DEEP_MOSS_LAYER.get())
                 )
         ));
 
@@ -282,7 +290,7 @@ public class RRConfiguredFeatures {
                 NoneFeatureConfiguration.INSTANCE
         ));
 
-        // Vanilla moss vegetation with moss sprouts in place of short and tall grass.
+        // Vanilla moss vegetation with a deep moss layer in place of the moss carpet and moss sprouts in place of grass.
         ctx.register(MOSS_VEGETATION, new ConfiguredFeature<>(
                 Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(
@@ -290,11 +298,16 @@ public class RRConfiguredFeatures {
                                 WeightedList.<BlockState>builder()
                                         .add(Blocks.FLOWERING_AZALEA.defaultBlockState(), 4)
                                         .add(Blocks.AZALEA.defaultBlockState(), 7)
-                                        .add(Blocks.MOSS_CARPET.defaultBlockState(), 25)
+                                        .add(RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState(), 25)
                                         .add(RRBlocks.MOSS_SPROUTS.get().defaultBlockState(), 35)
                                         .add(RRBlocks.SMALL_MOSS_SPROUTS.get().defaultBlockState(), 25)
                         )
                 )
+        ));
+
+        ctx.register(MOSS_HUMMOCK, new ConfiguredFeature<>(
+                RRFeatures.MOSS_HUMMOCK.get(),
+                NoneFeatureConfiguration.INSTANCE
         ));
 
         ctx.register(MOSS_SPROUTS, new ConfiguredFeature<>(
@@ -344,7 +357,7 @@ public class RRConfiguredFeatures {
         ctx.register(INVERTED_TREE, new ConfiguredFeature<>(
                 RRFeatures.INVERTED_TREE.get(),
                 new InvertedTreeFeature.Config(
-                        BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                        BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                         BlockStateProvider.simple(RRBlocks.INVERTED_TREE_WOOD.get()),
                         List.of(
                                 BlockStateProvider.simple(RRBlocks.INVERTED_LEAVES_1.get()),
@@ -462,6 +475,46 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(WATER_LILY, new ConfiguredFeature<>(RRFeatures.WATER_LILY.get(), NoneFeatureConfiguration.INSTANCE));
+
+        ctx.register(HANGING_CHORUS, new ConfiguredFeature<>(RRFeatures.HANGING_CHORUS.get(), NoneFeatureConfiguration.INSTANCE));
+
+        // Amethyst of every size, pointing down from the ceiling it grows on.
+        ctx.register(VOID_AMETHYST, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(
+                        new WeightedStateProvider(
+                                WeightedList.<BlockState>builder()
+                                        .add(Blocks.AMETHYST_CLUSTER.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.DOWN), 3)
+                                        .add(Blocks.LARGE_AMETHYST_BUD.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.DOWN), 2)
+                                        .add(Blocks.MEDIUM_AMETHYST_BUD.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.DOWN), 2)
+                                        .add(Blocks.SMALL_AMETHYST_BUD.defaultBlockState().setValue(AmethystClusterBlock.FACING, Direction.DOWN), 1)
+                        )
+                )
+        ));
+
+        ctx.register(DUST_BLOOM, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DUST_BLOOM.get()))
+        ));
+
+        // Every block draws its own lot, as a growing vine does: half of them glow.
+        BlockState beadVine = RRBlocks.BEAD_VINE.get().defaultBlockState();
+        ctx.register(BEAD_VINE, new ConfiguredFeature<>(
+                Feature.BLOCK_COLUMN,
+                new BlockColumnConfiguration(
+                        List.of(BlockColumnConfiguration.layer(
+                                BiasedToBottomInt.of(1, 8),
+                                new WeightedStateProvider(
+                                        WeightedList.<BlockState>builder()
+                                                .add(beadVine, 1)
+                                                .add(beadVine.setValue(BeadVineBlock.GLOWING, true), 1)
+                                )
+                        )),
+                        Direction.DOWN,
+                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                        false
+                )
+        ));
     }
 
     private static WallMushroomFeature.Config ashenMushroomConfig(int minimumDiameter, int maximumDiameter) {
@@ -478,7 +531,7 @@ public class RRConfiguredFeatures {
     ) {
         return new VegetationPatchConfiguration(
                 blocks.getOrThrow(RRTags.GOBLET_MOSS_REPLACEABLE),
-                BlockStateProvider.simple(Blocks.MOSS_BLOCK),
+                BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                 PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(MOSS_VEGETATION)),
                 CaveSurface.FLOOR,
                 ConstantInt.of(32),

@@ -28,11 +28,14 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.ARCANE_STONE_COLUMN.getKey(),
                 RRBlocks.ARCANE_STONE_PORTAL.getKey(),
                 RRBlocks.DIAMOND_ARCANE_STONE.getKey(),
+                RRBlocks.VOID_STONE.getKey(),
 
                 RRBlocks.MOSS_LIGHT.getKey(),
                 RRBlocks.LAPIS_LIGHT.getKey(),
                 RRBlocks.FIREFLY_IN_A_JAR.getKey()
         );
+
+        tag(BlockTags.NEEDS_DIAMOND_TOOL).add(RRBlocks.VOID_STONE.getKey());
 
         tag(BlockTags.MINEABLE_WITH_AXE).add(
                 RRBlocks.ELDEN_LOG.getKey(),
@@ -67,7 +70,9 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.INVERTED_TREE_HANGING_SIGN.getKey(),
                 RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.getKey(),
                 RRBlocks.GLOWING_MUSHROOM_CAP.getKey(),
-                RRBlocks.GLOWING_MUSHROOM_STEM.getKey()
+                RRBlocks.GLOWING_MUSHROOM_STEM.getKey(),
+                RRBlocks.HANGING_CHORUS_PLANT.getKey(),
+                RRBlocks.HANGING_CHORUS_FLOWER.getKey()
         );
 
         tag(BlockTags.MINEABLE_WITH_HOE).add(
@@ -83,6 +88,11 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.LAPIS_LIGHT.getKey()
         );
 
+        tag(BlockTags.MINEABLE_WITH_SHOVEL).add(
+                RRBlocks.DEEP_MOSS.getKey(),
+                RRBlocks.DEEP_MOSS_LAYER.getKey()
+        );
+
         tag(BlockTags.LOGS).add(
                 RRBlocks.ELDEN_LOG.getKey(),
                 RRBlocks.ELDEN_WOOD.getKey()
@@ -95,6 +105,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.DEEP_ROOTS.getKey(),
                 RRBlocks.BIG_LILY_PAD.getKey()
         );
+
+        tag(BlockTags.CLIMBABLE).add(RRBlocks.BEAD_VINE.getKey());
 
         tag(BlockTags.REPLACEABLE_BY_TREES).add(
                 RRBlocks.ELDEN_LEAF_LITTER.getKey(),
@@ -179,7 +191,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.PLANKS).add(RRBlocks.GIANT_GOBLET_STEM.getKey());
 
-        tag(BlockTags.MOSS_BLOCKS).add(RRBlocks.GLOWING_MOSS.getKey(), RRBlocks.FLOATING_MOSS.getKey());
+        // Through this tag deep moss is ground for plants and trees, as vanilla moss is.
+        tag(BlockTags.MOSS_BLOCKS).add(RRBlocks.GLOWING_MOSS.getKey(), RRBlocks.FLOATING_MOSS.getKey(), RRBlocks.DEEP_MOSS.getKey());
         tag(BlockTags.SUPPORTS_VEGETATION).add(RRBlocks.FLOATING_MOSS.getKey());
 
 
