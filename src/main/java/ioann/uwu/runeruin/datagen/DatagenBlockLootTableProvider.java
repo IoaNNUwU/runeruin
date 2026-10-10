@@ -63,6 +63,7 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         add(RRBlocks.ELDEN_WALL_SIGN.get(), block -> createSingleItemTable(RRBlocks.ELDEN_SIGN.get()));
         add(RRBlocks.ELDEN_WALL_HANGING_SIGN.get(), block -> createSingleItemTable(RRBlocks.ELDEN_HANGING_SIGN.get()));
         add(RRBlocks.ELDEN_LEAF_LITTER.get(), block -> createSegmentedBlockDrops(block));
+        add(RRBlocks.CLOVER.get(), block -> createSegmentedBlockDrops(block));
         dropSelf(RRBlocks.GIANT_GOBLET_STEM.get());
         dropSelf(RRBlocks.GIANT_GOBLET_BUD.get());
         dropSelf(RRBlocks.DEEP_ROOTS.get());

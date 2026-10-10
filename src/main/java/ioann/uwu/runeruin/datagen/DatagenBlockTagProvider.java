@@ -92,6 +92,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.INSIDE_STEP_SOUND_BLOCKS).add(
                 RRBlocks.ELDEN_LEAF_LITTER.getKey(),
+                RRBlocks.CLOVER.getKey(),
                 RRBlocks.DEEP_ROOTS.getKey(),
                 RRBlocks.BIG_LILY_PAD.getKey()
         );
