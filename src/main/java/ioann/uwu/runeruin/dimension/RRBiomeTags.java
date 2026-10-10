@@ -9,4 +9,5 @@ public class RRBiomeTags {
 
     public static final TagKey<Biome> HAS_GIANT_GOBLET = RR.tagKey(Registries.BIOME, "has_giant_goblet");
     public static final TagKey<Biome> HAS_BAOBAB = RR.tagKey(Registries.BIOME, "has_baobab");
+    public static final TagKey<Biome> HAS_DINOSAUR_SKELETON = RR.tagKey(Registries.BIOME, "has_dinosaur_skeleton");
 }

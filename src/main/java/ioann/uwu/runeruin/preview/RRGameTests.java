@@ -17,6 +17,8 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
+import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
+import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
@@ -28,8 +30,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.IntBinaryOperator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -55,6 +59,7 @@ import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FeatureSorter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
@@ -102,6 +107,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FLOATING_ISLANDS_NOT_GENERATED =
         TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
+        TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -365,6 +372,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("dinosaur_skeleton_burial"),
+            new FunctionGameTestInstance(
+                DINOSAUR_SKELETON_BURIAL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -429,6 +443,44 @@ public final class RRGameTests {
             RRChunkGenerator.topLevelNoise.getOrCreateNoise(levelRandom);
             helper.succeed();
         } catch (IOException | IllegalStateException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // A skeleton picks its height from the floor noise before its chunks exist, so that noise must give the
+    // floor the terrain builds. Then 20-50% of its blocks lie in the floor.
+    private static void dinosaurSkeletonBurial(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, 1);
+            IntBinaryOperator floorY = (x, z) -> DinosaurSkeletonStructure.floorY(x, z, randomState);
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, 1,
+                new BoundingBox(0, Const.LOST_CAVES_Y, 0, 15, Const.LOST_CAVES_Y + Const.TERRAIN_HEIGHT + 1, 15));
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    int y = floorY.applyAsInt(x, z);
+                    helper.assertTrue(!terrain.get(pos.set(x, y, z)).isAir() && terrain.get(pos.set(x, y + 1, z)).isAir(),
+                        "the lost caves floor at " + x + " " + z + " does not end at Y " + y);
+                }
+            }
+
+            int placed = 0;
+            for (int seed = 1; seed <= 32; seed++) {
+                Map<BlockPos, BlockState> bones = DinosaurSkeletonGenerator.generate(seed);
+                helper.assertTrue(bones.equals(DinosaurSkeletonGenerator.generate(seed)), "seed " + seed + " built two different skeletons");
+                OptionalInt y = DinosaurSkeletonStructure.buriedOriginY(bones, seed * 100, 0, floorY, RandomSource.create(seed));
+                if (y.isEmpty()) {
+                    continue;
+                }
+                placed++;
+                double share = DinosaurSkeletonStructure.buriedShare(bones, new BlockPos(seed * 100, y.getAsInt(), 0), floorY);
+                helper.assertTrue(share >= DinosaurSkeletonStructure.MIN_BURIED_SHARE && share <= DinosaurSkeletonStructure.MAX_BURIED_SHARE,
+                    "seed " + seed + " has " + Math.round(share * 100.0) + "% of the skeleton in the floor");
+            }
+            helper.assertTrue(placed >= 24, "only " + placed + " of 32 skeletons found a height with 20-50% in the floor");
+            helper.succeed();
+        } catch (IOException e) {
             helper.fail(e.toString());
         }
     }
