@@ -307,6 +307,28 @@ public class RRBlocks {
     public static final DeferredBlock<Block> GLOWING_MOSS = registerGlowingMoss("glowing_moss", MapColor.COLOR_CYAN);
     public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = registerGlowingMossCarpet("glowing_moss_carpet", MapColor.COLOR_CYAN);
 
+    /** Deep moss and its layers are to moss what the snow block and snow layers are to snow: shovel only. */
+    public static final DeferredBlock<Block> DEEP_MOSS = register("deep_moss",
+            _ -> BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_GREEN)
+                    .requiresCorrectToolForDrops()
+                    .strength(0.2F)
+                    .sound(SoundType.MOSS));
+
+    public static final DeferredBlock<Block> DEEP_MOSS_LAYER = register("deep_moss_layer",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_CARPET)
+                    .forceSolidOff()
+                    .requiresCorrectToolForDrops()
+                    .isViewBlocking((state, _, _) -> state.getValue(DeepMossLayerBlock.LAYERS) >= DeepMossLayerBlock.MAX_HEIGHT),
+            DeepMossLayerBlock::new);
+
+    public static final DeferredBlock<Block> MOSSBERRY_BUSH = REGISTRY.registerBlock(
+            "mossberry_bush",
+            MossberryBushBlock::new,
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
+                    .lightLevel(MossberryBushBlock::lightLevel)
+    );
+
     public static final DeferredBlock<Block> FLOATING_MOSS = registerInWater("floating_moss",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)
                     .noOcclusion(),

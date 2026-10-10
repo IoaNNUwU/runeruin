@@ -31,7 +31,8 @@ public final class RRTerrainSurfaces {
 
     private static final SurfaceResolver STONE = fixed(Blocks.STONE);
     private static final SurfaceResolver DEEPSLATE = fixed(Blocks.DEEPSLATE);
-    private static final SurfaceResolver MOSS = fixed(Blocks.MOSS_BLOCK);
+    // Not fixed(): the mod's blocks may not be registered yet when this class loads.
+    private static final SurfaceResolver MOSS = random -> RRBlocks.DEEP_MOSS.get().defaultBlockState();
     private static final SurfaceResolver PALE_MOSS = fixed(Blocks.PALE_MOSS_BLOCK);
     private static final SurfaceResolver GRASS = fixed(Blocks.GRASS_BLOCK);
     private static final SurfaceResolver GLOWING_MOSS = random ->

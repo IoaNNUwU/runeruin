@@ -4,7 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
+import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
@@ -15,6 +17,8 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
+import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
+import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
@@ -26,9 +30,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.IntBinaryOperator;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
@@ -42,11 +49,14 @@ import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FeatureSorter;
@@ -62,6 +72,9 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
@@ -89,6 +102,10 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("wispberry_aliases", () -> RRGameTests::wispberryAliases);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_BONEMEAL =
         TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSBERRY_BUSH_BONEMEAL =
+        TEST_FUNCTIONS.register("mossberry_bush_bonemeal", () -> RRGameTests::mossberryBushBonemeal);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSBERRY_BUSH_HARVEST =
+        TEST_FUNCTIONS.register("mossberry_bush_harvest", () -> RRGameTests::mossberryBushHarvest);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
         TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_FEATURE_ORDER =
@@ -101,6 +118,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FLOATING_ISLANDS_NOT_GENERATED =
         TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
+        TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -124,6 +143,7 @@ public final class RRGameTests {
     private static List<FeatureCase> featureCases() {
         Block glowingMoss = RRBlocks.GLOWING_MOSS.get();
         Block gobletBud = RRBlocks.GIANT_GOBLET_BUD.get();
+        Block deepMoss = RRBlocks.DEEP_MOSS.get();
         return List.of(
             new FeatureCase("brown_dome_mushroom", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("trumpet_mushroom", Surface.FLOOR, Blocks.STONE, 1),
@@ -146,19 +166,21 @@ public final class RRGameTests {
             new FeatureCase("water_lily", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("ashen_wall_mushroom_cluster", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("ashen_wall_mushroom_cluster_upper", Surface.WALL, Blocks.STONE, 0),
-            new FeatureCase("powdered_moss", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("powdered_moss", Surface.FLOOR, deepMoss, 1),
+            new FeatureCase("moss_hummock", Surface.FLOOR, deepMoss, 1),
+            new FeatureCase("moss_vegetation", Surface.FLOOR, deepMoss, 1),
             new FeatureCase("stone_lily", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("deep_roots_grass", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("goblet_deep_roots", Surface.FLOOR, gobletBud, 1),
             new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
-            new FeatureCase("wispberry_bush_patch", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
-            new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("wispberry_bush_patch", Surface.FLOOR, deepMoss, 1),
+            new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, deepMoss, 1),
             new FeatureCase("small_glowing_mushroom", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("elden_giant_tree", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
             new FeatureCase("swamp_jungle_trees", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
-            new FeatureCase("inverted_tree", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
-            new FeatureCase("long_ceiling_block_vine", Surface.CEILING, Blocks.MOSS_BLOCK, 0),
-            new FeatureCase("ceiling_vine", Surface.CEILING, Blocks.MOSS_BLOCK, -1),
+            new FeatureCase("inverted_tree", Surface.CEILING, deepMoss, 0),
+            new FeatureCase("long_ceiling_block_vine", Surface.CEILING, deepMoss, 0),
+            new FeatureCase("ceiling_vine", Surface.CEILING, deepMoss, -1),
             new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("goblet_kelp", Surface.UNDERWATER, Blocks.STONE, 1),
@@ -328,6 +350,20 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("mossberry_bush_bonemeal"),
+            new FunctionGameTestInstance(
+                MOSSBERRY_BUSH_BONEMEAL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("mossberry_bush_harvest"),
+            new FunctionGameTestInstance(
+                MOSSBERRY_BUSH_HARVEST.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("glowing_mushroom_patch"),
             new FunctionGameTestInstance(
                 GLOWING_MUSHROOM_PATCH.getKey(),
@@ -366,6 +402,13 @@ public final class RRGameTests {
             RR.id("floating_islands_not_generated"),
             new FunctionGameTestInstance(
                 FLOATING_ISLANDS_NOT_GENERATED.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("dinosaur_skeleton_burial"),
+            new FunctionGameTestInstance(
+                DINOSAUR_SKELETON_BURIAL.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -419,6 +462,13 @@ public final class RRGameTests {
                 "seed 1 generated different terrain twice");
             helper.assertTrue(!sameBlocks(seed1, HeadlessTerrainGenerator.generate(server, 2, column), column),
                 "seeds 1 and 2 generated the same terrain");
+            // The moss of floors and ceilings is deep moss; vanilla moss is not generated.
+            int deepMoss = 0;
+            for (BlockPos pos : BlockPos.betweenClosed(column.minX(), column.minY(), column.minZ(), column.maxX(), column.maxY(), column.maxZ())) {
+                helper.assertTrue(!seed1.get(pos).is(Blocks.MOSS_BLOCK), "the terrain has vanilla moss at " + pos.toShortString());
+                deepMoss += seed1.get(pos).is(RRBlocks.DEEP_MOSS.get()) ? 1 : 0;
+            }
+            helper.assertTrue(deepMoss > 0, "the terrain has no deep moss");
             // Plates, hanging terrain and surfaces already followed the seed; the layer shapes did not.
             helper.assertTrue(RRChunkGenerator.topLevelNoise.getOrCreateNoise(HeadlessTerrainGenerator.randomState(server, 1)).noise(100, 100)
                     != RRChunkGenerator.topLevelNoise.getOrCreateNoise(HeadlessTerrainGenerator.randomState(server, 2)).noise(100, 100),
@@ -434,6 +484,44 @@ public final class RRGameTests {
             RRChunkGenerator.topLevelNoise.getOrCreateNoise(levelRandom);
             helper.succeed();
         } catch (IOException | IllegalStateException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // A skeleton picks its height from the floor noise before its chunks exist, so that noise must give the
+    // floor the terrain builds. Then 20-50% of its blocks lie in the floor.
+    private static void dinosaurSkeletonBurial(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, 1);
+            IntBinaryOperator floorY = (x, z) -> DinosaurSkeletonStructure.floorY(x, z, randomState);
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, 1,
+                new BoundingBox(0, Const.LOST_CAVES_Y, 0, 15, Const.LOST_CAVES_Y + Const.TERRAIN_HEIGHT + 1, 15));
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    int y = floorY.applyAsInt(x, z);
+                    helper.assertTrue(!terrain.get(pos.set(x, y, z)).isAir() && terrain.get(pos.set(x, y + 1, z)).isAir(),
+                        "the lost caves floor at " + x + " " + z + " does not end at Y " + y);
+                }
+            }
+
+            int placed = 0;
+            for (int seed = 1; seed <= 32; seed++) {
+                Map<BlockPos, BlockState> bones = DinosaurSkeletonGenerator.generate(seed);
+                helper.assertTrue(bones.equals(DinosaurSkeletonGenerator.generate(seed)), "seed " + seed + " built two different skeletons");
+                OptionalInt y = DinosaurSkeletonStructure.buriedOriginY(bones, seed * 100, 0, floorY, RandomSource.create(seed));
+                if (y.isEmpty()) {
+                    continue;
+                }
+                placed++;
+                double share = DinosaurSkeletonStructure.buriedShare(bones, new BlockPos(seed * 100, y.getAsInt(), 0), floorY);
+                helper.assertTrue(share >= DinosaurSkeletonStructure.MIN_BURIED_SHARE && share <= DinosaurSkeletonStructure.MAX_BURIED_SHARE,
+                    "seed " + seed + " has " + Math.round(share * 100.0) + "% of the skeleton in the floor");
+            }
+            helper.assertTrue(placed >= 24, "only " + placed + " of 32 skeletons found a height with 20-50% in the floor");
+            helper.succeed();
+        } catch (IOException e) {
             helper.fail(e.toString());
         }
     }
@@ -716,6 +804,99 @@ public final class RRGameTests {
             }
         }
         helper.assertTrue(grew, "bonemeal did not grow a glowing mushroom");
+        helper.succeed();
+    }
+
+    // Bone meal grows one or two of the smallest berries on the bush. One time in four it also grows one
+    // berry next to it: on a bush that stands there, or on free moss, where it starts a new bush.
+    private static void mossberryBushBonemeal(GameTestHelper helper) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
+        var level = helper.getLevel();
+        var bush = (MossberryBushBlock) RRBlocks.MOSSBERRY_BUSH.get();
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            level.setBlockAndUpdate(pos.below(), Blocks.MOSS_BLOCK.defaultBlockState());
+            level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+        }
+        level.setBlockAndUpdate(base, bush.defaultBlockState());
+        helper.assertTrue(bush.isValidBonemealTarget(level, base, bush.defaultBlockState()), "mossberry bush rejected bonemeal");
+
+        RandomSource random = RandomSource.create(42);
+        int uses = 40;
+        int spreads = 0;
+        for (int use = 0; use < uses; use++) {
+            int before = berriesAround(level, base);
+            bush.performBonemeal(level, random, base, level.getBlockState(base));
+            int grown = berriesAround(level, base) - before;
+            helper.assertTrue(grown == 0 || grown == 1, "one use of bonemeal grew " + grown + " berries around the bush");
+            spreads += grown;
+            if (use == 0) {
+                List<MossberryBushBlock.Berry> berries = MossberryBushBlock.BERRIES.stream()
+                    .filter(berry -> level.getBlockState(base).getValue(berry.property())).toList();
+                helper.assertTrue(!berries.isEmpty() && berries.size() <= 2, "bonemeal grew " + berries.size() + " berries on its bush");
+                helper.assertTrue(berries.stream().allMatch(berry -> berry.size() == 2), "bonemeal did not start with the smallest berries");
+            }
+        }
+        // About ten of the forty; none or most of them would be another rule.
+        helper.assertTrue(spreads >= 3 && spreads <= 20, uses + " uses of bonemeal grew " + spreads + " berries around the bush");
+
+        // The first berry of a bush that bone meal started is the one nearest to the bush it was used on.
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            var near = level.getBlockState(pos);
+            List<MossberryBushBlock.Berry> berries = near.is(bush)
+                ? MossberryBushBlock.BERRIES.stream().filter(berry -> near.getValue(berry.property())).toList()
+                : List.of();
+            if (pos.equals(base) || berries.size() != 1) {
+                continue;
+            }
+            double fromX = (base.getX() - pos.getX()) * 16 + 8;
+            double fromZ = (base.getZ() - pos.getZ()) * 16 + 8;
+            double distance = Math.hypot(berries.getFirst().x() - fromX, berries.getFirst().z() - fromZ);
+            helper.assertTrue(MossberryBushBlock.BERRIES.stream().allMatch(other -> Math.hypot(other.x() - fromX, other.z() - fromZ) >= distance),
+                "bonemeal started a bush with a berry far from the bush it was used on");
+        }
+        helper.succeed();
+    }
+
+    private static int berriesAround(ServerLevel level, BlockPos base) {
+        int berries = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            var state = level.getBlockState(pos);
+            if (!pos.equals(base) && state.is(RRBlocks.MOSSBERRY_BUSH.get())) {
+                berries += (int) MossberryBushBlock.BERRIES.stream().filter(berry -> state.getValue(berry.property())).count();
+            }
+        }
+        return berries;
+    }
+    // A mossberry bush grows on moss only. Full of berries it glows like a ripe wispberry bush; one click
+    // picks them all for at most three berries and leaves the bush with its twigs.
+    private static void mossberryBushHarvest(GameTestHelper helper) {
+        BlockPos pos = helper.absolutePos(new BlockPos(0, 5, 0));
+        var level = helper.getLevel();
+        var bare = RRBlocks.MOSSBERRY_BUSH.get().defaultBlockState().setValue(MossberryBushBlock.TWIGS, true);
+        var full = bare;
+        for (MossberryBushBlock.Berry berry : MossberryBushBlock.BERRIES) {
+            full = full.setValue(berry.property(), true);
+        }
+        helper.assertTrue(MossberryBushBlock.lightLevel(bare) == 0, "a mossberry bush without berries glows");
+        helper.assertTrue(MossberryBushBlock.lightLevel(full) == 9, "a full mossberry bush gives light " + MossberryBushBlock.lightLevel(full));
+
+        var fullLayer = RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState().setValue(DeepMossLayerBlock.LAYERS, DeepMossLayerBlock.MAX_HEIGHT);
+        for (var ground : List.of(Blocks.STONE.defaultBlockState(), RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState(), fullLayer,
+                Blocks.MOSS_BLOCK.defaultBlockState(), RRBlocks.DEEP_MOSS.get().defaultBlockState())) {
+            level.setBlockAndUpdate(pos.below(2), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(pos.below(), ground);
+            boolean moss = ground != Blocks.STONE.defaultBlockState() && ground != RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState();
+            helper.assertTrue(full.canSurvive(level, pos) == moss, "a mossberry bush " + (moss ? "does not grow" : "grows") + " on " + ground);
+        }
+        level.setBlockAndUpdate(pos, full);
+        full.useWithoutItem(level, helper.makeMockPlayer(GameType.SURVIVAL), new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
+
+        helper.assertTrue(level.getBlockState(pos) == bare, "picking left " + level.getBlockState(pos));
+        int berries = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2)).stream()
+            .filter(entity -> entity.getItem().is(RRItems.MOSSBERRY))
+            .mapToInt(entity -> entity.getItem().getCount())
+            .sum();
+        helper.assertTrue(berries >= 1 && berries <= 3, "picking dropped " + berries + " mossberries");
         helper.succeed();
     }
 

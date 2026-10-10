@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.structures.BaobabStructure;
+import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletStructure;
 import ioann.uwu.runeruin.dimension.structures.HangingTracksStructure;
 import net.minecraft.core.registries.Registries;
@@ -14,6 +15,7 @@ public class RRStructures {
 
     public static final ResourceKey<Structure> GIANT_GOBLET = RR.resourceKey(Registries.STRUCTURE, "giant_goblet");
     public static final ResourceKey<Structure> BAOBAB = RR.resourceKey(Registries.STRUCTURE, "baobab");
+    public static final ResourceKey<Structure> DINOSAUR_SKELETON = RR.resourceKey(Registries.STRUCTURE, "dinosaur_skeleton");
     public static final ResourceKey<Structure> HANGING_TRACKS = RR.resourceKey(Registries.STRUCTURE, "hanging_tracks");
 
     public static void bootstrap(BootstrapContext<Structure> ctx) {
@@ -28,6 +30,12 @@ public class RRStructures {
         ctx.register(BAOBAB, new BaobabStructure(
                 new Structure.StructureSettings.Builder(biomes.getOrThrow(RRBiomeTags.HAS_BAOBAB))
                         .generationStep(GenerationStep.Decoration.VEGETAL_DECORATION)
+                        .build()
+        ));
+
+        ctx.register(DINOSAUR_SKELETON, new DinosaurSkeletonStructure(
+                new Structure.StructureSettings.Builder(biomes.getOrThrow(RRBiomeTags.HAS_DINOSAUR_SKELETON))
+                        .generationStep(GenerationStep.Decoration.UNDERGROUND_STRUCTURES)
                         .build()
         ));
 

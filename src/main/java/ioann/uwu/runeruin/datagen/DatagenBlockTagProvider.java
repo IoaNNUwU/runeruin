@@ -86,6 +86,11 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.LAPIS_LIGHT.getKey()
         );
 
+        tag(BlockTags.MINEABLE_WITH_SHOVEL).add(
+                RRBlocks.DEEP_MOSS.getKey(),
+                RRBlocks.DEEP_MOSS_LAYER.getKey()
+        );
+
         tag(BlockTags.LOGS).add(
                 RRBlocks.ELDEN_LOG.getKey(),
                 RRBlocks.ELDEN_WOOD.getKey()
@@ -173,7 +178,8 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
 
         tag(BlockTags.PLANKS).add(RRBlocks.GIANT_GOBLET_STEM.getKey());
 
-        tag(BlockTags.MOSS_BLOCKS).add(RRBlocks.GLOWING_MOSS.getKey(), RRBlocks.FLOATING_MOSS.getKey());
+        // Through this tag deep moss is ground for plants and trees, as vanilla moss is.
+        tag(BlockTags.MOSS_BLOCKS).add(RRBlocks.GLOWING_MOSS.getKey(), RRBlocks.FLOATING_MOSS.getKey(), RRBlocks.DEEP_MOSS.getKey());
         tag(BlockTags.SUPPORTS_VEGETATION).add(RRBlocks.FLOATING_MOSS.getKey());
 
 

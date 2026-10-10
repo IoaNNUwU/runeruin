@@ -3,6 +3,7 @@
 
   "item.runeruin.rune_of_space": "Rune of Space",
   "item.runeruin.wispberry": "Wispberry",
+  "item.runeruin.mossberry": "Mossberry",
   "item.runeruin.powdered_moss_bucket": "Powdered Moss Bucket",
   "item.runeruin.snail_spawn_egg": "Snail Spawn Egg",
   "entity.runeruin.snail": "Snail",
@@ -24,6 +25,9 @@
   "block.runeruin.powdered_moss": "Powdered Moss",
   "block.runeruin.glowing_moss": "Glowing Moss",
   "block.runeruin.glowing_moss_carpet": "Glowing Moss Carpet",
+  "block.runeruin.deep_moss": "Deep Moss",
+  "block.runeruin.deep_moss_layer": "Deep Moss Layer",
+  "block.runeruin.mossberry_bush": "Mossberry Bush",
   "block.runeruin.floating_moss": "Floating Moss",
   "block.runeruin.glowing_mushroom_cap": "Glowing Mushroom Cap",
   "block.runeruin.glowing_mushroom_stem": "Glowing Mushroom Stem",
@@ -97,6 +101,7 @@
 
   "dimension.runeruin.runeruin_dimension": "Rune Ruin",
   "structure.runeruin.giant_goblet": "Giant Goblet",
+  "structure.runeruin.dinosaur_skeleton": "Dinosaur Skeleton",
 
   "runeruin.configuration.title": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",

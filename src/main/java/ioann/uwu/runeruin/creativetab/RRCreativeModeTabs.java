@@ -25,6 +25,7 @@ public class RRCreativeModeTabs {
                     RRItems.RUNE_OF_SPACE.toStack(),
 
                     RRItems.WISPBERRY.toStack(),
+                    RRItems.MOSSBERRY.toStack(),
                     RRItems.POWDERED_MOSS_BUCKET.toStack(),
                     RRItems.SNAIL_SPAWN_EGG.toStack(),
                     RRBlocks.LAPIS_LIGHT.toStack(),
@@ -44,6 +45,8 @@ public class RRCreativeModeTabs {
                     RRBlocks.FIREFLY_IN_A_JAR.toStack(),
                     RRBlocks.GLOWING_MOSS.toStack(),
                     RRBlocks.GLOWING_MOSS_CARPET.toStack(),
+                    RRBlocks.DEEP_MOSS.toStack(),
+                    RRBlocks.DEEP_MOSS_LAYER.toStack(),
                     RRBlocks.FLOATING_MOSS.toStack(),
                     RRBlocks.GLOWING_MUSHROOM_CAP.toStack(),
                     RRBlocks.GLOWING_MUSHROOM_STEM.toStack(),
