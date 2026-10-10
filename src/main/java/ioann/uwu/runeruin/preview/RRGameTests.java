@@ -83,6 +83,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("biome_registry_complete", () -> RRGameTests::biomeRegistryComplete);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LAYER_FLOORS_DIFFER =
         TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FLOATING_ISLANDS_NOT_GENERATED =
+        TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -248,6 +250,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("floating_islands_not_generated"),
+            new FunctionGameTestInstance(
+                FLOATING_ISLANDS_NOT_GENERATED.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -323,6 +332,32 @@ public final class RRGameTests {
                 }
             }
             helper.assertTrue(same < 32, "lost and blooming cave floors have the same height at " + same + " of 64 points");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // An island too small for an arcane column floated with nothing under it, in the top layer and in the
+    // deep caves floor. Such islands are not generated; a small island that stands on a column stays.
+    private static void floatingIslandsNotGenerated(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            long seed = 2133132341L;
+            helper.assertTrue(HeadlessTerrainGenerator.generate(server, seed, new BoundingBox(85786, 280, 131858, 85823, 308, 131884)).placedCount() == 0,
+                "a top-layer island with no column under it was generated");
+            helper.assertTrue(HeadlessTerrainGenerator.generate(server, seed, new BoundingBox(85151, 100, 130716, 85176, 160, 130755)).placedCount() == 0,
+                "a small island of the deep caves floor was generated");
+
+            BoundingBox box = new BoundingBox(86800, 260, 135376, 86847, 308, 135423);
+            PreviewWorld supported = HeadlessTerrainGenerator.generate(server, seed, box);
+            boolean column = false;
+            boolean island = false;
+            for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+                column |= pos.getY() == box.minY() && supported.get(pos).is(RRBlocks.ARCANE_STONE.get());
+                island |= supported.get(pos).is(Blocks.GRASS_BLOCK);
+            }
+            helper.assertTrue(column && island, "a small top-layer island standing on a column was not generated");
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());
