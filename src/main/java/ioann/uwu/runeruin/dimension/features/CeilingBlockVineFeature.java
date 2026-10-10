@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.GeometryUtils;
+import ioann.uwu.runeruin.dimension.structures.HangingTracksStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import java.util.List;
 
@@ -333,7 +335,8 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
             }
         }
 
-        return true;
+        // Like the inverted trees, the vine keeps out of the way of hanging tracks that are not built yet.
+        return !HangingTracksStructure.reaches(level, new BoundingBox(ox - 3, oy - height - 2, oz - 3, ox + 4, oy, oz + 4));
     }
 
     public record Config(

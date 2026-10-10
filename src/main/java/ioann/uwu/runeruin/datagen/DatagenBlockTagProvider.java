@@ -28,6 +28,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.ARCANE_STONE_COLUMN.getKey(),
                 RRBlocks.ARCANE_STONE_PORTAL.getKey(),
                 RRBlocks.DIAMOND_ARCANE_STONE.getKey(),
+                RRBlocks.RUNIC_RAIL.getKey(),
                 RRBlocks.VOID_STONE.getKey(),
 
                 RRBlocks.MOSS_LIGHT.getKey(),
@@ -35,6 +36,7 @@ public class DatagenBlockTagProvider extends BlockTagsProvider {
                 RRBlocks.FIREFLY_IN_A_JAR.getKey()
         );
 
+        tag(BlockTags.RAILS).add(RRBlocks.RUNIC_RAIL.getKey());
         tag(BlockTags.NEEDS_DIAMOND_TOOL).add(RRBlocks.VOID_STONE.getKey());
 
         tag(BlockTags.MINEABLE_WITH_AXE).add(

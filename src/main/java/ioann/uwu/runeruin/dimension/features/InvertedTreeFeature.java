@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.GeometryUtils;
+import ioann.uwu.runeruin.dimension.structures.HangingTracksStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import java.util.List;
 
@@ -418,7 +420,12 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             }
         }
 
-        return true;
+        // Hanging tracks of a neighbouring chunk may not be built yet; the tree keeps out of their way too.
+        int reach = radius + 1;
+        return !HangingTracksStructure.reaches(level, new BoundingBox(
+                ox - reach, oy - height - radius - 1, oz - reach,
+                ox + reach, oy, oz + reach
+        ));
     }
 
     public record Config(
