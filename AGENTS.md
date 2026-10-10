@@ -16,7 +16,7 @@ Several agents work in this repository at once. Every change, documentation incl
    .\scripts\start-task.ps1 feature giant_goblet
    ```
 
-   It creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from the local `main`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option).
+   It creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from the local `main`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option). In the Claude desktop app, also add the new worktree to the session's folders (the `request_directory` tool with its path): the file pane opens only files from those folders.
 4. Claim the issue at once, before any other work: other agents see that it is taken only by its draft pull request. A pull request needs a commit, so start with an empty one:
 
    ```powershell
@@ -26,7 +26,7 @@ Several agents work in this repository at once. Every change, documentation incl
    ```
 
    Then repeat the check from step 2: if another open pull request links the issue too, the one with the higher number gives way, so close yours (`gh pr close`) and tell the user. If you cannot claim the issue, tell the user before going on.
-5. Work only inside the task worktree: edits, searches, Gradle, file links in replies. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
+5. Work only inside the task worktree: edits, searches, Gradle. Links to files in replies are absolute paths into the task worktree: a relative link is resolved from the folder the session was started in, usually the main checkout, where the file is missing or is another version. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
 6. Follow-ups after a commit stay in the same branch and worktree. Start a new branch only for an unrelated feature or bug.
 7. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
 8. Remove a worktree only when the user asks, with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` and `gh pr merge --delete-branch` delete the shared sources cache through the junction, and it keeps the branch unless its commits are pushed or in `main`.
