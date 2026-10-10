@@ -191,7 +191,6 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
                     || cap.contains(lowered)
                     || level.isOutsideBuildHeight(lowered)
                     || level.isOutsideBuildHeight(support)
-                    || !level.ensureCanWrite(lowered)
                     || !isAirLike(level, lowered)) {
                 continue;
             }
@@ -609,7 +608,7 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
 
     private static boolean canPlace(WorldGenLevel level, List<BlockPos> positions) {
         for (BlockPos pos : positions) {
-            if (level.isOutsideBuildHeight(pos) || !level.ensureCanWrite(pos)) {
+            if (level.isOutsideBuildHeight(pos)) {
                 return false;
             }
             BlockState existing = level.getBlockState(pos);

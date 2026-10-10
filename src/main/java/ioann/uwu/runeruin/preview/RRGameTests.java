@@ -86,26 +86,58 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("biome_registry_complete", () -> RRGameTests::biomeRegistryComplete);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LAYER_FLOORS_DIFFER =
         TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FLOATING_ISLANDS_NOT_GENERATED =
+        TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_EXPORT_MARKS =
         TEST_FUNCTIONS.register("preview_export_marks", () -> RRGameTests::previewExportMarks);
 
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_REACH =
+        TEST_FUNCTIONS.register("feature_reach", () -> RRGameTests::featureReach);
+
+    // A feature may write only into the chunk of its origin and the eight around it, and the origin can
+    // lie on a chunk edge. A block further from it along X or Z can fall outside: vanilla then logs
+    // "Detected setBlock in a far chunk" and drops the block. Features do not check their blocks for
+    // this, so their sizes must keep them inside.
+    private static final int FEATURE_REACH_LIMIT = 16;
+    private static final int FEATURE_REACH_SEEDS = 48;
+
     private record FeatureCase(String id, Surface surface, Block ground, int offset) {}
 
-    // Configured features without a preview job of their own, each on the surface its placement finds
-    // in the world. Built in the test: mod blocks do not exist yet when the class loads.
-    private static void featurePlacement(GameTestHelper helper) {
+    // Every mod configured feature on the surface its placement finds in the world.
+    // Built in the tests: mod blocks do not exist yet when the class loads.
+    private static List<FeatureCase> featureCases() {
         Block glowingMoss = RRBlocks.GLOWING_MOSS.get();
-        List<FeatureCase> cases = List.of(
+        Block gobletBud = RRBlocks.GIANT_GOBLET_BUD.get();
+        return List.of(
+            new FeatureCase("brown_dome_mushroom", Surface.FLOOR, Blocks.STONE, 1),
+            new FeatureCase("trumpet_mushroom", Surface.FLOOR, Blocks.STONE, 1),
+            new FeatureCase("red_arch_mushroom", Surface.FLOOR, Blocks.STONE, 1),
+            new FeatureCase("pink_twist_mushroom", Surface.FLOOR, Blocks.STONE, 1),
+            new FeatureCase("yellow_hat_mushroom", Surface.FLOOR, Blocks.STONE, 1),
+            new FeatureCase("small_red_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("big_red_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("small_brown_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("big_brown_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("ashen_wall_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("ashen_wall_mushroom_upper", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("ceiling_ball", Surface.CEILING, Blocks.STONE, 0),
+            new FeatureCase("tuff_moss_boulder", Surface.FLOOR, Blocks.STONE, -2),
+            new FeatureCase("mini_volcano", Surface.FLOOR, Blocks.STONE, -2),
+            new FeatureCase("monolith", Surface.FLOOR, Blocks.STONE, -2),
+            new FeatureCase("glowing_mushroom", Surface.FLOOR, glowingMoss, 1),
+            new FeatureCase("goblet_moss_patch", Surface.FLOOR, gobletBud, 1),
+            new FeatureCase("goblet_moss_patch_underwater", Surface.UNDERWATER, gobletBud, 1),
+            new FeatureCase("water_lily", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("ashen_wall_mushroom_cluster", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("ashen_wall_mushroom_cluster_upper", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("powdered_moss", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
             new FeatureCase("moss_hummock", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
             new FeatureCase("stone_lily", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("deep_roots_grass", Surface.FLOOR, glowingMoss, 1),
-            new FeatureCase("goblet_deep_roots", Surface.FLOOR, RRBlocks.GIANT_GOBLET_BUD.get(), 1),
+            new FeatureCase("goblet_deep_roots", Surface.FLOOR, gobletBud, 1),
             new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("moss_berry_bush_patch", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
             new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
@@ -123,15 +155,54 @@ public final class RRGameTests {
             new FeatureCase("dripstone_spike", Surface.CAVE, Blocks.STONE, 0),
             new FeatureCase("deepslate_spike", Surface.CAVE, Blocks.STONE, 0)
         );
+    }
+
+    private static void featurePlacement(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         List<String> failed = new ArrayList<>();
-        for (FeatureCase c : cases) {
+        for (FeatureCase c : featureCases()) {
             if (FeaturePreviewJob.place(server, RR.id(c.id()), c.surface(), c.ground().defaultBlockState(),
-                    c.offset(), 1, 16).changedBlocks() == 0) {
+                    c.offset(), 1, 16, 0, 0).changedBlocks() == 0) {
                 failed.add(c.id() + " on " + c.surface());
             }
         }
         helper.assertTrue(failed.isEmpty(), "placed nothing: " + String.join(", ", failed));
+        helper.succeed();
+    }
+
+    // The largest distance along X or Z between a feature's origin and a block it writes, over many seeds.
+    // The preview origin is a chunk corner: the worst case for giant spikes, which may be wider elsewhere.
+    private static void featureReach(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        Set<String> covered = new HashSet<>();
+        List<String> measured = new ArrayList<>();
+        List<String> problems = new ArrayList<>();
+        for (FeatureCase c : featureCases()) {
+            covered.add(c.id());
+            int reach = 0;
+            // Seeds next to each other start a feature with nearly the same first random number.
+            RandomSource seeds = RandomSource.create(1);
+            for (int i = 0; i < FEATURE_REACH_SEEDS; i++) {
+                FeaturePreviewJob.Placement placement = FeaturePreviewJob.place(server, RR.id(c.id()), c.surface(),
+                    c.ground().defaultBlockState(), c.offset(), seeds.nextLong(), 2 * FEATURE_REACH_LIMIT, 0, 0);
+                BoundingBox written = placement.world().writtenBox();
+                if (written != null) {
+                    BlockPos origin = placement.origin();
+                    reach = Math.max(reach, Math.max(
+                        Math.max(origin.getX() - written.minX(), written.maxX() - origin.getX()),
+                        Math.max(origin.getZ() - written.minZ(), written.maxZ() - origin.getZ())));
+                }
+            }
+            measured.add(c.id() + " " + reach);
+            if (reach > FEATURE_REACH_LIMIT) {
+                problems.add(c.id() + " writes " + reach + " blocks from its origin");
+            }
+        }
+        server.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE).listElements()
+            .filter(feature -> isModKey(feature.key()) && !covered.contains(feature.key().identifier().getPath()))
+            .forEach(feature -> problems.add(feature.key().identifier() + " has no row in featureCases"));
+        RR.LOGGER.info("Feature reach over {} seeds: {}", FEATURE_REACH_SEEDS, String.join(", ", measured));
+        helper.assertTrue(problems.isEmpty(), "the limit is " + FEATURE_REACH_LIMIT + " blocks: " + String.join("; ", problems));
         helper.succeed();
     }
 
@@ -259,6 +330,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("floating_islands_not_generated"),
+            new FunctionGameTestInstance(
+                FLOATING_ISLANDS_NOT_GENERATED.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -269,6 +347,13 @@ public final class RRGameTests {
             RR.id("preview_export_marks"),
             new FunctionGameTestInstance(
                 PREVIEW_EXPORT_MARKS.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("feature_reach"),
+            new FunctionGameTestInstance(
+                FEATURE_REACH.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -334,6 +419,32 @@ public final class RRGameTests {
                 }
             }
             helper.assertTrue(same < 32, "lost and blooming cave floors have the same height at " + same + " of 64 points");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // An island too small for an arcane column floated with nothing under it, in the top layer and in the
+    // deep caves floor. Such islands are not generated; a small island that stands on a column stays.
+    private static void floatingIslandsNotGenerated(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            long seed = 2133132341L;
+            helper.assertTrue(HeadlessTerrainGenerator.generate(server, seed, new BoundingBox(85786, 280, 131858, 85823, 308, 131884)).placedCount() == 0,
+                "a top-layer island with no column under it was generated");
+            helper.assertTrue(HeadlessTerrainGenerator.generate(server, seed, new BoundingBox(85151, 100, 130716, 85176, 160, 130755)).placedCount() == 0,
+                "a small island of the deep caves floor was generated");
+
+            BoundingBox box = new BoundingBox(86800, 260, 135376, 86847, 308, 135423);
+            PreviewWorld supported = HeadlessTerrainGenerator.generate(server, seed, box);
+            boolean column = false;
+            boolean island = false;
+            for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+                column |= pos.getY() == box.minY() && supported.get(pos).is(RRBlocks.ARCANE_STONE.get());
+                island |= supported.get(pos).is(Blocks.GRASS_BLOCK);
+            }
+            helper.assertTrue(column && island, "a small top-layer island standing on a column was not generated");
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());
