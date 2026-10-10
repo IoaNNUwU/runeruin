@@ -39,7 +39,8 @@ public final class HangingTracksPreviewJob implements PreviewJob {
     public String description() {
         return "Hanging minecart tracks under a wavy ceiling. params: piece (network, straight, stairs, diagonal, corner, "
                 + "junction, platform), size, extent (1-2), links (junction sides, 1-15), wood (oak, inverted_tree), "
-                + "wear (intact, decayed, overgrown), shape (square, l, t), shell (open, railing, room), content, gap (3-20), "
+                + "wear (intact, decayed, overgrown), shape (rectangle, round, l, t, plus) with width and depth, "
+                + "theme (moss_pond, huts, treasure_hut, camp, storage, spawner, workshop, depot, lookout), gap (3-20), "
                 + "terrain=real with x and z (the ceiling and the floor of the Deep caves for the seed, around that block)";
     }
 
@@ -150,11 +151,11 @@ public final class HangingTracksPreviewJob implements PreviewJob {
         if (kind.equals("platform")) {
             return new HangingPlatformPiece(
                     port,
-                    HangingPlatformPiece.Shape.valueOf(args.get("shape", "square").toUpperCase(Locale.ROOT)),
-                    size == 0 ? 7 : size,
+                    HangingPlatformPiece.Shape.valueOf(args.get("shape", "rectangle").toUpperCase(Locale.ROOT)),
+                    args.getInt("width", 13),
+                    args.getInt("depth", 13),
                     1,
-                    HangingPlatformPiece.Shell.valueOf(args.get("shell", "room").toUpperCase(Locale.ROOT)),
-                    HangingPlatformPiece.Content.valueOf(args.get("content", "storage").toUpperCase(Locale.ROOT)),
+                    HangingPlatformPiece.Theme.valueOf(args.get("theme", "huts").toUpperCase(Locale.ROOT)),
                     !Boolean.parseBoolean(args.get("detached", "false")),
                     look
             );

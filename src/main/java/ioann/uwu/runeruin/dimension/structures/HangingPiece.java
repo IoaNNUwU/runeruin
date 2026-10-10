@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.dimension.structures;
 
+import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.structures.HangingTracksLayout.Port;
@@ -156,9 +157,17 @@ public abstract class HangingPiece extends StructurePiece {
         return ((h ^ (h >>> 33)) >>> 40) / (float) (1 << 24);
     }
 
-    /** Whether the deck block is there: a decayed piece has lost some planks at its edges, never under the rails. */
-    protected boolean hasDeck(int f, int r, boolean edge) {
-        return !(edge && this.wear == Wear.DECAYED && chance(f, r, 1) < 0.35f);
+    /**
+     * Whether the deck is moss here. An overgrown piece has one mossy stretch, most of its length,
+     * and the rails run through it.
+     */
+    protected boolean mossy(int f, int length) {
+        if (this.wear != Wear.OVERGROWN) {
+            return false;
+        }
+        int from = (int) (chance(0, 0, 30) * length * 0.4f);
+        int to = length - 1 - (int) (chance(0, 0, 31) * length * 0.4f);
+        return f >= from && f <= to;
     }
 
     protected static RailShape flatRail(Direction a, Direction b) {
@@ -213,21 +222,30 @@ public abstract class HangingPiece extends StructurePiece {
             }
         }
 
-        /** A deck plank with what grows on it and hangs under it. */
-        void deck(int f, int u, int r, boolean edge) {
-            if (!hasDeck(f, r, edge)) {
-                return;
+        /**
+         * A deck of planks, or of moss with planks under it when it is thicker than a block. The deck is never
+         * broken: its age shows in the moss layers and roots of a mossy one and the cobwebs of a decayed one.
+         */
+        void deck(int f, int u, int r, boolean mossy, int thickness) {
+            put(f, u, r, mossy ? RRBlocks.DEEP_MOSS.get().defaultBlockState() : wood.planks());
+            for (int i = 1; i < thickness; i++) {
+                put(f, u - i, r, wood.planks());
             }
-            put(f, u, r, wood.planks());
-            if (wear == Wear.OVERGROWN) {
-                if (chance(f, r, 2) < 0.4f) {
-                    put(f, u + 1, r, Blocks.MOSS_CARPET.defaultBlockState());
+            if (mossy) {
+                if (chance(f, r, 2) < 0.15f) {
+                    put(f, u + 1, r, RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState()
+                            .setValue(DeepMossLayerBlock.LAYERS, 1 + (int) (chance(f, r, 12) * 2)));
                 }
-                if (chance(f, r, 3) < 0.15f) {
-                    put(f, u - 1, r, Blocks.HANGING_ROOTS.defaultBlockState());
+                if (chance(f, r, 3) < 0.2f) {
+                    put(f, u - thickness, r, Blocks.HANGING_ROOTS.defaultBlockState());
                 }
-            } else if (wear == Wear.DECAYED && chance(f, r, 4) < 0.06f) {
-                put(f, u - 1, r, Blocks.COBWEB.defaultBlockState());
+            } else if (wear == Wear.DECAYED) {
+                if (chance(f, r, 4) < 0.08f) {
+                    put(f, u - thickness, r, Blocks.COBWEB.defaultBlockState());
+                }
+                if (chance(f, r, 13) < 0.03f) {
+                    put(f, u + 1, r, Blocks.COBWEB.defaultBlockState());
+                }
             }
         }
 
@@ -274,8 +292,11 @@ public abstract class HangingPiece extends StructurePiece {
             put(f, u, r, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
         }
 
-        /** Vines on the side of the deck block next to this place, a few blocks down. */
-        void vines(int f, int u, int r, Direction towardsDeck) {
+        /** Vines down the side of the deck block next to this place: often on a mossy deck, sometimes on a decayed one. */
+        void vines(int f, int u, int r, Direction towardsDeck, boolean mossy) {
+            if (chance(f, r, 11) >= (mossy ? 0.25f : wear == Wear.DECAYED ? 0.1f : 0f)) {
+                return;
+            }
             BlockState vine = Blocks.VINE.defaultBlockState().setValue(VineBlock.getPropertyForFace(towardsDeck), true);
             int length = 1 + (int) (chance(f, r, 7) * 3);
             for (int i = 0; i < length; i++) {

@@ -126,18 +126,21 @@ public abstract class HangingTrackPiece extends HangingPiece {
         }
     }
 
-    /** Fences along the edges that are a block away from the rails, and vines on the sides of an overgrown deck. */
-    protected void edges(Canvas canvas, int f, int u, boolean hanger) {
+    /** One row of a deck across the track, with fences along the edges that are a block away from the rails. */
+    protected void row(Canvas canvas, int f, int u, boolean mossy, boolean hanger) {
+        for (int r = -this.left; r <= this.right; r++) {
+            canvas.deck(f, u, r, mossy, 1);
+        }
+        if (hanger) {
+            hanger(canvas, f, u);
+        }
         for (int sign = -1; sign <= 1; sign += 2) {
             int extent = sign < 0 ? this.left : this.right;
-            if (!hasDeck(f, sign * extent, true)) {
-                continue;
-            }
             if (extent > 1 && chance(f >> 2, sign, 10) < 0.35f) {
                 canvas.fence(f, u + 1, sign * extent);
             }
-            if (this.wear == Wear.OVERGROWN && !hanger && chance(f, sign, 11) < 0.2f) {
-                canvas.vines(f, u, sign * (extent + 1), side(-sign));
+            if (!hanger) {
+                canvas.vines(f, u, sign * (extent + 1), side(-sign), mossy);
             }
         }
     }
@@ -146,10 +149,7 @@ public abstract class HangingTrackPiece extends HangingPiece {
     protected void squareDeck(Canvas canvas, int e) {
         for (int f = 0; f <= 2 * e; f++) {
             for (int r = -e; r <= e; r++) {
-                boolean border = f == 0 || f == 2 * e || Math.abs(r) == e;
-                boolean corner = (f == 0 || f == 2 * e) && Math.abs(r) == e;
-                // The rails may leave through the middle of any side.
-                canvas.deck(f, 0, r, border && !corner && r != 0 && f != e);
+                canvas.deck(f, 0, r, mossy(f, 2 * e + 1), 1);
             }
         }
         for (int f = 0; f <= 2 * e; f += 2 * e) {
@@ -191,14 +191,7 @@ public abstract class HangingTrackPiece extends HangingPiece {
                 path[f + 1] = new int[]{f, 0, 0};
             }
             for (int f = 0; f < this.size; f++) {
-                for (int r = -this.left; r <= this.right; r++) {
-                    canvas.deck(f, 0, r, r == -this.left || r == this.right);
-                }
-                boolean hanger = f % 5 == 2;
-                if (hanger) {
-                    hanger(canvas, f, 0);
-                }
-                edges(canvas, f, 0, hanger);
+                row(canvas, f, 0, mossy(f, this.size), f % 5 == 2);
             }
             rails(canvas, path);
         }
@@ -254,15 +247,8 @@ public abstract class HangingTrackPiece extends HangingPiece {
             for (int f = 0; f < length; f++) {
                 int level = level(f);
                 path[f + 1] = new int[]{f, 0, level};
-                for (int r = -this.left; r <= this.right; r++) {
-                    canvas.deck(f, level, r, r == -this.left || r == this.right);
-                }
                 // A beam needs a flat rail above it: the upper block of a step going up, the lower one going down.
-                boolean hanger = f % 4 == (this.size > 0 ? 1 : 0);
-                if (hanger) {
-                    hanger(canvas, f, level);
-                }
-                edges(canvas, f, level, hanger);
+                row(canvas, f, level, mossy(f, length), f % 4 == (this.size > 0 ? 1 : 0));
             }
             rails(canvas, path);
         }
@@ -334,9 +320,8 @@ public abstract class HangingTrackPiece extends HangingPiece {
             int[][] path = path();
             for (int f = 0; f <= steps + 1; f++) {
                 for (int r = Math.min(0, this.size) - extent; r <= Math.max(0, this.size) + extent; r++) {
-                    int distance = distance(path, f, r);
-                    if (distance <= extent) {
-                        canvas.deck(f, 0, r, extent > 1 && distance == extent && !post(f, r));
+                    if (distance(path, f, r) <= extent) {
+                        canvas.deck(f, 0, r, mossy(f, steps + 2), 1);
                     }
                 }
             }
@@ -347,17 +332,6 @@ public abstract class HangingTrackPiece extends HangingPiece {
                 }
             }
             rails(canvas, path);
-        }
-
-        /** Whether a chain stands on this deck block: on both sides of the rails, every third step. */
-        private boolean post(int f, int r) {
-            int sign = Integer.signum(this.size);
-            for (int i = this.left; i <= steps(); i += 3) {
-                if (f == i - this.left && r == i * sign || f == i + this.left && r == (i - 1) * sign) {
-                    return true;
-                }
-            }
-            return false;
         }
     }
 
@@ -492,7 +466,7 @@ public abstract class HangingTrackPiece extends HangingPiece {
                     boolean border = f == 0 || f == 2 * extent || Math.abs(r) == extent;
                     boolean corner = (f == 0 || f == 2 * extent) && Math.abs(r) == extent;
                     // The rails leave through the middle of each side.
-                    if (!border || corner || Math.abs(r) <= 1 || Math.abs(f - extent) <= 1 || !hasDeck(f, r, true)) {
+                    if (!border || corner || Math.abs(r) <= 1 || Math.abs(f - extent) <= 1) {
                         continue;
                     }
                     canvas.fence(f, 1, r);

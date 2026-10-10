@@ -3,9 +3,8 @@ package ioann.uwu.runeruin.dimension.structures;
 import ioann.uwu.runeruin.dimension.structures.HangingPiece.Look;
 import ioann.uwu.runeruin.dimension.structures.HangingPiece.Wear;
 import ioann.uwu.runeruin.dimension.structures.HangingPiece.Wood;
-import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece.Content;
 import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece.Shape;
-import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece.Shell;
+import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece.Theme;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -129,7 +128,7 @@ public final class HangingTracksLayout {
                 return true;
             }
         }
-        // A track that cannot go on ends with a platform; each attempt tries a smaller one.
+        // A track that cannot go on ends with a platform.
         for (int attempt = 0; attempt < 3; attempt++) {
             HangingPlatformPiece platform = randomPlatform(port, true, attempt);
             if (fits(platform, parent)) {
@@ -182,55 +181,43 @@ public final class HangingTracksLayout {
         return new HangingTrackPiece.Junction(port, this.extent, HangingTrackPiece.BACK, look());
     }
 
+    /** A platform for this place; each further attempt makes a smaller one, down to 7 by 7 blocks. */
     private HangingPlatformPiece randomPlatform(Port port, boolean connected, int attempt) {
-        Shape shape = Shape.SQUARE;
-        int size = 5;
+        Shape shape = Shape.RECTANGLE;
+        int width = 7;
+        int depth = 7;
         if (attempt == 0) {
             int roll = this.random.nextInt(10);
-            shape = roll < 6 ? Shape.SQUARE : roll < 8 ? Shape.L : Shape.T;
-            size = 5 + 2 * this.random.nextInt(3);
+            shape = roll < 4 ? Shape.RECTANGLE : roll < 6 ? Shape.ROUND : roll < 7 ? Shape.L : roll < 9 ? Shape.T : Shape.PLUS;
+            width = 11 + 2 * this.random.nextInt(3);
+            depth = shape == Shape.ROUND || shape == Shape.PLUS ? width : 11 + this.random.nextInt(5);
         } else if (attempt == 1) {
-            size = 7;
+            width = 9 + 2 * this.random.nextInt(2);
+            depth = 9 + this.random.nextInt(3);
         }
-
-        Content content = randomContent(connected);
-        Shell shell;
-        if (content == Content.LOOKOUT) {
-            shell = Shell.RAILING;
-        } else if (content == Content.COLLAPSED) {
-            shell = Shell.OPEN;
-        } else {
-            int roll = this.random.nextInt(10);
-            boolean roomFits = gap(port) > HangingPlatformPiece.ROOM_HEIGHT + 1;
-            shell = roomFits && roll < 5 ? Shell.ROOM : roll < 8 ? Shell.RAILING : Shell.OPEN;
-        }
-        if (shape == Shape.SQUARE && size == 9 && shell == Shell.ROOM && this.random.nextInt(3) == 0) {
-            content = Content.TREASURE;
-        }
-        return new HangingPlatformPiece(port, shape, size, this.random.nextBoolean() ? 1 : -1, shell, content, connected, look());
+        Theme theme = randomTheme(shape, depth, connected, gap(port) >= HangingPlatformPiece.ROOF + 2);
+        return new HangingPlatformPiece(port, shape, width, depth, this.random.nextBoolean() ? 1 : -1, theme, connected, look());
     }
 
-    private Content randomContent(boolean connected) {
-        int roll = this.random.nextInt(100);
-        if (roll < 28) {
-            return Content.STORAGE;
+    /** A theme that the platform has room for. */
+    private Theme randomTheme(Shape shape, int depth, boolean connected, boolean roofFits) {
+        for (int attempt = 0; attempt < 6; attempt++) {
+            int roll = this.random.nextInt(100);
+            Theme theme = roll < 20 ? Theme.MOSS_POND : roll < 42 ? Theme.HUTS : roll < 54 ? Theme.CAMP
+                    : roll < 66 ? Theme.STORAGE : roll < 76 ? Theme.SPAWNER : roll < 84 ? Theme.WORKSHOP
+                    : roll < 90 ? Theme.LOOKOUT : roll < 96 ? Theme.DEPOT : Theme.TREASURE_HUT;
+            boolean fits = switch (theme) {
+                case MOSS_POND -> depth >= 11 && shape != Shape.L && shape != Shape.T;
+                case HUTS, TREASURE_HUT -> roofFits && depth >= 11;
+                case STORAGE, WORKSHOP -> roofFits && depth >= 9;
+                case DEPOT -> connected && depth >= 9;
+                default -> true;
+            };
+            if (fits) {
+                return theme;
+            }
         }
-        if (roll < 50) {
-            return Content.SPAWNER;
-        }
-        if (roll < 64) {
-            return Content.CAMP;
-        }
-        if (roll < 76) {
-            return Content.WORKSHOP;
-        }
-        if (roll < 84) {
-            return Content.LOOKOUT;
-        }
-        if (roll < 92) {
-            return Content.COLLAPSED;
-        }
-        return connected ? Content.DEPOT : Content.STORAGE;
+        return Theme.CAMP;
     }
 
     /** A few platforms that hang near the tracks without touching them, up to 5 blocks higher or lower. */
@@ -274,9 +261,10 @@ public final class HangingTracksLayout {
         }
         BoundingBox apart = area.inflatedBy(SPACING);
         for (HangingPiece other : this.pieces) {
-            // A piece touches the one it grows from and comes close to that one's other neighbours.
-            boolean joined = parent != null
-                    && (other == parent || this.parents.get(other) == parent || other == this.parents.get(parent));
+            // A piece touches the one it grows from. A track also comes close to that one's other neighbours;
+            // a platform is too wide for that: their beams and chains would hang in its deck.
+            boolean joined = parent != null && (other == parent || !(piece instanceof HangingPlatformPiece)
+                    && (this.parents.get(other) == parent || other == this.parents.get(parent)));
             if (other.footprint().intersects(joined ? area : apart)) {
                 return false;
             }
