@@ -10,7 +10,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
@@ -32,15 +31,17 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
 
 public class WispberryBushBlock extends VegetationBlock implements BonemealableBlock {
 
     public static final IntegerProperty AGE = BlockStateProperties.AGE_3;
-    private static final VoxelShape SHAPE_SAPLING = Block.column(10.0F, 0.0F, 8.0F);
-    private static final VoxelShape SHAPE_GROWING = Block.column(14.0F, 0.0F, 16.0F);
+    private static final VoxelShape SHAPE_SAPLING = Block.column(8.0F, 0.0F, 9.0F);
+    private static final VoxelShape SHAPE_GROWN = Block.column(14.0F, 0.0F, 16.0F);
+    // Only the middle of the bush holds whoever walks into it: its edge can be brushed past.
+    private static final VoxelShape CORE_SAPLING = Block.column(4.0F, 0.0F, 9.0F);
+    private static final VoxelShape CORE_GROWN = Block.column(8.0F, 0.0F, 16.0F);
 
     public WispberryBushBlock(Properties properties) {
         super(properties);
@@ -62,13 +63,12 @@ public class WispberryBushBlock extends VegetationBlock implements BonemealableB
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        VoxelShape shape;
-        switch (state.getValue(AGE)) {
-            case 0 -> shape = SHAPE_SAPLING;
-            case 3 -> shape = Shapes.block();
-            default -> shape = SHAPE_GROWING;
-        }
-        return shape;
+        return state.getValue(AGE) == 0 ? SHAPE_SAPLING : SHAPE_GROWN;
+    }
+
+    @Override
+    protected VoxelShape getEntityInsideCollisionShape(BlockState state, BlockGetter level, BlockPos pos, Entity entity) {
+        return state.getValue(AGE) == 0 ? CORE_SAPLING : CORE_GROWN;
     }
 
     @Override
@@ -88,28 +88,11 @@ public class WispberryBushBlock extends VegetationBlock implements BonemealableB
         }
     }
 
+    /** The bush holds whoever walks into it as a cobweb does, and does not hurt. */
     @Override
     protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean isPrecise) {
-
         if (entity instanceof LivingEntity && !entity.is(EntityTypes.FROG) && !entity.is(EntityTypes.BOGGED)) {
-
-            entity.makeStuckInBlock(state, new Vec3(0.8F, 0.75F, 0.8F));
-
-            if (level instanceof ServerLevel serverLevel) {
-                if (state.getValue(AGE) != 0) {
-                    Vec3 movement = entity.isClientAuthoritative() ? entity.getKnownMovement() : entity.oldPosition().subtract(entity.position());
-
-                    if (movement.horizontalDistanceSqr() > (double)0.0F) {
-                        double xs = Math.abs(movement.x());
-                        double zs = Math.abs(movement.z());
-                        if (xs >= (double)0.003F || zs >= (double)0.003F) {
-                            DamageSource damageSource = level.damageSources().generic();
-
-                            entity.hurtServer(serverLevel, damageSource, 1.0F);
-                        }
-                    }
-                }
-            }
+            entity.makeStuckInBlock(state, new Vec3(0.25, 0.05F, 0.25));
         }
     }
 
