@@ -161,6 +161,12 @@ public class RRBlocks {
             EldenLeafLitterBlock::new
     );
 
+    /** Clover lying on the ground in one to four segments, like the pink petals. */
+    public static final DeferredBlock<Block> CLOVER = register("clover",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PINK_PETALS),
+            CloverBlock::new
+    );
+
     public static final DeferredBlock<Block> ELDEN_VINES = register("elden_vines",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CAVE_VINES_PLANT)
                     .mapColor(MapColor.COLOR_BROWN)
