@@ -7,6 +7,7 @@ import ioann.uwu.runeruin.dimension.RRBiomes;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
@@ -112,15 +113,9 @@ public final class RRTerrainSurfaces {
 
     private static void placeSurface(TerrainWriter terrain, int x, int y, int z, BlockState state, int inwardDirection) {
         terrain.set(x, y, z, state);
-        if (isMoss(state)) {
+        if (state.is(BlockTags.MOSS_BLOCKS)) {
             terrain.set(x, y + inwardDirection, z, state);
         }
-    }
-
-    private static boolean isMoss(BlockState state) {
-        return state.is(Blocks.MOSS_BLOCK)
-                || state.is(Blocks.PALE_MOSS_BLOCK)
-                || state.is(RRBlocks.GLOWING_MOSS.get());
     }
 
     public static boolean hasProfile(ResourceKey<Biome> biome) {
