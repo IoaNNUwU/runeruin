@@ -10,7 +10,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
-import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.data.worldgen.features.TreeFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.data.worldgen.placement.VegetationPlacements;
@@ -315,7 +314,7 @@ public class RRPlacedFeatures {
         ));
 
         ctx.register(MOSS_VEGETATION, new PlacedFeature(
-                configuredFeatures.getOrThrow(CaveFeatures.MOSS_VEGETATION),
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_VEGETATION),
                 floorPlacement(CountPlacement.of(200), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.solid(), 12, 1)
         ));
 

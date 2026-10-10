@@ -97,6 +97,8 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.GLOWING_MOSS.get());
         dropSelf(RRBlocks.GLOWING_MOSS_CARPET.get());
         dropSelf(RRBlocks.FLOATING_MOSS.get());
+        add(RRBlocks.MOSS_SPROUTS.get(), block -> createShearsOnlyDrop(block));
+        add(RRBlocks.SMALL_MOSS_SPROUTS.get(), block -> createShearsOnlyDrop(block));
         add(RRBlocks.GLOWING_MUSHROOM_CAP.get(), this::createGlowingMushroomBlockDrop);
         add(RRBlocks.GLOWING_MUSHROOM_STEM.get(), this::createGlowingMushroomBlockDrop);
         dropSelf(RRBlocks.GLOWING_MUSHROOM.get());

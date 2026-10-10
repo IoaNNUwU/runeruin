@@ -18,6 +18,8 @@ public class DatagenDataMapProvider extends DataMapProvider {
     protected void gather(HolderLookup.Provider provider) {
         builder(NeoForgeDataMaps.COMPOSTABLES)
                 .add(RRBlocks.ELDEN_LEAF_LITTER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false)
-                .add(RRBlocks.CLOVER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false);
+                .add(RRBlocks.CLOVER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false)
+                .add(RRBlocks.MOSS_SPROUTS.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false)
+                .add(RRBlocks.SMALL_MOSS_SPROUTS.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false);
     }
 }

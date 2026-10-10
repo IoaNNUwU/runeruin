@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.dimension.structures;
 
+import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -1235,7 +1236,8 @@ public final class BaobabTreeGenerator {
                 }
 
                 float plantChoice = random.nextFloat();
-                BlockState plant = plantChoice < 0.38F ? Blocks.SHORT_GRASS.defaultBlockState()
+                BlockState plant = plantChoice < 0.19F ? RRBlocks.SMALL_MOSS_SPROUTS.get().defaultBlockState()
+                        : plantChoice < 0.38F ? RRBlocks.MOSS_SPROUTS.get().defaultBlockState()
                         : plantChoice < 0.72F ? Blocks.FERN.defaultBlockState()
                         : Blocks.PINK_PETALS.defaultBlockState();
                 tree.put(plantPos.immutable(), plant);

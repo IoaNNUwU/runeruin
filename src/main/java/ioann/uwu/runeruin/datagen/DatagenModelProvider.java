@@ -70,6 +70,8 @@ public class DatagenModelProvider extends ModelProvider {
         );
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
         FloatingMossModels.createFloatingMoss(blockModels);
+        blockModels.createCrossBlockWithDefaultItem(RRBlocks.MOSS_SPROUTS.get(), BlockModelGenerators.PlantType.NOT_TINTED);
+        blockModels.createCrossBlockWithDefaultItem(RRBlocks.SMALL_MOSS_SPROUTS.get(), BlockModelGenerators.PlantType.NOT_TINTED);
         blockModels.createTrivialBlock(
                 RRBlocks.GLOWING_MUSHROOM_CAP.get(),
                 TexturedModel.CUBE.updateTexture(TextureMapping::forceAllTranslucent)
