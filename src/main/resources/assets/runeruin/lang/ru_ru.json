@@ -3,6 +3,7 @@
 
   "item.runeruin.rune_of_space": "Руна пространства",
   "item.runeruin.wispberry": "Блуждающая ягода",
+  "item.runeruin.mossberry": "Моховая ягода",
   "item.runeruin.powdered_moss_bucket": "Ведро порошкового мха",
   "item.runeruin.snail_spawn_egg": "Яйцо призыва улитки",
   "entity.runeruin.snail": "Улитка",
@@ -23,6 +24,9 @@
   "block.runeruin.powdered_moss": "Порошковый мох",
   "block.runeruin.glowing_moss": "Светящийся мох",
   "block.runeruin.glowing_moss_carpet": "Ковёр из светящегося мха",
+  "block.runeruin.deep_moss": "Глубокий мох",
+  "block.runeruin.deep_moss_layer": "Слой глубокого мха",
+  "block.runeruin.mossberry_bush": "Куст моховой ягоды",
   "block.runeruin.floating_moss": "Плавучий мох",
   "block.runeruin.glowing_mushroom_cap": "Светящаяся шляпка гриба",
   "block.runeruin.glowing_mushroom_stem": "Белая ножка светящегося гриба",
