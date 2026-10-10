@@ -375,6 +375,34 @@ public class RRBlocks {
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.LILY_PAD),
             WaterLilyLeafBlock::new);
 
+    /** What the Void ceiling is made of; as hard to break and to blow up as obsidian. */
+    public static final DeferredBlock<Block> VOID_STONE = register("void_stone",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OBSIDIAN)
+                    .mapColor(MapColor.COLOR_PURPLE));
+
+    /** A thread of beads hanging from a ceiling; about half of its blocks glow. */
+    public static final DeferredBlock<Block> BEAD_VINE = register("bead_vine",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CAVE_VINES_PLANT)
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .lightLevel(BeadVineBlock::getLightLevel)
+                    .randomTicks(),
+            BeadVineBlock::new);
+
+    public static final DeferredBlock<Block> DUST_BLOOM = register("dust_bloom",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SPORE_BLOSSOM)
+                    .mapColor(MapColor.COLOR_MAGENTA)
+                    .lightLevel(_ -> 7),
+            DustBloomBlock::new);
+
+    /** Chorus that grows down from void stone, with the look and the fruit of the vanilla plant. */
+    public static final DeferredBlock<Block> HANGING_CHORUS_PLANT = register("hanging_chorus_plant",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHORUS_PLANT),
+            HangingChorusPlantBlock::new);
+
+    public static final DeferredBlock<Block> HANGING_CHORUS_FLOWER = register("hanging_chorus_flower",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHORUS_FLOWER),
+            HangingChorusFlowerBlock::new);
+
     /** Interior portal block; no BlockItem (like nether portal). */
     public static final DeferredBlock<Block> RUNE_RUIN_PORTAL = REGISTRY.registerBlock(
             "rune_ruin_portal",

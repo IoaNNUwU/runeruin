@@ -37,6 +37,7 @@ public final class RRTerrainSurfaces {
     private static final SurfaceResolver GRASS = fixed(Blocks.GRASS_BLOCK);
     private static final SurfaceResolver GLOWING_MOSS = random ->
             GlowingMossBlock.stateForPlacement(RRBlocks.GLOWING_MOSS.get().defaultBlockState(), random);
+    private static final SurfaceResolver VOID_STONE = random -> RRBlocks.VOID_STONE.get().defaultBlockState();
 
     private static final SurfaceResolver DEFAULT_FLOOR = STONE;
     private static final SurfaceResolver DEFAULT_CEILING = MOSS;
@@ -65,6 +66,8 @@ public final class RRTerrainSurfaces {
 
         register(RRBiomes.SPARKLING_CAVES, DEEPSLATE, DEEPSLATE);
         register(RRBiomes.SPARKLING_CAVES_CEILING, DEEPSLATE, DEEPSLATE);
+
+        register(RRBiomes.VOID, VOID_STONE, VOID_STONE);
     }
 
     private RRTerrainSurfaces() {}

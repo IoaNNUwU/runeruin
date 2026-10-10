@@ -10,6 +10,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemEntityPropertyCondition;
 import net.minecraft.world.level.storage.loot.providers.number.BinomialDistributionGenerator;
@@ -114,6 +116,16 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.WATER_LILY_ROOT.get());
         add(RRBlocks.WATER_LILY_LEAF.get(), createShearsOnlyDrop(RRBlocks.WATER_LILY_LEAF.get()));
         dropSelf(RRBlocks.WATER_LILY_FLOWER.get());
+
+        dropSelf(RRBlocks.VOID_STONE.get());
+        dropSelf(RRBlocks.BEAD_VINE.get());
+        dropSelf(RRBlocks.DUST_BLOOM.get());
+        // As the vanilla chorus: fruit from the plant, and the flower only when someone breaks it.
+        add(RRBlocks.HANGING_CHORUS_PLANT.get(), createSingleItemTable(Items.CHORUS_FRUIT, UniformGenerator.between(0.0F, 1.0F)));
+        add(RRBlocks.HANGING_CHORUS_FLOWER.get(), block -> LootTable.lootTable().withPool(LootPool.lootPool()
+                .when(LootItemEntityPropertyCondition.entityPresent(LootContext.EntityTarget.THIS))
+                .add(LootItem.lootTableItem(block).when(ExplosionCondition.survivesExplosion()))
+        ));
 
         add(RRBlocks.RUNE_RUIN_PORTAL.get(), noDrop());
 
