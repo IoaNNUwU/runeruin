@@ -31,6 +31,7 @@ public final class PreviewWorld {
     private final RandomSource random;
     private final WorldGenLevel view;
     private final @Nullable ServerLevel server;
+    private @Nullable BoundingBox written;
 
     private PreviewWorld(long seed, @Nullable ServerLevel server) {
         this.seed = seed;
@@ -75,6 +76,20 @@ public final class PreviewWorld {
         } else {
             blocks.put(key, state);
         }
+    }
+
+    /**
+     * The box around every block written through {@link #asLevel()}, also where the state stayed the same;
+     * null before the first write. Blocks prepared with {@link #set} and {@link #fillBox} do not count.
+     */
+    public @Nullable BoundingBox writtenBox() {
+        return written;
+    }
+
+    private void write(BlockPos pos, BlockState state) {
+        BoundingBox box = new BoundingBox(pos);
+        written = written == null ? box : BoundingBox.encapsulating(written, box);
+        set(pos, state);
     }
 
     public int placedCount() {
@@ -123,7 +138,7 @@ public final class PreviewWorld {
     private Object invoke(Object proxy, Method method, Object @Nullable [] args) throws Throwable {
         return switch (method.getName()) {
             case "setBlock" -> {
-                set((BlockPos) args[0], (BlockState) args[1]);
+                write((BlockPos) args[0], (BlockState) args[1]);
                 yield true;
             }
             case "getBlockState" -> get((BlockPos) args[0]);
@@ -132,7 +147,7 @@ public final class PreviewWorld {
             case "isFluidAtPosition" -> ((Predicate<FluidState>) args[1]).test(get((BlockPos) args[0]).getFluidState());
             case "getRawBrightness" -> 0;
             case "removeBlock", "destroyBlock" -> {
-                set((BlockPos) args[0], Blocks.AIR.defaultBlockState());
+                write((BlockPos) args[0], Blocks.AIR.defaultBlockState());
                 yield true;
             }
             case "scheduleTick" -> null;
