@@ -301,6 +301,7 @@ public class RRBlocks {
     public static final DeferredBlock<Block> MOSS_LAYER = register("moss_layer",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_CARPET)
                     .forceSolidOff()
+                    .lightLevel(MossLayerBlock::lightLevel)
                     .isViewBlocking((state, _, _) -> state.getValue(MossLayerBlock.LAYERS) >= MossLayerBlock.MAX_HEIGHT),
             MossLayerBlock::new);
 

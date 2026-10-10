@@ -16,6 +16,7 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
+import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
 import ioann.uwu.runeruin.region.RegionExport;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
@@ -43,6 +45,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FeatureSorter;
@@ -55,6 +59,9 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
@@ -76,6 +83,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSS_LAYER_BONEMEAL =
         TEST_FUNCTIONS.register("moss_layer_bonemeal", () -> RRGameTests::mossLayerBonemeal);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSS_LAYER_HARVEST =
+        TEST_FUNCTIONS.register("moss_layer_harvest", () -> RRGameTests::mossLayerHarvest);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
         TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_FEATURE_ORDER =
@@ -291,6 +300,13 @@ public final class RRGameTests {
             RR.id("moss_layer_bonemeal"),
             new FunctionGameTestInstance(
                 MOSS_LAYER_BONEMEAL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("moss_layer_harvest"),
+            new FunctionGameTestInstance(
+                MOSS_LAYER_HARVEST.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -635,6 +651,32 @@ public final class RRGameTests {
                 }
             }
         }
+        helper.succeed();
+    }
+
+    // A block full of mossberries glows like a ripe berry bush; one click picks them all for at most
+    // three berries and leaves the twigs.
+    private static void mossLayerHarvest(GameTestHelper helper) {
+        BlockPos pos = helper.absolutePos(new BlockPos(0, 5, 0));
+        var level = helper.getLevel();
+        var bare = RRBlocks.MOSS_LAYER.get().defaultBlockState().setValue(MossLayerBlock.TWIGS, true);
+        var full = bare;
+        for (MossLayerBlock.Plant plant : MossLayerBlock.PLANTS) {
+            full = full.setValue(plant.property(), true);
+        }
+        helper.assertTrue(MossLayerBlock.lightLevel(bare) == 0, "a moss layer without plants glows");
+        helper.assertTrue(MossLayerBlock.lightLevel(full) == 9, "a full moss layer gives light " + MossLayerBlock.lightLevel(full));
+
+        level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(pos, full);
+        full.useWithoutItem(level, helper.makeMockPlayer(GameType.SURVIVAL), new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
+
+        helper.assertTrue(level.getBlockState(pos) == bare, "picking left " + level.getBlockState(pos));
+        int berries = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2)).stream()
+            .filter(entity -> entity.getItem().is(RRItems.MOSSBERRY))
+            .mapToInt(entity -> entity.getItem().getCount())
+            .sum();
+        helper.assertTrue(berries >= 1 && berries <= 3, "picking dropped " + berries + " mossberries");
         helper.succeed();
     }
 

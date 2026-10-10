@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.food.Foods;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SolidBucketItem;
@@ -49,6 +50,13 @@ public class RRItems {
                                     )
                             ))
                             .build())
+    );
+
+    /** Picked from the plants of a moss layer and planted back on one; see {@code MossLayerBlock}. */
+    public static final DeferredItem<Item> MOSSBERRY = REGISTRY.registerItem(
+            "mossberry",
+            Item::new,
+            p -> p.food(Foods.SWEET_BERRIES)
     );
 
     public static final DeferredItem<Item> POWDERED_MOSS_BUCKET = REGISTRY.registerItem(

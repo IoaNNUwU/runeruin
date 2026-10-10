@@ -65,6 +65,7 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
                             for (int i = 1 + random.nextInt(Math.min(height, 4)); i > 0; i--) {
                                 state = state.setValue(Util.getRandom(MossLayerBlock.PLANTS, random).property(), true);
                             }
+                            state = state.setValue(MossLayerBlock.TWIGS, random.nextBoolean());
                         }
                         level.setBlock(pos, state, 2);
                         placed = true;

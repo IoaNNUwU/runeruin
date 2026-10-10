@@ -1,5 +1,7 @@
 package ioann.uwu.runeruin.datagen.models;
 
+import static ioann.uwu.runeruin.datagen.models.ModelJson.horizontalPlane;
+import static ioann.uwu.runeruin.datagen.models.ModelJson.planeFace;
 import static ioann.uwu.runeruin.datagen.models.ModelJson.vector;
 
 import com.google.gson.JsonArray;
@@ -14,7 +16,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import org.jspecify.annotations.NonNull;
 
-/** Moss layer: a snow-like slab per height and, standing on it, one model per plant that its property switches on. */
+/** Moss layer: a snow-like slab per height and, on top of it, the twigs and one model per plant, each switched on by its property. */
 public final class MossLayerModels {
 
     private static final String MOSS = "runeruin:block/moss_layer";
@@ -30,6 +32,12 @@ public final class MossLayerModels {
             JsonObject layerModel = layerModel(height);
             blockModels.modelOutput.accept(layer, () -> layerModel);
             blockState.with(new ConditionBuilder().term(MossLayerBlock.LAYERS, layers), BlockModelGenerators.plainVariant(layer));
+
+            Identifier twigs = RR.id("block/moss_layer_twigs_height" + height);
+            JsonObject twigsModel = twigsModel(height);
+            blockModels.modelOutput.accept(twigs, () -> twigsModel);
+            blockState.with(new ConditionBuilder().term(MossLayerBlock.LAYERS, layers).term(MossLayerBlock.TWIGS, true),
+                    BlockModelGenerators.plainVariant(twigs));
 
             for (int number = 0; number < MossLayerBlock.PLANTS.size(); number++) {
                 MossLayerBlock.Plant plant = MossLayerBlock.PLANTS.get(number);
@@ -59,6 +67,24 @@ public final class MossLayerModels {
         return model;
     }
 
+    /** Twigs lie flat half a pixel above the moss, as a water lily flower lies above its pad. */
+    private static JsonObject twigsModel(int mossHeight) {
+        JsonObject model = new JsonObject();
+        model.addProperty("ambientocclusion", false);
+        JsonObject textures = new JsonObject();
+        textures.addProperty("particle", MOSS);
+        textures.addProperty("texture", "runeruin:block/moss_layer_twigs");
+        model.add("textures", textures);
+        JsonObject down = planeFace(0, 16, 16, 0);
+        JsonObject up = planeFace(0, 0, 16, 16);
+        down.remove("tintindex");
+        up.remove("tintindex");
+        JsonArray elements = new JsonArray();
+        elements.add(horizontalPlane(mossHeight + 0.5, down, up));
+        model.add("elements", elements);
+        return model;
+    }
+
     /**
      * One cube, leaning away from the middle of the block: side by side the cubes read as a dome. Two upright
      * planes through its middle reach a pixel out of it on every side: what is drawn there shows as spikes.
@@ -81,7 +107,7 @@ public final class MossLayerModels {
         model.addProperty("ambientocclusion", false);
         JsonObject textures = new JsonObject();
         textures.addProperty("particle", MOSS);
-        textures.addProperty("plant", "runeruin:block/moss_hedgehog");
+        textures.addProperty("plant", "runeruin:block/mossberry");
         model.add("textures", textures);
         model.add("elements", elements);
         return model;
@@ -110,7 +136,7 @@ public final class MossLayerModels {
     }
 
     /**
-     * moss_hedgehog.png, per cube size a row of two tiles: the cube face at u 0, as wide as the cube, and the
+     * block/mossberry.png, per cube size a row of two tiles: the cube face at u 0, as wide as the cube, and the
      * spike plane at u 4, two pixels wider. The rows start at v 0 (4x4), 6 (3x3) and 11 (2x2).
      */
     private static JsonObject tile(int size, boolean spikes, boolean mirrored) {

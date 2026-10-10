@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.items.RRItems;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.DataMapProvider;
@@ -19,6 +20,7 @@ public class DatagenDataMapProvider extends DataMapProvider {
         builder(NeoForgeDataMaps.COMPOSTABLES)
                 .add(RRBlocks.ELDEN_LEAF_LITTER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false)
                 .add(RRBlocks.MOSS_LAYER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false)
+                .add(RRItems.MOSSBERRY, new Compostable(0.3F), false)
                 .add(RRBlocks.CLOVER.get().asItem().builtInRegistryHolder(), new Compostable(0.3F), false);
     }
 }
