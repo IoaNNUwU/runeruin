@@ -603,7 +603,8 @@ public final class RRGameTests {
         helper.succeed();
     }
 
-    // Bone meal adds one or two plants to the block and at most one to each moss layer around it, up to the limit.
+    // Bone meal grows one or two of the smallest plants on the block and, on each moss layer around it,
+    // at most one: the plant nearest to that block.
     private static void mossLayerBonemeal(GameTestHelper helper) {
         BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
         var level = helper.getLevel();
@@ -612,19 +613,26 @@ public final class RRGameTests {
             level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
             level.setBlockAndUpdate(pos, moss.defaultBlockState());
         }
-        var state = moss.defaultBlockState().setValue(MossLayerBlock.PLANTS, MossLayerBlock.MAX_PLANTS - 1);
-        level.setBlockAndUpdate(base, state);
+        var state = moss.defaultBlockState();
         helper.assertTrue(moss.isValidBonemealTarget(level, base, state), "moss layer rejected bonemeal");
         moss.performBonemeal(level, RandomSource.create(42), base, state);
 
         for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
             var grown = level.getBlockState(pos);
             helper.assertTrue(grown.is(moss), "bonemeal replaced a moss layer with " + grown);
-            int plants = grown.getValue(MossLayerBlock.PLANTS);
+            List<MossLayerBlock.Plant> plants = MossLayerBlock.PLANTS.stream().filter(plant -> grown.getValue(plant.property())).toList();
             if (pos.equals(base)) {
-                helper.assertTrue(plants == MossLayerBlock.MAX_PLANTS, "bonemeal left " + plants + " plants on its block");
+                helper.assertTrue(!plants.isEmpty() && plants.size() <= 2, "bonemeal grew " + plants.size() + " plants on its block");
+                helper.assertTrue(plants.stream().allMatch(plant -> plant.size() == 2), "bonemeal did not start with the smallest plants");
             } else {
-                helper.assertTrue(plants <= 1, "bonemeal grew " + plants + " plants on a neighbour");
+                helper.assertTrue(plants.size() <= 1, "bonemeal grew " + plants.size() + " plants on a neighbour");
+                double fromX = (base.getX() - pos.getX()) * 16 + 8;
+                double fromZ = (base.getZ() - pos.getZ()) * 16 + 8;
+                for (MossLayerBlock.Plant plant : plants) {
+                    double distance = Math.hypot(plant.x() - fromX, plant.z() - fromZ);
+                    helper.assertTrue(MossLayerBlock.PLANTS.stream().allMatch(other -> Math.hypot(other.x() - fromX, other.z() - fromZ) >= distance),
+                            "bonemeal grew a plant on a neighbour far from the block it was used on");
+                }
             }
         }
         helper.succeed();

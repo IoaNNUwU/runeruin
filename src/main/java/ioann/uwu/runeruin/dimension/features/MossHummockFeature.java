@@ -5,6 +5,7 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,7 +16,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A group of moss layer mounds standing together: a main one and a few smaller ones against its side, each
- * tallest in the middle. Spiky plants grow mostly near the tops, moss carpets lie around the rim.
+ * tallest in the middle. Plants grow mostly near the tops, moss carpets lie around the rim.
  */
 public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
 
@@ -58,9 +59,14 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
                     }
                     BlockPos pos = findFloor(level, column, moss);
                     if (pos != null) {
-                        boolean hasPlants = random.nextFloat() < 0.1F + 0.13F * height;
-                        int plants = hasPlants ? 1 + random.nextInt(Math.min(height, 4)) : 0;
-                        level.setBlock(pos, moss.setValue(MossLayerBlock.LAYERS, height).setValue(MossLayerBlock.PLANTS, plants), 2);
+                        BlockState state = moss.setValue(MossLayerBlock.LAYERS, height);
+                        if (random.nextFloat() < 0.1F + 0.13F * height) {
+                            // Up to four plants, fewer on low moss; a place that comes up twice still holds one.
+                            for (int i = 1 + random.nextInt(Math.min(height, 4)); i > 0; i--) {
+                                state = state.setValue(Util.getRandom(MossLayerBlock.PLANTS, random).property(), true);
+                            }
+                        }
+                        level.setBlock(pos, state, 2);
                         placed = true;
                     }
                 } else if ((layers[x + REACH - 1][z + REACH] | layers[x + REACH + 1][z + REACH]
