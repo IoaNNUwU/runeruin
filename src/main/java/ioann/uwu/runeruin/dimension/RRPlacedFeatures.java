@@ -58,7 +58,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> RARE_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "rare_stone_lily");
     public static final ResourceKey<PlacedFeature> COMMON_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "common_stone_lily");
 
-    public static final ResourceKey<PlacedFeature> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "moss_berry_bush_patch");
+    public static final ResourceKey<PlacedFeature> WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "wispberry_bush_patch");
     public static final ResourceKey<PlacedFeature> POWDERED_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "powdered_moss");
     public static final ResourceKey<PlacedFeature> MOSS_HUMMOCK = RR.resourceKey(Registries.PLACED_FEATURE, "moss_hummock");
 
@@ -230,8 +230,8 @@ public class RRPlacedFeatures {
                 floorPlacement(CountPlacement.of(16), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP, bloomingGround, 16, 0)
         ));
 
-        ctx.register(MOSS_BERRY_BUSH_PATCH, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_BERRY_BUSH_PATCH),
+        ctx.register(WISPBERRY_BUSH_PATCH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.WISPBERRY_BUSH_PATCH),
                 List.of(
                         RarityFilter.onAverageOnceEvery(1),
                         InSquarePlacement.spread(),

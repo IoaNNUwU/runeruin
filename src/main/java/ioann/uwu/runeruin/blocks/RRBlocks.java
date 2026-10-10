@@ -30,6 +30,11 @@ public class RRBlocks {
 
     public static final DeferredRegister.Blocks REGISTRY = DeferredRegister.createBlocks(RR.MODID);
 
+    static {
+        // The wispberry bush was the mossberry bush once: worlds saved before the rename keep their bushes.
+        REGISTRY.addAlias(RR.id("moss_berry_bush"), RR.id("wispberry_bush"));
+    }
+
     private static final UnaryOperator<BlockBehaviour.Properties> ARCANE_STONE_PROPS = _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.DEEPSLATE);
 
     private static final BlockSetType INVERTED_TREE_BLOCK_SET = BlockSetType.register(new BlockSetType("inverted_tree"));
@@ -330,11 +335,11 @@ public class RRBlocks {
                     .lightLevel(_ -> 3),
             GlowingMushroomBlock::new);
 
-    public static final DeferredBlock<Block> MOSS_BERRY_BUSH = REGISTRY.registerBlock(
-            "moss_berry_bush",
-            MossBerryBushBlock::new,
+    public static final DeferredBlock<Block> WISPBERRY_BUSH = REGISTRY.registerBlock(
+            "wispberry_bush",
+            WispberryBushBlock::new,
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
-                    .lightLevel(MossBerryBushBlock::getLightLevel)
+                    .lightLevel(WispberryBushBlock::getLightLevel)
     );
 
     /** One registered block; the 2x2/3x3 shapes are represented by BigLilyPadBlock.PART. */

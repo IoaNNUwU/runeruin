@@ -1,6 +1,6 @@
 package ioann.uwu.runeruin.dimension.features;
 
-import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
+import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,7 +33,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     private static final IntProvider CLOUD_HEIGHT = UniformInt.of(3, 9);
     private static final IntProvider CLUMP_HEIGHT = UniformInt.of(4, 8);
     private static final IntProvider CLUMP_RADIUS = UniformInt.of(1, 3);
-    private static final float MOSS_BERRY_CHANCE = 0.3F;
+    private static final float WISPBERRY_CHANCE = 0.3F;
 
     public GobletMossPatchFeature() {
         super(VegetationPatchConfiguration.CODEC);
@@ -77,11 +77,11 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     ) {
         super.distributeVegetation(context, level, config, random, surface, xRadius, zRadius);
         if (config.vegetationChance() > 0.0F) {
-            placeMossBerryBushes(level, config, random, surface);
+            placeWispberryBushes(level, config, random, surface);
         }
     }
 
-    private static void placeMossBerryBushes(
+    private static void placeWispberryBushes(
             WorldGenLevel level,
             VegetationPatchConfiguration config,
             RandomSource random,
@@ -90,7 +90,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
         Direction above = config.surface().getDirection().getOpposite();
 
         for (BlockPos ground : surface) {
-            if (random.nextFloat() >= MOSS_BERRY_CHANCE) {
+            if (random.nextFloat() >= WISPBERRY_CHANCE) {
                 continue;
             }
             BlockPos bushPos = ground.relative(above);
@@ -100,7 +100,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
             int age = random.nextInt(4);
             level.setBlock(
                     bushPos,
-                    RRBlocks.MOSS_BERRY_BUSH.get().defaultBlockState().setValue(MossBerryBushBlock.AGE, age),
+                    RRBlocks.WISPBERRY_BUSH.get().defaultBlockState().setValue(WispberryBushBlock.AGE, age),
                     2
             );
         }

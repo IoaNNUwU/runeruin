@@ -89,7 +89,7 @@ public class DatagenModelProvider extends ModelProvider {
         createDeepRoots(blockModels);
 
         PortalModels.createRuneRuinPortal(blockModels);
-        createMossBerry(blockModels, itemModels);
+        createWispberry(blockModels, itemModels);
     }
 
     private static void createAshenMushroomBlock(@NonNull BlockModelGenerators blockModels) {
@@ -140,16 +140,16 @@ public class DatagenModelProvider extends ModelProvider {
         ));
     }
 
-    private static void createMossBerry(@NonNull BlockModelGenerators blockModels, @NonNull ItemModelGenerators itemModels) {
-        itemModels.generateFlatItem(RRItems.MOSS_BERRY.get(), ModelTemplates.FLAT_ITEM);
+    private static void createWispberry(@NonNull BlockModelGenerators blockModels, @NonNull ItemModelGenerators itemModels) {
+        itemModels.generateFlatItem(RRItems.WISPBERRY.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.POWDERED_MOSS_BUCKET.get(), ModelTemplates.FLAT_ITEM);
 
         blockModels.blockStateOutput.accept(
-                MultiVariantGenerator.dispatch(RRBlocks.MOSS_BERRY_BUSH.get())
+                MultiVariantGenerator.dispatch(RRBlocks.WISPBERRY_BUSH.get())
                         .with(PropertyDispatch.initial(BlockStateProperties.AGE_3)
                                 .generate(age -> BlockModelGenerators.plainVariant(
                                         blockModels.createSuffixedVariant(
-                                                RRBlocks.MOSS_BERRY_BUSH.get(),
+                                                RRBlocks.WISPBERRY_BUSH.get(),
                                                 "_stage" + age,
                                                 ModelTemplates.CROSS,
                                                 TextureMapping::cross

@@ -35,6 +35,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -79,6 +80,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_large_radii", () -> RRGameTests::ashenMushroomLargeRadii);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> WISPBERRY_ALIASES =
+        TEST_FUNCTIONS.register("wispberry_aliases", () -> RRGameTests::wispberryAliases);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_BONEMEAL =
         TEST_FUNCTIONS.register("glowing_mushroom_bonemeal", () -> RRGameTests::glowingMushroomBonemeal);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSS_LAYER_BONEMEAL =
@@ -148,7 +151,7 @@ public final class RRGameTests {
             new FeatureCase("deep_roots_grass", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("goblet_deep_roots", Surface.FLOOR, gobletBud, 1),
             new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
-            new FeatureCase("moss_berry_bush_patch", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
+            new FeatureCase("wispberry_bush_patch", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
             new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, Blocks.MOSS_BLOCK, 1),
             new FeatureCase("small_glowing_mushroom", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("elden_giant_tree", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
@@ -286,6 +289,13 @@ public final class RRGameTests {
             RR.id("ashen_mushroom_large_radii"),
             new FunctionGameTestInstance(
                 ASHEN_MUSHROOM_LARGE_RADII.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("wispberry_aliases"),
+            new FunctionGameTestInstance(
+                WISPBERRY_ALIASES.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -586,6 +596,15 @@ public final class RRGameTests {
         } catch (Exception e) {
             helper.fail(e.toString());
         }
+    }
+
+    // Worlds saved before the mossberry bush became the wispberry bush still name the old ids.
+    private static void wispberryAliases(GameTestHelper helper) {
+        helper.assertTrue(BuiltInRegistries.BLOCK.getValue(RR.id("moss_berry_bush")) == RRBlocks.WISPBERRY_BUSH.get(),
+            "moss_berry_bush is no longer read as the wispberry bush");
+        helper.assertTrue(BuiltInRegistries.ITEM.getValue(RR.id("moss_berry")) == RRItems.WISPBERRY.get(),
+            "moss_berry is no longer read as the wispberry");
+        helper.succeed();
     }
 
     private static void glowingMushroomBonemeal(GameTestHelper helper) {

@@ -22,6 +22,11 @@ public class RRItems {
 
     public static final DeferredRegister.Items REGISTRY = DeferredRegister.createItems(RR.MODID);
 
+    static {
+        // The wispberry was the mossberry once: worlds saved before the rename keep their berries.
+        REGISTRY.addAlias(RR.id("moss_berry"), RR.id("wispberry"));
+    }
+
     public static final DeferredItem<Item> RUNE_OF_SPACE = REGISTRY.registerItem(
             "rune_of_space",
             RuneOfSpaceItem::new,
@@ -34,9 +39,9 @@ public class RRItems {
             )
     );
 
-    public static final DeferredItem<Item> MOSS_BERRY = REGISTRY.registerItem(
-            "moss_berry",
-            p -> new BlockItem(RRBlocks.MOSS_BERRY_BUSH.get(), p.useItemDescriptionPrefix()),
+    public static final DeferredItem<Item> WISPBERRY = REGISTRY.registerItem(
+            "wispberry",
+            p -> new BlockItem(RRBlocks.WISPBERRY_BUSH.get(), p.useItemDescriptionPrefix()),
             p -> p.food(new FoodProperties.Builder()
                     .nutrition(3)
                     .saturationModifier(0.3f)
@@ -44,8 +49,8 @@ public class RRItems {
                     Consumable.builder()
                             .onConsume(new ApplyStatusEffectsConsumeEffect(
                                     new MobEffectInstance(
-                                            MobEffects.POISON,
-                                            5 * 20,
+                                            MobEffects.NIGHT_VISION,
+                                            10 * 20,
                                             0
                                     )
                             ))

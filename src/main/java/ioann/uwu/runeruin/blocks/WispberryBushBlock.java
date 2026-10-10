@@ -11,8 +11,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
@@ -38,19 +36,19 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
 
-public class MossBerryBushBlock extends VegetationBlock implements BonemealableBlock {
+public class WispberryBushBlock extends VegetationBlock implements BonemealableBlock {
 
     public static final IntegerProperty AGE = BlockStateProperties.AGE_3;
     private static final VoxelShape SHAPE_SAPLING = Block.column(10.0F, 0.0F, 8.0F);
     private static final VoxelShape SHAPE_GROWING = Block.column(14.0F, 0.0F, 16.0F);
 
-    public MossBerryBushBlock(Properties properties) {
+    public WispberryBushBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.getStateDefinition().any()
                 .setValue(AGE, 0));
     }
 
-    public static final MapCodec<MossBerryBushBlock> CODEC = simpleCodec(MossBerryBushBlock::new);
+    public static final MapCodec<WispberryBushBlock> CODEC = simpleCodec(WispberryBushBlock::new);
 
     @Override
     protected MapCodec<? extends VegetationBlock> codec() {
@@ -59,7 +57,7 @@ public class MossBerryBushBlock extends VegetationBlock implements BonemealableB
 
     @Override
     public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData, Player player) {
-        return RRItems.MOSS_BERRY.toStack();
+        return RRItems.WISPBERRY.toStack();
     }
 
     @Override
@@ -93,7 +91,7 @@ public class MossBerryBushBlock extends VegetationBlock implements BonemealableB
     @Override
     protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean isPrecise) {
 
-        if (entity instanceof LivingEntity livingEntity && !entity.is(EntityTypes.FROG) && !entity.is(EntityTypes.BOGGED)) {
+        if (entity instanceof LivingEntity && !entity.is(EntityTypes.FROG) && !entity.is(EntityTypes.BOGGED)) {
 
             entity.makeStuckInBlock(state, new Vec3(0.8F, 0.75F, 0.8F));
 
@@ -108,7 +106,6 @@ public class MossBerryBushBlock extends VegetationBlock implements BonemealableB
                             DamageSource damageSource = level.damageSources().generic();
 
                             entity.hurtServer(serverLevel, damageSource, 1.0F);
-                            livingEntity.addEffect(new MobEffectInstance(MobEffects.POISON, 5 * 20));
                         }
                     }
                 }
@@ -133,7 +130,7 @@ public class MossBerryBushBlock extends VegetationBlock implements BonemealableB
             if (level instanceof ServerLevel serverLevel) {
 
                 Block.dropFromBlockInteractLootTable(serverLevel,
-                        RRLootTables.HARVEST_MOSS_BERRY,
+                        RRLootTables.HARVEST_WISPBERRY,
                         state,
                         level.getBlockEntity(pos),
                         null,

@@ -2,7 +2,7 @@ package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMossBlock;
-import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
+import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.features.*;
 import net.minecraft.core.Direction;
@@ -57,7 +57,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_POOL_WITH_DRIPLEAVES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_pool_with_dripleaves");
     public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_lily");
 
-    public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_BERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_berry_bush_patch");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "wispberry_bush_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> POWDERED_MOSS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "powdered_moss");
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_HUMMOCK = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_hummock");
 
@@ -265,12 +265,12 @@ public class RRConfiguredFeatures {
                 )
         ));
 
-        ctx.register(MOSS_BERRY_BUSH_PATCH, new ConfiguredFeature<>(
+        ctx.register(WISPBERRY_BUSH_PATCH, new ConfiguredFeature<>(
                 Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(
                         new RandomizedIntStateProvider(
-                                BlockStateProvider.simple(RRBlocks.MOSS_BERRY_BUSH.get()),
-                                MossBerryBushBlock.AGE,
+                                BlockStateProvider.simple(RRBlocks.WISPBERRY_BUSH.get()),
+                                WispberryBushBlock.AGE,
                                 new UniformInt(0, 3)
                         )
                 )

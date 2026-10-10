@@ -1,6 +1,6 @@
 package ioann.uwu.runeruin.datagen;
 
-import ioann.uwu.runeruin.blocks.MossBerryBushBlock;
+import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
@@ -26,24 +26,24 @@ public class DatagenLootTableProvider implements LootTableSubProvider {
     @Override
     public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> output) {
         output.accept(
-                RRLootTables.HARVEST_MOSS_BERRY,
+                RRLootTables.HARVEST_WISPBERRY,
                 LootTable.lootTable()
                         .withPool(LootPool.lootPool()
-                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.MOSS_BERRY_BUSH.get())
+                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.WISPBERRY_BUSH.get())
                                         .setProperties(StatePropertiesPredicate.Builder.properties()
-                                                .hasProperty(MossBerryBushBlock.AGE, 3)
+                                                .hasProperty(WispberryBushBlock.AGE, 3)
                                         )
                                 )
-                                .add(LootItem.lootTableItem(RRItems.MOSS_BERRY))
+                                .add(LootItem.lootTableItem(RRItems.WISPBERRY))
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(2f, 4f)))
                         )
                         .withPool(LootPool.lootPool()
-                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.MOSS_BERRY_BUSH.get())
+                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.WISPBERRY_BUSH.get())
                                         .setProperties(StatePropertiesPredicate.Builder.properties()
-                                                .hasProperty(MossBerryBushBlock.AGE, 2)
+                                                .hasProperty(WispberryBushBlock.AGE, 2)
                                         )
                                 )
-                                .add(LootItem.lootTableItem(RRItems.MOSS_BERRY))
+                                .add(LootItem.lootTableItem(RRItems.WISPBERRY))
                                 .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 2f)))
                         )
         );
