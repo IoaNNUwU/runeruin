@@ -9,7 +9,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
@@ -18,6 +23,9 @@ import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
 /** Moss stacked like snow layers; small plants grow on top of it, each in a place of its own, bone meal adds more. */
 public class MossLayerBlock extends SnowLayerBlock implements BonemealableBlock {
@@ -73,11 +81,32 @@ public class MossLayerBlock extends SnowLayerBlock implements BonemealableBlock 
                 && (!context.replacingClickedOnBlock() || context.getClickedFace() == Direction.UP);
     }
 
+    private static boolean hasPlants(BlockState state) {
+        return PLANTS.stream().anyMatch(plant -> state.getValue(plant.property()));
+    }
+
+    /** The plants prick whoever moves over them, as a sweet berry bush does, but do not slow anyone down. */
+    @Override
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean isPrecise) {
+        if (entity instanceof LivingEntity && level instanceof ServerLevel serverLevel && hasPlants(state)) {
+            Vec3 movement = entity.isClientAuthoritative() ? entity.getKnownMovement() : entity.oldPosition().subtract(entity.position());
+            if (Math.abs(movement.x()) >= 0.003F || Math.abs(movement.z()) >= 0.003F) {
+                entity.hurtServer(serverLevel, level.damageSources().sweetBerryBush(), 1.0F);
+            }
+        }
+    }
+
+    /** Mobs walk around the plants as they walk around a sweet berry bush. */
+    @Override
+    public @Nullable PathType getBlockPathType(BlockState state, BlockGetter level, BlockPos pos, @Nullable Mob mob) {
+        return hasPlants(state) ? PathType.DAMAGING : super.getBlockPathType(state, level, pos, mob);
+    }
+
     @Override
     public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
         for (BlockPos near : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
             BlockState nearState = level.getBlockState(near);
-            if (nearState.is(this) && PLANTS.stream().anyMatch(plant -> !nearState.getValue(plant.property()))) {
+            if (nearState.is(this) && !PLANTS.stream().allMatch(plant -> nearState.getValue(plant.property()))) {
                 return true;
             }
         }

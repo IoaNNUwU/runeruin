@@ -19,8 +19,6 @@ public final class MossLayerModels {
 
     private static final String MOSS = "runeruin:block/moss_layer";
 
-    private static final String[] FACES = {"down", "up", "north", "south", "west", "east"};
-
     private MossLayerModels() {}
 
     public static void createMossLayer(@NonNull BlockModelGenerators blockModels) {
@@ -36,7 +34,7 @@ public final class MossLayerModels {
             for (int number = 0; number < MossLayerBlock.PLANTS.size(); number++) {
                 MossLayerBlock.Plant plant = MossLayerBlock.PLANTS.get(number);
                 Identifier id = RR.id("block/moss_layer_plant" + number + "_height" + height);
-                JsonObject plantModel = plantModel(plant, number, height);
+                JsonObject plantModel = plantModel(plant, height);
                 blockModels.modelOutput.accept(id, () -> plantModel);
                 blockState.with(new ConditionBuilder().term(MossLayerBlock.LAYERS, layers).term(plant.property(), true),
                         BlockModelGenerators.plainVariant(id));
@@ -61,26 +59,23 @@ public final class MossLayerModels {
         return model;
     }
 
-    /** One cube, leaning away from the middle of the block: side by side the cubes read as a dome. */
-    private static JsonObject plantModel(MossLayerBlock.Plant plant, int number, int mossHeight) {
+    /**
+     * One cube, leaning away from the middle of the block: side by side the cubes read as a dome. Two upright
+     * planes through its middle, a tenth wider than the cube, show their dark rim around it as spikes.
+     */
+    private static JsonObject plantModel(MossLayerBlock.Plant plant, int mossHeight) {
         double half = plant.size() / 2.0;
+        double rim = half * 1.1;
         double[] center = {plant.x(), mossHeight + plant.lift(), plant.z()};
-        JsonObject element = new JsonObject();
-        element.add("from", vector(center[0] - half, center[1] - half, center[2] - half));
-        element.add("to", vector(center[0] + half, center[1] + half, center[2] + half));
         JsonObject rotation = new JsonObject();
         rotation.add("origin", vector(center));
         // The game turns around x first: lean towards +z, then swing that lean to point away from the middle.
         rotation.addProperty("x", plant.tilt());
         rotation.addProperty("y", Math.round(Math.toDegrees(Math.atan2(plant.x() - 8, plant.z() - 8))));
-        element.add("rotation", rotation);
-        JsonObject faces = new JsonObject();
-        for (int face = 0; face < FACES.length; face++) {
-            faces.add(FACES[face], tileFace(plant.size(), number * 3 + face * 7));
-        }
-        element.add("faces", faces);
         JsonArray elements = new JsonArray();
-        elements.add(element);
+        elements.add(element(center, half, half, half, rotation, tile(plant.size(), 0), "down", "up", "north", "south", "west", "east"));
+        elements.add(element(center, rim, rim, 0, rotation, tile(plant.size(), 4), "north", "south"));
+        elements.add(element(center, 0, rim, rim, rotation, tile(plant.size(), 4), "west", "east"));
         JsonObject model = new JsonObject();
         // No smooth lighting: it is meant for block faces, not for cubes this small and tilted.
         model.addProperty("ambientocclusion", false);
@@ -92,13 +87,26 @@ public final class MossLayerModels {
         return model;
     }
 
-    /** moss_hedgehog.png holds face tiles: eight 4x4 in rows 0-7, ten 3x3 in rows 8-13, eight 2x2 in rows 14-15. */
-    private static JsonObject tileFace(int size, int number) {
-        int perRow = size == 4 ? 4 : size == 3 ? 5 : 8;
-        int top = size == 4 ? 0 : size == 3 ? 8 : 14;
-        int tile = number % (size == 2 ? perRow : perRow * 2);
-        int u = tile % perRow * size;
-        int v = top + tile / perRow * size;
+    private static JsonObject element(double[] center, double x, double y, double z, JsonObject rotation,
+                                      JsonObject face, String... sides) {
+        JsonObject element = new JsonObject();
+        element.add("from", vector(center[0] - x, center[1] - y, center[2] - z));
+        element.add("to", vector(center[0] + x, center[1] + y, center[2] + z));
+        element.add("rotation", rotation);
+        JsonObject faces = new JsonObject();
+        for (String side : sides) {
+            faces.add(side, face);
+        }
+        element.add("faces", faces);
+        return element;
+    }
+
+    /**
+     * moss_hedgehog.png, per cube size a row of two tiles as wide as the cube: its face at u 0 and its spike
+     * plane at u 4. The rows start at v 0 (4x4), 4 (3x3) and 7 (2x2).
+     */
+    private static JsonObject tile(int size, int u) {
+        int v = size == 4 ? 0 : size == 3 ? 4 : 7;
         JsonObject face = new JsonObject();
         face.add("uv", vector(u, v, u + size, v + size));
         face.addProperty("texture", "#plant");
