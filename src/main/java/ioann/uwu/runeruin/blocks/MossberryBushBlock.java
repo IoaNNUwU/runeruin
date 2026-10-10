@@ -21,7 +21,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -41,8 +40,8 @@ import net.neoforged.neoforge.common.CommonHooks;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A small bush on moss that grows mossberries, each in a place of its own. The berries glow, prick, are picked
- * by hand and planted back; they grow again by themselves, and bone meal adds more.
+ * A small bush on moss that grows mossberries, each in a place of its own. The berries glow, prick and are
+ * picked by hand; they grow again by themselves, and bone meal adds more and spreads bushes over the moss around.
  */
 public class MossberryBushBlock extends VegetationBlock implements BonemealableBlock {
     public static final MapCodec<MossberryBushBlock> CODEC = simpleCodec(MossberryBushBlock::new);
@@ -53,14 +52,18 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
      */
     public record Berry(BooleanProperty property, double x, double z, int size, double lift, double tilt) {}
 
-    /** One big cube, three medium ones around it and three small ones further out: together they make a dome. */
+    /**
+     * One big cube, three medium ones around it and three small ones further out: together they make a dome.
+     * The model turns each berry to face away from the middle, so none may stand on a diagonal of the block:
+     * there its spike planes would lie in the planes of the crossed bush and flicker.
+     */
     public static final List<Berry> BERRIES = List.of(
-            berry(0, 8.5, 7.5, 4, 2, 8),
+            berry(0, 8, 8, 4, 2, 8),
             berry(1, 4.5, 7, 3, 1, 30),
-            berry(2, 11, 5.5, 3, 0.7, 30),
+            berry(2, 11.5, 6.5, 3, 0.7, 30),
             berry(3, 8.5, 11.5, 3, 1.3, 30),
             berry(4, 12.5, 9.5, 2, 0.5, 50),
-            berry(5, 4, 11, 2, 0.3, 50),
+            berry(5, 3.5, 10, 2, 0.3, 50),
             berry(6, 7, 3, 2, 0.8, 50)
     );
 
@@ -100,12 +103,6 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
                 || state.is(RRBlocks.DEEP_MOSS_LAYER) && state.getValue(DeepMossLayerBlock.LAYERS) == DeepMossLayerBlock.MAX_HEIGHT;
     }
 
-    /** A planted mossberry is the first berry of the new bush. */
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return grow(this.defaultBlockState(), context.getLevel().getRandom());
-    }
-
     private static int berryCount(BlockState state) {
         return (int) BERRIES.stream().filter(berry -> state.getValue(berry.property())).count();
     }
@@ -143,18 +140,9 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
         }
     }
 
-    /** A mossberry in the hand is planted on the bush as one more berry. */
+    /** Bone meal does its own work instead of picking the berries. */
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (stack.is(RRItems.MOSSBERRY) && berryCount(state) < BERRIES.size()) {
-            if (level instanceof ServerLevel serverLevel) {
-                serverLevel.setBlock(pos, grow(state, serverLevel.getRandom()), Block.UPDATE_CLIENTS);
-                serverLevel.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                stack.consume(1, player);
-            }
-            return InteractionResult.SUCCESS;
-        }
-        // Bone meal does its own work instead of picking the berries.
         return stack.is(Items.BONE_MEAL) ? InteractionResult.PASS : super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
@@ -203,11 +191,16 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
         return berryCount(state) > 0 ? PathType.DAMAGING : super.getBlockPathType(state, level, pos, mob);
     }
 
+    /** Free moss next to a bush: bone meal can start a new bush there. */
+    private boolean canSpreadTo(LevelReader level, BlockPos pos, BlockState state) {
+        return state.isAir() && this.defaultBlockState().canSurvive(level, pos);
+    }
+
     @Override
     public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
         for (BlockPos near : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
             BlockState nearState = level.getBlockState(near);
-            if (nearState.is(this) && berryCount(nearState) < BERRIES.size()) {
+            if (nearState.is(this) ? berryCount(nearState) < BERRIES.size() : canSpreadTo(level, near, nearState)) {
                 return true;
             }
         }
@@ -223,25 +216,26 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
     public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
         for (BlockPos near : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
             BlockState nearState = level.getBlockState(near);
-            if (!nearState.is(this)) {
-                continue;
-            }
-            BlockState grown = nearState;
+            BlockState grown;
             if (near.equals(pos)) {
                 // One or two berries on the bush itself.
-                grown = grow(grown, random);
+                grown = grow(nearState, random);
                 if (random.nextBoolean()) {
                     grown = grow(grown, random);
                 }
-            } else if (random.nextBoolean()) {
-                // At most one on each bush around it, in the place nearest to the bush with the bone meal.
+            } else if (random.nextBoolean() && (nearState.is(this) || this.canSpreadTo(level, near, nearState))) {
+                // At most one around it, on a bush or on free moss, where it starts a new bush:
+                // in the place nearest to the bush with the bone meal.
+                BlockState bush = nearState.is(this) ? nearState : this.defaultBlockState();
                 double fromX = (pos.getX() - near.getX()) * 16 + 8;
                 double fromZ = (pos.getZ() - near.getZ()) * 16 + 8;
                 grown = BERRIES.stream()
-                        .filter(berry -> !nearState.getValue(berry.property()))
+                        .filter(berry -> !bush.getValue(berry.property()))
                         .min(Comparator.comparingDouble(berry -> Mth.square(berry.x() - fromX) + Mth.square(berry.z() - fromZ)))
-                        .map(berry -> nearState.setValue(berry.property(), true))
-                        .orElse(nearState);
+                        .map(berry -> bush.setValue(berry.property(), true))
+                        .orElse(bush);
+            } else {
+                continue;
             }
             // Half of the bushes that grow something also get twigs.
             if (grown != nearState && random.nextBoolean()) {
