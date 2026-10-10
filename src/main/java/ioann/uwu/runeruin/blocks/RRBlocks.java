@@ -161,7 +161,7 @@ public class RRBlocks {
             EldenLeafLitterBlock::new
     );
 
-    /** A flat patch of clover, lying on the ground like the pink petals. */
+    /** Clover lying on the ground in one to four segments, like the pink petals. */
     public static final DeferredBlock<Block> CLOVER = register("clover",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PINK_PETALS),
             CloverBlock::new

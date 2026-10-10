@@ -7,25 +7,44 @@ import com.google.gson.JsonObject;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.client.data.models.BlockModelGenerators;
-import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.MultiVariant;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 
-/** Clover: flat leaves at different heights, each on a crossed stem. */
+/** Clover: flat leaves at different heights, each on a crossed stem, in the four segments of a flower bed. */
 public final class CloverModels {
 
     /**
-     * One clover per row: the texel of its center in the block texture (x, z), how far its
-     * leaves reach from the center, and its height. The texture is the patch seen from above.
+     * The clovers of each segment, in the order the segments are added (the quarters of the
+     * block texture: north-west, south-west, south-east, north-east). One clover per row:
+     * the corner of its square in the texture (x, z), the side of the square and its height.
+     * The texture is the whole patch seen from above.
      */
-    private static final int[][] CLOVERS = {
-            {3, 3, 2, 3}, {11, 4, 2, 2}, {7, 10, 2, 3}, {13, 12, 2, 2},
-            {7, 1, 1, 2}, {14, 1, 1, 1}, {1, 8, 1, 2}, {2, 12, 1, 1}, {5, 14, 1, 2}, {9, 14, 1, 1}, {14, 7, 1, 3},
+    private static final int[][][] SEGMENTS = {
+            {{0, 0, 4, 2}, {4, 4, 4, 3}, {5, 0, 3, 1}},
+            {{0, 9, 7, 2}},
+            {{12, 8, 4, 3}, {8, 12, 4, 2}, {8, 8, 3, 1}, {13, 13, 3, 1}},
+            {{9, 0, 7, 3}},
     };
 
     private CloverModels() {}
 
     public static void createClover(@NonNull BlockModelGenerators blockModels) {
+        MultiVariant[] models = new MultiVariant[SEGMENTS.length];
+        for (int segment = 0; segment < SEGMENTS.length; segment++) {
+            models[segment] = BlockModelGenerators.plainVariant(createSegment(blockModels, segment));
+        }
+        blockModels.createSegmentedBlock(
+                RRBlocks.CLOVER.get(),
+                models[0], BlockModelGenerators.FLOWER_BED_MODEL_1_SEGMENT_CONDITION,
+                models[1], BlockModelGenerators.FLOWER_BED_MODEL_2_SEGMENT_CONDITION,
+                models[2], BlockModelGenerators.FLOWER_BED_MODEL_3_SEGMENT_CONDITION,
+                models[3], BlockModelGenerators.FLOWER_BED_MODEL_4_SEGMENT_CONDITION
+        );
+        blockModels.registerSimpleFlatItemModel(RRBlocks.CLOVER.get());
+    }
+
+    private static Identifier createSegment(BlockModelGenerators blockModels, int segment) {
         JsonObject model = new JsonObject();
         model.addProperty("ambientocclusion", false);
 
@@ -36,17 +55,17 @@ public final class CloverModels {
         model.add("textures", textures);
 
         JsonArray elements = new JsonArray();
-        for (int[] clover : CLOVERS) {
-            double x0 = clover[0] - clover[2];
-            double z0 = clover[1] - clover[2];
-            double x1 = clover[0] + clover[2] + 1;
-            double z1 = clover[1] + clover[2] + 1;
+        for (int[] clover : SEGMENTS[segment]) {
+            double x0 = clover[0];
+            double z0 = clover[1];
+            double x1 = x0 + clover[2];
+            double z1 = z0 + clover[2];
             double height = clover[3];
             elements.add(element(new double[]{x0, height, z0}, new double[]{x1, height, z1},
                     "up", face("clover", x0, z0, x1, z1), "down", face("clover", x0, z1, x1, z0)));
 
-            double x = clover[0] + 0.5;
-            double z = clover[1] + 0.5;
+            double x = (x0 + x1) / 2;
+            double z = (z0 + z1) / 2;
             for (double angle : new double[]{45, -45}) {
                 JsonObject stem = element(new double[]{x - 0.5, 0, z}, new double[]{x + 0.5, height, z},
                         "north", face("stem", 0, 7 - height, 1, 7), "south", face("stem", 0, 7 - height, 1, 7));
@@ -60,13 +79,9 @@ public final class CloverModels {
         }
         model.add("elements", elements);
 
-        Identifier modelId = RR.id("block/clover");
+        Identifier modelId = RR.id("block/clover_" + (segment + 1));
         blockModels.modelOutput.accept(modelId, () -> model);
-        blockModels.blockStateOutput.accept(MultiVariantGenerator.dispatch(
-                RRBlocks.CLOVER.get(),
-                BlockModelGenerators.createRotatedVariants(BlockModelGenerators.plainModel(modelId))
-        ));
-        blockModels.registerSimpleFlatItemModel(RRBlocks.CLOVER.get());
+        return modelId;
     }
 
     private static JsonObject element(double[] from, double[] to, String side1, JsonObject face1, String side2, JsonObject face2) {
