@@ -28,5 +28,9 @@ public class DatagenBiomeTagProvider extends BiomeTagsProvider {
         this.tag(RRBiomeTags.HAS_BAOBAB)
                 .add(RRBiomes.JUNGLE_SWAMP);
 
+        this.tag(RRBiomeTags.HAS_HANGING_TRACKS)
+                .add(RRBiomes.DEEP_ROOTS)
+                .add(RRBiomes.DEEP_INVERTED_FOREST);
+
     }
 }

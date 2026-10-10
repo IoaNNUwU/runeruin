@@ -12,6 +12,7 @@ public class RRStructureSets {
 
     public static final ResourceKey<StructureSet> GIANT_GOBLETS = RR.resourceKey(Registries.STRUCTURE_SET, "giant_goblets");
     public static final ResourceKey<StructureSet> BAOBABS = RR.resourceKey(Registries.STRUCTURE_SET, "baobabs");
+    public static final ResourceKey<StructureSet> HANGING_TRACKS = RR.resourceKey(Registries.STRUCTURE_SET, "hanging_tracks");
 
     public static void bootstrap(BootstrapContext<StructureSet> ctx) {
         var structures = ctx.lookup(Registries.STRUCTURE);
@@ -29,6 +30,15 @@ public class RRStructureSets {
                 new StructureSet(
                         structures.getOrThrow(RRStructures.BAOBAB),
                         new RandomSpreadStructurePlacement(5, 3, RandomSpreadType.LINEAR, 2819815)
+                )
+        );
+
+        // Stations are at least 10 chunks apart: more than two radii of a network (HangingTracksLayout.MAX_RADIUS).
+        ctx.register(
+                HANGING_TRACKS,
+                new StructureSet(
+                        structures.getOrThrow(RRStructures.HANGING_TRACKS),
+                        new RandomSpreadStructurePlacement(16, 10, RandomSpreadType.LINEAR, 2857414)
                 )
         );
     }

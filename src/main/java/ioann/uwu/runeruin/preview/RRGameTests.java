@@ -44,11 +44,17 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FeatureSorter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RailBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
@@ -69,6 +75,12 @@ public final class RRGameTests {
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_GIANT_GOBLET =
         TEST_FUNCTIONS.register("preview_giant_goblet", () -> RRGameTests::previewGiantGoblet);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_HANGING_TRACKS =
+        TEST_FUNCTIONS.register("preview_hanging_tracks", () -> RRGameTests::previewHangingTracks);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> RUNIC_RAIL_KEEPS_SPEED =
+        TEST_FUNCTIONS.register("runic_rail_keeps_speed", () -> RRGameTests::runicRailKeepsSpeed);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> RUNIC_RAIL_CROSSING =
+        TEST_FUNCTIONS.register("runic_rail_crossing", () -> RRGameTests::runicRailCrossing);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
@@ -264,6 +276,27 @@ public final class RRGameTests {
             new FunctionGameTestInstance(
                 PREVIEW_GIANT_GOBLET.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("preview_hanging_tracks"),
+            new FunctionGameTestInstance(
+                PREVIEW_HANGING_TRACKS.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("runic_rail_keeps_speed"),
+            new FunctionGameTestInstance(
+                RUNIC_RAIL_KEEPS_SPEED.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 80, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("runic_rail_crossing"),
+            new FunctionGameTestInstance(
+                RUNIC_RAIL_CROSSING.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 80, 0, true)
             )
         );
         event.registerTest(
@@ -527,6 +560,80 @@ public final class RRGameTests {
         } catch (Exception e) {
             helper.fail(e.toString());
         }
+    }
+
+    // The preview job itself fails when no network fits or when the rails of a network break off anywhere.
+    private static void previewHangingTracks(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            for (int seed = 1; seed <= 8; seed++) {
+                PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(server), java.util.Map.of())
+                    .with("seed", Integer.toString(seed));
+                PreviewJobs.Result result = PreviewCatalog.require("hanging_tracks").run(args);
+                helper.assertTrue(result.count("minecraft:iron_chain") > 100, "hanging tracks " + seed + " hang on too few chains");
+                // Under the ceiling and above the floor that the Deep caves have with this seed.
+                PreviewCatalog.require("hanging_tracks").run(args.with("terrain", "real"), server);
+            }
+            helper.succeed();
+        } catch (Exception e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // An empty minecart loses 4% of its speed every tick on a vanilla rail and slides back down a slope.
+    private static void runicRailKeepsSpeed(GameTestHelper helper) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
+        var level = helper.getLevel();
+        BlockState rail = RRBlocks.RUNIC_RAIL.get().defaultBlockState();
+        for (int x = 0; x < 16; x++) {
+            int step = x < 6 ? 0 : 1;
+            level.setBlockAndUpdate(base.offset(x, step - 1, 0), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(base.offset(x, step, 0),
+                rail.setValue(RailBlock.SHAPE, x == 5 ? RailShape.ASCENDING_EAST : RailShape.EAST_WEST));
+        }
+
+        double speed = 0.2;
+        Minecart minecart = EntityTypes.MINECART.create(level, EntitySpawnReason.COMMAND);
+        minecart.setInitialPos(base.getX() + 0.5, base.getY(), base.getZ() + 0.5);
+        minecart.setDeltaMovement(speed, 0, 0);
+        level.addFreshEntity(minecart);
+
+        helper.runAfterDelay(50, () -> {
+            helper.assertTrue(minecart.getY() > base.getY() + 0.9, "the minecart did not climb the slope: y " + minecart.getY());
+            helper.assertTrue(minecart.getX() > base.getX() + 8, "the minecart stopped at x " + (minecart.getX() - base.getX()));
+            helper.assertTrue(Math.abs(minecart.getDeltaMovement().horizontalDistance() - speed) < 1.0E-3,
+                "the minecart changed its speed to " + minecart.getDeltaMovement().horizontalDistance());
+            helper.succeed();
+        });
+    }
+
+    // On a vanilla rail that lies across its way a minecart turns aside.
+    private static void runicRailCrossing(GameTestHelper helper) {
+        // Higher than the track of runic_rail_keeps_speed, which starts a few blocks aside.
+        BlockPos base = helper.absolutePos(new BlockPos(0, 12, 0));
+        var level = helper.getLevel();
+        BlockState rail = RRBlocks.RUNIC_RAIL.get().defaultBlockState();
+        for (int i = -5; i <= 5; i++) {
+            level.setBlockAndUpdate(base.offset(i, -1, 0), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(base.offset(0, -1, i), Blocks.STONE.defaultBlockState());
+        }
+        for (int i = -5; i <= 5; i++) {
+            level.setBlock(base.offset(0, 0, i), rail.setValue(RailBlock.SHAPE, RailShape.NORTH_SOUTH), Block.UPDATE_CLIENTS);
+            if (i != 0) {
+                level.setBlock(base.offset(i, 0, 0), rail.setValue(RailBlock.SHAPE, RailShape.EAST_WEST), Block.UPDATE_CLIENTS);
+            }
+        }
+
+        Minecart minecart = EntityTypes.MINECART.create(level, EntitySpawnReason.COMMAND);
+        minecart.setInitialPos(base.getX() - 4.5, base.getY(), base.getZ() + 0.5);
+        minecart.setDeltaMovement(0.2, 0, 0);
+        level.addFreshEntity(minecart);
+
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(minecart.getX() > base.getX() + 2, "the minecart did not cross: x " + (minecart.getX() - base.getX()));
+            helper.assertTrue(Math.abs(minecart.getZ() - base.getZ() - 0.5) < 0.1, "the minecart turned aside: z " + (minecart.getZ() - base.getZ()));
+            helper.succeed();
+        });
     }
 
     private static void ashenMushroomSmallRadii(GameTestHelper helper) {
