@@ -17,6 +17,8 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
+import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
+import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
@@ -28,8 +30,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.IntBinaryOperator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -45,6 +49,7 @@ import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -54,6 +59,7 @@ import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FeatureSorter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
@@ -101,6 +107,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FLOATING_ISLANDS_NOT_GENERATED =
         TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
+        TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -366,6 +374,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("dinosaur_skeleton_burial"),
+            new FunctionGameTestInstance(
+                DINOSAUR_SKELETON_BURIAL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -437,6 +452,44 @@ public final class RRGameTests {
             RRChunkGenerator.topLevelNoise.getOrCreateNoise(levelRandom);
             helper.succeed();
         } catch (IOException | IllegalStateException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // A skeleton picks its height from the floor noise before its chunks exist, so that noise must give the
+    // floor the terrain builds. Then 20-50% of its blocks lie in the floor.
+    private static void dinosaurSkeletonBurial(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, 1);
+            IntBinaryOperator floorY = (x, z) -> DinosaurSkeletonStructure.floorY(x, z, randomState);
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, 1,
+                new BoundingBox(0, Const.LOST_CAVES_Y, 0, 15, Const.LOST_CAVES_Y + Const.TERRAIN_HEIGHT + 1, 15));
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    int y = floorY.applyAsInt(x, z);
+                    helper.assertTrue(!terrain.get(pos.set(x, y, z)).isAir() && terrain.get(pos.set(x, y + 1, z)).isAir(),
+                        "the lost caves floor at " + x + " " + z + " does not end at Y " + y);
+                }
+            }
+
+            int placed = 0;
+            for (int seed = 1; seed <= 32; seed++) {
+                Map<BlockPos, BlockState> bones = DinosaurSkeletonGenerator.generate(seed);
+                helper.assertTrue(bones.equals(DinosaurSkeletonGenerator.generate(seed)), "seed " + seed + " built two different skeletons");
+                OptionalInt y = DinosaurSkeletonStructure.buriedOriginY(bones, seed * 100, 0, floorY, RandomSource.create(seed));
+                if (y.isEmpty()) {
+                    continue;
+                }
+                placed++;
+                double share = DinosaurSkeletonStructure.buriedShare(bones, new BlockPos(seed * 100, y.getAsInt(), 0), floorY);
+                helper.assertTrue(share >= DinosaurSkeletonStructure.MIN_BURIED_SHARE && share <= DinosaurSkeletonStructure.MAX_BURIED_SHARE,
+                    "seed " + seed + " has " + Math.round(share * 100.0) + "% of the skeleton in the floor");
+            }
+            helper.assertTrue(placed >= 24, "only " + placed + " of 32 skeletons found a height with 20-50% in the floor");
+            helper.succeed();
+        } catch (IOException e) {
             helper.fail(e.toString());
         }
     }
@@ -648,51 +701,66 @@ public final class RRGameTests {
         helper.succeed();
     }
 
-    // Bone meal grows one or two of the smallest berries on the bush and at most one around it: on a bush
-    // that stands there, or on free moss, where it starts a new bush. That one is the berry nearest to the
-    // bush with the bone meal.
+    // Bone meal grows one or two of the smallest berries on the bush. One time in four it also grows one
+    // berry next to it: on a bush that stands there, or on free moss, where it starts a new bush.
     private static void mossberryBushBonemeal(GameTestHelper helper) {
         BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
         var level = helper.getLevel();
         var bush = (MossberryBushBlock) RRBlocks.MOSSBERRY_BUSH.get();
         for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
             level.setBlockAndUpdate(pos.below(), Blocks.MOSS_BLOCK.defaultBlockState());
-            // Bushes west of the middle, free moss east of it.
-            level.setBlockAndUpdate(pos, pos.getX() <= base.getX() ? bush.defaultBlockState() : Blocks.AIR.defaultBlockState());
+            level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
         }
-        var state = bush.defaultBlockState();
-        helper.assertTrue(bush.isValidBonemealTarget(level, base, state), "mossberry bush rejected bonemeal");
-        bush.performBonemeal(level, RandomSource.create(42), base, state);
+        level.setBlockAndUpdate(base, bush.defaultBlockState());
+        helper.assertTrue(bush.isValidBonemealTarget(level, base, bush.defaultBlockState()), "mossberry bush rejected bonemeal");
 
-        int newBushes = 0;
-        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
-            var grown = level.getBlockState(pos);
-            if (pos.getX() > base.getX() && grown.isAir()) {
-                continue;
-            }
-            helper.assertTrue(grown.is(bush), "bonemeal left " + grown + " in place of a mossberry bush");
-            List<MossberryBushBlock.Berry> berries = MossberryBushBlock.BERRIES.stream().filter(berry -> grown.getValue(berry.property())).toList();
-            if (pos.equals(base)) {
+        RandomSource random = RandomSource.create(42);
+        int uses = 40;
+        int spreads = 0;
+        for (int use = 0; use < uses; use++) {
+            int before = berriesAround(level, base);
+            bush.performBonemeal(level, random, base, level.getBlockState(base));
+            int grown = berriesAround(level, base) - before;
+            helper.assertTrue(grown == 0 || grown == 1, "one use of bonemeal grew " + grown + " berries around the bush");
+            spreads += grown;
+            if (use == 0) {
+                List<MossberryBushBlock.Berry> berries = MossberryBushBlock.BERRIES.stream()
+                    .filter(berry -> level.getBlockState(base).getValue(berry.property())).toList();
                 helper.assertTrue(!berries.isEmpty() && berries.size() <= 2, "bonemeal grew " + berries.size() + " berries on its bush");
                 helper.assertTrue(berries.stream().allMatch(berry -> berry.size() == 2), "bonemeal did not start with the smallest berries");
-            } else {
-                boolean isNew = pos.getX() > base.getX();
-                newBushes += isNew ? 1 : 0;
-                helper.assertTrue(berries.size() == 1 || !isNew && berries.isEmpty(), "bonemeal grew " + berries.size() + " berries on a neighbour");
-                double fromX = (base.getX() - pos.getX()) * 16 + 8;
-                double fromZ = (base.getZ() - pos.getZ()) * 16 + 8;
-                for (MossberryBushBlock.Berry berry : berries) {
-                    double distance = Math.hypot(berry.x() - fromX, berry.z() - fromZ);
-                    helper.assertTrue(MossberryBushBlock.BERRIES.stream().allMatch(other -> Math.hypot(other.x() - fromX, other.z() - fromZ) >= distance),
-                            "bonemeal grew a berry on a neighbour far from the bush it was used on");
-                }
             }
         }
-        // Three free blocks at one in two each: the seed above gives at least one.
-        helper.assertTrue(newBushes > 0, "bonemeal started no bush on the free moss");
+        // About ten of the forty; none or most of them would be another rule.
+        helper.assertTrue(spreads >= 3 && spreads <= 20, uses + " uses of bonemeal grew " + spreads + " berries around the bush");
+
+        // The first berry of a bush that bone meal started is the one nearest to the bush it was used on.
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            var near = level.getBlockState(pos);
+            List<MossberryBushBlock.Berry> berries = near.is(bush)
+                ? MossberryBushBlock.BERRIES.stream().filter(berry -> near.getValue(berry.property())).toList()
+                : List.of();
+            if (pos.equals(base) || berries.size() != 1) {
+                continue;
+            }
+            double fromX = (base.getX() - pos.getX()) * 16 + 8;
+            double fromZ = (base.getZ() - pos.getZ()) * 16 + 8;
+            double distance = Math.hypot(berries.getFirst().x() - fromX, berries.getFirst().z() - fromZ);
+            helper.assertTrue(MossberryBushBlock.BERRIES.stream().allMatch(other -> Math.hypot(other.x() - fromX, other.z() - fromZ) >= distance),
+                "bonemeal started a bush with a berry far from the bush it was used on");
+        }
         helper.succeed();
     }
 
+    private static int berriesAround(ServerLevel level, BlockPos base) {
+        int berries = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            var state = level.getBlockState(pos);
+            if (!pos.equals(base) && state.is(RRBlocks.MOSSBERRY_BUSH.get())) {
+                berries += (int) MossberryBushBlock.BERRIES.stream().filter(berry -> state.getValue(berry.property())).count();
+            }
+        }
+        return berries;
+    }
     // A mossberry bush grows on moss only. Full of berries it glows like a ripe wispberry bush; one click
     // picks them all for at most three berries and leaves the bush with its twigs.
     private static void mossberryBushHarvest(GameTestHelper helper) {

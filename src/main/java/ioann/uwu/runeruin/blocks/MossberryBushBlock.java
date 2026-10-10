@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.blocks;
 
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.items.RRItems;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -190,16 +191,16 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
         return berryCount(state) > 0 ? PathType.DAMAGING : super.getBlockPathType(state, level, pos, mob);
     }
 
-    /** Free moss next to a bush: bone meal can start a new bush there. */
-    private boolean canSpreadTo(LevelReader level, BlockPos pos, BlockState state) {
-        return state.isAir() && this.defaultBlockState().canSurvive(level, pos);
+    /** A bush with room for a berry, or free moss, where bone meal can start a new bush. */
+    private boolean canGrowAt(LevelReader level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.is(this) ? berryCount(state) < BERRIES.size() : state.isAir() && this.defaultBlockState().canSurvive(level, pos);
     }
 
     @Override
     public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
         for (BlockPos near : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
-            BlockState nearState = level.getBlockState(near);
-            if (nearState.is(this) ? berryCount(nearState) < BERRIES.size() : canSpreadTo(level, near, nearState)) {
+            if (this.canGrowAt(level, near)) {
                 return true;
             }
         }
@@ -213,35 +214,40 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
 
     @Override
     public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
-        for (BlockPos near : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
-            BlockState nearState = level.getBlockState(near);
-            BlockState grown;
-            if (near.equals(pos)) {
-                // One or two berries on the bush itself.
-                grown = grow(nearState, random);
-                if (random.nextBoolean()) {
-                    grown = grow(grown, random);
-                }
-            } else if (random.nextBoolean() && (nearState.is(this) || this.canSpreadTo(level, near, nearState))) {
-                // At most one around it, on a bush or on free moss, where it starts a new bush:
-                // in the place nearest to the bush with the bone meal.
-                BlockState bush = nearState.is(this) ? nearState : this.defaultBlockState();
-                double fromX = (pos.getX() - near.getX()) * 16 + 8;
-                double fromZ = (pos.getZ() - near.getZ()) * 16 + 8;
-                grown = BERRIES.stream()
-                        .filter(berry -> !bush.getValue(berry.property()))
-                        .min(Comparator.comparingDouble(berry -> Mth.square(berry.x() - fromX) + Mth.square(berry.z() - fromZ)))
-                        .map(berry -> bush.setValue(berry.property(), true))
-                        .orElse(bush);
-            } else {
-                continue;
-            }
-            // Half of the bushes that grow something also get twigs.
-            if (grown != nearState && random.nextBoolean()) {
-                grown = grown.setValue(TWIGS, true);
-            }
-            level.setBlock(near, grown, Block.UPDATE_CLIENTS);
+        // One or two berries on the bush itself.
+        BlockState grown = grow(state, random);
+        if (random.nextBoolean()) {
+            grown = grow(grown, random);
         }
+        setGrown(level, random, pos, state, grown);
+
+        // One time in four, one more berry next to it: on a bush that stands there or on free moss,
+        // where it starts a new bush.
+        List<BlockPos> around = new ArrayList<>();
+        for (BlockPos near : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
+            if (!near.equals(pos) && this.canGrowAt(level, near)) {
+                around.add(near.immutable());
+            }
+        }
+        if (around.isEmpty() || random.nextInt(4) != 0) {
+            return;
+        }
+        BlockPos near = Util.getRandom(around, random);
+        BlockState nearState = level.getBlockState(near);
+        BlockState bush = nearState.is(this) ? nearState : this.defaultBlockState();
+        // That berry is the one nearest to the bush with the bone meal.
+        double fromX = (pos.getX() - near.getX()) * 16 + 8;
+        double fromZ = (pos.getZ() - near.getZ()) * 16 + 8;
+        Berry nearest = BERRIES.stream()
+                .filter(berry -> !bush.getValue(berry.property()))
+                .min(Comparator.comparingDouble(berry -> Mth.square(berry.x() - fromX) + Mth.square(berry.z() - fromZ)))
+                .orElseThrow();
+        setGrown(level, random, near, nearState, bush.setValue(nearest.property(), true));
+    }
+
+    /** Half of the bushes that grow something also get twigs. */
+    private static void setGrown(ServerLevel level, RandomSource random, BlockPos pos, BlockState old, BlockState grown) {
+        level.setBlock(pos, grown != old && random.nextBoolean() ? grown.setValue(TWIGS, true) : grown, Block.UPDATE_CLIENTS);
     }
 
     @Override
