@@ -38,6 +38,12 @@
   "block.runeruin.water_lily_leaf": "Water Lily Leaf",
   "block.runeruin.water_lily_flower": "Water Lily Flower",
 
+  "block.runeruin.void_stone": "Void Stone",
+  "block.runeruin.bead_vine": "Bead Vine",
+  "block.runeruin.dust_bloom": "Dust Bloom",
+  "block.runeruin.hanging_chorus_plant": "Hanging Chorus Plant",
+  "block.runeruin.hanging_chorus_flower": "Hanging Chorus Flower",
+
   "block.runeruin.elden_sapling": "Elden Sapling",
   "block.runeruin.potted_elden_sapling": "Potted Elden Sapling",
   "block.runeruin.elden_log": "Elden Log",
@@ -98,6 +104,7 @@
   "biome.runeruin.deepslate_spike_caves": "Deepslate Spike Caves",
   "biome.runeruin.sparkling_caves_ceiling": "Sparkling Caves Ceiling",
   "biome.runeruin.sparkling_caves": "Sparkling Caves",
+  "biome.runeruin.void": "Void",
 
   "dimension.runeruin.runeruin_dimension": "Rune Ruin",
   "structure.runeruin.giant_goblet": "Giant Goblet",

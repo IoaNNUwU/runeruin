@@ -8,7 +8,6 @@ import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.Climate;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -117,7 +116,7 @@ public class RRBiomeSource extends BiomeSource {
                         biomeRegistry.getOrThrow(RRBiomes.SPARKLING_CAVES)
                 ),
                 HolderSet.direct(
-                        biomeRegistry.getOrThrow(Biomes.THE_VOID)
+                        biomeRegistry.getOrThrow(RRBiomes.VOID)
                 )
         ));
     }

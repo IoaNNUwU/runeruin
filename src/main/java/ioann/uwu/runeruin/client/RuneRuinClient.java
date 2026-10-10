@@ -85,6 +85,8 @@ public class RuneRuinClient {
         // Cherry petal motion at vanilla leaf size.
         event.registerSpriteSet(RRParticleTypes.ELDEN_LEAVES.get(), sprites -> (_, level, x, y, z, _, _, _, random) ->
                 new FallingLeavesParticle(level, x, y, z, sprites.get(random), 0.25F, 2.0F, false, true, 2.0F, 0.0F));
+        event.registerSpriteSet(RRParticleTypes.VOID_DUST.get(), sprites -> (_, level, x, y, z, _, _, _, random) ->
+                new VoidDustParticle(level, x, y, z, sprites.get(random)));
     }
 
     @SubscribeEvent
