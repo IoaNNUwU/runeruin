@@ -56,9 +56,10 @@ public final class PreviewCommands {
                 Path path = PreviewCatalog.writeList(dir);
                 RR.LOGGER.info("Preview job list -> {}", path.toAbsolutePath());
             } else {
-                PreviewArgs args = PreviewArgs.fromSystem(dir);
-                PreviewJobs.Result result = PreviewCatalog.require(job).run(args, server);
-                RR.LOGGER.info("Headless preview '{}' finished: {} blocks -> {}", job, result.world().placedCount(), result.jsonPath().toAbsolutePath());
+                for (PreviewArgs args : PreviewArgs.fromSystem(dir).perSeed()) {
+                    PreviewJobs.Result result = PreviewCatalog.require(job).run(args, server);
+                    RR.LOGGER.info("Headless preview '{}' finished: {} blocks -> {}", job, result.world().placedCount(), result.jsonPath().toAbsolutePath());
+                }
             }
         } catch (Exception e) {
             RR.LOGGER.error("Headless preview '{}' failed. Known jobs:\n{}", job, PreviewCatalog.listText(), e);

@@ -46,12 +46,12 @@ Work with GitHub, in this repository or in the user's fork (issues, pushing, pul
 1. `gradlew.bat compileJava`
 2. `gradlew.bat runData` — after any change to datagen, blocks/items, models, tags, loot or worldgen bootstrap
 3. `gradlew.bat runGameTestServer` — mod and datapack load, GameTests in `preview/RRGameTests`
-4. shapes: `runPreview` of the matching job (`headless-preview` skill); models, textures, translations: `python scripts/lint_assets.py` after `runData`, and renders from `scripts/render_model.py` / `scripts/render_texture_tile.py`
+4. shapes: `runPreview` of the matching job and pictures from `scripts/render_preview.py` that you have looked at (`headless-preview` skill); models, textures, translations: `python scripts/lint_assets.py` after `runData`, and renders from `scripts/render_model.py` / `scripts/render_texture_tile.py`
 5. `gradlew.bat build`
 
 Lighting, render layers, interaction and biome placement need the game: list them under "Check in game". Speed benchmarks (`benchmark` skill) are not a check: they run only on the user's command, once the user has closed other programs.
 
-**Final report**, also for partial work: in the chat, in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions), with the branch, the worktree path and the output of `git status --short --branch`. The user reviews the changes and the Decisions and approves them; only then may a pull request become ready for review. End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
+**Final report**, also for partial work: in the chat, in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions), with the branch, the worktree path and the output of `git status --short --branch`. After a change to the shape of a feature or structure, show its preview pictures in the chat with their seed and parameters, before and after for an existing shape. The user reviews the changes and the Decisions and approves them; only then may a pull request become ready for review. End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
 
 ## Commits and code
 

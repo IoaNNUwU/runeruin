@@ -1,5 +1,8 @@
 package ioann.uwu.runeruin.preview;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
@@ -16,10 +19,12 @@ import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
@@ -81,6 +86,8 @@ public final class RRGameTests {
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_EXPORT_MARKS =
+        TEST_FUNCTIONS.register("preview_export_marks", () -> RRGameTests::previewExportMarks);
 
     private record FeatureCase(String id, Surface surface, Block ground, int offset) {}
 
@@ -122,6 +129,52 @@ public final class RRGameTests {
         }
         helper.assertTrue(failed.isEmpty(), "placed nothing: " + String.join(", ", failed));
         helper.succeed();
+    }
+
+    // scripts/render_preview.py fades what the preview prepared and outlines blocks without collision.
+    // Both come from the export: here the pool and its floor are prepared, the kelp is not.
+    private static void previewExportMarks(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(server), Map.of(
+                "id", "runeruin:goblet_kelp", "surface", "underwater", "seeds", "1,5-6", "name", "gametest_export_marks"));
+            List<PreviewArgs> runs = args.perSeed();
+            helper.assertTrue(runs.stream().map(run -> run.name("")).toList().equals(List.of(
+                "gametest_export_marks_s1", "gametest_export_marks_s5", "gametest_export_marks_s6")), "seeds=1,5-6 gave " + runs.size() + " runs");
+
+            JsonObject export = JsonParser.parseString(Files.readString(
+                PreviewCatalog.require("feature").run(runs.getFirst(), server).jsonPath())).getAsJsonObject();
+            Set<String> noCollision = new HashSet<>();
+            export.getAsJsonArray("noCollision").forEach(token -> noCollision.add(token.getAsString()));
+            JsonArray layers = export.getAsJsonArray("layers");
+            int preparedKelp = 0;
+            int kelp = 0;
+            int freeGround = 0;
+            for (int y = 0; y < layers.size(); y++) {
+                for (int z = 0; z < layers.get(y).getAsJsonArray().size(); z++) {
+                    String blocks = layers.get(y).getAsJsonArray().get(z).getAsString();
+                    String prepared = export.getAsJsonArray("prepared").get(y).getAsJsonArray().get(z).getAsString();
+                    for (int x = 0; x < blocks.length(); x++) {
+                        String token = blocks.substring(x, x + 1);
+                        String state = export.getAsJsonObject("palette").get(token).getAsString();
+                        boolean marked = prepared.charAt(x) == '#';
+                        if (state.contains("kelp")) {
+                            kelp++;
+                            preparedKelp += marked ? 1 : 0;
+                            helper.assertTrue(noCollision.contains(token), "kelp is exported with a collision shape");
+                        } else if (state.equals("minecraft:stone")) {
+                            freeGround += marked ? 0 : 1;
+                            helper.assertTrue(!noCollision.contains(token), "stone is exported without a collision shape");
+                        }
+                    }
+                }
+            }
+            helper.assertTrue(kelp > 0 && preparedKelp == 0, preparedKelp + " of " + kelp + " kelp blocks are marked as prepared");
+            helper.assertTrue(freeGround == 0, freeGround + " ground blocks are not marked as prepared");
+            helper.succeed();
+        } catch (Exception e) {
+            helper.fail(e.toString());
+        }
     }
     // Registered biomes that never generate. biome_registry_complete fails if one of them generates.
     private static final Set<ResourceKey<Biome>> PARKED_BIOMES = Set.of(RRBiomes.GHOST_GROVE);
@@ -198,6 +251,13 @@ public final class RRGameTests {
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("preview_export_marks"),
+            new FunctionGameTestInstance(
+                PREVIEW_EXPORT_MARKS.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );

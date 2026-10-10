@@ -11,15 +11,20 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -68,19 +73,22 @@ public final class RegionExport {
      * Used by in-game {@code /rrexport} (via {@link #scan}) and headless previews.
      */
     public static Snapshot capture(String dimension, BoundingBox box, java.util.function.Function<BlockPos, BlockState> blocks) {
-        return capture(dimension, box, null, blocks);
+        return capture(dimension, box, null, blocks, null);
     }
 
+    /** @param prepared the blocks a preview built for its subject (ground, ceiling, pool), if it is one */
     public static Snapshot capture(
         String dimension,
         BoundingBox box,
         @Nullable Long worldSeed,
-        java.util.function.Function<BlockPos, BlockState> blocks
+        java.util.function.Function<BlockPos, BlockState> blocks,
+        @Nullable Predicate<BlockPos> prepared
     ) {
         int sizeX = box.getXSpan();
         int sizeY = box.getYSpan();
         int sizeZ = box.getZSpan();
         BlockState[][][] states = new BlockState[sizeY][sizeZ][sizeX];
+        char[][][] preparedGrid = null;
         Map<String, Integer> stateCounts = new LinkedHashMap<>();
         Map<String, BlockState> representatives = new LinkedHashMap<>();
         BlockState air = Blocks.AIR.defaultBlockState();
@@ -96,6 +104,17 @@ public final class RegionExport {
                         state = air;
                     }
                     states[y][z][x] = state;
+                    if (prepared != null && prepared.test(cursor)) {
+                        if (preparedGrid == null) {
+                            preparedGrid = new char[sizeY][sizeZ][sizeX];
+                            for (char[][] layer : preparedGrid) {
+                                for (char[] row : layer) {
+                                    Arrays.fill(row, '.');
+                                }
+                            }
+                        }
+                        preparedGrid[y][z][x] = '#';
+                    }
                     String id = BlockStateParser.serialize(state);
                     stateCounts.merge(id, 1, Integer::sum);
                     representatives.putIfAbsent(id, state);
@@ -141,7 +160,7 @@ public final class RegionExport {
                 trimmedStates++;
             }
         }
-        return new Snapshot(dimension, box, sizeX, sizeY, sizeZ, worldSeed, palette, grid, trimmedStates, trimmedBlocks);
+        return new Snapshot(dimension, box, sizeX, sizeY, sizeZ, worldSeed, palette, grid, preparedGrid, trimmedStates, trimmedBlocks);
     }
 
     public static Result write(Snapshot snapshot, Path dir, String name) throws IOException {
@@ -169,7 +188,7 @@ public final class RegionExport {
                 }
             }
         }
-        return capture(level.dimension().identifier().toString(), box, level.getSeed(), level::getBlockState);
+        return capture(level.dimension().identifier().toString(), box, level.getSeed(), level::getBlockState, null);
     }
 
     static String toJson(Snapshot snap) {
@@ -210,17 +229,27 @@ public final class RegionExport {
         }
         root.add("palette", palette);
         root.add("counts", counts);
+        // For scripts/render_preview.py: it outlines plants, vines and fluids and fades prepared blocks.
+        JsonArray noCollision = new JsonArray();
+        snap.palette.noCollision.forEach(token -> noCollision.add(String.valueOf(token)));
+        root.add("noCollision", noCollision);
+        root.add("layers", rows(snap.grid));
+        if (snap.prepared != null) {
+            root.add("prepared", rows(snap.prepared));
+        }
+        return GSON.toJson(root) + "\n";
+    }
 
+    private static JsonArray rows(char[][][] grid) {
         JsonArray layers = new JsonArray();
-        for (int y = 0; y < snap.sizeY; y++) {
+        for (char[][] rows : grid) {
             JsonArray layer = new JsonArray();
-            for (int z = 0; z < snap.sizeZ; z++) {
-                layer.add(new String(snap.grid[y][z]));
+            for (char[] row : rows) {
+                layer.add(new String(row));
             }
             layers.add(layer);
         }
-        root.add("layers", layers);
-        return GSON.toJson(root) + "\n";
+        return layers;
     }
 
     static String toProjectionText(Snapshot snap) {
@@ -356,6 +385,8 @@ public final class RegionExport {
         final @Nullable Long worldSeed;
         final Palette palette;
         final char[][][] grid;
+        /** Same layout as {@link #grid}: {@code #} where a preview prepared the block; null outside previews. */
+        final char @Nullable [][][] prepared;
         final int trimmedStates;
         final int trimmedBlocks;
 
@@ -368,6 +399,7 @@ public final class RegionExport {
             @Nullable Long worldSeed,
             Palette palette,
             char[][][] grid,
+            char @Nullable [][][] prepared,
             int trimmedStates,
             int trimmedBlocks
         ) {
@@ -379,6 +411,7 @@ public final class RegionExport {
             this.worldSeed = worldSeed;
             this.palette = palette;
             this.grid = grid;
+            this.prepared = prepared;
             this.trimmedStates = trimmedStates;
             this.trimmedBlocks = trimmedBlocks;
         }
@@ -436,6 +469,7 @@ public final class RegionExport {
         final Map<String, Character> stateToToken = new LinkedHashMap<>();
         final Map<Character, String> tokenToState = new LinkedHashMap<>();
         final Map<Character, Integer> counts = new LinkedHashMap<>();
+        final Set<Character> noCollision = new LinkedHashSet<>();
         private int nextPool = 0;
 
         void register(String state, BlockState blockState) {
@@ -446,6 +480,9 @@ public final class RegionExport {
             stateToToken.put(state, token);
             tokenToState.put(token, state);
             counts.put(token, 0);
+            if (!blockState.isAir() && blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty()) {
+                noCollision.add(token);
+            }
         }
 
         boolean contains(String state) {
