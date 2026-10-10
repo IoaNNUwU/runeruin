@@ -46,7 +46,7 @@ public class RRStructureSets {
                         new RandomSpreadStructurePlacement(
                                 Vec3i.ZERO, StructurePlacement.FrequencyReductionMethod.DEFAULT, 1.0F, 7361529,
                                 Optional.of(new StructurePlacement.ExclusionZone(structureSets.getOrThrow(GIANT_GOBLETS), 1)),
-                                8, 4, RandomSpreadType.LINEAR
+                                6, 3, RandomSpreadType.LINEAR
                         )
                 )
         );
