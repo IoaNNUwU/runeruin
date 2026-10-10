@@ -49,6 +49,10 @@ public class DatagenMain {
                             new LootTableProvider.SubProviderEntry(
                                     DatagenLootTableProvider::new,
                                     LootContextParamSets.BLOCK_INTERACT
+                            ),
+                            new LootTableProvider.SubProviderEntry(
+                                    DatagenChestLootTableProvider::new,
+                                    LootContextParamSets.CHEST
                             )
                     ), lookupProvider
         ));

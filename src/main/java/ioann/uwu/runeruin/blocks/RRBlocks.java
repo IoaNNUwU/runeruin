@@ -57,6 +57,10 @@ public class RRBlocks {
     public static final DeferredBlock<Block> ARCANE_STONE_PORTAL = register("arcane_stone_portal", ARCANE_STONE_PROPS, ArcaneStonePortalBlock::new);
 
     public static final DeferredBlock<Block> DIAMOND_ARCANE_STONE = register("diamond_arcane_stone", _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.DIAMOND_BLOCK));
+    public static final DeferredBlock<Block> RUNIC_RAIL = register("runic_rail",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.RAIL),
+            RunicRailBlock::new);
+
     public static final DeferredBlock<Block> LAPIS_LIGHT = register("lapis_light",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PEARLESCENT_FROGLIGHT)
                     .lightLevel(_ -> 6)

@@ -21,6 +21,8 @@ public class DatagenItemTagProvider extends ItemTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.@NonNull Provider provider) {
+        tag(ItemTags.RAILS).add(itemKey(RRBlocks.RUNIC_RAIL.get()));
+
         tag(ItemTags.PLANKS).add(itemKey(RRBlocks.ELDEN_PLANKS.get()));
         tag(ItemTags.LOGS).add(
                 itemKey(RRBlocks.ELDEN_LOG.get()),

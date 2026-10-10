@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.structures.HangingTracksStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -26,6 +27,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.Tags;
 import org.jspecify.annotations.Nullable;
@@ -61,6 +63,14 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                     int maxColumnRadius = Mth.clamp(maxColumnRadiusBasedOnColumnHeight, config.columnRadius.minInclusive(), config.columnRadius.maxInclusive());
                     int maxReach = maxReach(origin);
                     int radius = Math.min(maxReach, Mth.randomBetweenInclusive(random, config.columnRadius.minInclusive(), maxColumnRadius));
+
+                    // Hanging tracks cut their way through the spikes of their own chunk. A spike of a chunk that is
+                    // decorated later would grow back into them, so it keeps out of their way, like the inverted trees.
+                    if (HangingTracksStructure.reaches(level, new BoundingBox(
+                            origin.getX() - radius, columnRange.floor(), origin.getZ() - radius,
+                            origin.getX() + radius, columnRange.ceiling(), origin.getZ() + radius))) {
+                        return false;
+                    }
 
                     LargeDripstone stalactite = makeDripstone(origin.atY(columnRange.ceiling() - 1), false, random, radius, config.stalactiteBluntness, config.heightScale);
 
