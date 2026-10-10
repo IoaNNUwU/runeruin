@@ -45,6 +45,7 @@ import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -639,51 +640,66 @@ public final class RRGameTests {
         helper.succeed();
     }
 
-    // Bone meal grows one or two of the smallest berries on the bush and at most one around it: on a bush
-    // that stands there, or on free moss, where it starts a new bush. That one is the berry nearest to the
-    // bush with the bone meal.
+    // Bone meal grows one or two of the smallest berries on the bush. One time in four it also grows one
+    // berry next to it: on a bush that stands there, or on free moss, where it starts a new bush.
     private static void mossberryBushBonemeal(GameTestHelper helper) {
         BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
         var level = helper.getLevel();
         var bush = (MossberryBushBlock) RRBlocks.MOSSBERRY_BUSH.get();
         for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
             level.setBlockAndUpdate(pos.below(), Blocks.MOSS_BLOCK.defaultBlockState());
-            // Bushes west of the middle, free moss east of it.
-            level.setBlockAndUpdate(pos, pos.getX() <= base.getX() ? bush.defaultBlockState() : Blocks.AIR.defaultBlockState());
+            level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
         }
-        var state = bush.defaultBlockState();
-        helper.assertTrue(bush.isValidBonemealTarget(level, base, state), "mossberry bush rejected bonemeal");
-        bush.performBonemeal(level, RandomSource.create(42), base, state);
+        level.setBlockAndUpdate(base, bush.defaultBlockState());
+        helper.assertTrue(bush.isValidBonemealTarget(level, base, bush.defaultBlockState()), "mossberry bush rejected bonemeal");
 
-        int newBushes = 0;
-        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
-            var grown = level.getBlockState(pos);
-            if (pos.getX() > base.getX() && grown.isAir()) {
-                continue;
-            }
-            helper.assertTrue(grown.is(bush), "bonemeal left " + grown + " in place of a mossberry bush");
-            List<MossberryBushBlock.Berry> berries = MossberryBushBlock.BERRIES.stream().filter(berry -> grown.getValue(berry.property())).toList();
-            if (pos.equals(base)) {
+        RandomSource random = RandomSource.create(42);
+        int uses = 40;
+        int spreads = 0;
+        for (int use = 0; use < uses; use++) {
+            int before = berriesAround(level, base);
+            bush.performBonemeal(level, random, base, level.getBlockState(base));
+            int grown = berriesAround(level, base) - before;
+            helper.assertTrue(grown == 0 || grown == 1, "one use of bonemeal grew " + grown + " berries around the bush");
+            spreads += grown;
+            if (use == 0) {
+                List<MossberryBushBlock.Berry> berries = MossberryBushBlock.BERRIES.stream()
+                    .filter(berry -> level.getBlockState(base).getValue(berry.property())).toList();
                 helper.assertTrue(!berries.isEmpty() && berries.size() <= 2, "bonemeal grew " + berries.size() + " berries on its bush");
                 helper.assertTrue(berries.stream().allMatch(berry -> berry.size() == 2), "bonemeal did not start with the smallest berries");
-            } else {
-                boolean isNew = pos.getX() > base.getX();
-                newBushes += isNew ? 1 : 0;
-                helper.assertTrue(berries.size() == 1 || !isNew && berries.isEmpty(), "bonemeal grew " + berries.size() + " berries on a neighbour");
-                double fromX = (base.getX() - pos.getX()) * 16 + 8;
-                double fromZ = (base.getZ() - pos.getZ()) * 16 + 8;
-                for (MossberryBushBlock.Berry berry : berries) {
-                    double distance = Math.hypot(berry.x() - fromX, berry.z() - fromZ);
-                    helper.assertTrue(MossberryBushBlock.BERRIES.stream().allMatch(other -> Math.hypot(other.x() - fromX, other.z() - fromZ) >= distance),
-                            "bonemeal grew a berry on a neighbour far from the bush it was used on");
-                }
             }
         }
-        // Three free blocks at one in two each: the seed above gives at least one.
-        helper.assertTrue(newBushes > 0, "bonemeal started no bush on the free moss");
+        // About ten of the forty; none or most of them would be another rule.
+        helper.assertTrue(spreads >= 3 && spreads <= 20, uses + " uses of bonemeal grew " + spreads + " berries around the bush");
+
+        // The first berry of a bush that bone meal started is the one nearest to the bush it was used on.
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            var near = level.getBlockState(pos);
+            List<MossberryBushBlock.Berry> berries = near.is(bush)
+                ? MossberryBushBlock.BERRIES.stream().filter(berry -> near.getValue(berry.property())).toList()
+                : List.of();
+            if (pos.equals(base) || berries.size() != 1) {
+                continue;
+            }
+            double fromX = (base.getX() - pos.getX()) * 16 + 8;
+            double fromZ = (base.getZ() - pos.getZ()) * 16 + 8;
+            double distance = Math.hypot(berries.getFirst().x() - fromX, berries.getFirst().z() - fromZ);
+            helper.assertTrue(MossberryBushBlock.BERRIES.stream().allMatch(other -> Math.hypot(other.x() - fromX, other.z() - fromZ) >= distance),
+                "bonemeal started a bush with a berry far from the bush it was used on");
+        }
         helper.succeed();
     }
 
+    private static int berriesAround(ServerLevel level, BlockPos base) {
+        int berries = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, 0, -1), base.offset(1, 0, 1))) {
+            var state = level.getBlockState(pos);
+            if (!pos.equals(base) && state.is(RRBlocks.MOSSBERRY_BUSH.get())) {
+                berries += (int) MossberryBushBlock.BERRIES.stream().filter(berry -> state.getValue(berry.property())).count();
+            }
+        }
+        return berries;
+    }
     // A mossberry bush grows on moss only. Full of berries it glows like a ripe wispberry bush; one click
     // picks them all for at most three berries and leaves the bush with its twigs.
     private static void mossberryBushHarvest(GameTestHelper helper) {
