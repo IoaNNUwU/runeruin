@@ -4,8 +4,9 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
+import ioann.uwu.runeruin.dimension.noise.Noise;
+import ioann.uwu.runeruin.dimension.noise.SupportedIslandsNoise;
 import ioann.uwu.runeruin.dimension.runes.Runes;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -52,7 +53,9 @@ public class ArcaneStructureGen {
             }
         }
 
-        if (doGenerateColumn(terrain.chunk().getPos(), randomState)) {
+        ChunkPos chunkPos = terrain.chunk().getPos();
+        Noise topLevel = topLevelNoise.getOrCreateNoise(randomState);
+        if (doGenerateColumn(chunkPos.x(), chunkPos.z(), (x, z) -> topLevel.noise(x, z) >= 0.01f)) {
             generateArcaneColumn(terrain, randomState);
         }
     }
@@ -153,59 +156,35 @@ public class ArcaneStructureGen {
         }
     }
 
-    private static boolean doGenerateColumn(ChunkPos chunkPos, RandomState randomState) {
-        boolean simple = doGenerateColumnSimple(chunkPos, randomState);
-        if (!simple) {
+    /** Whether a column stands in this chunk. Islands with no column under them are not generated: {@link SupportedIslandsNoise}. */
+    public static boolean doGenerateColumn(int chunkX, int chunkZ, SupportedIslandsNoise.Land topLayer) {
+        if (!doGenerateColumnSimple(chunkX, chunkZ, topLayer)) {
             return false;
         }
 
-        return (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z()), randomState)
-                || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z()), randomState))
-                && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() + 1), randomState)
-                || !doGenerateColumnSimple(new ChunkPos(chunkPos.x(), chunkPos.z() - 1), randomState))
-                && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() + 1), randomState)
-                || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() - 1), randomState))
-                && (!doGenerateColumnSimple(new ChunkPos(chunkPos.x() + 1, chunkPos.z() - 1), randomState)
-                || !doGenerateColumnSimple(new ChunkPos(chunkPos.x() - 1, chunkPos.z() + 1), randomState));
+        return (!doGenerateColumnSimple(chunkX + 1, chunkZ, topLayer)
+                || !doGenerateColumnSimple(chunkX - 1, chunkZ, topLayer))
+                && (!doGenerateColumnSimple(chunkX, chunkZ + 1, topLayer)
+                || !doGenerateColumnSimple(chunkX, chunkZ - 1, topLayer))
+                && (!doGenerateColumnSimple(chunkX + 1, chunkZ + 1, topLayer)
+                || !doGenerateColumnSimple(chunkX - 1, chunkZ - 1, topLayer))
+                && (!doGenerateColumnSimple(chunkX + 1, chunkZ - 1, topLayer)
+                || !doGenerateColumnSimple(chunkX - 1, chunkZ + 1, topLayer));
     }
 
-    private static boolean doGenerateColumnSimple(ChunkPos chunkPos, RandomState randomState) {
-
-        BlockPos xzBlock = chunkPos.getBlockAt(15, 0, 15);
-        BlockPos xnBlock = chunkPos.getBlockAt(15, 0, 0);
-        BlockPos nzBlock = chunkPos.getBlockAt(0, 0, 15);
-        BlockPos nnBlock = chunkPos.getBlockAt(0, 0, 0);
-
-        float xzNoise = topLevelNoise.getOrCreateNoise(randomState).noise(xzBlock.getX(), xzBlock.getZ());
-        float xnNoise = topLevelNoise.getOrCreateNoise(randomState).noise(xnBlock.getX(), xnBlock.getZ());
-        float nzNoise = topLevelNoise.getOrCreateNoise(randomState).noise(nzBlock.getX(), nzBlock.getZ());
-        float nnNoise = topLevelNoise.getOrCreateNoise(randomState).noise(nnBlock.getX(), nnBlock.getZ());
+    private static boolean doGenerateColumnSimple(int chunkX, int chunkZ, SupportedIslandsNoise.Land topLayer) {
+        int minX = chunkX << 4;
+        int minZ = chunkZ << 4;
 
         // Generate column only if all vertices are on top layer
-        // TODO: Or all vertices are on bottom layer to avoid floating islands
-        for (float noise : List.of(xzNoise, xnNoise, nzNoise, nnNoise)) {
-            if (noise < 0.01) {
-                return false;
-            }
+        if (!topLayer.at(minX + 15, minZ + 15) || !topLayer.at(minX + 15, minZ)
+                || !topLayer.at(minX, minZ + 15) || !topLayer.at(minX, minZ)) {
+            return false;
         }
 
-        ChunkPos xzChunk = new ChunkPos(chunkPos.x() + 1, chunkPos.z() + 1);
-        ChunkPos xnChunk = new ChunkPos(chunkPos.x() + 1, chunkPos.z() - 1);
-        ChunkPos nzChunk = new ChunkPos(chunkPos.x() - 1, chunkPos.z() + 1);
-        ChunkPos nnChunk = new ChunkPos(chunkPos.x() - 1, chunkPos.z() - 1);
-
-        // Generate column only if one of diagonal chunks is a hole
-        for (ChunkPos chPos : List.of(xzChunk, xnChunk, nzChunk, nnChunk)) {
-            int x = chPos.getMiddleBlockX();
-            int z = chPos.getMiddleBlockZ();
-
-            float noise = topLevelNoise.getOrCreateNoise(randomState).noise(x, z);
-            if (noise < 0.01) {
-                return true;
-            }
-        }
-
-        // No diagonal chunks are holes. We are in the middle of an island, no need for column
-        return false;
+        // Generate column only if the middle of one of diagonal chunks is a hole.
+        // Otherwise we are in the middle of an island, no need for column
+        return !topLayer.at(minX + 24, minZ + 24) || !topLayer.at(minX + 24, minZ - 8)
+                || !topLayer.at(minX - 8, minZ + 24) || !topLayer.at(minX - 8, minZ - 8);
     }
 }
