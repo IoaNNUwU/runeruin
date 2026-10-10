@@ -94,12 +94,10 @@ public final class RRGameTests {
 
     // A feature may write only into the chunk of its origin and the eight around it, and the origin can
     // lie on a chunk edge. A block further from it along X or Z can fall outside: vanilla then logs
-    // "Detected setBlock in a far chunk" and drops the block.
+    // "Detected setBlock in a far chunk" and drops the block. Features do not check their blocks for
+    // this, so their sizes must keep them inside.
     private static final int FEATURE_REACH_LIMIT = 16;
     private static final int FEATURE_REACH_SEEDS = 48;
-    // Giant spikes grow wider than the limit in caves higher than the preview one, and MossySpikeFeature
-    // fits each of them into the allowed chunks itself.
-    private static final Set<String> SELF_FITTING_FEATURES = Set.of("stone_spike", "dripstone_spike", "deepslate_spike");
 
     private record FeatureCase(String id, Surface surface, Block ground, int offset) {}
 
@@ -158,7 +156,7 @@ public final class RRGameTests {
         List<String> failed = new ArrayList<>();
         for (FeatureCase c : featureCases()) {
             if (FeaturePreviewJob.place(server, RR.id(c.id()), c.surface(), c.ground().defaultBlockState(),
-                    c.offset(), 1, 16).changedBlocks() == 0) {
+                    c.offset(), 1, 16, 0, 0).changedBlocks() == 0) {
                 failed.add(c.id() + " on " + c.surface());
             }
         }
@@ -167,6 +165,7 @@ public final class RRGameTests {
     }
 
     // The largest distance along X or Z between a feature's origin and a block it writes, over many seeds.
+    // The preview origin is a chunk corner: the worst case for giant spikes, which may be wider elsewhere.
     private static void featureReach(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         Set<String> covered = new HashSet<>();
@@ -175,9 +174,11 @@ public final class RRGameTests {
         for (FeatureCase c : featureCases()) {
             covered.add(c.id());
             int reach = 0;
-            for (long seed = 1; seed <= FEATURE_REACH_SEEDS; seed++) {
+            // Seeds next to each other start a feature with nearly the same first random number.
+            RandomSource seeds = RandomSource.create(1);
+            for (int i = 0; i < FEATURE_REACH_SEEDS; i++) {
                 FeaturePreviewJob.Placement placement = FeaturePreviewJob.place(server, RR.id(c.id()), c.surface(),
-                    c.ground().defaultBlockState(), c.offset(), seed, 2 * FEATURE_REACH_LIMIT);
+                    c.ground().defaultBlockState(), c.offset(), seeds.nextLong(), 2 * FEATURE_REACH_LIMIT, 0, 0);
                 BoundingBox written = placement.world().writtenBox();
                 if (written != null) {
                     BlockPos origin = placement.origin();
@@ -187,7 +188,7 @@ public final class RRGameTests {
                 }
             }
             measured.add(c.id() + " " + reach);
-            if (reach > FEATURE_REACH_LIMIT && !SELF_FITTING_FEATURES.contains(c.id())) {
+            if (reach > FEATURE_REACH_LIMIT) {
                 problems.add(c.id() + " writes " + reach + " blocks from its origin");
             }
         }

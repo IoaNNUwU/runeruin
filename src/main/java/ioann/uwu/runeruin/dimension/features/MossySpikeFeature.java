@@ -8,6 +8,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -38,11 +39,9 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
     public boolean place(FeaturePlaceContext<SpikeConfiguration> context) {
         WorldGenLevel level = context.level();
         BlockPos origin = context.origin();
-        FeatureChunkBounds chunkBounds = new FeatureChunkBounds(origin);
         SpikeConfiguration config = context.config();
         RandomSource random = context.random();
-        if (!chunkBounds.contains(origin)
-                || !level.isStateAtPosition(origin, SpeleothemUtils::isEmptyOrWater)) {
+        if (!level.isStateAtPosition(origin, SpeleothemUtils::isEmptyOrWater)) {
             return false;
         } else {
 
@@ -60,7 +59,8 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                 } else {
                     int maxColumnRadiusBasedOnColumnHeight = (int)((float)columnRange.height() * config.maxColumnRadiusToCaveHeightRatio);
                     int maxColumnRadius = Mth.clamp(maxColumnRadiusBasedOnColumnHeight, config.columnRadius.minInclusive(), config.columnRadius.maxInclusive());
-                    int radius = Mth.randomBetweenInclusive(random, config.columnRadius.minInclusive(), maxColumnRadius);
+                    int maxReach = maxReach(origin);
+                    int radius = Math.min(maxReach, Mth.randomBetweenInclusive(random, config.columnRadius.minInclusive(), maxColumnRadius));
 
                     LargeDripstone stalactite = makeDripstone(origin.atY(columnRange.ceiling() - 1), false, random, radius, config.stalactiteBluntness, config.heightScale);
 
@@ -68,20 +68,20 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
                     WindOffsetter wind;
                     if (stalactite.isSuitableForWind(config) && stalagmite.isSuitableForWind(config)) {
-                        wind = new WindOffsetter(origin.getY(), random, config.windSpeed);
+                        wind = new WindOffsetter(origin.getY(), random, config.windSpeed, maxReach - radius);
                     } else {
                         wind = WindOffsetter.noWind();
                     }
 
-                    boolean stalactiteBaseEmbeddedInStone = stalactite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind, chunkBounds);
-                    boolean stalagmiteBaseEmbeddedInStone = stalagmite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind, chunkBounds);
+                    boolean stalactiteBaseEmbeddedInStone = stalactite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind);
+                    boolean stalagmiteBaseEmbeddedInStone = stalagmite.moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(level, wind);
 
                     if (stalactiteBaseEmbeddedInStone) {
-                        stalactite.placeBlocks(level, random, wind, mainBlock, columnRange, chunkBounds);
+                        stalactite.placeBlocks(level, random, wind, mainBlock, columnRange);
                     }
 
                     if (stalagmiteBaseEmbeddedInStone) {
-                        stalagmite.placeBlocks(level, random, wind, mainBlock, columnRange, chunkBounds);
+                        stalagmite.placeBlocks(level, random, wind, mainBlock, columnRange);
                     }
 
                     return true;
@@ -90,6 +90,17 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                 return false;
             }
         }
+    }
+
+    /**
+     * How far from the origin along X and Z the spike may write. A feature may change only the chunk of
+     * its origin and the eight around it: 16 blocks from an origin on a chunk edge, more towards the middle.
+     * Keeping the radius and the wind shift within this takes the place of checking every block.
+     */
+    private static int maxReach(BlockPos origin) {
+        int x = SectionPos.sectionRelative(origin.getX());
+        int z = SectionPos.sectionRelative(origin.getZ());
+        return 16 + Math.min(Math.min(x, 15 - x), Math.min(z, 15 - z));
     }
 
     private static boolean isInsideColumn(BlockState state) {
@@ -149,21 +160,17 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
             return !this.pointingUp ? this.root.getY() : this.root.getY() + this.getHeight();
         }
 
-        private boolean moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(
-                WorldGenLevel level,
-                WindOffsetter wind,
-                FeatureChunkBounds chunkBounds
-        ) {
+        private boolean moveBackUntilBaseIsInsideStoneAndShrinkRadiusIfNecessary(WorldGenLevel level, WindOffsetter wind) {
             while(this.radius > 1) {
                 BlockPos.MutableBlockPos newRoot = this.root.mutable();
                 int maxTries = Math.min(10, this.getHeight());
 
                 for(int i = 0; i < maxTries; ++i) {
-                    if (!chunkBounds.contains(newRoot) || level.getBlockState(newRoot).is(Blocks.LAVA)) {
+                    if (level.getBlockState(newRoot).is(Blocks.LAVA)) {
                         return false;
                     }
 
-                    if (isCircleMostlyEmbeddedInStone(level, wind.offset(newRoot), this.radius, chunkBounds)) {
+                    if (isCircleMostlyEmbeddedInStone(level, wind.offset(newRoot), this.radius)) {
                         this.root = newRoot;
                         return true;
                     }
@@ -186,8 +193,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                 RandomSource random,
                 WindOffsetter wind,
                 BlockState block,
-                Column.Range columnRange,
-                FeatureChunkBounds chunkBounds
+                Column.Range columnRange
         ) {
             for(int dx = -this.radius; dx <= this.radius; ++dx) {
                 for(int dz = -this.radius; dz <= this.radius; ++dz) {
@@ -212,10 +218,6 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
 
                             for(int i = 0; i < height && pos.getY() < maxY; ++i) {
                                 BlockPos windAdjustedPos = wind.offset(pos);
-                                if (!chunkBounds.contains(windAdjustedPos)) {
-                                    break;
-                                }
-
                                 BlockState state = level.getBlockState(windAdjustedPos);
                                 if (canReplaceWithSpike(state)) {
                                     hasBeenOutOfStone = true;
@@ -239,7 +241,6 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                             }
 
                             if (mossCapPos != null
-                                    && chunkBounds.contains(mossCapPos)
                                     && isMossTransitionColumn(heightFromMoss, random)
                                     && level.isStateAtPosition(mossCapPos, MossySpikeFeature::canReplaceWithMossCap)) {
                                 level.setBlock(mossCapPos, mossBase, 2);
@@ -263,9 +264,11 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
     private static final class WindOffsetter {
         private final int originY;
         private final @Nullable Vec3 windSpeed;
+        private final int maxShift;
 
-        private WindOffsetter(int originY, RandomSource random, FloatProvider windSpeedRange) {
+        private WindOffsetter(int originY, RandomSource random, FloatProvider windSpeedRange, int maxShift) {
             this.originY = originY;
+            this.maxShift = maxShift;
             float speed = windSpeedRange.sample(random);
             float direction = Mth.randomBetween(random, 0.0F, (float)Math.PI);
             this.windSpeed = new Vec3(Mth.cos(direction) * speed, 0.0F, Mth.sin(direction) * speed);
@@ -274,6 +277,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
         private WindOffsetter() {
             this.originY = 0;
             this.windSpeed = null;
+            this.maxShift = 0;
         }
 
         private static WindOffsetter noWind() {
@@ -286,7 +290,11 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
             } else {
                 int dy = this.originY - pos.getY();
                 Vec3 totalWindAdjust = this.windSpeed.scale(dy);
-                return pos.offset(Mth.floor(totalWindAdjust.x), 0, Mth.floor(totalWindAdjust.z));
+                return pos.offset(
+                        Mth.clamp(Mth.floor(totalWindAdjust.x), -this.maxShift, this.maxShift),
+                        0,
+                        Mth.clamp(Mth.floor(totalWindAdjust.z), -this.maxShift, this.maxShift)
+                );
             }
         }
     }
@@ -306,16 +314,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
         return heightRelativeToMaxRadius / 0.384 * dripstoneRadius;
     }
 
-    static boolean isCircleMostlyEmbeddedInStone(
-            WorldGenLevel level,
-            BlockPos center,
-            int xzRadius,
-            FeatureChunkBounds chunkBounds
-    ) {
-        if (!chunkBounds.contains(center)) {
-            return false;
-        }
-
+    static boolean isCircleMostlyEmbeddedInStone(WorldGenLevel level, BlockPos center, int xzRadius) {
         if (level.isStateAtPosition(center, MossySpikeFeature::canReplaceWithSpike)) {
             return false;
         } else {
@@ -328,8 +327,7 @@ public class MossySpikeFeature extends Feature<MossySpikeFeature.SpikeConfigurat
                 int dz = (int)(Mth.sin(angle) * (float)xzRadius);
 
                 BlockPos sample = center.offset(dx, 0, dz);
-                if (!chunkBounds.contains(sample)
-                        || level.isStateAtPosition(sample, MossySpikeFeature::canReplaceWithSpike)) {
+                if (level.isStateAtPosition(sample, MossySpikeFeature::canReplaceWithSpike)) {
                     return false;
                 }
             }
