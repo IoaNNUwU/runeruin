@@ -25,10 +25,24 @@ public class ArcaneStructureGen {
 
     public static void generateArcaneStructure(TerrainWriter terrain, RandomState randomState) {
         ChunkPos chunkPos = terrain.chunk().getPos();
-        Noise topLevel = topLevelNoise.getOrCreateNoise(randomState);
-        if (doGenerateColumn(chunkPos.x(), chunkPos.z(), (x, z) -> topLevel.noise(x, z) >= 0.01f)) {
+        if (hasColumn(chunkPos.x(), chunkPos.z(), randomState)) {
             generateArcaneColumn(terrain, randomState);
         }
+    }
+
+    public static boolean hasColumn(int chunkX, int chunkZ, RandomState randomState) {
+        Noise topLevel = topLevelNoise.getOrCreateNoise(randomState);
+        return doGenerateColumn(chunkX, chunkZ, (x, z) -> topLevel.noise(x, z) >= 0.01f);
+    }
+
+    /** How many blocks lie between a block and the column of a chunk: 0 inside the column. */
+    public static int distanceToColumn(int chunkX, int chunkZ, int x, int z) {
+        int minX = (chunkX << 4) + 2;
+        int minZ = (chunkZ << 4) + 2;
+        return Math.max(
+                Math.max(0, Math.max(minX - x, x - minX - 11)),
+                Math.max(0, Math.max(minZ - z, z - minZ - 11))
+        );
     }
 
     private static final LazyNoise topLevelBaselineNoise = RRChunkGenerator.topLevelBaselineNoise;

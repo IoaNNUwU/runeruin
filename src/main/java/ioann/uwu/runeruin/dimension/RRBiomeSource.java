@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
@@ -145,7 +146,7 @@ public class RRBiomeSource extends BiomeSource {
         // Each layer starts above this Y, top to bottom like `layers`.
         int[] layerBottoms = {
                 baseLine,
-                BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
+                TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 10,
                 deepCeilingTop,
                 DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
                 lostBaseLine,

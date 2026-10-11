@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.placements.ChunkCenterPlacement;
 import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
@@ -98,7 +99,7 @@ public class RRPlacedFeatures {
 
     // Height bands that decorations start their surface scan from.
     private static final int BLOOMING_FLOOR_TOP = BLOOMING_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
-    private static final int BLOOMING_CEILING_BOTTOM = BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
+    private static final int BLOOMING_CEILING_BOTTOM = TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 10;
     private static final int BLOOMING_CEILING_TOP = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
     private static final int DEEP_CEILING_BOTTOM = DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
     private static final int DEEP_CEILING_TOP = DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
