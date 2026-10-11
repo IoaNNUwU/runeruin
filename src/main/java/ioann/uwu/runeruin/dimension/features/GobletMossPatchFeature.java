@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension.features;
 
 import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.RRConfiguredFeatures;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -33,6 +35,9 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
     private static final IntProvider CLUMP_HEIGHT = UniformInt.of(4, 8);
     private static final IntProvider CLUMP_RADIUS = UniformInt.of(1, 3);
     private static final float WISPBERRY_CHANCE = 0.3F;
+    private static final float FLOATING_MOSS_CHANCE = 0.5F;
+    /** The rim rises two blocks above the water. */
+    private static final int FLOATING_MOSS_SCAN = 3;
 
     public GobletMossPatchFeature() {
         super(VegetationPatchConfiguration.CODEC);
@@ -53,6 +58,9 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                 : super.placeGroundPatch(level, config, random, origin, replaceable, xRadius, zRadius);
         if (!underwater) {
             this.distributeVegetation(context, level, config, random, surface, xRadius, zRadius);
+            if (random.nextFloat() < FLOATING_MOSS_CHANCE) {
+                placeFloatingMoss(context, xRadius, zRadius);
+            }
         }
         if (surface.isEmpty()) {
             return false;
@@ -102,6 +110,29 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                     RRBlocks.WISPBERRY_BUSH.get().defaultBlockState().setValue(WispberryBushBlock.AGE, age),
                     2
             );
+        }
+    }
+
+    /** A small raft of floating moss on the water that the patch reaches from the rim of the cup. */
+    private static void placeFloatingMoss(FeaturePlaceContext<VegetationPatchConfiguration> context, int xRadius, int zRadius) {
+        WorldGenLevel level = context.level();
+        List<BlockPos> water = new ArrayList<>();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int dx = -xRadius; dx <= xRadius; dx++) {
+            for (int dz = -zRadius; dz <= zRadius; dz++) {
+                cursor.setWithOffset(context.origin(), dx, 0, dz);
+                for (int step = 0; step < FLOATING_MOSS_SCAN && level.isEmptyBlock(cursor); step++) {
+                    cursor.move(Direction.DOWN);
+                }
+                if (FloatingMossPatchFeature.isOpenWater(level, cursor)) {
+                    water.add(cursor.immutable());
+                }
+            }
+        }
+        if (!water.isEmpty()) {
+            level.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE)
+                    .getOrThrow(RRConfiguredFeatures.SMALL_FLOATING_MOSS_PATCH).value()
+                    .place(level, context.chunkGenerator(), context.random(), Util.getRandom(water, context.random()));
         }
     }
 
