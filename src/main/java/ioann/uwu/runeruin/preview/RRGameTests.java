@@ -38,6 +38,7 @@ import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -62,8 +63,11 @@ import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.InteractionHand;
@@ -98,6 +102,8 @@ import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -175,6 +181,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> TEMPLATE_PIECE =
         TEST_FUNCTIONS.register("template_piece", () -> RRGameTests::templatePiece);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> SAVE_COMMAND =
+        TEST_FUNCTIONS.register("save_command", () -> RRGameTests::saveCommand);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -538,6 +546,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("save_command"),
+            new FunctionGameTestInstance(
+                SAVE_COMMAND.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -707,6 +722,43 @@ public final class RRGameTests {
         helper.assertTrue(level.getBlockState(target).is(Blocks.GOLD_BLOCK) && level.getBlockState(target.south()).is(Blocks.DIAMOND_BLOCK),
             "the template turned a quarter is not at " + target + " and south of it");
         helper.succeed();
+    }
+
+    // The command a person saves a build with: the selection becomes a template file in the resources of the
+    // checkout the game was started from, without its structure void block.
+    private static void saveCommand(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos build = helper.absolutePos(new BlockPos(0, 2, 0));
+        level.setBlockAndUpdate(build, Blocks.GOLD_BLOCK.defaultBlockState());
+        level.setBlockAndUpdate(build.east(), Blocks.STRUCTURE_VOID.defaultBlockState());
+        String startedFrom = System.getProperty("runeruin.checkout");
+        try {
+            Path checkout = Files.createTempDirectory("runeruin_checkout");
+            System.setProperty("runeruin.checkout", checkout.toString());
+            CommandSourceStack player = ((ServerPlayer) helper.makeMockServerPlayer(GameType.CREATIVE)).createCommandSourceStack()
+                .withPermission(PermissionSet.ALL_PERMISSIONS).withSuppressedOutput();
+            for (String command : List.of("rrpos1 " + build.toShortString().replace(",", ""),
+                "rrpos2 " + build.east().toShortString().replace(",", ""), "rrsave test_save_command/build")) {
+                level.getServer().getCommands().performPrefixedCommand(player, command);
+            }
+            Path file = checkout.resolve("src/main/resources/data/runeruin/structure/test_save_command/build.nbt");
+            helper.assertTrue(Files.isRegularFile(file) && Files.size(file) > 0, "/rrsave wrote no " + file);
+            StructureTemplate template = level.getStructureManager().get(RR.id("test_save_command/build")).orElseThrow();
+            helper.assertTrue(template.getSize().equals(new Vec3i(2, 1, 1)), "the template is " + template.getSize());
+            StructurePlaceSettings asBuilt = new StructurePlaceSettings();
+            helper.assertTrue(template.filterBlocks(BlockPos.ZERO, asBuilt, Blocks.GOLD_BLOCK).size() == 1
+                && template.filterBlocks(BlockPos.ZERO, asBuilt, Blocks.STRUCTURE_VOID).isEmpty(),
+                "the template must hold the gold block and no structure void");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        } finally {
+            if (startedFrom == null) {
+                System.clearProperty("runeruin.checkout");
+            } else {
+                System.setProperty("runeruin.checkout", startedFrom);
+            }
+        }
     }
 
     // The lost and blooming cave floors used one unnamed noise and had the same relief, one layer apart.
