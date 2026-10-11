@@ -61,6 +61,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> COMMON_STONE_LILY = RR.resourceKey(Registries.PLACED_FEATURE, "common_stone_lily");
 
     public static final ResourceKey<PlacedFeature> WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "wispberry_bush_patch");
+    public static final ResourceKey<PlacedFeature> DEEP_WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "deep_wispberry_bush_patch");
     public static final ResourceKey<PlacedFeature> POWDERED_MOSS = RR.resourceKey(Registries.PLACED_FEATURE, "powdered_moss");
     public static final ResourceKey<PlacedFeature> MOSS_HUMMOCK = RR.resourceKey(Registries.PLACED_FEATURE, "moss_hummock");
 
@@ -244,25 +245,11 @@ public class RRPlacedFeatures {
 
         ctx.register(WISPBERRY_BUSH_PATCH, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.WISPBERRY_BUSH_PATCH),
-                List.of(
-                        RarityFilter.onAverageOnceEvery(1),
-                        InSquarePlacement.spread(),
-                        HeightRangePlacement.uniform(VerticalAnchor.absolute(BLOOMING_CAVES_Y), VerticalAnchor.absolute(BLOOMING_FLOOR_TOP)),
-                        BiomeFilter.biome(),
-                        CountPlacement.of(96),
-                        RandomOffsetPlacement.ofTriangle(7, 3),
-                        EnvironmentScanPlacement.scanningFor(
-                                Direction.DOWN,
-                                BlockPredicate.matchesBlocks(
-                                        RRBlocks.DEEP_MOSS.get(),
-                                        Blocks.MOSSY_COBBLESTONE,
-                                        Blocks.STONE
-                                ),
-                                BlockPredicate.ONLY_IN_AIR_PREDICATE,
-                                16
-                        ),
-                        RandomOffsetPlacement.vertical(ConstantInt.of(1))
-                )
+                wispberryPatchPlacement(BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP)
+        ));
+        ctx.register(DEEP_WISPBERRY_BUSH_PATCH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.WISPBERRY_BUSH_PATCH),
+                wispberryPatchPlacement(DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y)
         ));
 
         ctx.register(POWDERED_MOSS, new PlacedFeature(
@@ -482,6 +469,29 @@ public class RRPlacedFeatures {
                 InSquarePlacement.spread(),
                 new GobletUnderwaterPlacement(),
                 BiomeFilter.biome()
+        );
+    }
+
+    /** One group of bushes per chunk around a point of the band, each bush on the ground under its own spot. */
+    private static List<PlacementModifier> wispberryPatchPlacement(int minY, int maxY) {
+        return List.of(
+                RarityFilter.onAverageOnceEvery(1),
+                InSquarePlacement.spread(),
+                HeightRangePlacement.uniform(VerticalAnchor.absolute(minY), VerticalAnchor.absolute(maxY)),
+                BiomeFilter.biome(),
+                CountPlacement.of(96),
+                RandomOffsetPlacement.ofTriangle(7, 3),
+                EnvironmentScanPlacement.scanningFor(
+                        Direction.DOWN,
+                        BlockPredicate.matchesBlocks(
+                                RRBlocks.DEEP_MOSS.get(),
+                                Blocks.MOSSY_COBBLESTONE,
+                                Blocks.STONE
+                        ),
+                        BlockPredicate.ONLY_IN_AIR_PREDICATE,
+                        16
+                ),
+                RandomOffsetPlacement.vertical(ConstantInt.of(1))
         );
     }
 

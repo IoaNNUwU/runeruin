@@ -29,6 +29,7 @@ public class DeepslateSpikeCaves {
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.DEEP_DEEPSLATE_SPIKE);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.RED_ARCH.placedKey());
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.DEEP_WISPBERRY_BUSH_PATCH);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.DEEP_MOSS_SPROUTS);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
