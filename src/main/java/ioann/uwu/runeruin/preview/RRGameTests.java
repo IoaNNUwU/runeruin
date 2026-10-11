@@ -20,7 +20,10 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
+import ioann.uwu.runeruin.entities.RREntityTypes;
+import ioann.uwu.runeruin.entities.RunicMinecart;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.loottables.RRLootTables;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
 import ioann.uwu.runeruin.region.RegionExport;
@@ -55,8 +58,10 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
@@ -73,6 +78,10 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -95,6 +104,10 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("runic_rail_keeps_speed", () -> RRGameTests::runicRailKeepsSpeed);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> RUNIC_RAIL_CROSSING =
         TEST_FUNCTIONS.register("runic_rail_crossing", () -> RRGameTests::runicRailCrossing);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> RUNIC_MINECART_KEEPS_SPEED =
+        TEST_FUNCTIONS.register("runic_minecart_keeps_speed", () -> RRGameTests::runicMinecartKeepsSpeed);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> HANGING_TRACKS_STATION_LOOT =
+        TEST_FUNCTIONS.register("hanging_tracks_station_loot", () -> RRGameTests::hangingTracksStationLoot);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
@@ -330,6 +343,20 @@ public final class RRGameTests {
             new FunctionGameTestInstance(
                 RUNIC_RAIL_CROSSING.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 80, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("runic_minecart_keeps_speed"),
+            new FunctionGameTestInstance(
+                RUNIC_MINECART_KEEPS_SPEED.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 120, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("hanging_tracks_station_loot"),
+            new FunctionGameTestInstance(
+                HANGING_TRACKS_STATION_LOOT.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
         event.registerTest(
@@ -781,17 +808,23 @@ public final class RRGameTests {
         }
     }
 
-    // An empty minecart loses 4% of its speed every tick on a vanilla rail and slides back down a slope.
-    private static void runicRailKeepsSpeed(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
+    /** A track of 16 rails to the east that climbs one block after the fifth; returns its first rail. */
+    private static BlockPos slopedTrack(GameTestHelper helper, int y, Block rail) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, y, 0));
         var level = helper.getLevel();
-        BlockState rail = RRBlocks.RUNIC_RAIL.get().defaultBlockState();
         for (int x = 0; x < 16; x++) {
             int step = x < 6 ? 0 : 1;
             level.setBlockAndUpdate(base.offset(x, step - 1, 0), Blocks.STONE.defaultBlockState());
-            level.setBlockAndUpdate(base.offset(x, step, 0),
-                rail.setValue(RailBlock.SHAPE, x == 5 ? RailShape.ASCENDING_EAST : RailShape.EAST_WEST));
+            level.setBlockAndUpdate(base.offset(x, step, 0), rail.defaultBlockState()
+                .setValue(RailBlock.SHAPE, x == 5 ? RailShape.ASCENDING_EAST : RailShape.EAST_WEST));
         }
+        return base;
+    }
+
+    // An empty minecart loses 4% of its speed every tick on a vanilla rail and slides back down a slope.
+    private static void runicRailKeepsSpeed(GameTestHelper helper) {
+        BlockPos base = slopedTrack(helper, 5, RRBlocks.RUNIC_RAIL.get());
+        var level = helper.getLevel();
 
         double speed = 0.2;
         Minecart minecart = EntityTypes.MINECART.create(level, EntitySpawnReason.COMMAND);
@@ -806,6 +839,58 @@ public final class RRGameTests {
                 "the minecart changed its speed to " + minecart.getDeltaMovement().horizontalDistance());
             helper.succeed();
         });
+    }
+
+    // On vanilla rails a minecart with a rider slows down, most of all on a slope, and an empty one
+    // at this speed rolls on for five blocks.
+    private static void runicMinecartKeepsSpeed(GameTestHelper helper) {
+        // Higher than the tracks of the runic rail tests, which start a few blocks aside.
+        BlockPos base = slopedTrack(helper, 19, Blocks.RAIL);
+        var level = helper.getLevel();
+
+        double speed = 0.2;
+        RunicMinecart minecart = RREntityTypes.RUNIC_MINECART.get().create(level, EntitySpawnReason.COMMAND);
+        minecart.setInitialPos(base.getX() + 0.5, base.getY(), base.getZ() + 0.5);
+        minecart.setDeltaMovement(speed, 0, 0);
+        level.addFreshEntity(minecart);
+        Pig rider = EntityTypes.PIG.create(level, EntitySpawnReason.COMMAND);
+        rider.setNoAi(true);
+        rider.setPos(minecart.position());
+        level.addFreshEntity(rider);
+        rider.startRiding(minecart, true, false);
+
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(minecart.isVehicle(), "the rider left the minecart");
+            helper.assertTrue(minecart.getY() > base.getY() + 0.9, "the minecart did not climb the slope: y " + minecart.getY());
+            helper.assertTrue(minecart.getX() > base.getX() + 8, "the minecart stopped at x " + (minecart.getX() - base.getX()));
+            helper.assertTrue(Math.abs(minecart.getDeltaMovement().horizontalDistance() - speed) < 1.0E-3,
+                "the minecart changed its speed to " + minecart.getDeltaMovement().horizontalDistance());
+            // Removed, not dismounted: a pig standing on the rails would stop the minecart as well.
+            rider.discard();
+            double left = minecart.getX();
+            helper.runAfterDelay(30, () -> {
+                helper.assertTrue(minecart.getDeltaMovement().horizontalDistance() < 1.0E-3,
+                    "the empty minecart still moves at " + minecart.getDeltaMovement().horizontalDistance());
+                helper.assertTrue(minecart.getX() - left < 1.5, "the empty minecart rolled on for " + (minecart.getX() - left));
+                helper.succeed();
+            });
+        });
+    }
+
+    // The chest of a station is what puts a runic minecart into every network.
+    private static void hangingTracksStationLoot(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        LootTable table = level.getServer().reloadableRegistries().getLootTable(RRLootTables.HANGING_TRACKS_STATION);
+        LootParams params = new LootParams.Builder(level)
+            .withParameter(LootContextParams.ORIGIN, Vec3.ZERO)
+            .create(LootContextParamSets.CHEST);
+        for (long seed = 1; seed <= 20; seed++) {
+            List<ItemStack> loot = table.getRandomItems(params, seed);
+            helper.assertTrue(loot.stream().anyMatch(stack -> stack.is(RRItems.RUNIC_MINECART)),
+                "no runic minecart in the station chest with seed " + seed);
+            helper.assertTrue(loot.size() > 1, "no supplies in the station chest with seed " + seed);
+        }
+        helper.succeed();
     }
 
     // On a vanilla rail that lies across its way a minecart turns aside.

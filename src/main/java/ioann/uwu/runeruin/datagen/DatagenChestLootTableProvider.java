@@ -13,6 +13,7 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
+import net.minecraft.world.level.storage.loot.entries.NestedLootTable;
 import net.minecraft.world.level.storage.loot.functions.EnchantRandomlyFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
@@ -47,12 +48,22 @@ public class DatagenChestLootTableProvider implements LootTableSubProvider {
                                 .add(item(Items.MINECART, 5, 1, 1))
                                 .add(item(Items.IRON_PICKAXE, 3, 1, 1))
                                 .add(item(Items.NAME_TAG, 2, 1, 1))
+                                .add(item(RRItems.RUNIC_MINECART, 2, 1, 1))
                         )
+        );
+
+        // The chest of a station: every network has one, so every network has a runic minecart.
+        output.accept(
+                RRLootTables.HANGING_TRACKS_STATION,
+                LootTable.lootTable()
+                        .withPool(LootPool.lootPool().add(LootItem.lootTableItem(RRItems.RUNIC_MINECART)))
+                        .withPool(LootPool.lootPool().add(NestedLootTable.lootTableReference(RRLootTables.HANGING_TRACKS_SUPPLY)))
         );
 
         output.accept(
                 RRLootTables.HANGING_TRACKS_TREASURE,
                 LootTable.lootTable()
+                        .withPool(LootPool.lootPool().add(LootItem.lootTableItem(RRItems.RUNIC_MINECART)))
                         .withPool(LootPool.lootPool()
                                 .setRolls(UniformGenerator.between(4f, 7f))
                                 .add(item(RRBlocks.RUNIC_RAIL, 15, 16, 32))

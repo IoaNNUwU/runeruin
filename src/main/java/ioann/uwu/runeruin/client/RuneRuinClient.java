@@ -97,6 +97,7 @@ public class RuneRuinClient {
     @SubscribeEvent
     static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(RREntityTypes.SNAIL.get(), SnailRenderer::new);
+        event.registerEntityRenderer(RREntityTypes.RUNIC_MINECART.get(), RunicMinecartRenderer::new);
     }
 
     @SubscribeEvent

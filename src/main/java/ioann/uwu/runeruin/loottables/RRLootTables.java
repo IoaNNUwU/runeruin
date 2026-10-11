@@ -9,6 +9,7 @@ public class RRLootTables {
 
     public static final ResourceKey<LootTable> HARVEST_WISPBERRY = RR.resourceKey(Registries.LOOT_TABLE, "harvest/wispberry");
 
+    public static final ResourceKey<LootTable> HANGING_TRACKS_STATION = RR.resourceKey(Registries.LOOT_TABLE, "chests/hanging_tracks_station");
     public static final ResourceKey<LootTable> HANGING_TRACKS_SUPPLY = RR.resourceKey(Registries.LOOT_TABLE, "chests/hanging_tracks_supply");
     public static final ResourceKey<LootTable> HANGING_TRACKS_TREASURE = RR.resourceKey(Registries.LOOT_TABLE, "chests/hanging_tracks_treasure");
 }

@@ -6,7 +6,10 @@
   "item.runeruin.mossberry": "Mossberry",
   "item.runeruin.powdered_moss_bucket": "Powdered Moss Bucket",
   "item.runeruin.snail_spawn_egg": "Snail Spawn Egg",
+  "item.runeruin.runic_minecart": "Runic Minecart",
+  "item.runeruin.runic_minecart.tooltip": "Keeps its speed even on ordinary rails",
   "entity.runeruin.snail": "Snail",
+  "entity.runeruin.runic_minecart": "Runic Minecart",
 
   "block.runeruin.arcane_stone": "Arcane Stone",
   "block.runeruin.arcane_stone_bricks": "Arcane Stone Bricks",
