@@ -47,7 +47,7 @@ public final class HangingTracksLayout {
     public static final int MAX_RADIUS = 72;
     /** Air between a deck and the ceiling above it. */
     public static final int MIN_GAP = 3;
-    public static final int MAX_GAP = 20;
+    public static final int MAX_GAP = 28;
 
     private static final int MAX_DEPTH = 9;
     private static final int MAX_PIECES = 56;

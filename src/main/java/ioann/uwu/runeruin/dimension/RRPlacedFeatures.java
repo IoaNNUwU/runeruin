@@ -2,6 +2,8 @@ package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.placements.ChunkCenterPlacement;
 import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
@@ -80,7 +82,8 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch_underwater");
-    public static final ResourceKey<PlacedFeature> GOBLET_SEAGRASS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_seagrass");
+    public static final ResourceKey<PlacedFeature> FLOATING_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "floating_moss_patch");
+    public static final ResourceKey<PlacedFeature> GOBLET_SEAGRASS =RR.resourceKey(Registries.PLACED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<PlacedFeature> GOBLET_KELP = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_kelp");
     public static final ResourceKey<PlacedFeature> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_deep_roots");
     public static final ResourceKey<PlacedFeature> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.PLACED_FEATURE, "deep_roots_grass");
@@ -97,7 +100,7 @@ public class RRPlacedFeatures {
 
     // Height bands that decorations start their surface scan from.
     private static final int BLOOMING_FLOOR_TOP = BLOOMING_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
-    private static final int BLOOMING_CEILING_BOTTOM = BLOOMING_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
+    private static final int BLOOMING_CEILING_BOTTOM = TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 10;
     private static final int BLOOMING_CEILING_TOP = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
     private static final int DEEP_CEILING_BOTTOM = DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
     private static final int DEEP_CEILING_TOP = DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
@@ -283,7 +286,7 @@ public class RRPlacedFeatures {
         ));
         ctx.register(INVERTED_TREE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.INVERTED_TREE),
-                ceilingPlacement(CountPlacement.of(8), DEEP_CEILING_BOTTOM, DEEP_CAVES_CEILING_Y, 0)
+                ceilingPlacement(CountPlacement.of(13), DEEP_CEILING_BOTTOM, DeepCavesGen.HIGHEST_Y, 0)
         ));
 
         ctx.register(ELDEN_GIANT_TREE, new PlacedFeature(
@@ -369,6 +372,10 @@ public class RRPlacedFeatures {
                         BlockPredicate.matchesTag(RRTags.GOBLET_MOSS_REPLACEABLE), BlockPredicate.matchesBlocks(Blocks.WATER), 32, 1)
         ));
 
+        ctx.register(FLOATING_MOSS_PATCH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.FLOATING_MOSS_PATCH),
+                gobletUnderwaterPlacement(RarityFilter.onAverageOnceEvery(9))
+        ));
         ctx.register(GOBLET_SEAGRASS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_SEAGRASS),
                 gobletUnderwaterPlacement(CountPlacement.of(48))

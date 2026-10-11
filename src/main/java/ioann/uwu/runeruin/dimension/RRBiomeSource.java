@@ -3,6 +3,8 @@ package ioann.uwu.runeruin.dimension;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
@@ -133,14 +135,25 @@ public class RRBiomeSource extends BiomeSource {
         float baselineNoise = RRChunkGenerator.topLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, z);
         int baseLine = (int) (BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET);
 
+        // Inside an island the ceiling of the Blooming caves rises a terrace into it and takes its biomes along.
+        if (y > baseLine && y <= baseLine + TopLayerAndBloomingCavesGen.CEILING_BIOME_RISE
+                && TopLayerAndBloomingCavesGen.ceilingHasTerraces(x, z, sampler)) {
+            baseLine += TopLayerAndBloomingCavesGen.CEILING_BIOME_RISE;
+        }
+
         float lostBaselineNoise = RRChunkGenerator.lostTopLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, z);
         int lostBaseLine = (int) (LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * lostBaselineNoise + TOP_LAYER_OFFSET);
+
+        // The ceiling of the Deep caves rises into the floor of the Blooming caves and keeps its biome there.
+        int deepCeilingTop = y <= DEEP_CAVES_CEILING_Y || y > DeepCavesGen.HIGHEST_Y
+                ? BLOOMING_CAVES_Y
+                : DeepCavesGen.roofY(x, z, sampler);
 
         // Each layer starts above this Y, top to bottom like `layers`.
         int[] layerBottoms = {
                 baseLine,
-                BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
-                BLOOMING_CAVES_Y,
+                TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 10,
+                deepCeilingTop,
                 DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
                 lostBaseLine,
                 LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,

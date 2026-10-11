@@ -135,7 +135,7 @@ public class FloatingMossBlock extends Block implements SimpleWaterloggedBlock {
         return connect(state, level, pos);
     }
 
-    private BlockState connect(BlockState state, BlockGetter level, BlockPos pos) {
+    public BlockState connect(BlockState state, BlockGetter level, BlockPos pos) {
         for (int x = 0; x < 3; x++) {
             for (int z = 0; z < 3; z++) {
                 BooleanProperty cell = cell(x, z);

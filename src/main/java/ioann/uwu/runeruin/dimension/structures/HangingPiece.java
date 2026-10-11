@@ -3,7 +3,7 @@ package ioann.uwu.runeruin.dimension.structures;
 import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.blocks.WispberryBushBlock;
-import ioann.uwu.runeruin.dimension.Const;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.structures.HangingTracksLayout.Port;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -141,7 +141,7 @@ public abstract class HangingPiece extends StructurePiece {
         int z2 = port.z(f2, r2);
         return new BoundingBox(
                 Math.min(x1, x2), port.y() - below, Math.min(z1, z2),
-                Math.max(x1, x2), Const.DEEP_CAVES_CEILING_Y, Math.max(z1, z2)
+                Math.max(x1, x2), DeepCavesGen.HIGHEST_Y, Math.max(z1, z2)
         );
     }
 
@@ -297,7 +297,7 @@ public abstract class HangingPiece extends StructurePiece {
             }
             int bottom = origin.y() + u;
             int top = bottom;
-            while (top <= Const.DEEP_CAVES_CEILING_Y && this.level.getBlockState(this.cursor.setY(top)).isAir()) {
+            while (top <= DeepCavesGen.HIGHEST_Y && this.level.getBlockState(this.cursor.setY(top)).isAir()) {
                 top++;
             }
             if (wear == Wear.DECAYED && chance(f, r, 5) < 0.25f) {

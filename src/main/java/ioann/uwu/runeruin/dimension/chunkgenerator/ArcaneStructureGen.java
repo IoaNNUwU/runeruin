@@ -18,46 +18,31 @@ import java.util.List;
 
 import static ioann.uwu.runeruin.dimension.Const.*;
 import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_CEILING_Y;
-import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_Y;
-import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_CEILING_Y;
-import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_Y;
 import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_MAX_BASELINE_HEIGHT;
 import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_OFFSET;
 
 public class ArcaneStructureGen {
 
     public static void generateArcaneStructure(TerrainWriter terrain, RandomState randomState) {
-        BlockState arcaneStone = RRBlocks.ARCANE_STONE.get().defaultBlockState();
-
-        for (int y = CEILING_VOID_Y + 1; y < LOST_CAVES_Y; y++) {
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    terrain.set(x, y, z, arcaneStone);
-                }
-            }
-        }
-        /*
-        for (int y = LOST_CAVES_CEILING_Y + 1; y < DEEP_CAVES_Y; y++) {
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    terrain.set(x, y, z, arcaneStone);
-                }
-            }
-        }
-         */
-        for (int y = DEEP_CAVES_CEILING_Y + 1; y < BLOOMING_CAVES_Y; y++) {
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    terrain.set(x, y, z, arcaneStone);
-                }
-            }
-        }
-
         ChunkPos chunkPos = terrain.chunk().getPos();
-        Noise topLevel = topLevelNoise.getOrCreateNoise(randomState);
-        if (doGenerateColumn(chunkPos.x(), chunkPos.z(), (x, z) -> topLevel.noise(x, z) >= 0.01f)) {
+        if (hasColumn(chunkPos.x(), chunkPos.z(), randomState)) {
             generateArcaneColumn(terrain, randomState);
         }
+    }
+
+    public static boolean hasColumn(int chunkX, int chunkZ, RandomState randomState) {
+        Noise topLevel = topLevelNoise.getOrCreateNoise(randomState);
+        return doGenerateColumn(chunkX, chunkZ, (x, z) -> topLevel.noise(x, z) >= 0.01f);
+    }
+
+    /** How many blocks lie between a block and the column of a chunk: 0 inside the column. */
+    public static int distanceToColumn(int chunkX, int chunkZ, int x, int z) {
+        int minX = (chunkX << 4) + 2;
+        int minZ = (chunkZ << 4) + 2;
+        return Math.max(
+                Math.max(0, Math.max(minX - x, x - minX - 11)),
+                Math.max(0, Math.max(minZ - z, z - minZ - 11))
+        );
     }
 
     private static final LazyNoise topLevelBaselineNoise = RRChunkGenerator.topLevelBaselineNoise;
@@ -79,19 +64,15 @@ public class ArcaneStructureGen {
         float maxNoise = Math.max(Math.max(baselineNoiseXZ, baselineNoiseXN), Math.max(baselineNoiseNZ, baselineNoiseNN));
         float baseLine = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * maxNoise + 1 + TOP_LAYER_OFFSET;
 
-        for (int y = BLOOMING_CAVES_Y; y < baseLine; y++) {
-            for (int x = 3; x < 13; x++) {
-                for (int z = 2; z < 14; z++) {
+        for (int x = 2; x < 14; x++) {
+            for (int z = 2; z < 14; z++) {
+                if ((x == 2 || x == 13) && (z == 2 || z == 13)) {
+                    continue;
+                }
+                // From the stone that the Deep caves never open: no column hangs into them.
+                for (int y = DeepCavesGen.roofY(chX + x, chZ + z, randomState.sampler()); y < baseLine; y++) {
                     terrain.set(x, y, z, arcaneStone);
                 }
-            }
-            int x = 2;
-            for (int z = 3; z < 13; z++) {
-                terrain.set(x, y, z, arcaneStone);
-            }
-            x = 13;
-            for (int z = 3; z < 13; z++) {
-                terrain.set(x, y, z, arcaneStone);
             }
         }
 

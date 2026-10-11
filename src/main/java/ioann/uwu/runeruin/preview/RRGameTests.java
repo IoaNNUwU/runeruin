@@ -14,12 +14,16 @@ import ioann.uwu.runeruin.dimension.RRBiomes;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
+import ioann.uwu.runeruin.entities.RREntityTypes;
+import ioann.uwu.runeruin.entities.RunicMinecart;
 import ioann.uwu.runeruin.items.RRItems;
+import ioann.uwu.runeruin.loottables.RRLootTables;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
 import ioann.uwu.runeruin.region.RegionExport;
@@ -54,8 +58,10 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
@@ -72,6 +78,10 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -94,6 +104,10 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("runic_rail_keeps_speed", () -> RRGameTests::runicRailKeepsSpeed);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> RUNIC_RAIL_CROSSING =
         TEST_FUNCTIONS.register("runic_rail_crossing", () -> RRGameTests::runicRailCrossing);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> RUNIC_MINECART_KEEPS_SPEED =
+        TEST_FUNCTIONS.register("runic_minecart_keeps_speed", () -> RRGameTests::runicMinecartKeepsSpeed);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> HANGING_TRACKS_STATION_LOOT =
+        TEST_FUNCTIONS.register("hanging_tracks_station_loot", () -> RRGameTests::hangingTracksStationLoot);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
@@ -118,6 +132,10 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FLOATING_ISLANDS_NOT_GENERATED =
         TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DEEP_CAVES_CEILING =
+        TEST_FUNCTIONS.register("deep_caves_ceiling", () -> RRGameTests::deepCavesCeiling);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOOMING_CAVES_CEILING =
+        TEST_FUNCTIONS.register("blooming_caves_ceiling", () -> RRGameTests::bloomingCavesCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
 
@@ -189,6 +207,8 @@ public final class RRGameTests {
             new FeatureCase("bead_vine", Surface.CEILING, voidStone, -1),
             new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
+            new FeatureCase("floating_moss_patch", Surface.UNDERWATER, Blocks.STONE, 1),
+            new FeatureCase("small_floating_moss_patch", Surface.UNDERWATER, Blocks.STONE, 1),
             new FeatureCase("goblet_kelp", Surface.UNDERWATER, Blocks.STONE, 1),
             new FeatureCase("goblet_seagrass", Surface.UNDERWATER, Blocks.STONE, 1),
             new FeatureCase("stone_spike", Surface.CAVE, Blocks.STONE, 0),
@@ -328,6 +348,20 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("runic_minecart_keeps_speed"),
+            new FunctionGameTestInstance(
+                RUNIC_MINECART_KEEPS_SPEED.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 120, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("hanging_tracks_station_loot"),
+            new FunctionGameTestInstance(
+                HANGING_TRACKS_STATION_LOOT.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("ashen_mushroom_small_radii"),
             new FunctionGameTestInstance(
                 ASHEN_MUSHROOM_SMALL_RADII.getKey(),
@@ -408,6 +442,20 @@ public final class RRGameTests {
             RR.id("floating_islands_not_generated"),
             new FunctionGameTestInstance(
                 FLOATING_ISLANDS_NOT_GENERATED.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("deep_caves_ceiling"),
+            new FunctionGameTestInstance(
+                DEEP_CAVES_CEILING.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("blooming_caves_ceiling"),
+            new FunctionGameTestInstance(
+                BLOOMING_CAVES_CEILING.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -578,6 +626,186 @@ public final class RRGameTests {
         }
     }
 
+    // The ceiling of the Deep caves has levels and ledges, nothing floats under it, it leaves the floor of the
+    // Blooming caves closed, and no arcane plate lies between the layers.
+    private static void deepCavesCeiling(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, 1);
+            int size = 96;
+            int minY = DeepCavesGen.LOWEST_Y - 1;
+            int height = Const.BLOOMING_CAVES_Y + Const.TERRAIN_HEIGHT - minY + 1;
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, 1, new BoundingBox(0, minY, 0, size - 1, minY + height - 1, size - 1));
+
+            // 1 is a block, 2 is a block that a path of blocks ties to the floor of the Blooming caves.
+            byte[] blocks = new byte[size * size * height];
+            int[] tied = new int[blocks.length];
+            int count = 0;
+            int lowest = Integer.MAX_VALUE;
+            int highest = Integer.MIN_VALUE;
+            int ledges = 0;
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    int floorY = TopLayerAndBloomingCavesGen.bloomingCavesFloorY(x + 8, z + 8, randomState);
+                    int ceilingY = DeepCavesGen.ceilingSurfaceY(x, z, randomState);
+                    lowest = Math.min(lowest, ceilingY);
+                    highest = Math.max(highest, ceilingY);
+                    // What lies on the edge may hang on something outside.
+                    boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;
+                    boolean ledge = false;
+                    for (int y = minY; y <= floorY; y++) {
+                        BlockState state = terrain.get(pos.set(x, y, z));
+                        String at = " at " + x + " " + y + " " + z;
+                        helper.assertTrue(y < ceilingY == state.isAir() || y > ceilingY, "the ceiling does not start at Y " + ceilingY + at);
+                        helper.assertTrue(y < floorY - 6 || !state.isAir(), "the floor of the Blooming caves is open" + at);
+                        helper.assertTrue(y < floorY || !state.is(Blocks.STONE), "the floor of the Blooming caves has no surface" + at);
+                        helper.assertTrue(y >= floorY - 6 || !state.is(RRBlocks.ARCANE_STONE.get()), "arcane stone under the Blooming caves" + at);
+                        ledge |= state.isAir() && y > ceilingY;
+                        if (!state.isAir()) {
+                            int block = (x * size + z) * height + y - minY;
+                            blocks[block] = 1;
+                            if (edge || y == floorY) {
+                                blocks[block] = 2;
+                                tied[count++] = block;
+                            }
+                        }
+                    }
+                    if (ledge) {
+                        ledges++;
+                    }
+                }
+            }
+            int floating = floatingBlocks(blocks, tied, count, size, height);
+            helper.assertTrue(floating == 0, floating + " blocks float under the ceiling of the Deep caves");
+            helper.assertTrue(highest - lowest >= 15, "the ceiling of the Deep caves only spans Y " + lowest + " to " + highest);
+            helper.assertTrue(ledges > 0, "the ceiling of the Deep caves has no ledge");
+
+            BoundingBox underLostCaves = new BoundingBox(0, Const.CEILING_VOID_Y + 1, 0, 15, Const.LOST_CAVES_Y - 1, 15);
+            PreviewWorld rock = HeadlessTerrainGenerator.generate(server, 1, underLostCaves);
+            for (BlockPos block : BlockPos.betweenClosed(underLostCaves.minX(), underLostCaves.minY(), underLostCaves.minZ(),
+                    underLostCaves.maxX(), underLostCaves.maxY(), underLostCaves.maxZ())) {
+                helper.assertTrue(rock.get(block).is(Blocks.DEEPSLATE), "no deepslate under the Lost caves at " + block.toShortString());
+            }
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // The ceiling of the Blooming caves has terraces inside the islands and stays even at their edges, nothing
+    // floats under it, it leaves the top layer closed, and all of it lies in the ceiling biomes, whose plants hang from it.
+    private static void bloomingCavesCeiling(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            long seed = 12345;
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, seed);
+            RRBiomeSource biomes = RRBiomeSource.newDefault(server.registryAccess().lookupOrThrow(Registries.BIOME));
+            int size = 112;
+            int minY = TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 3;
+            int height = 40;
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, seed, new BoundingBox(0, minY, 0, size - 1, minY + height - 1, size - 1));
+
+            // The lowest block of the even ceiling, or 0 between the islands.
+            int[] even = new int[size * size];
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    even[x * size + z] = TopLayerAndBloomingCavesGen.evenCeilingY(x, z, randomState).orElse(0);
+                }
+            }
+
+            // 1 is a block of a terrace, 2 is a block that a path of blocks ties to the even ceiling.
+            byte[] blocks = new byte[size * size * height];
+            int[] tied = new int[blocks.length];
+            int count = 0;
+            int deepest = 0;
+            int highest = 0;
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    int evenY = even[x * size + z];
+                    if (evenY == 0) {
+                        continue;
+                    }
+                    boolean atEdge = false;
+                    for (int dx = -4; dx <= 4; dx++) {
+                        for (int dz = -4; dz <= 4; dz++) {
+                            atEdge |= x + dx >= 0 && x + dx < size && z + dz >= 0 && z + dz < size && even[(x + dx) * size + z + dz] == 0;
+                        }
+                    }
+                    int ceilingY = minY;
+                    while (terrain.get(pos.set(x, ceilingY, z)).isAir()) {
+                        ceilingY++;
+                    }
+                    // An arcane column passes through the ceiling, and its runes are cut into its sides.
+                    if (terrain.get(pos).is(RRBlocks.ARCANE_STONE.get()) || terrain.get(pos).is(RRBlocks.DIAMOND_ARCANE_STONE.get())) {
+                        continue;
+                    }
+                    String at = " at " + x + " " + z;
+                    helper.assertTrue(!atEdge || ceilingY == evenY, "the ceiling at the edge of an island is at Y " + ceilingY + ", not " + evenY + at);
+                    helper.assertTrue(ceilingY == evenY || ceilingY >= TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y, "a terrace hangs down to Y " + ceilingY + at);
+                    helper.assertTrue(terrain.get(pos).is(RRBlocks.DEEP_MOSS.get()), "the ceiling has no moss at Y " + ceilingY + at);
+                    helper.assertTrue(!terrain.get(pos.set(x, ceilingY + 1, z)).is(RRBlocks.DEEP_MOSS.get()), "the moss of the ceiling is two blocks thick" + at);
+                    Holder<Biome> biome = biomes.getNoiseBiome(
+                        QuartPos.fromBlock(x), QuartPos.fromBlock(ceilingY - 1), QuartPos.fromBlock(z), randomState.sampler());
+                    helper.assertTrue(biome.is(RRBiomes.GLOWING_ROOTS) || biome.is(RRBiomes.GLOWING_BALLS),
+                        "the air under the ceiling at Y " + ceilingY + at + " is in " + biome.getRegisteredName());
+                    deepest = Math.max(deepest, evenY - ceilingY);
+                    highest = Math.max(highest, ceilingY - evenY);
+                    // Soil hangs over the surface under a cliff, so the highest block of a column is not its surface.
+                    int surfaceY = Math.min(TopLayerAndBloomingCavesGen.topLayerSurfaceY(x, z, randomState).orElse(ceilingY), minY + height - 1);
+                    for (int y = ceilingY; y <= surfaceY; y++) {
+                        helper.assertTrue(y < surfaceY - 8 || !terrain.get(pos.set(x, y, z)).isAir(), "the top layer is open from below at " + x + " " + y + " " + z);
+                    }
+                    // What lies on the edge may hang on something outside.
+                    boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;
+                    for (int y = ceilingY; y < minY + height; y++) {
+                        if (!terrain.get(pos.set(x, y, z)).isAir()) {
+                            int block = (x * size + z) * height + y - minY;
+                            blocks[block] = 1;
+                            if (edge || y >= evenY) {
+                                blocks[block] = 2;
+                                tied[count++] = block;
+                            }
+                        }
+                    }
+                }
+            }
+            int floating = floatingBlocks(blocks, tied, count, size, height);
+            helper.assertTrue(floating == 0, floating + " blocks float under the ceiling of the Blooming caves");
+            helper.assertTrue(deepest >= 4 && highest >= 3, "the terraces hang only " + deepest + " blocks under the even ceiling and rise " + highest + " above it");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    /** Spreads from the tied blocks (2) through their neighbours and counts the blocks (1) that nothing reached. */
+    private static int floatingBlocks(byte[] blocks, int[] tied, int count, int size, int height) {
+        int[] steps = {1, height, height * size};
+        int[] limits = {height, size, size};
+        while (count > 0) {
+            int block = tied[--count];
+            int[] place = {block % height, block / height % size, block / height / size};
+            for (int axis = 0; axis < 3; axis++) {
+                for (int side = -1; side <= 1; side += 2) {
+                    int next = block + side * steps[axis];
+                    if (place[axis] + side >= 0 && place[axis] + side < limits[axis] && blocks[next] == 1) {
+                        blocks[next] = 2;
+                        tied[count++] = next;
+                    }
+                }
+            }
+        }
+        int floating = 0;
+        for (byte block : blocks) {
+            if (block == 1) {
+                floating++;
+            }
+        }
+        return floating;
+    }
+
     private static boolean sameBlocks(PreviewWorld a, PreviewWorld b, BoundingBox box) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int y = box.minY(); y <= box.maxY(); y++) {
@@ -660,31 +888,45 @@ public final class RRGameTests {
     private static void previewHangingTracks(GameTestHelper helper) {
         try {
             MinecraftServer server = helper.getLevel().getServer();
+            int fitted = 0;
             for (int seed = 1; seed <= 8; seed++) {
                 PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(server), java.util.Map.of())
                     .with("seed", Integer.toString(seed));
                 PreviewJobs.Result result = PreviewCatalog.require("hanging_tracks").run(args);
                 helper.assertTrue(result.count("minecraft:iron_chain") > 100, "hanging tracks " + seed + " hang on too few chains");
                 // Under the ceiling and above the floor that the Deep caves have with this seed.
-                PreviewCatalog.require("hanging_tracks").run(args.with("terrain", "real"), server);
+                // Between the steps of the ceiling a station sometimes has no room.
+                try {
+                    PreviewCatalog.require("hanging_tracks").run(args.with("terrain", "real"), server);
+                    fitted++;
+                } catch (IllegalStateException e) {
+                    helper.assertTrue(e.getMessage().startsWith("No network fits"), e.getMessage());
+                }
             }
+            helper.assertTrue(fitted >= 6, "hanging tracks fit the Deep caves with only " + fitted + " of 8 seeds");
             helper.succeed();
         } catch (Exception e) {
             helper.fail(e.toString());
         }
     }
 
-    // An empty minecart loses 4% of its speed every tick on a vanilla rail and slides back down a slope.
-    private static void runicRailKeepsSpeed(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 5, 0));
+    /** A track of 16 rails to the east that climbs one block after the fifth; returns its first rail. */
+    private static BlockPos slopedTrack(GameTestHelper helper, int y, Block rail) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, y, 0));
         var level = helper.getLevel();
-        BlockState rail = RRBlocks.RUNIC_RAIL.get().defaultBlockState();
         for (int x = 0; x < 16; x++) {
             int step = x < 6 ? 0 : 1;
             level.setBlockAndUpdate(base.offset(x, step - 1, 0), Blocks.STONE.defaultBlockState());
-            level.setBlockAndUpdate(base.offset(x, step, 0),
-                rail.setValue(RailBlock.SHAPE, x == 5 ? RailShape.ASCENDING_EAST : RailShape.EAST_WEST));
+            level.setBlockAndUpdate(base.offset(x, step, 0), rail.defaultBlockState()
+                .setValue(RailBlock.SHAPE, x == 5 ? RailShape.ASCENDING_EAST : RailShape.EAST_WEST));
         }
+        return base;
+    }
+
+    // An empty minecart loses 4% of its speed every tick on a vanilla rail and slides back down a slope.
+    private static void runicRailKeepsSpeed(GameTestHelper helper) {
+        BlockPos base = slopedTrack(helper, 5, RRBlocks.RUNIC_RAIL.get());
+        var level = helper.getLevel();
 
         double speed = 0.2;
         Minecart minecart = EntityTypes.MINECART.create(level, EntitySpawnReason.COMMAND);
@@ -699,6 +941,58 @@ public final class RRGameTests {
                 "the minecart changed its speed to " + minecart.getDeltaMovement().horizontalDistance());
             helper.succeed();
         });
+    }
+
+    // On vanilla rails a minecart with a rider slows down, most of all on a slope, and an empty one
+    // at this speed rolls on for five blocks.
+    private static void runicMinecartKeepsSpeed(GameTestHelper helper) {
+        // Higher than the tracks of the runic rail tests, which start a few blocks aside.
+        BlockPos base = slopedTrack(helper, 19, Blocks.RAIL);
+        var level = helper.getLevel();
+
+        double speed = 0.2;
+        RunicMinecart minecart = RREntityTypes.RUNIC_MINECART.get().create(level, EntitySpawnReason.COMMAND);
+        minecart.setInitialPos(base.getX() + 0.5, base.getY(), base.getZ() + 0.5);
+        minecart.setDeltaMovement(speed, 0, 0);
+        level.addFreshEntity(minecart);
+        Pig rider = EntityTypes.PIG.create(level, EntitySpawnReason.COMMAND);
+        rider.setNoAi(true);
+        rider.setPos(minecart.position());
+        level.addFreshEntity(rider);
+        rider.startRiding(minecart, true, false);
+
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(minecart.isVehicle(), "the rider left the minecart");
+            helper.assertTrue(minecart.getY() > base.getY() + 0.9, "the minecart did not climb the slope: y " + minecart.getY());
+            helper.assertTrue(minecart.getX() > base.getX() + 8, "the minecart stopped at x " + (minecart.getX() - base.getX()));
+            helper.assertTrue(Math.abs(minecart.getDeltaMovement().horizontalDistance() - speed) < 1.0E-3,
+                "the minecart changed its speed to " + minecart.getDeltaMovement().horizontalDistance());
+            // Removed, not dismounted: a pig standing on the rails would stop the minecart as well.
+            rider.discard();
+            double left = minecart.getX();
+            helper.runAfterDelay(30, () -> {
+                helper.assertTrue(minecart.getDeltaMovement().horizontalDistance() < 1.0E-3,
+                    "the empty minecart still moves at " + minecart.getDeltaMovement().horizontalDistance());
+                helper.assertTrue(minecart.getX() - left < 1.5, "the empty minecart rolled on for " + (minecart.getX() - left));
+                helper.succeed();
+            });
+        });
+    }
+
+    // The chest of a station is what puts a runic minecart into every network.
+    private static void hangingTracksStationLoot(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        LootTable table = level.getServer().reloadableRegistries().getLootTable(RRLootTables.HANGING_TRACKS_STATION);
+        LootParams params = new LootParams.Builder(level)
+            .withParameter(LootContextParams.ORIGIN, Vec3.ZERO)
+            .create(LootContextParamSets.CHEST);
+        for (long seed = 1; seed <= 20; seed++) {
+            List<ItemStack> loot = table.getRandomItems(params, seed);
+            helper.assertTrue(loot.stream().anyMatch(stack -> stack.is(RRItems.RUNIC_MINECART)),
+                "no runic minecart in the station chest with seed " + seed);
+            helper.assertTrue(loot.size() > 1, "no supplies in the station chest with seed " + seed);
+        }
+        helper.succeed();
     }
 
     // On a vanilla rail that lies across its way a minecart turns aside.

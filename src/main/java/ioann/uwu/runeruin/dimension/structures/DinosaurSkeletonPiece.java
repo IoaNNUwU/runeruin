@@ -60,7 +60,7 @@ public final class DinosaurSkeletonPiece extends StructurePiece {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (Map.Entry<BlockPos, BlockState> bone : this.bones.entrySet()) {
             pos.setWithOffset(this.origin, bone.getKey());
-            // Not into the arcane plate under the floor.
+            // Not into the rock between the Lost caves and the Void.
             if (chunkBB.isInside(pos) && pos.getY() >= Const.LOST_CAVES_Y) {
                 level.setBlock(pos, bone.getValue(), Block.UPDATE_CLIENTS);
             }
