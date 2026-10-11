@@ -1,0 +1,29 @@
+name: Issue result
+
+# Comments the Done and Pictures sections of a merged pull request on the issues it closes, and updates
+# that comment when the description is edited later. pull_request_target gives pull requests from forks
+# a token that can comment; it checks out main, never the code of the pull request.
+on:
+  pull_request_target:
+    types: [closed, edited]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: issue-result-${{ github.event.pull_request.number }}
+
+jobs:
+  comment:
+    if: ${{ github.event.pull_request.merged }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comment on the closed issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 scripts/issue_result.py ${{ github.event.pull_request.number }}
