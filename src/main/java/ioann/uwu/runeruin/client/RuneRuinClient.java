@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.client;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.client.model.MossyRamModel;
 import ioann.uwu.runeruin.client.model.SnailModel;
 import ioann.uwu.runeruin.datagen.DatagenBiomeTagProvider;
 import ioann.uwu.runeruin.entities.RREntityTypes;
@@ -9,6 +10,7 @@ import ioann.uwu.runeruin.particles.RRParticleTypes;
 import java.util.List;
 import net.minecraft.client.Camera;
 import net.minecraft.client.color.block.BlockTintSources;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.particle.FallingLeavesParticle;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -92,11 +94,19 @@ public class RuneRuinClient {
     @SubscribeEvent
     static void registerEntityLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(SnailModel.LAYER_LOCATION, SnailModel::createBodyLayer);
+        event.registerLayerDefinition(MossyRamModel.PROPHET, () -> MossyRamModel.createProphet(CubeDeformation.NONE));
+        event.registerLayerDefinition(MossyRamModel.PROPHET_MOSS, () -> MossyRamModel.createProphet(MossyRamModel.PROPHET_MOSS_DEPTH));
+        event.registerLayerDefinition(MossyRamModel.WARRIOR, () -> MossyRamModel.createWarrior(CubeDeformation.NONE));
+        event.registerLayerDefinition(MossyRamModel.WARRIOR_MOSS, () -> MossyRamModel.createWarrior(MossyRamModel.WARRIOR_MOSS_DEPTH));
     }
 
     @SubscribeEvent
     static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(RREntityTypes.SNAIL.get(), SnailRenderer::new);
+        event.registerEntityRenderer(RREntityTypes.MOSSY_PROPHET.get(),
+                context -> new MossyRamRenderer(context, MossyRamModel.PROPHET, MossyRamModel.PROPHET_MOSS, 1.3F));
+        event.registerEntityRenderer(RREntityTypes.MOSSY_WARRIOR.get(),
+                context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel.WARRIOR_MOSS, 0.4F));
         event.registerEntityRenderer(RREntityTypes.RUNIC_MINECART.get(), RunicMinecartRenderer::new);
     }
 

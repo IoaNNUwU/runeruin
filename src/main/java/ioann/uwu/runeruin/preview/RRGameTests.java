@@ -23,8 +23,12 @@ import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
+import ioann.uwu.runeruin.entities.MossyProphet;
+import ioann.uwu.runeruin.entities.MossyRam;
+import ioann.uwu.runeruin.entities.MossyWarrior;
 import ioann.uwu.runeruin.entities.RREntityTypes;
 import ioann.uwu.runeruin.entities.RunicMinecart;
+import ioann.uwu.runeruin.entities.Snail;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
@@ -61,10 +65,13 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
@@ -114,6 +121,14 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("runic_minecart_keeps_speed", () -> RRGameTests::runicMinecartKeepsSpeed);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> HANGING_TRACKS_STATION_LOOT =
         TEST_FUNCTIONS.register("hanging_tracks_station_loot", () -> RRGameTests::hangingTracksStationLoot);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_PROPHET_SUMMONS_WARRIORS =
+        TEST_FUNCTIONS.register("mossy_prophet_summons_warriors", () -> RRGameTests::mossyProphetSummonsWarriors);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_PROPHET_LEAP =
+        TEST_FUNCTIONS.register("mossy_prophet_leap", () -> RRGameTests::mossyProphetLeap);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_PROPHET_THROWS_WARRIOR =
+        TEST_FUNCTIONS.register("mossy_prophet_throws_warrior", () -> RRGameTests::mossyProphetThrowsWarrior);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_WARRIOR_SPIN_JUMP =
+        TEST_FUNCTIONS.register("mossy_warrior_spin_jump", () -> RRGameTests::mossyWarriorSpinJump);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
@@ -513,6 +528,36 @@ public final class RRGameTests {
             new FunctionGameTestInstance(
                 FEATURE_REACH.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        // Tests stand in a grid a few blocks apart, in the order they are registered here, and build into each
+        // other's space: a test put in the middle moves all later ones, and some of them into each other.
+        event.registerTest(
+            RR.id("mossy_prophet_summons_warriors"),
+            new FunctionGameTestInstance(
+                MOSSY_PROPHET_SUMMONS_WARRIORS.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("mossy_prophet_leap"),
+            new FunctionGameTestInstance(
+                MOSSY_PROPHET_LEAP.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 160, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("mossy_prophet_throws_warrior"),
+            new FunctionGameTestInstance(
+                MOSSY_PROPHET_THROWS_WARRIOR.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("mossy_warrior_spin_jump"),
+            new FunctionGameTestInstance(
+                MOSSY_WARRIOR_SPIN_JUMP.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
             )
         );
     }
@@ -1127,6 +1172,136 @@ public final class RRGameTests {
                 helper.assertTrue(minecart.getX() - left < 1.5, "the empty minecart rolled on for " + (minecart.getX() - left));
                 helper.succeed();
             });
+        });
+    }
+
+    private static final int FIGHT_FLOOR_SIZE = 25;
+
+    /** A stone floor for a fight, its corner at the origin of the test; mobs stand on the given height. */
+    private static void fightFloor(GameTestHelper helper, int y) {
+        BlockPos corner = helper.absolutePos(new BlockPos(0, y - 1, 0));
+        BlockPos far = corner.offset(FIGHT_FLOOR_SIZE - 1, 0, FIGHT_FLOOR_SIZE - 1);
+        ServerLevel level = helper.getLevel();
+        // Without players, mobs move only in forced chunks that have got around to ticking entities, and the test
+        // forces just the chunk of its origin. Chunks get ready in real time while the tests run their ticks as fast
+        // as they can: a mob would hang in the air at a chunk border until the test is over, so wait for them here.
+        // The runner releases every forced chunk after the batch.
+        List<ChunkPos> chunks = ChunkPos.rangeClosed(ChunkPos.containing(corner), ChunkPos.containing(far)).toList();
+        chunks.forEach(chunk -> level.setChunkForced(chunk.x(), chunk.z(), true));
+        long deadline = System.nanoTime() + 30_000_000_000L;
+        while (!chunks.stream().allMatch(chunk -> level.isPositionEntityTicking(chunk.getWorldPosition()))) {
+            helper.assertTrue(System.nanoTime() < deadline, "the chunks of the fight floor do not start ticking");
+            level.getChunkSource().pollTask();
+        }
+        for (BlockPos pos : BlockPos.betweenClosed(corner, far)) {
+            level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
+        }
+    }
+
+    /** Ends a fight: its mobs would go on and fall from the floor onto the tests below. */
+    private static void endFight(GameTestHelper helper, int y) {
+        AABB floor = AABB.encapsulatingFullBlocks(
+            helper.absolutePos(new BlockPos(0, y, 0)), helper.absolutePos(new BlockPos(FIGHT_FLOOR_SIZE - 1, y, FIGHT_FLOOR_SIZE - 1)));
+        helper.getLevel().getEntitiesOfClass(Mob.class, floor.inflate(16)).forEach(Mob::discard);
+    }
+
+    /** A snail that only stands where it is put and outlives a fight. */
+    private static Snail fightTarget(GameTestHelper helper, int x, int y, int z) {
+        Snail snail = helper.spawn(RREntityTypes.SNAIL.get(), new BlockPos(x, y, z));
+        snail.goalSelector.removeAllGoals(goal -> true);
+        snail.getAttribute(Attributes.MAX_HEALTH).setBaseValue(200.0);
+        snail.setHealth(200.0F);
+        return snail;
+    }
+
+    // A Prophet with no warriors around it calls them before anything else.
+    private static void mossyProphetSummonsWarriors(GameTestHelper helper) {
+        int y = 50;
+        fightFloor(helper, y);
+        MossyProphet prophet = helper.spawn(RREntityTypes.MOSSY_PROPHET.get(), new BlockPos(8, y, 12));
+        prophet.setTarget(fightTarget(helper, 16, y, 12));
+
+        helper.succeedWhen(() -> {
+            int warriors = helper.getLevel().getEntitiesOfClass(MossyWarrior.class, prophet.getBoundingBox().inflate(8)).size();
+            helper.assertTrue(warriors >= 3 && warriors <= 5, "the Prophet has " + warriors + " warriors");
+            endFight(helper, y);
+        });
+    }
+
+    // The shockwave of a landing runs over the ground: it reaches a bystander, but not one that stands above it.
+    private static void mossyProphetLeap(GameTestHelper helper) {
+        int y = 70;
+        fightFloor(helper, y);
+        var level = helper.getLevel();
+        // Enough warriors at its side, so the Prophet leaps instead of calling more.
+        for (int z = 2; z <= 4; z++) {
+            helper.spawn(RREntityTypes.MOSSY_WARRIOR.get(), new BlockPos(2, y, z)).setNoAi(true);
+        }
+        MossyProphet prophet = helper.spawn(RREntityTypes.MOSSY_PROPHET.get(), new BlockPos(6, y, 12));
+        Snail target = fightTarget(helper, 16, y, 12);
+        prophet.setTarget(target);
+        Snail bystander = fightTarget(helper, 16, y, 16);
+        level.setBlockAndUpdate(helper.absolutePos(new BlockPos(16, y + 2, 8)), Blocks.STONE.defaultBlockState());
+        Snail above = fightTarget(helper, 16, y + 3, 8);
+
+        double floor = prophet.getY();
+        Vec3 aim = target.position();
+        double[] peak = {floor};
+        Vec3[] landing = {null};
+        helper.onEachTick(() -> {
+            peak[0] = Math.max(peak[0], prophet.getY());
+            if (landing[0] == null && peak[0] - floor > 4.0 && prophet.onGround()) {
+                landing[0] = prophet.position();
+            }
+        });
+        helper.runAfterDelay(120, () -> {
+            helper.assertTrue(landing[0] != null, "the Prophet rose by " + (peak[0] - floor) + " and did not land");
+            helper.assertTrue(landing[0].distanceTo(aim) < 2.0, "the Prophet landed " + landing[0].distanceTo(aim) + " from its target");
+            helper.assertTrue(prophet.getHealth() == prophet.getMaxHealth(), "the leap hurt the Prophet: " + prophet.getHealth());
+            helper.assertTrue(bystander.getHealth() == 192.0F, "the bystander on the ground has health " + bystander.getHealth());
+            helper.assertTrue(above.getHealth() == 200.0F, "the bystander above the ground has health " + above.getHealth());
+            endFight(helper, y);
+            helper.succeed();
+        });
+    }
+
+    // A warrior beside the Prophet goes up into its hands and from there at the target, which it then fights.
+    private static void mossyProphetThrowsWarrior(GameTestHelper helper) {
+        int y = 110;
+        fightFloor(helper, y);
+        // Enough warriors, so the Prophet does not call more; these two do not move and cannot be picked up.
+        for (int z = 2; z <= 3; z++) {
+            helper.spawn(RREntityTypes.MOSSY_WARRIOR.get(), new BlockPos(2, y, z)).setNoAi(true);
+        }
+        MossyWarrior warrior = helper.spawn(RREntityTypes.MOSSY_WARRIOR.get(), new BlockPos(6, y, 9));
+        MossyProphet prophet = helper.spawn(RREntityTypes.MOSSY_PROPHET.get(), new BlockPos(6, y, 12));
+        Snail target = fightTarget(helper, 16, y, 12);
+        prophet.setTarget(target);
+
+        boolean[] held = {false};
+        helper.onEachTick(() -> held[0] |= warrior.getVehicle() == prophet && warrior.getY() - prophet.getY() > 2.5);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(held[0], "the Prophet did not lift the warrior");
+            helper.assertTrue(target.getHealth() == 192.0F, "the target has health " + target.getHealth());
+            helper.assertTrue(warrior.getTarget() == target, "the thrown warrior fights " + warrior.getTarget());
+            endFight(helper, y);
+        });
+    }
+
+    // A warrior some blocks from its target somersaults onto it, which hurts more than its punch.
+    private static void mossyWarriorSpinJump(GameTestHelper helper) {
+        int y = 90;
+        fightFloor(helper, y);
+        MossyWarrior warrior = helper.spawn(RREntityTypes.MOSSY_WARRIOR.get(), new BlockPos(8, y, 12));
+        Snail target = fightTarget(helper, 14, y, 12);
+        warrior.setTarget(target);
+
+        boolean[] spun = {false};
+        helper.onEachTick(() -> spun[0] |= warrior.getAction() == MossyRam.Action.SPIN && !warrior.onGround());
+        helper.succeedWhen(() -> {
+            helper.assertTrue(spun[0], "the warrior did not somersault");
+            helper.assertTrue(target.getHealth() == 195.0F, "the target has health " + target.getHealth());
+            endFight(helper, y);
         });
     }
 
