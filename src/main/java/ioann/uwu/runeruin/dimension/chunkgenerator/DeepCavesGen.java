@@ -24,7 +24,7 @@ public class DeepCavesGen {
 
     private static final LazyNoise reliefNoise = LazyNoise.single("deepCavesCeilingRelief", 9f);
 
-    private static final TerracedCeiling CEILING = new TerracedCeiling("deepCavesCeiling", LOWEST_Y, HIGHEST_Y,
+    private static final TerracedCeiling CEILING = new TerracedCeiling("deepCavesCeiling", LOWEST_Y, HIGHEST_Y, 3,
             (chunkX, chunkZ, randomState) -> (x, z) -> {
                 int roof = roofY(x, z, randomState.sampler());
                 // The highest terrace stays 2 blocks under the roof, in the ceiling biome with what hangs from it.

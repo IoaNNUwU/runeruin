@@ -19,7 +19,6 @@ import net.minecraft.world.level.levelgen.RandomState;
  */
 public final class TerracedCeiling {
 
-    private static final int STEPS = 3;
     // The part of a step that the rounded wall between two terraces takes.
     private static final float RISER = 0.22f;
     private static final float CONTRAST = 1.9f;
@@ -51,6 +50,7 @@ public final class TerracedCeiling {
 
     private final int minY;
     private final int height;
+    private final int steps;
     private final Layer layer;
     private final LazyNoise levelNoise;
     private final LazyNoise shiftXNoise;
@@ -59,10 +59,14 @@ public final class TerracedCeiling {
     // structures that hang under the ceiling ask about the same chunks.
     private final Map<Climate.Sampler, AtomicReferenceArray<Chunk>> chunks = new MapMaker().weakKeys().makeMap();
 
-    /** The name seeds the noises: renaming a ceiling reshapes it. */
-    public TerracedCeiling(String name, int minY, int maxY, Layer layer) {
+    /**
+     * @param name  seeds the noises: renaming a ceiling reshapes it
+     * @param steps the steps between the terraces, one fewer than the terraces
+     */
+    public TerracedCeiling(String name, int minY, int maxY, int steps, Layer layer) {
         this.minY = minY;
         this.height = maxY - minY + 1;
+        this.steps = steps;
         this.layer = layer;
         this.levelNoise = new LazyNoise(name + "Levels", seed -> {
             Noise wide = new SingleNoise(Noise.hashString(name + "Levels1" + seed), 1f);
@@ -198,11 +202,11 @@ public final class TerracedCeiling {
     }
 
     /** The terrace of this noise, from 0 for the lowest to 1 for the highest, with rounded walls between them. */
-    private static float level(float noise) {
-        float steps = Mth.clamp((noise - 0.5f) * CONTRAST + 0.5f, 0f, 0.9999f) * STEPS;
+    private float level(float noise) {
+        float steps = Mth.clamp((noise - 0.5f) * CONTRAST + 0.5f, 0f, 0.9999f) * this.steps;
         int step = (int) steps;
         float riser = Mth.clamp((steps - step - 0.5f) / RISER + 0.5f, 0f, 1f);
-        return (step + riser * riser * (3 - 2 * riser)) / STEPS;
+        return (step + riser * riser * (3 - 2 * riser)) / this.steps;
     }
 
     /** The ceiling in one chunk, by the coordinates of a block inside it. */

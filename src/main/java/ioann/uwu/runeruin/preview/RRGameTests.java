@@ -665,7 +665,7 @@ public final class RRGameTests {
     }
 
     // The ceiling of the Blooming caves has terraces inside the islands and stays even at their edges, nothing
-    // floats under it, and all of it lies in the ceiling biomes, whose plants hang from it.
+    // floats under it, it leaves the top layer closed, and all of it lies in the ceiling biomes, whose plants hang from it.
     private static void bloomingCavesCeiling(GameTestHelper helper) {
         try {
             MinecraftServer server = helper.getLevel().getServer();
@@ -690,6 +690,7 @@ public final class RRGameTests {
             int[] tied = new int[blocks.length];
             int count = 0;
             int deepest = 0;
+            int highest = 0;
             BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
             for (int x = 0; x < size; x++) {
                 for (int z = 0; z < size; z++) {
@@ -720,6 +721,12 @@ public final class RRGameTests {
                     helper.assertTrue(biome.is(RRBiomes.GLOWING_ROOTS) || biome.is(RRBiomes.GLOWING_BALLS),
                         "the air under the ceiling at Y " + ceilingY + at + " is in " + biome.getRegisteredName());
                     deepest = Math.max(deepest, evenY - ceilingY);
+                    highest = Math.max(highest, ceilingY - evenY);
+                    // Soil hangs over the surface under a cliff, so the highest block of a column is not its surface.
+                    int surfaceY = Math.min(TopLayerAndBloomingCavesGen.topLayerSurfaceY(x, z, randomState).orElse(ceilingY), minY + height - 1);
+                    for (int y = ceilingY; y <= surfaceY; y++) {
+                        helper.assertTrue(y < surfaceY - 8 || !terrain.get(pos.set(x, y, z)).isAir(), "the top layer is open from below at " + x + " " + y + " " + z);
+                    }
                     // What lies on the edge may hang on something outside.
                     boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;
                     for (int y = ceilingY; y < minY + height; y++) {
@@ -736,7 +743,7 @@ public final class RRGameTests {
             }
             int floating = floatingBlocks(blocks, tied, count, size, height);
             helper.assertTrue(floating == 0, floating + " blocks float under the ceiling of the Blooming caves");
-            helper.assertTrue(deepest >= 6, "the terraces hang only " + deepest + " blocks under the even ceiling");
+            helper.assertTrue(deepest >= 4 && highest >= 3, "the terraces hang only " + deepest + " blocks under the even ceiling and rise " + highest + " above it");
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());
