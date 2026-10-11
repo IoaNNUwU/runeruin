@@ -2,8 +2,9 @@
 name: worldgen-structure
 description: >-
   Add or change a RuneRuin structure (large multi-piece builds such as Giant Goblet or Baobab):
-  structure and piece classes and types, datapack structure and structure set, biome tag, preview.
-  Use when something is too large for one feature or must span chunks.
+  structure and piece classes and types, datapack structure and structure set, biome tag, preview,
+  and man-made builds from templates a person saves in the game. Use when something is too large for
+  one feature or must span chunks.
 ---
 
 Read `.agents/skills/worldgen-structure/SKILL.md` and follow it. That file is the

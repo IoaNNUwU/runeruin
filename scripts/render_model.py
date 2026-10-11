@@ -2,7 +2,7 @@
 """Render a block or item model JSON to a PNG: two isometric views, the south face and the top.
 
     python scripts/render_model.py out.png runeruin:block/stone_lily [--scale 16] [--tint 91BD59]
-    python scripts/render_model.py out.png src/generated/resources/assets/runeruin/models/block/x.json
+    python scripts/render_model.py out.png src/main/resources/assets/runeruin/models/block/x.json
 
 A bare name (stone_lily) tries block/ then item/. Parents and textures resolve through src/main,
 src/generated and .vanilla-textures (vanilla models included). Follows the game's baking: face vertex
