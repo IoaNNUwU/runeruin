@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.dimension.features;
 
 import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
+import ioann.uwu.runeruin.blocks.MossLayerPlantBlock;
 import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.core.BlockPos;
@@ -16,7 +17,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A group of deep moss mounds standing together: a main one and a few smaller ones against its side, each
- * tallest in the middle. Around them, on the moss floor, grow mossberry bushes.
+ * tallest in the middle. Moss sprouts and mossberry bushes grow out of the mounds, and more bushes around
+ * them, on the moss floor.
  */
 public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
 
@@ -24,6 +26,8 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
     private static final int REACH = 10;
     private static final int FLOOR_SEARCH = 3;
     private static final float BUSH_CHANCE = 0.25F;
+    /** The part of the moss columns that grow a plant: two in five of them small sprouts, as many sprouts, one a bush. */
+    private static final float PLANT_CHANCE = 0.3F;
 
     public MossHummockFeature() {
         super(NoneFeatureConfiguration.CODEC);
@@ -63,14 +67,15 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
                     continue;
                 }
                 if (height > 0) {
-                    level.setBlock(pos, moss.setValue(DeepMossLayerBlock.LAYERS, height), 2);
+                    // Most of a mound is bare moss; a plant in the rest stands in the moss of its column.
+                    BlockState plant = roll < 1 - PLANT_CHANCE || height > MossLayerPlantBlock.MAX_MOSS ? null
+                            : roll < 1 - PLANT_CHANCE * 0.6F ? RRBlocks.SMALL_MOSS_SPROUTS.get().defaultBlockState()
+                            : roll < 1 - PLANT_CHANCE * 0.2F ? RRBlocks.MOSS_SPROUTS.get().defaultBlockState()
+                            : bush(random);
+                    level.setBlock(pos, plant == null ? moss.setValue(DeepMossLayerBlock.LAYERS, height) : plant.setValue(MossLayerPlantBlock.MOSS, height), 2);
                     placed = true;
                 } else {
-                    BlockState bush = RRBlocks.MOSSBERRY_BUSH.get().defaultBlockState().setValue(MossberryBushBlock.TWIGS, random.nextBoolean());
-                    // One to three berries; a place that comes up twice still holds one.
-                    for (int i = 1 + random.nextInt(3); i > 0; i--) {
-                        bush = bush.setValue(Util.getRandom(MossberryBushBlock.BERRIES, random).property(), true);
-                    }
+                    BlockState bush = bush(random);
                     if (bush.canSurvive(level, pos)) {
                         level.setBlock(pos, bush, 2);
                     }
@@ -78,6 +83,15 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
         return placed;
+    }
+
+    /** A bush with one to three berries; a place that comes up twice still holds one. */
+    private static BlockState bush(RandomSource random) {
+        BlockState bush = RRBlocks.MOSSBERRY_BUSH.get().defaultBlockState().setValue(MossberryBushBlock.TWIGS, random.nextBoolean());
+        for (int i = 1 + random.nextInt(3); i > 0; i--) {
+            bush = bush.setValue(Util.getRandom(MossberryBushBlock.BERRIES, random).property(), true);
+        }
+        return bush;
     }
 
     /** A round mound that falls from {@code peak} layers in the middle to one layer at the edge. */

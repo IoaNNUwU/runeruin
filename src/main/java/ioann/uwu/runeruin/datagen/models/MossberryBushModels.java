@@ -6,21 +6,18 @@ import static ioann.uwu.runeruin.datagen.models.ModelJson.vector;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.MossLayerPlantBlock;
 import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.client.data.models.BlockModelGenerators;
-import net.minecraft.client.data.models.blockstates.ConditionBuilder;
 import net.minecraft.client.data.models.blockstates.MultiPartGenerator;
-import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import org.jspecify.annotations.NonNull;
 
 /**
  * Mossberry bush: a small crossed bush that is always there and, switched on by their properties, the twigs
- * around it and one cube per berry.
+ * around it and one cube per berry. All of them come once per height of the moss the bush stands in.
  */
 public final class MossberryBushModels {
 
@@ -31,25 +28,28 @@ public final class MossberryBushModels {
     public static void createMossberryBush(@NonNull BlockModelGenerators blockModels) {
         Block block = RRBlocks.MOSSBERRY_BUSH.get();
         MultiPartGenerator blockState = MultiPartGenerator.multiPart(block);
-        blockState.with(BlockModelGenerators.plainVariant(ModelTemplates.CROSS.create(block, TextureMapping.cross(block), blockModels.modelOutput)));
+        for (int moss = 0; moss <= MossLayerPlantBlock.MAX_MOSS; moss++) {
+            blockState.with(MossLayerPlantModels.moss(moss), BlockModelGenerators.plainVariant(MossLayerPlantModels.cross(blockModels, block, moss)));
 
-        Identifier twigs = RR.id("block/mossberry_bush_twigs");
-        JsonObject twigsModel = twigsModel();
-        blockModels.modelOutput.accept(twigs, () -> twigsModel);
-        blockState.with(new ConditionBuilder().term(MossberryBushBlock.TWIGS, true), BlockModelGenerators.plainVariant(twigs));
+            Identifier twigs = MossLayerPlantModels.lifted(block, "_twigs", moss);
+            JsonObject twigsModel = twigsModel(moss * 2);
+            blockModels.modelOutput.accept(twigs, () -> twigsModel);
+            blockState.with(MossLayerPlantModels.moss(moss).term(MossberryBushBlock.TWIGS, true), BlockModelGenerators.plainVariant(twigs));
 
-        for (int number = 0; number < MossberryBushBlock.BERRIES.size(); number++) {
-            MossberryBushBlock.Berry berry = MossberryBushBlock.BERRIES.get(number);
-            Identifier id = RR.id("block/mossberry_bush_berry" + number);
-            JsonObject berryModel = berryModel(berry);
-            blockModels.modelOutput.accept(id, () -> berryModel);
-            blockState.with(new ConditionBuilder().term(berry.property(), true), BlockModelGenerators.plainVariant(id));
+            for (int number = 0; number < MossberryBushBlock.BERRIES.size(); number++) {
+                MossberryBushBlock.Berry berry = MossberryBushBlock.BERRIES.get(number);
+                Identifier id = MossLayerPlantModels.lifted(block, "_berry" + number, moss);
+                JsonObject berryModel = berryModel(berry, moss * 2);
+                blockModels.modelOutput.accept(id, () -> berryModel);
+                blockState.with(MossLayerPlantModels.moss(moss).term(berry.property(), true), BlockModelGenerators.plainVariant(id));
+            }
         }
+        MossLayerPlantModels.addMoss(blockState);
         blockModels.blockStateOutput.accept(blockState);
     }
 
-    /** Twigs lie flat half a pixel above the ground, as a water lily flower lies above its pad. */
-    private static JsonObject twigsModel() {
+    /** Twigs lie flat half a pixel above the ground, {@code lift} pixels up, as a water lily flower lies above its pad. */
+    private static JsonObject twigsModel(int lift) {
         JsonObject model = new JsonObject();
         model.addProperty("ambientocclusion", false);
         JsonObject textures = new JsonObject();
@@ -61,7 +61,7 @@ public final class MossberryBushModels {
         down.remove("tintindex");
         up.remove("tintindex");
         JsonArray elements = new JsonArray();
-        elements.add(horizontalPlane(0.5, down, up));
+        elements.add(horizontalPlane(lift + 0.5, down, up));
         model.add("elements", elements);
         return model;
     }
@@ -69,11 +69,12 @@ public final class MossberryBushModels {
     /**
      * One cube, leaning away from the middle of the block: side by side the cubes read as a dome. Two upright
      * planes through its middle reach a pixel out of it on every side: what is drawn there shows as spikes.
+     * {@code lift} is the height of the ground under the bush, in pixels.
      */
-    private static JsonObject berryModel(MossberryBushBlock.Berry berry) {
+    private static JsonObject berryModel(MossberryBushBlock.Berry berry, int lift) {
         double half = berry.size() / 2.0;
         double rim = half + 1;
-        double[] center = {berry.x(), berry.lift(), berry.z()};
+        double[] center = {berry.x(), lift + berry.lift(), berry.z()};
         JsonObject rotation = new JsonObject();
         rotation.add("origin", vector(center));
         // The game turns around x first: lean towards +z, then swing that lean to point away from the middle.
