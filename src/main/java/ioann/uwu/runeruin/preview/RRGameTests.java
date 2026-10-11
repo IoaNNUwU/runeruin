@@ -24,6 +24,7 @@ import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
+import ioann.uwu.runeruin.dimension.structures.TemplatePiece;
 import ioann.uwu.runeruin.entities.MossyProphet;
 import ioann.uwu.runeruin.entities.MossyRam;
 import ioann.uwu.runeruin.entities.MossyWarrior;
@@ -52,6 +53,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.FunctionGameTestInstance;
@@ -82,7 +84,9 @@ import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FeatureSorter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RailBlock;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
@@ -93,6 +97,8 @@ import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvi
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -167,6 +173,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("blooming_caves_ceiling", () -> RRGameTests::bloomingCavesCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> TEMPLATE_PIECE =
+        TEST_FUNCTIONS.register("template_piece", () -> RRGameTests::templatePiece);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -523,6 +531,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("template_piece"),
+            new FunctionGameTestInstance(
+                TEMPLATE_PIECE.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -664,6 +679,34 @@ public final class RRGameTests {
         } catch (IOException e) {
             helper.fail(e.toString());
         }
+    }
+
+    // A piece of a structure that a person built: the folder of its template lists the variants, the piece
+    // builds the template turned, and a piece saved with its chunk comes back turned the same way.
+    private static void templatePiece(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        StructureTemplateManager templates = level.getStructureManager();
+        BlockPos build = helper.absolutePos(new BlockPos(0, 2, 0));
+        level.setBlockAndUpdate(build, Blocks.GOLD_BLOCK.defaultBlockState());
+        level.setBlockAndUpdate(build.east(), Blocks.DIAMOND_BLOCK.defaultBlockState());
+        for (String name : List.of("b", "a")) {
+            Identifier id = RR.id("test_template_piece/" + name);
+            templates.getOrCreate(id).fillFromWorld(level, build, new Vec3i(2, 1, 1), false, List.of(Blocks.STRUCTURE_VOID));
+            helper.assertTrue(templates.save(id), "the template " + id + " was not saved");
+        }
+        List<Identifier> variants = TemplatePiece.variants(templates, "test_template_piece");
+        helper.assertTrue(variants.equals(List.of(RR.id("test_template_piece/a"), RR.id("test_template_piece/b"))),
+            "the folder lists " + variants);
+
+        BlockPos target = build.above(3);
+        TemplatePiece piece = new TemplatePiece(templates, variants.getFirst(), target, Rotation.CLOCKWISE_90, Mirror.NONE);
+        TemplatePiece loaded = new TemplatePiece(templates, piece.createTag(StructurePieceSerializationContext.fromLevel(level)));
+        helper.assertTrue(loaded.getBoundingBox().equals(piece.getBoundingBox()), "a saved piece came back as " + loaded.getBoundingBox());
+        loaded.postProcess(level, level.structureManager(), level.getChunkSource().getGenerator(), level.getRandom(),
+            loaded.getBoundingBox(), ChunkPos.containing(target), target);
+        helper.assertTrue(level.getBlockState(target).is(Blocks.GOLD_BLOCK) && level.getBlockState(target.south()).is(Blocks.DIAMOND_BLOCK),
+            "the template turned a quarter is not at " + target + " and south of it");
+        helper.succeed();
     }
 
     // The lost and blooming cave floors used one unnamed noise and had the same relief, one layer apart.

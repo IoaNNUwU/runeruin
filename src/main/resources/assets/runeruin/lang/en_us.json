@@ -143,11 +143,14 @@
   "commands.runeruin.region.export_3d_hint": "For agent review, re-export a 1-block-thick slice (XZ / XY / YZ).",
   "commands.runeruin.region.export_trimmed": "Trimmed rare states: %s; blocks replaced: %s (most frequent states kept).",
   "commands.runeruin.region.open_file": "Click to open",
+  "commands.runeruin.region.save": "Saved the %sx%sx%s selection as the template %s: %s",
+  "commands.runeruin.region.save_world": "in this world, as a structure block saves",
   "commands.runeruin.region.clear": "Selection cleared",
   "commands.runeruin.region.generate": "Regenerated %sx%sx%s selection with the headless generator: %s blocks changed, %s generated",
   "commands.runeruin.region.generate_height": "Selection height must be within %s..%s",
   "commands.runeruin.region.generate_error": "Failed to generate selection: %s",
 
   "commands.runeruin.preview.done": "Preview %s seed=%s (%s blocks) -> %s",
+  "commands.runeruin.preview.placed": "Built %s blocks of the draft beside you",
   "commands.runeruin.preview.io_error": "Failed to write preview: %s"
 }

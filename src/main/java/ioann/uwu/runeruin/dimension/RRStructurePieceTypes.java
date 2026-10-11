@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonPiece;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
 import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece;
 import ioann.uwu.runeruin.dimension.structures.HangingTrackPiece;
+import ioann.uwu.runeruin.dimension.structures.TemplatePiece;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -20,4 +21,5 @@ public class RRStructurePieceTypes {
     public static final DeferredHolder<StructurePieceType, StructurePieceType> DINOSAUR_SKELETON_PIECE = REGISTRY.register("dinosaur_skeleton_piece", () -> (StructurePieceType.ContextlessType) DinosaurSkeletonPiece::new);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> HANGING_TRACK = REGISTRY.register("hanging_track", () -> (StructurePieceType.ContextlessType) HangingTrackPiece::load);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> HANGING_PLATFORM = REGISTRY.register("hanging_platform", () -> (StructurePieceType.ContextlessType) HangingPlatformPiece::new);
+    public static final DeferredHolder<StructurePieceType, StructurePieceType> TEMPLATE = REGISTRY.register("template", () -> (StructurePieceType.StructureTemplateType) TemplatePiece::new);
 }
