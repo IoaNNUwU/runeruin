@@ -157,6 +157,7 @@ public class TopLayerAndBloomingCavesGen {
                     if (!ceiling.stone(x, y, z) || y > lowest && ceiling.stone(x, y - 1, z)) {
                         continue;
                     }
+                    // One block of moss: under the top layer it is not two blocks thick as on the other cave surfaces.
                     terrain.set(x, y, z, underside(chunk, xx, zz, y, randomState));
                 }
             }

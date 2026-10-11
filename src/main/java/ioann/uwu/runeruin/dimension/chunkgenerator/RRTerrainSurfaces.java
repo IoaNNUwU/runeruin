@@ -107,11 +107,18 @@ public final class RRTerrainSurfaces {
         return ceiling(biome, surfaceRandom(randomState, x, y, z));
     }
 
-    /** The surface block of a cave floor. Moss is two blocks thick there; on the ceilings it is one. */
     public static void placeFloorSurface(TerrainWriter terrain, int x, int y, int z, BlockState state) {
+        placeSurface(terrain, x, y, z, state, -1);
+    }
+
+    public static void placeCeilingSurface(TerrainWriter terrain, int x, int y, int z, BlockState state) {
+        placeSurface(terrain, x, y, z, state, 1);
+    }
+
+    private static void placeSurface(TerrainWriter terrain, int x, int y, int z, BlockState state, int inwardDirection) {
         terrain.set(x, y, z, state);
         if (state.is(BlockTags.MOSS_BLOCKS)) {
-            terrain.set(x, y - 1, z, state);
+            terrain.set(x, y + inwardDirection, z, state);
         }
     }
 
