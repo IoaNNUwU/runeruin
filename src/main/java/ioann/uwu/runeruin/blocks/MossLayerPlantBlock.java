@@ -1,7 +1,10 @@
 package ioann.uwu.runeruin.blocks;
 
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -15,6 +18,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -30,14 +34,16 @@ public abstract class MossLayerPlantBlock extends VegetationBlock {
     public static final int MAX_MOSS = DeepMossLayerBlock.MAX_HEIGHT - 1;
     public static final IntegerProperty MOSS = IntegerProperty.create("moss", 0, MAX_MOSS);
 
-    private final VoxelShape[] shapes;
+    private final Function<BlockState, VoxelShape> shapes;
 
-    protected MossLayerPlantBlock(int height, Properties properties) {
+    /** @param plantShape the shape of the plant as it stands without moss */
+    protected MossLayerPlantBlock(Function<BlockState, VoxelShape> plantShape, Properties properties) {
         super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(MOSS, 0));
-        this.shapes = Block.boxes(MAX_MOSS, moss -> Shapes.or(
-                Block.column(16.0, 0.0, moss * 2),
-                Block.column(12.0, moss * 2, moss * 2 + height)));
+        this.shapes = this.getShapeForEachState(state -> {
+            int moss = state.getValue(MOSS);
+            return Shapes.or(Block.column(16.0, 0.0, moss * 2), plantShape.apply(state).move(0.0, moss / 8.0, 0.0));
+        });
     }
 
     /** The deep moss layer a plant stands in; only for a plant that has moss. */
@@ -57,7 +63,7 @@ public abstract class MossLayerPlantBlock extends VegetationBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return shapes[state.getValue(MOSS)];
+        return shapes.apply(state);
     }
 
     @Override
@@ -89,6 +95,12 @@ public abstract class MossLayerPlantBlock extends VegetationBlock {
         return context.getItemInHand().is(RRBlocks.DEEP_MOSS_LAYER.asItem())
                 ? state.getValue(MOSS) < MAX_MOSS
                 : state.getValue(MOSS) == 0 && super.canBeReplaced(state, context);
+    }
+
+    /** A deep moss layer in the hand goes under the plant instead of using it. */
+    @Override
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        return stack.is(RRBlocks.DEEP_MOSS_LAYER.asItem()) ? InteractionResult.PASS : super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
     @Override

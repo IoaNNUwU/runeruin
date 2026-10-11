@@ -1350,7 +1350,7 @@ public final class RRGameTests {
         helper.succeed();
     }
 
-    // Moss sprouts and the mossberry bush go into a deep moss layer they are placed on, and a layer placed on
+    // Moss sprouts and the berry bushes go into a deep moss layer they are placed on, and a layer placed on
     // them goes under them. The moss holds like a layer of its height, stays when a player breaks the plant and
     // takes the plant along when its ground goes. Moss hummocks grow such plants.
     private static void plantsInMossLayer(GameTestHelper helper) {
@@ -1360,7 +1360,7 @@ public final class RRGameTests {
         var hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
         var layer = RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState();
         var layerItem = (BlockItem) RRBlocks.DEEP_MOSS_LAYER.asItem();
-        for (var item : List.of(RRBlocks.MOSS_SPROUTS.asItem(), RRBlocks.SMALL_MOSS_SPROUTS.asItem(), RRItems.MOSSBERRY.get())) {
+        for (var item : List.of(RRBlocks.MOSS_SPROUTS.asItem(), RRBlocks.SMALL_MOSS_SPROUTS.asItem(), RRItems.MOSSBERRY.get(), RRItems.WISPBERRY.get())) {
             Block plant = ((BlockItem) item).getBlock();
             level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
             level.setBlockAndUpdate(pos, layer.setValue(DeepMossLayerBlock.LAYERS, 3));

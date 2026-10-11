@@ -33,6 +33,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
 import org.jspecify.annotations.Nullable;
 
@@ -67,8 +68,10 @@ public class MossberryBushBlock extends MossLayerPlantBlock implements Bonemeala
     /** Dry twigs lying around the bush, just above the ground. */
     public static final BooleanProperty TWIGS = BooleanProperty.create("twigs");
 
+    private static final VoxelShape SHAPE = Block.column(12.0, 0.0, 6.0);
+
     public MossberryBushBlock(Properties properties) {
-        super(6, properties);
+        super(_ -> SHAPE, properties);
         BlockState bare = this.defaultBlockState().setValue(TWIGS, false);
         for (Berry berry : BERRIES) {
             bare = bare.setValue(berry.property(), false);
@@ -122,10 +125,10 @@ public class MossberryBushBlock extends MossLayerPlantBlock implements Bonemeala
         }
     }
 
-    /** Bone meal and a deep moss layer do their own work instead of picking the berries. */
+    /** Bone meal does its own work instead of picking the berries. */
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        return stack.is(Items.BONE_MEAL) || stack.is(RRBlocks.DEEP_MOSS_LAYER.asItem()) ? InteractionResult.PASS : super.useItemOn(stack, state, level, pos, player, hand, hitResult);
+        return stack.is(Items.BONE_MEAL) ? InteractionResult.PASS : super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
     /** One click picks every berry; the bush and its twigs stay. */

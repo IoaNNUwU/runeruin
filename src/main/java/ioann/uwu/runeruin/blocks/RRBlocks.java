@@ -375,6 +375,7 @@ public class RRBlocks {
             "wispberry_bush",
             WispberryBushBlock::new,
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
+                    .forceSolidOff()
                     .lightLevel(WispberryBushBlock::getLightLevel)
     );
 
