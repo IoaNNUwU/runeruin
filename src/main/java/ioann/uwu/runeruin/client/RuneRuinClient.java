@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.client;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.client.model.MossFrogModel;
 import ioann.uwu.runeruin.client.model.SnailModel;
 import ioann.uwu.runeruin.datagen.DatagenBiomeTagProvider;
 import ioann.uwu.runeruin.entities.RREntityTypes;
@@ -92,6 +93,7 @@ public class RuneRuinClient {
     @SubscribeEvent
     static void registerEntityLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(SnailModel.LAYER_LOCATION, SnailModel::createBodyLayer);
+        event.registerLayerDefinition(MossFrogModel.LAYER_LOCATION, MossFrogModel::createBodyLayer);
     }
 
     @SubscribeEvent
