@@ -1,0 +1,64 @@
+{
+	"format_version": "1.21.11",
+	"ambientocclusion": false,
+	"textures": {
+		"particle": "minecraft:block/dark_oak_log",
+		"rhizome": "minecraft:block/dark_oak_log",
+		"roots": "minecraft:block/hanging_roots"
+	},
+	"elements": [
+		{
+			"name": "rhizome",
+			"from": [5, 9, 5],
+			"to": [11, 13, 11],
+			"faces": {
+				"north": {"texture": "#rhizome"},
+				"east": {"texture": "#rhizome"},
+				"south": {"texture": "#rhizome"},
+				"west": {"texture": "#rhizome"},
+				"up": {"texture": "#rhizome"},
+				"down": {"texture": "#rhizome"}
+			}
+		},
+		{
+			"name": "roots",
+			"from": [0, -7, 8],
+			"to": [16, 9, 8],
+			"rotation": {"angle": 40, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#roots"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#roots"}
+			}
+		},
+		{
+			"name": "roots",
+			"from": [0, -7, 8],
+			"to": [16, 9, 8],
+			"rotation": {"angle": -50, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#roots"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#roots"}
+			}
+		},
+		{
+			"name": "roots",
+			"from": [0, -15, 8],
+			"to": [16, 1, 8],
+			"rotation": {"angle": -40, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#roots"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#roots"}
+			}
+		},
+		{
+			"name": "roots",
+			"from": [0, -15, 8],
+			"to": [16, 1, 8],
+			"rotation": {"angle": 50, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#roots"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#roots"}
+			}
+		}
+	]
+}

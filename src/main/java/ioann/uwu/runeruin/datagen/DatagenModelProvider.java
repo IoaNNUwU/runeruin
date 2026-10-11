@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.datagen;
 
-import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.datagen.models.CloverModels;
@@ -26,16 +25,25 @@ import net.minecraft.client.data.models.model.TexturedModel;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.ResourceManager;
 import org.jspecify.annotations.NonNull;
 
 /**
- * One line per block or block family. Hand-built and multi-block models live in
- * {@code datagen/models/}, one class per family, so parallel branches rarely touch this file.
+ * One line per block or block family; multi-block families live in {@code datagen/models/}, one class per
+ * family, so parallel branches rarely touch this file.
+ *
+ * <p>A model with a geometry of its own is not built here: it is a file in {@code assets/runeruin/models} that a
+ * person edits in Blockbench. This provider writes the blockstates and item definitions that refer to it, the
+ * models on vanilla parents (cubes, crosses, stairs) and the models derived from such a file.
  */
 public class DatagenModelProvider extends ModelProvider {
 
-    public DatagenModelProvider(PackOutput output) {
+    /** The resources of the mod as they are in {@code src/main/resources}. */
+    private final ResourceManager resources;
+
+    public DatagenModelProvider(PackOutput output, ResourceManager resources) {
         super(output, RR.MODID);
+        this.resources = resources;
     }
 
     @Override
@@ -80,10 +88,10 @@ public class DatagenModelProvider extends ModelProvider {
         );
         blockModels.createFullAndCarpetBlocks(RRBlocks.GLOWING_MOSS.get(), RRBlocks.GLOWING_MOSS_CARPET.get());
         DeepMossModels.createDeepMoss(blockModels);
-        MossberryBushModels.createMossberryBush(blockModels);
-        FloatingMossModels.createFloatingMoss(blockModels);
-        MossLayerPlantModels.createMossSprouts(blockModels, RRBlocks.MOSS_SPROUTS.get());
-        MossLayerPlantModels.createMossSprouts(blockModels, RRBlocks.SMALL_MOSS_SPROUTS.get());
+        MossberryBushModels.createMossberryBush(blockModels, this.resources);
+        FloatingMossModels.createFloatingMoss(blockModels, this.resources);
+        MossLayerPlantModels.createMossSprouts(blockModels, this.resources, RRBlocks.MOSS_SPROUTS.get());
+        MossLayerPlantModels.createMossSprouts(blockModels, this.resources, RRBlocks.SMALL_MOSS_SPROUTS.get());
         blockModels.createTrivialBlock(
                 RRBlocks.GLOWING_MUSHROOM_CAP.get(),
                 TexturedModel.CUBE.updateTexture(TextureMapping::forceAllTranslucent)
@@ -101,7 +109,7 @@ public class DatagenModelProvider extends ModelProvider {
         VoidModels.createVoid(blockModels);
 
         PortalModels.createRuneRuinPortal(blockModels);
-        WispberryBushModels.createWispberryBush(blockModels);
+        WispberryBushModels.createWispberryBush(blockModels, this.resources);
     }
 
     private static void createAshenMushroomBlock(@NonNull BlockModelGenerators blockModels) {
@@ -131,21 +139,6 @@ public class DatagenModelProvider extends ModelProvider {
                 BlockModelGenerators.PlantType.NOT_TINTED.createItemModel(blockModels, deepRoots)
         );
         Identifier deepRootsModel = RR.id("block/deep_roots");
-        blockModels.modelOutput.accept(deepRootsModel, () -> JsonParser.parseString("""
-                {
-                  "ambientocclusion": false,
-                  "textures": {"particle": "runeruin:block/deep_roots", "cross": "runeruin:block/deep_roots"},
-                  "elements": [
-                    {"from": [0.8, 0, 8], "to": [15.2, 16, 8], "shade": false,
-                     "rotation": {"origin": [8, 8, 8], "axis": "y", "angle": 45, "rescale": true},
-                     "faces": {"north": {"uv": [0, 0, 16, 16], "texture": "#cross"},
-                               "south": {"uv": [16, 0, 0, 16], "texture": "#cross"}}},
-                    {"from": [8, 0, 0.8], "to": [8, 16, 15.2], "shade": false,
-                     "rotation": {"origin": [8, 8, 8], "axis": "y", "angle": 45, "rescale": true},
-                     "faces": {"west": {"uv": [0, 0, 16, 16], "texture": "#cross"},
-                               "east": {"uv": [16, 0, 0, 16], "texture": "#cross"}}}
-                  ]
-                }"""));
         blockModels.blockStateOutput.accept(MultiVariantGenerator.dispatch(
                 deepRoots,
                 BlockModelGenerators.createRotatedVariants(BlockModelGenerators.plainModel(deepRootsModel))

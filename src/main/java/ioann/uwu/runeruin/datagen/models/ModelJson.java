@@ -3,72 +3,66 @@ package ioann.uwu.runeruin.datagen.models;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.util.Map;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.ResourceManager;
 
-/** Builders for hand-written block model JSON. */
+/**
+ * The models a person keeps as files in {@code assets/runeruin/models} and edits in Blockbench. Data generation
+ * builds no geometry: it only reads such a file and derives other models from it.
+ */
 final class ModelJson {
 
     private ModelJson() {}
 
-    static void addElement(
-            JsonArray elements,
-            String name,
-            double[] from,
-            double[] to,
-            String texture,
-            int lightEmission,
-            String... directions
-    ) {
-        JsonObject element = new JsonObject();
-        // Minecraft ignores unknown element fields; the analysis skill uses this stable label.
-        element.addProperty("name", name);
-        element.add("from", vector(from));
-        element.add("to", vector(to));
-        if (lightEmission > 0) {
-            element.addProperty("light_emission", lightEmission);
+    static JsonObject read(ResourceManager resources, Identifier model) {
+        try (Reader reader = resources.openAsReader(model.withPath(path -> "models/" + path + ".json"))) {
+            return JsonParser.parseReader(reader).getAsJsonObject();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
+    }
 
-        JsonObject faces = new JsonObject();
-        for (String direction : directions) {
-            JsonObject face = new JsonObject();
-            face.addProperty("texture", "#" + texture);
-            faces.add(direction, face);
+    /**
+     * The model {@code lift} pixels higher. The game takes the texture area of a side face without a "uv" from
+     * where its element stands, so such a face gets the area it has in the file: the texture moves with the model.
+     */
+    static JsonObject lifted(JsonObject model, double lift) {
+        JsonObject lifted = model.deepCopy();
+        for (JsonElement entry : lifted.getAsJsonArray("elements")) {
+            JsonObject element = entry.getAsJsonObject();
+            JsonArray from = element.getAsJsonArray("from");
+            JsonArray to = element.getAsJsonArray("to");
+            double[] min = {from.get(0).getAsDouble(), from.get(1).getAsDouble(), from.get(2).getAsDouble()};
+            double[] max = {to.get(0).getAsDouble(), to.get(1).getAsDouble(), to.get(2).getAsDouble()};
+            for (Map.Entry<String, JsonElement> face : element.getAsJsonObject("faces").entrySet()) {
+                double[] u = switch (face.getKey()) {
+                    case "north" -> new double[]{16 - max[0], 16 - min[0]};
+                    case "south" -> new double[]{min[0], max[0]};
+                    case "west" -> new double[]{min[2], max[2]};
+                    case "east" -> new double[]{16 - max[2], 16 - min[2]};
+                    default -> null;
+                };
+                if (u != null && !face.getValue().getAsJsonObject().has("uv")) {
+                    JsonArray uv = new JsonArray();
+                    for (double value : new double[]{u[0], 16 - max[1], u[1], 16 - min[1]}) {
+                        uv.add(value);
+                    }
+                    face.getValue().getAsJsonObject().add("uv", uv);
+                }
+            }
+            from.set(1, new JsonPrimitive(min[1] + lift));
+            to.set(1, new JsonPrimitive(max[1] + lift));
+            if (element.has("rotation")) {
+                JsonArray origin = element.getAsJsonObject("rotation").getAsJsonArray("origin");
+                origin.set(1, new JsonPrimitive(origin.get(1).getAsDouble() + lift));
+            }
         }
-        element.add("faces", faces);
-        elements.add(element);
-    }
-
-    static JsonArray vector(double... coordinates) {
-        JsonArray result = new JsonArray();
-        for (double coordinate : coordinates) {
-            result.add(coordinate);
-        }
-        return result;
-    }
-
-    static void rotateY(JsonElement element, double angle) {
-        JsonObject rotation = new JsonObject();
-        rotation.add("origin", vector(8, 8, 8));
-        rotation.addProperty("axis", "y");
-        rotation.addProperty("angle", angle);
-        element.getAsJsonObject().add("rotation", rotation);
-    }
-
-    static JsonObject horizontalPlane(double y, JsonObject down, JsonObject up) {
-        JsonObject element = new JsonObject();
-        element.add("from", vector(0.0, y, 0.0));
-        element.add("to", vector(16.0, y, 16.0));
-        JsonObject faces = new JsonObject();
-        faces.add("down", down);
-        faces.add("up", up);
-        element.add("faces", faces);
-        return element;
-    }
-
-    static JsonObject planeFace(double u0, double v0, double u1, double v1) {
-        JsonObject face = new JsonObject();
-        face.add("uv", vector(u0, v0, u1, v1));
-        face.addProperty("texture", "#texture");
-        face.addProperty("tintindex", 0);
-        return face;
+        return lifted;
     }
 }

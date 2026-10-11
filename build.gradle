@@ -328,6 +328,13 @@ publishing {
     }
 }
 
+// A model that moves from data generation into src/main/resources stays in src/generated until the next
+// runData removes it there. src/main/resources comes first, so the file a person keeps wins;
+// scripts/lint_assets.py reports a file that data generation still writes.
+tasks.named('processResources', ProcessResources).configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 // The entity model export runs only with runData and nothing refers to it: keep it out of the mod jar.
 tasks.named('jar', Jar).configure {
     exclude '**/datagen/EntityModelExport*'

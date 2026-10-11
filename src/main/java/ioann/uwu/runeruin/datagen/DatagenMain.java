@@ -8,6 +8,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.LootTableProvider;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -57,7 +58,7 @@ public class DatagenMain {
                     ), lookupProvider
         ));
 
-        gen.addProvider(true, new DatagenModelProvider(packOutput));
+        gen.addProvider(true, new DatagenModelProvider(packOutput, event.getResourceManager(PackType.CLIENT_RESOURCES)));
 
         gen.addProvider(true, new DatagenBlockTagProvider(packOutput, lookupProvider));
 
