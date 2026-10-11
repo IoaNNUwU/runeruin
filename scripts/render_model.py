@@ -183,9 +183,10 @@ def face_texels(texture, corners, uv, normal, light, tint):
     return texels
 
 
-def render_view(quads, camera, scale):
+def render_view(quads, camera, scale, right=None):
     camera = normalize(camera)
-    right = normalize(cross((0, 1, 0), camera)) if abs(camera[1]) < 0.999 else (1, 0, 0)
+    if right is None:
+        right = normalize(cross((0, 1, 0), camera)) if abs(camera[1]) < 0.999 else (1, 0, 0)
     up = cross(camera, right)
     visible = [(quad, color) for quad, color, normal in quads if dot(normal, camera) > 1e-6]
     projected = [([(dot(p, right) * scale, -dot(p, up) * scale) for p in quad], color,
@@ -276,6 +277,7 @@ def main():
 def save_sheet(output, title, panels):
     """The panels in a row under the title, each with its name."""
     width = sum(image.width for _, image in panels) + GAP * (len(panels) + 1)
+    width = max(width, math.ceil(ImageDraw.Draw(panels[0][1]).textlength(title)) + GAP * 2)
     height = max(image.height for _, image in panels) + LABEL_HEIGHT + GAP * 2 + 4
     sheet = Image.new("RGB", (width, height), BACKGROUND)
     draw = ImageDraw.Draw(sheet)
