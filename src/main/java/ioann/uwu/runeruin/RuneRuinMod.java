@@ -15,10 +15,13 @@ import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.particles.RRParticleTypes;
 import ioann.uwu.runeruin.preview.RRGameTests;
 import ioann.uwu.runeruin.portal.RRPoiTypes;
+import net.minecraft.core.dispenser.MinecartDispenseItemBehavior;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.event.BlockEntityTypeAddBlocksEvent;
 
@@ -31,6 +34,7 @@ public class RuneRuinMod {
     public RuneRuinMod(IEventBus modEventBus, ModContainer modContainer) {
 
         modEventBus.addListener(this::addBlockEntityTypes);
+        modEventBus.addListener(this::addDispenserBehaviors);
         modEventBus.addListener(Snail::registerAttributes);
         modEventBus.addListener(Snail::registerSpawnPlacements);
 
@@ -53,6 +57,13 @@ public class RuneRuinMod {
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
+
+    private void addDispenserBehaviors(FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> DispenserBlock.registerBehavior(
+                RRItems.RUNIC_MINECART,
+                new MinecartDispenseItemBehavior(RREntityTypes.RUNIC_MINECART.get())
+        ));
     }
 
     private void addBlockEntityTypes(BlockEntityTypeAddBlocksEvent event) {
