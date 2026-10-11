@@ -10,6 +10,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -39,7 +40,11 @@ public class TopLayerAndBloomingCavesGen {
     );
 
     public static int bloomingCavesFloorY(int x, int z, RandomState randomState) {
-        float noise = floorNoise.getOrCreateNoise(randomState).noise(x, z);
+        return bloomingCavesFloorY(x, z, randomState.sampler());
+    }
+
+    public static int bloomingCavesFloorY(int x, int z, Climate.Sampler sampler) {
+        float noise = floorNoise.getOrCreateNoise(sampler).noise(x, z);
         int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
         return BLOOMING_CAVES_Y + biomeHeight;
     }
@@ -50,9 +55,10 @@ public class TopLayerAndBloomingCavesGen {
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int xx = chunk.getPos().getMiddleBlockX() + x;
-                int zz = chunk.getPos().getMiddleBlockZ() + z;
-                int topY = bloomingCavesFloorY(xx, zz, randomState);
+                int xx = chunk.getPos().getMinBlockX() + x;
+                int zz = chunk.getPos().getMinBlockZ() + z;
+                // The floor reads its noise 8 blocks aside; its biome is the one of its own column.
+                int topY = bloomingCavesFloorY(xx + 8, zz + 8, randomState);
                 for (int y = BLOOMING_CAVES_Y; y < topY; y++) {
                     terrain.set(x, y, z, stone);
                 }

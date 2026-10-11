@@ -49,7 +49,7 @@ public class DeepCavesAndLostCavesGen {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int topY = lostCavesFloorY(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z, randomState);
-                for (int y = LOST_CAVES_Y; y <= topY; y++) {
+                for (int y = CEILING_VOID_Y + 1; y <= topY; y++) {
                     terrain.set(x, y, z, deepslate);
                 }
             }

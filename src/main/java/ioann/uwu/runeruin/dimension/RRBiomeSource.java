@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
@@ -136,11 +137,16 @@ public class RRBiomeSource extends BiomeSource {
         float lostBaselineNoise = RRChunkGenerator.lostTopLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, z);
         int lostBaseLine = (int) (LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * lostBaselineNoise + TOP_LAYER_OFFSET);
 
+        // The ceiling of the Deep caves rises into the floor of the Blooming caves and keeps its biome there.
+        int deepCeilingTop = y <= DEEP_CAVES_CEILING_Y || y > DeepCavesGen.HIGHEST_Y
+                ? BLOOMING_CAVES_Y
+                : DeepCavesGen.roofY(x, z, sampler);
+
         // Each layer starts above this Y, top to bottom like `layers`.
         int[] layerBottoms = {
                 baseLine,
                 BLOOMING_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
-                BLOOMING_CAVES_Y,
+                deepCeilingTop,
                 DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
                 lostBaseLine,
                 LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,

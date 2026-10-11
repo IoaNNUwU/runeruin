@@ -44,7 +44,7 @@ public final class HangingTracksPreviewJob implements PreviewJob {
                 + "rock=true (a rock through the middle of a single piece), terrain=real with x and z (the ceiling and the floor of the Deep caves for the seed, around that block)";
     }
 
-    /** A ceiling like the one of the Deep caves, its lowest block 3 to 10 blocks under the plate, and no floor. */
+    /** A wavy ceiling at the height of the Deep caves one, and no floor. */
     private static final HangingTracksLayout.Terrain WAVES = new HangingTracksLayout.Terrain() {
         @Override
         public int ceilingY(int x, int z) {

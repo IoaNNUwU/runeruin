@@ -13,7 +13,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-/** The layer under the lowest arcane plate: a void stone ceiling above the abyss. */
+/** The layer under the Lost caves: a void stone ceiling above the abyss. */
 public class VoidBiome {
 
     public static Biome bootstrap(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {

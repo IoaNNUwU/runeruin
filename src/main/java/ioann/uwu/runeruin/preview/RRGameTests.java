@@ -14,6 +14,7 @@ import ioann.uwu.runeruin.dimension.RRBiomes;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
@@ -118,6 +119,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FLOATING_ISLANDS_NOT_GENERATED =
         TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DEEP_CAVES_CEILING =
+        TEST_FUNCTIONS.register("deep_caves_ceiling", () -> RRGameTests::deepCavesCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
 
@@ -412,6 +415,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("deep_caves_ceiling"),
+            new FunctionGameTestInstance(
+                DEEP_CAVES_CEILING.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("dinosaur_skeleton_burial"),
             new FunctionGameTestInstance(
                 DINOSAUR_SKELETON_BURIAL.getKey(),
@@ -578,6 +588,93 @@ public final class RRGameTests {
         }
     }
 
+    // The ceiling of the Deep caves has levels and ledges, nothing floats under it, it leaves the floor of the
+    // Blooming caves closed, and no arcane plate lies between the layers.
+    private static void deepCavesCeiling(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, 1);
+            int size = 96;
+            int minY = DeepCavesGen.LOWEST_Y - 1;
+            int height = Const.BLOOMING_CAVES_Y + Const.TERRAIN_HEIGHT - minY + 1;
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, 1, new BoundingBox(0, minY, 0, size - 1, minY + height - 1, size - 1));
+
+            // 1 is a block, 2 is a block that a path of blocks ties to the floor of the Blooming caves.
+            byte[] blocks = new byte[size * size * height];
+            int[] tied = new int[blocks.length];
+            int count = 0;
+            int lowest = Integer.MAX_VALUE;
+            int highest = Integer.MIN_VALUE;
+            int ledges = 0;
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    int floorY = TopLayerAndBloomingCavesGen.bloomingCavesFloorY(x + 8, z + 8, randomState);
+                    int ceilingY = DeepCavesGen.ceilingSurfaceY(x, z, randomState);
+                    lowest = Math.min(lowest, ceilingY);
+                    highest = Math.max(highest, ceilingY);
+                    // What lies on the edge may hang on something outside.
+                    boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;
+                    boolean ledge = false;
+                    for (int y = minY; y <= floorY; y++) {
+                        BlockState state = terrain.get(pos.set(x, y, z));
+                        String at = " at " + x + " " + y + " " + z;
+                        helper.assertTrue(y < ceilingY == state.isAir() || y > ceilingY, "the ceiling does not start at Y " + ceilingY + at);
+                        helper.assertTrue(y < floorY - 6 || !state.isAir(), "the floor of the Blooming caves is open" + at);
+                        helper.assertTrue(y < floorY || !state.is(Blocks.STONE), "the floor of the Blooming caves has no surface" + at);
+                        helper.assertTrue(y >= floorY - 6 || !state.is(RRBlocks.ARCANE_STONE.get()), "arcane stone under the Blooming caves" + at);
+                        ledge |= state.isAir() && y > ceilingY;
+                        if (!state.isAir()) {
+                            int block = (x * size + z) * height + y - minY;
+                            blocks[block] = 1;
+                            if (edge || y == floorY) {
+                                blocks[block] = 2;
+                                tied[count++] = block;
+                            }
+                        }
+                    }
+                    if (ledge) {
+                        ledges++;
+                    }
+                }
+            }
+            int[] steps = {1, height, height * size};
+            while (count > 0) {
+                int block = tied[--count];
+                int[] place = {block % height, block / height % size, block / height / size};
+                int[] limits = {height, size, size};
+                for (int axis = 0; axis < 3; axis++) {
+                    for (int side = -1; side <= 1; side += 2) {
+                        int next = block + side * steps[axis];
+                        if (place[axis] + side >= 0 && place[axis] + side < limits[axis] && blocks[next] == 1) {
+                            blocks[next] = 2;
+                            tied[count++] = next;
+                        }
+                    }
+                }
+            }
+            int floating = 0;
+            for (byte block : blocks) {
+                if (block == 1) {
+                    floating++;
+                }
+            }
+            helper.assertTrue(floating == 0, floating + " blocks float under the ceiling of the Deep caves");
+            helper.assertTrue(highest - lowest >= 15, "the ceiling of the Deep caves only spans Y " + lowest + " to " + highest);
+            helper.assertTrue(ledges > 0, "the ceiling of the Deep caves has no ledge");
+
+            BoundingBox underLostCaves = new BoundingBox(0, Const.CEILING_VOID_Y + 1, 0, 15, Const.LOST_CAVES_Y - 1, 15);
+            PreviewWorld rock = HeadlessTerrainGenerator.generate(server, 1, underLostCaves);
+            for (BlockPos block : BlockPos.betweenClosed(underLostCaves.minX(), underLostCaves.minY(), underLostCaves.minZ(),
+                    underLostCaves.maxX(), underLostCaves.maxY(), underLostCaves.maxZ())) {
+                helper.assertTrue(rock.get(block).is(Blocks.DEEPSLATE), "no deepslate under the Lost caves at " + block.toShortString());
+            }
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
     private static boolean sameBlocks(PreviewWorld a, PreviewWorld b, BoundingBox box) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int y = box.minY(); y <= box.maxY(); y++) {
@@ -660,14 +757,22 @@ public final class RRGameTests {
     private static void previewHangingTracks(GameTestHelper helper) {
         try {
             MinecraftServer server = helper.getLevel().getServer();
+            int fitted = 0;
             for (int seed = 1; seed <= 8; seed++) {
                 PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(server), java.util.Map.of())
                     .with("seed", Integer.toString(seed));
                 PreviewJobs.Result result = PreviewCatalog.require("hanging_tracks").run(args);
                 helper.assertTrue(result.count("minecraft:iron_chain") > 100, "hanging tracks " + seed + " hang on too few chains");
                 // Under the ceiling and above the floor that the Deep caves have with this seed.
-                PreviewCatalog.require("hanging_tracks").run(args.with("terrain", "real"), server);
+                // Between the steps of the ceiling a station sometimes has no room.
+                try {
+                    PreviewCatalog.require("hanging_tracks").run(args.with("terrain", "real"), server);
+                    fitted++;
+                } catch (IllegalStateException e) {
+                    helper.assertTrue(e.getMessage().startsWith("No network fits"), e.getMessage());
+                }
             }
+            helper.assertTrue(fitted >= 6, "hanging tracks fit the Deep caves with only " + fitted + " of 8 seeds");
             helper.succeed();
         } catch (Exception e) {
             helper.fail(e.toString());

@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.placements.ChunkCenterPlacement;
 import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
@@ -283,7 +284,7 @@ public class RRPlacedFeatures {
         ));
         ctx.register(INVERTED_TREE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.INVERTED_TREE),
-                ceilingPlacement(CountPlacement.of(8), DEEP_CEILING_BOTTOM, DEEP_CAVES_CEILING_Y, 0)
+                ceilingPlacement(CountPlacement.of(13), DEEP_CEILING_BOTTOM, DeepCavesGen.HIGHEST_Y, 0)
         ));
 
         ctx.register(ELDEN_GIANT_TREE, new PlacedFeature(
