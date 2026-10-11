@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.dimension.biomes.bloomingcaves;
 
-import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
@@ -61,8 +60,6 @@ public class StoneForest {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.WISPBERRY_BUSH_PATCH);
 
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.COMMON_STONE_LILY);
-
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.BROWN_DOME.placedKey());
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
