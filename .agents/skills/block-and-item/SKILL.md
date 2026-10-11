@@ -25,4 +25,6 @@ A new block touches 8–10 files. Copy the closest existing block (same shape, r
 | 9 | `assets/runeruin/lang/en_us.json` and `ru_ru.json` | `block.runeruin.<id>` / `item.runeruin.<id>` in both files; they are hand-written. A missing key shows the raw key in game. |
 | 10 | `assets/runeruin/textures/{block,item,entity}/` | PNGs, made with the `minecraft-pixel-texture-generation` skill. A missing texture only shows as magenta-black in game. |
 
+In the report, give every model file of step 4a as a link with its absolute path in the task worktree, one line per file: what it shows and "open it in Blockbench".
+
 Then run `compileJava`, `runData` and `python scripts/lint_assets.py`: the linter catches a missing model, texture or translation, a texture of the wrong size and a model file that Blockbench would save for another version of the game. Render the new model with `scripts/render_model.py`. Nothing catches a wrong render layer, drops or tool, so list those under "Check in game" in the final report.

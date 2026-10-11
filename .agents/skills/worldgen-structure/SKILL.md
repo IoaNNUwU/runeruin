@@ -15,7 +15,7 @@ description: >-
 - A shape of nature that differs with every seed (a tree, a goblet, a skeleton) is code, below.
 - Not sure which of the two it is: ask the user before writing either.
 
-A draft of a build for the person to start from is a generator with a preview job (`headless-preview` skill), shown as renders. The person runs `/rrpreview place <job> [seed]` to get it two blocks away in the game, rebuilds it, selects it with `/rrpos1` and `/rrpos2` and saves it with `/rrsave <folder>/<name>` (`entities` after the name keeps item frames and armor stands). A game started with `runClient` writes the template into `src/main/resources/data/runeruin/structure/` of its checkout; `/place template runeruin:<folder>/<name>` puts it back into a world. A structure void block in the build keeps the block of the world, air clears it. Once the templates are in, delete the generator: the build has one source.
+A draft of a build for the person to start from is a generator with a preview job (`headless-preview` skill), shown as renders. The person runs `/rrpreview place <job> [seed]` to get it two blocks away in the game, rebuilds it, selects it with `/rrpos1` and `/rrpos2` and saves it with `/rrsave <folder>/<name>` (`entities` after the name keeps item frames and armor stands). A game started with `runClient` writes the template into `src/main/resources/data/runeruin/structure/` of its checkout; `/place template runeruin:<folder>/<name>` puts it back into a world. A structure void block in the build keeps the block of the world, air clears it. Once the templates are in, delete the generator: the build has one source. In the report, give the person the commands to type, with the real job and template names.
 
 ## In code
 
