@@ -8,6 +8,7 @@ import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -37,7 +38,11 @@ public class DeepCavesAndLostCavesGen {
     );
 
     public static int lostCavesFloorY(int x, int z, RandomState randomState) {
-        float noise = floorNoise.getOrCreateNoise(randomState).noise(x, z);
+        return lostCavesFloorY(x, z, randomState.sampler());
+    }
+
+    public static int lostCavesFloorY(int x, int z, Climate.Sampler sampler) {
+        float noise = floorNoise.getOrCreateNoise(sampler).noise(x, z);
         int biomeHeight = (int) (TERRAIN_MIN_HEIGHT + noise * (TERRAIN_HEIGHT - TERRAIN_MIN_HEIGHT));
         return LOST_CAVES_Y + biomeHeight;
     }
