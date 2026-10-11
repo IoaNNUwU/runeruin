@@ -7,9 +7,10 @@
     python scripts/render_entity_model.py out.png minecraft:cow entity/cow/cow_temperate --view 20,10 160,45 300,-60
     python scripts/render_entity_model.py out.png minecraft:cow entity/cow/cow_temperate --pose head.xRot=30 right_front_leg.xRot=-40
 
-Entity models are built in Java, so the geometry comes from the game: `gradlew runData` writes every model layer,
-vanilla and ours, to build/entity_models/<namespace>/<model>/<layer>.json (EntityModelExport), the parts with
-their initial poses and the faces of their boxes as ModelPart builds them. Run it again after a change to a model.
+The game builds entity models in code, vanilla ones from Java and ours from the Blockbench projects in
+assets/runeruin/models/entity, so the geometry comes from the game: `gradlew runData` writes every model layer
+to build/entity_models/<namespace>/<model>/<layer>.json (EntityModelExport), the parts with their initial poses
+and the faces of their boxes as ModelPart builds them. Run it again after a change to a model or its project.
 A bare model name tries runeruin: then minecraft:. The texture is an id resolved through src/main and
 .vanilla-textures, or a path to a PNG.
 

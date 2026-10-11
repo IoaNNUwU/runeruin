@@ -1,0 +1,34 @@
+{
+	"meta": {"format_version": "5.0", "model_format": "modded_entity", "box_uv": true},
+	"name": "snail",
+	"modded_entity_version": "1.17",
+	"modded_entity_flip_y": true,
+	"resolution": {"width": 64, "height": 64},
+	"elements": [
+		{"name": "shell", "from": [-4, 0, -8], "to": [4, 16, 8], "origin": [0, 24, 0], "type": "cube", "uuid": "759542d0-f21a-5095-a56c-3e32913c9562"},
+		{"name": "head", "from": [-4, 4, -12], "to": [4, 12, -8], "origin": [0, 24, 0], "uv_offset": [0, 36], "type": "cube", "uuid": "d9909813-f290-5642-8084-768d2cde028a"},
+		{"name": "left_antenna", "from": [1, 12, -12], "to": [3, 20, -10], "origin": [2, 12, -11], "uv_offset": [24, 36], "type": "cube", "uuid": "9c381e63-0808-5f58-94f9-93815ec76466"},
+		{"name": "right_antenna", "from": [-3, 12, -12], "to": [-1, 20, -10], "origin": [-2, 12, -11], "uv_offset": [34, 36], "type": "cube", "uuid": "2a246fed-0607-53b7-b074-d6e2e63d5da2"},
+		{"name": "left_eye", "from": [3.1, 19, -12.5], "to": [5.1, 21, -10.5], "origin": [4.1, 20, -11.5], "uv_offset": [44, 36], "type": "cube", "uuid": "7e10d0da-6a29-513e-94ba-b3cbab3e3346"},
+		{"name": "right_eye", "from": [-5.1, 19, -12.5], "to": [-3.1, 21, -10.5], "origin": [-4.1, 20, -11.5], "uv_offset": [44, 42], "type": "cube", "uuid": "8ce1fdc7-c2ff-5285-95d5-e5d66319cf03"}
+	],
+	"groups": [
+		{"name": "shell", "origin": [0, 24, 0], "uuid": "6be1854b-a919-50f0-9bdf-74b7ee3d1071"},
+		{"name": "head", "origin": [0, 24, 0], "uuid": "9bf16361-1762-5aeb-9595-fac1bc43319b"},
+		{"name": "left_antenna", "origin": [2, 12, -11], "rotation": [0, 0, -20.053523], "uuid": "d54fce59-55f0-54d0-8895-352622a7d36e"},
+		{"name": "right_antenna", "origin": [-2, 12, -11], "rotation": [0, 0, 20.053523], "uuid": "4a22ba2d-99cd-55fc-b812-749d8af66829"},
+		{"name": "left_eye", "origin": [4.1, 20, -11.5], "uuid": "8c7f03da-7610-56ac-a156-1cd12ea30be6"},
+		{"name": "right_eye", "origin": [-4.1, 20, -11.5], "uuid": "2667df56-49e2-5302-8140-561c4a23082c"}
+	],
+	"outliner": [
+		{"uuid": "6be1854b-a919-50f0-9bdf-74b7ee3d1071", "children": ["759542d0-f21a-5095-a56c-3e32913c9562"]},
+		{"uuid": "9bf16361-1762-5aeb-9595-fac1bc43319b", "children": ["d9909813-f290-5642-8084-768d2cde028a"]},
+		{"uuid": "d54fce59-55f0-54d0-8895-352622a7d36e", "children": ["9c381e63-0808-5f58-94f9-93815ec76466"]},
+		{"uuid": "4a22ba2d-99cd-55fc-b812-749d8af66829", "children": ["2a246fed-0607-53b7-b074-d6e2e63d5da2"]},
+		{"uuid": "8c7f03da-7610-56ac-a156-1cd12ea30be6", "children": ["7e10d0da-6a29-513e-94ba-b3cbab3e3346"]},
+		{"uuid": "2667df56-49e2-5302-8140-561c4a23082c", "children": ["8ce1fdc7-c2ff-5285-95d5-e5d66319cf03"]}
+	],
+	"textures": [
+		{"name": "snail.png", "relative_path": "../../textures/entity/snail/snail.png", "uuid": "99d4ca2b-e14b-5628-a054-ca9b5182e4ad"}
+	]
+}

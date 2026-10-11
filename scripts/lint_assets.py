@@ -7,6 +7,7 @@ and the models that data generation derives live in src/generated.
 - blockstates, item definitions and models refer only to models that exist;
 - a model a person keeps as a file says which Minecraft it is for, so that Blockbench saves it for that one,
   and data generation does not write the same file;
+- the Blockbench project of a mob finds its textures from any checkout;
 - every texture a model uses exists, vanilla ones in .vanilla-textures (gradlew extractVanillaTextures);
 - en_us and ru_ru have the same keys, and every block and item has a name in both;
 - block and item textures are 16x16, or 16 wide with a .mcmeta animation of whole frames, or listed in OTHER_SIZES.
@@ -122,6 +123,14 @@ def check_models(problems):
             if (ASSET_ROOTS[1] / path.relative_to(ASSET_ROOTS[0])).is_file():
                 problems.append(f"{rel(path)}: data generation writes this model too; "
                                 "run runData, and if it is still there, stop generating it")
+    # A mob's Blockbench project: Blockbench finds its textures by these paths, and one that starts at a
+    # drive or a home folder works on one computer only.
+    for path in asset_files("models", "*.bbmodel"):
+        for texture in (read_json(path, problems) or {}).get("textures", []):
+            relative = texture.get("relative_path")
+            if texture.get("path") or not relative or not (path.parent / relative).is_file():
+                problems.append(f"{rel(path)}: texture {texture.get('name')} needs a relative_path to its PNG and no path "
+                                "(in Blockbench: Settings > Export, asset paths: relative)")
     # An old or missing .vanilla-textures must not turn unchecked references into "assets OK".
     for assets in sorted(missing):
         problems.append(f"{assets} not checked: missing in .vanilla-textures, run gradlew extractVanillaTextures")
