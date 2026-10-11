@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension.structures;
 
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
+import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
@@ -60,8 +61,8 @@ public final class DinosaurSkeletonPiece extends StructurePiece {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (Map.Entry<BlockPos, BlockState> bone : this.bones.entrySet()) {
             pos.setWithOffset(this.origin, bone.getKey());
-            // Not into the rock between the Lost caves and the Void.
-            if (chunkBB.isInside(pos) && pos.getY() >= Const.LOST_CAVES_Y) {
+            // Not under the Lost caves, and not into the ceiling of the Void where it rises into their floor.
+            if (chunkBB.isInside(pos) && pos.getY() >= Const.LOST_CAVES_Y && !VoidGen.reaches(level, pos)) {
                 level.setBlock(pos, bone.getValue(), Block.UPDATE_CLIENTS);
             }
         }
