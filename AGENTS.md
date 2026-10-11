@@ -51,12 +51,13 @@ Work with GitHub, in this repository or in the user's fork (issues, pushing, pul
 
 Lighting, render layers, interaction and biome placement need the game: list them under "Check in game". Speed benchmarks (`benchmark` skill) are not a check: they run only on the user's command, once the user has closed other programs.
 
-**Final report**, also for partial work: in the chat, in the format of `.github/pull_request_template.md` (Done, Verified, Check in game, Decisions), with the branch, the worktree path and the output of `git status --short --branch`. After a change to the shape of a feature or structure, show its preview pictures in the chat with their seed and parameters, before and after for an existing shape. The user reviews the changes and the Decisions and approves them; only then may a pull request become ready for review. End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
+**Final report**, also for partial work: in the chat, in the format of `.github/pull_request_template.md` (Done, Pictures, Verified, Check in game, Decisions), with the branch, the worktree path and the output of `git status --short --branch`. Show the pictures of a visible change in the chat as [CONTRIBUTING.md](CONTRIBUTING.md#pictures) describes: each view with its seed and parameters, before and after for something that already exists. The user reviews the changes and the Decisions and approves them; only then does the report go into the pull request description, with the same pictures attached, and may the pull request become ready for review. End with single-line PowerShell commands using absolute paths to the task worktree, without `cd`: `runData` first if it is needed, then `& 'C:\path\to\worktree\gradlew.bat' -p 'C:\path\to\worktree' runClient`.
 
 ## Commits and code
 
 - Commit subject in the imperative, no prefix: `Make floating moss sink under creatures that stand still`. No attribution lines (`Co-Authored-By`, "Generated with …").
 - Reduce code rather than grow it: fix existing code instead of adding more, change an algorithm instead of adding another condition, comment only important points. Keep the surrounding style; packing code onto one line is not less code.
+- No mixin where the same can be done without one: a class of our own, an overridden method, a NeoForge event or hook, even when that takes more code. A mixin is only for vanilla behaviour that leaves no other way in, and its class comment says why.
 - Imports one per line, sorted, no wildcards: the shared registry files then merge cleanly.
 
 ## Gradle, datagen and the game

@@ -87,10 +87,33 @@ Commit messages are short and in the imperative, without prefixes: `Add an ice b
 
 Push your commits to the draft pull request as you go (`git push`). A change without an issue gets a draft pull request in the same way, just without the `Fixes` line.
 
-- The **title** reads like a commit subject, and the **description** follows the template: `Fixes #<issue>` (drop the line when there is no issue), what was done, how it was verified, what to check in the game and the decisions made along the way. The title and the description become the commit on `main`, so write them for someone reading the history a year from now.
+- The **title** reads like a commit subject, and the **description** follows the template: `Fixes #<issue>` (drop the line when there is no issue), what was done, [pictures](#pictures) of it, how it was verified, what to check in the game and the decisions made along the way. The title and the description become the commit on `main`, so write them for someone reading the history a year from now.
 - Before marking it **ready for review**, merge the latest `main` (`git fetch upstream`, then `git merge upstream/main`), run the checks again and make sure CI is green.
 - If an AI agent did the work, review its changes and its decisions yourself before marking the pull request ready. By doing so you take responsibility for them, as for your own code.
 - The maintainer reviews the pull request and squash-merges it. The branch is deleted after the merge, so further work goes into a new branch.
+
+### Pictures
+
+A pull request that changes how something looks shows it in the `Pictures` section of its description, so that anyone can see the result without building the mod. Any other pull request writes `None` there and why.
+
+| Change                                                       | Picture                                                                |
+|--------------------------------------------------------------|------------------------------------------------------------------------|
+| shape of a feature, a structure or the terrain               | preview render, `scripts/render_preview.py`                            |
+| model of a block, an item or a mob                           | render of the model, `scripts/render_model.py` for blocks and items    |
+| block texture                                                | 3×3 tile next to the old texture, `scripts/render_texture_tile.py`     |
+| item texture                                                 | the icon, enlarged                                                     |
+| lighting, transparency, the look of a biome, mobs, particles | screenshot from the game (F2, saved in `~/.runeruin/game/screenshots`) |
+
+- One picture per view that the change needs: a cut and a view from below are two pictures. Use the fewest that show the change.
+- A change to something that is already in `main` shows it before and after, from the same view with the same seed and parameters. A sheet that holds both is one picture. Two separate files stand side by side in a table with the columns `Before` and `After`. Something new shows only the result.
+- A line above every picture says what it shows: a render or the game, the view, the seed and parameters or the coordinates, and where before and after are on it.
+- Pictures are attached to the pull request, never committed. With push access to the repository, write the local path of each picture in the description, `![Cut at z 58](exports/ceiling_cut.png)`, and attach the same path; `gh` uploads the file and puts its address into the description:
+
+  ```powershell
+  gh pr edit <number> --body-file report.md --attach exports/ceiling_cut.png --attach exports/ceiling_below.png
+  ```
+
+  From a fork, drag the pictures into the description in the browser.
 
 When you are done, update your `main` again and remove the task folder with `.\scripts\finish-task.ps1 -Path ..\RuneRuin-ice-biome`. Do not delete it with `git worktree remove --force`: that would follow the link and wipe the shared Minecraft sources.
 
@@ -100,7 +123,7 @@ Agents read [AGENTS.md](AGENTS.md) and by default only work on your computer: th
 
 - They may create issues, push the task branch to `origin`, and open and edit draft pull requests. When you give them an issue, they first check that it is free and claim it with a draft pull request right after creating the branch, as described above. Without an issue they work only on a change that needs no design proposal.
 - While they work, their pull request is where the work shows: they push commits to it, and the decisions go into its description with the final report. A design proposal stays in the chat. They comment on an issue only after you agree to that comment in the chat.
-- The final report goes into the chat first. Only after you approve it does it go into the pull request description, and only then is the pull request marked ready (`gh pr ready`).
+- The final report goes into the chat first. Only after you approve it does it go into the pull request description with its pictures, and only then is the pull request marked ready (`gh pr ready`). Agents render previews themselves but do not start the game: screenshots are yours to take, and the agent attaches the ones you name.
 - They never push to `main`. They merge pull requests or close issues only when you allow it explicitly, in the chat or in your personal agent instructions, and only where your own GitHub rights allow it.
 
 `gh` uses `upstream` as the main repository automatically, so `gh issue list` and `gh pr create` work from a fork without extra setup.

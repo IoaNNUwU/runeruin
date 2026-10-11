@@ -6,7 +6,10 @@
   "item.runeruin.mossberry": "Моховая ягода",
   "item.runeruin.powdered_moss_bucket": "Ведро порошкового мха",
   "item.runeruin.snail_spawn_egg": "Яйцо призыва улитки",
+  "item.runeruin.runic_minecart": "Руническая вагонетка",
+  "item.runeruin.runic_minecart.tooltip": "Сохраняет скорость даже на обычных рельсах",
   "entity.runeruin.snail": "Улитка",
+  "entity.runeruin.runic_minecart": "Руническая вагонетка",
 
   "block.runeruin.arcane_stone": "Мистический камень",
   "block.runeruin.arcane_stone_bricks": "Кирпичи из мистического камня",

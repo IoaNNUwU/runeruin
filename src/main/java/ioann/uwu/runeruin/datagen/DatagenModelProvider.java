@@ -46,6 +46,7 @@ public class DatagenModelProvider extends ModelProvider {
         itemModels.generateFlatItem(RRItems.WISPBERRY.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.MOSSBERRY.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.POWDERED_MOSS_BUCKET.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(RRItems.RUNIC_MINECART.get(), ModelTemplates.FLAT_ITEM);
 
         // --- Blocks ---
         blockModels.createTrivialCube(RRBlocks.ARCANE_STONE.get());

@@ -82,7 +82,8 @@ public class RRPlacedFeatures {
 
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch_underwater");
-    public static final ResourceKey<PlacedFeature> GOBLET_SEAGRASS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_seagrass");
+    public static final ResourceKey<PlacedFeature> FLOATING_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "floating_moss_patch");
+    public static final ResourceKey<PlacedFeature> GOBLET_SEAGRASS =RR.resourceKey(Registries.PLACED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<PlacedFeature> GOBLET_KELP = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_kelp");
     public static final ResourceKey<PlacedFeature> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_deep_roots");
     public static final ResourceKey<PlacedFeature> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.PLACED_FEATURE, "deep_roots_grass");
@@ -371,6 +372,10 @@ public class RRPlacedFeatures {
                         BlockPredicate.matchesTag(RRTags.GOBLET_MOSS_REPLACEABLE), BlockPredicate.matchesBlocks(Blocks.WATER), 32, 1)
         ));
 
+        ctx.register(FLOATING_MOSS_PATCH, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.FLOATING_MOSS_PATCH),
+                gobletUnderwaterPlacement(RarityFilter.onAverageOnceEvery(9))
+        ));
         ctx.register(GOBLET_SEAGRASS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_SEAGRASS),
                 gobletUnderwaterPlacement(CountPlacement.of(48))
