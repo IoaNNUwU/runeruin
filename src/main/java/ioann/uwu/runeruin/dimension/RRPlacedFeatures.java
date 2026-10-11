@@ -18,8 +18,11 @@ import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.data.worldgen.placement.VegetationPlacements;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.UniformInt;
+import net.minecraft.util.valueproviders.WeightedListInt;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
@@ -394,7 +397,10 @@ public class RRPlacedFeatures {
         ));
         ctx.register(WATER_LILY, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.WATER_LILY),
-                waterSurfacePlacement(RarityFilter.onAverageOnceEvery(3))
+                // Two chunks of three.
+                waterSurfacePlacement(CountPlacement.of(new WeightedListInt(
+                        WeightedList.<IntProvider>builder().add(ConstantInt.of(1), 2).add(ConstantInt.of(0), 1).build()
+                )))
         ));
 
         ctx.register(HANGING_CHORUS, new PlacedFeature(
