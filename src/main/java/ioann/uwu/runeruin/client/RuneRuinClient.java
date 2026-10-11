@@ -92,7 +92,6 @@ public class RuneRuinClient {
     @SubscribeEvent
     static void registerEntityLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(SnailModel.LAYER_LOCATION, SnailModel::createBodyLayer);
-        event.registerLayerDefinition(RunicMinecartRenderer.LAYER, RunicMinecartRenderer::createBodyLayer);
     }
 
     @SubscribeEvent

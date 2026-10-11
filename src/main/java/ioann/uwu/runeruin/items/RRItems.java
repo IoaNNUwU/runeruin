@@ -3,6 +3,10 @@ package ioann.uwu.runeruin.items;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.entities.RREntityTypes;
+import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -14,6 +18,7 @@ import net.minecraft.world.item.MinecartItem;
 import net.minecraft.world.item.SolidBucketItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.Consumable;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
 import net.minecraft.world.item.consume_effects.ConsumeEffect;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -73,7 +78,10 @@ public class RRItems {
     public static final DeferredItem<Item> RUNIC_MINECART = REGISTRY.registerItem(
             "runic_minecart",
             p -> new MinecartItem(RREntityTypes.RUNIC_MINECART.get(), p),
-            p -> p.stacksTo(1)
+            p -> p.stacksTo(1).component(DataComponents.LORE, new ItemLore(List.of(
+                    Component.translatable("item.runeruin.runic_minecart.tooltip")
+                            .withStyle(style -> style.withColor(ChatFormatting.GRAY).withItalic(false))
+            )))
     );
 
     public static final DeferredItem<Item> SNAIL_SPAWN_EGG = REGISTRY.registerItem(
