@@ -1168,9 +1168,17 @@ public final class RRGameTests {
         BlockPos corner = helper.absolutePos(new BlockPos(0, y - 1, 0));
         BlockPos far = corner.offset(FIGHT_FLOOR_SIZE - 1, 0, FIGHT_FLOOR_SIZE - 1);
         ServerLevel level = helper.getLevel();
-        // Without players, mobs move only in forced chunks, and the test forces just the chunk of its origin.
+        // Without players, mobs move only in forced chunks that have got around to ticking entities, and the test
+        // forces just the chunk of its origin. Chunks get ready in real time while the tests run their ticks as fast
+        // as they can: a mob would hang in the air at a chunk border until the test is over, so wait for them here.
         // The runner releases every forced chunk after the batch.
-        ChunkPos.rangeClosed(ChunkPos.containing(corner), ChunkPos.containing(far)).forEach(chunk -> level.setChunkForced(chunk.x(), chunk.z(), true));
+        List<ChunkPos> chunks = ChunkPos.rangeClosed(ChunkPos.containing(corner), ChunkPos.containing(far)).toList();
+        chunks.forEach(chunk -> level.setChunkForced(chunk.x(), chunk.z(), true));
+        long deadline = System.nanoTime() + 30_000_000_000L;
+        while (!chunks.stream().allMatch(chunk -> level.isPositionEntityTicking(chunk.getWorldPosition()))) {
+            helper.assertTrue(System.nanoTime() < deadline, "the chunks of the fight floor do not start ticking");
+            level.getChunkSource().pollTask();
+        }
         for (BlockPos pos : BlockPos.betweenClosed(corner, far)) {
             level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
         }

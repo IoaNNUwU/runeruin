@@ -162,9 +162,11 @@ public class MossyRamModel extends EntityModel<MossyRamRenderState> {
         this.rightArm.xRot = -step * 0.6F - punch;
         this.leftArm.xRot = step * 0.6F - punch;
 
-        // The arms go up to call warriors and through a leap.
-        this.rightArm.zRot = state.raise * 2.5F;
-        this.leftArm.zRot = -state.raise * 2.5F;
+        // The arms go up and apart to call warriors and through a leap; holding a warrior, they go on past
+        // the vertical and lean in over the head.
+        float lift = state.raise * 2.5F + state.hold * 3.66F;
+        this.rightArm.zRot = lift;
+        this.leftArm.zRot = -lift;
         // The body sinks onto the legs before a leap and after it.
         this.body.y += state.crouch * 4.0F;
         this.body.xRot = state.crouch * 0.1F;

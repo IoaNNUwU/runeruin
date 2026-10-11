@@ -20,7 +20,8 @@ public final class RREntityTypes {
             "mossy_prophet",
             MossyProphet::new,
             MobCategory.MONSTER,
-            builder -> builder.sized(2.3F, 3.0F).eyeHeight(2.6F).clientTrackingRange(10).noLootTable()
+            // A warrior it lifts sits over the horns, between the raised hands.
+            builder -> builder.sized(2.3F, 3.0F).eyeHeight(2.6F).passengerAttachments(3.2F).clientTrackingRange(10).noLootTable()
     );
 
     public static final DeferredHolder<EntityType<?>, EntityType<MossyWarrior>> MOSSY_WARRIOR = REGISTRY.registerEntityType(

@@ -40,6 +40,7 @@ public class MossyRamRenderer extends MobRenderer<MossyRam, MossyRamRenderState,
         state.attackAnim = entity.getAttackAnim(partialTicks);
         state.crouch = entity.getCrouch(partialTicks);
         state.raise = entity.getRaise(partialTicks);
+        state.hold = entity.getHold(partialTicks);
         state.spin = entity.getSpin(partialTicks);
     }
 

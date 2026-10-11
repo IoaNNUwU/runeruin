@@ -6,5 +6,6 @@ public class MossyRamRenderState extends LivingEntityRenderState {
     public float attackAnim;
     public float crouch;
     public float raise;
+    public float hold;
     public float spin;
 }

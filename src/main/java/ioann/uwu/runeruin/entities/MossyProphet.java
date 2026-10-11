@@ -46,6 +46,7 @@ public class MossyProphet extends MossyRam {
     private static final double THROW_MAX_DISTANCE = 16.0;
     private static final double THROW_GRAB_RANGE = 6.0;
     private static final int THROW_WINDUP_TICKS = 12;
+    private static final int LEAP_AFTER_THROW_TICKS = 100;
 
     private int nextLeap;
     private int nextSummon;
@@ -275,7 +276,7 @@ public class MossyProphet extends MossyRam {
         public void start() {
             this.time = 0;
             MossyProphet.this.getNavigation().stop();
-            MossyProphet.this.setAction(Action.RAISE);
+            MossyProphet.this.setAction(Action.HOLD);
             this.warrior.startRiding(MossyProphet.this, true, false);
             MossyProphet.this.playSound(SoundEvents.GOAT_SCREAMING_PREPARE_RAM, 2.0F, 0.8F);
         }
@@ -300,6 +301,8 @@ public class MossyProphet extends MossyRam {
             }
             MossyProphet.this.setAction(Action.NONE);
             MossyProphet.this.nextThrow = MossyProphet.this.tickCount + 80 + MossyProphet.this.random.nextInt(40);
+            // The warrior fights first: a leap right behind it would be two attacks in one.
+            MossyProphet.this.nextLeap = Math.max(MossyProphet.this.nextLeap, MossyProphet.this.tickCount + LEAP_AFTER_THROW_TICKS);
         }
     }
 

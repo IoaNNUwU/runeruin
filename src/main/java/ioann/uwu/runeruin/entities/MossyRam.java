@@ -26,7 +26,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 /** What the Mossy Prophet and its Mossy Warriors share: the flock, the jumps and the poses of their attacks. */
 public abstract class MossyRam extends Monster {
     /** What the body does besides walking and punching; the client turns it into a pose. */
-    public enum Action { NONE, CROUCH, RAISE, SPIN }
+    public enum Action { NONE, CROUCH, RAISE, HOLD, SPIN }
 
     private static final EntityDataAccessor<Byte> DATA_ACTION = SynchedEntityData.defineId(MossyRam.class, EntityDataSerializers.BYTE);
     private static final float SPIN_SPEED = 0.9F;
@@ -36,6 +36,8 @@ public abstract class MossyRam extends Monster {
     private float crouchO;
     private float raise;
     private float raiseO;
+    private float hold;
+    private float holdO;
     private float spin;
     private float spinO;
 
@@ -96,6 +98,8 @@ public abstract class MossyRam extends Monster {
             this.crouch += ((action == Action.CROUCH ? 1.0F : 0.0F) - this.crouch) * 0.5F;
             this.raiseO = this.raise;
             this.raise += ((action == Action.RAISE ? 1.0F : 0.0F) - this.raise) * 0.4F;
+            this.holdO = this.hold;
+            this.hold += ((action == Action.HOLD ? 1.0F : 0.0F) - this.hold) * 0.4F;
             // A somersault stops at once: unwinding it would turn the mob backwards through the ground.
             this.spinO = action == Action.SPIN ? this.spin : 0.0F;
             this.spin = action == Action.SPIN ? this.spin + SPIN_SPEED : 0.0F;
@@ -108,6 +112,10 @@ public abstract class MossyRam extends Monster {
 
     public float getRaise(float partialTicks) {
         return Mth.lerp(partialTicks, this.raiseO, this.raise);
+    }
+
+    public float getHold(float partialTicks) {
+        return Mth.lerp(partialTicks, this.holdO, this.hold);
     }
 
     public float getSpin(float partialTicks) {
