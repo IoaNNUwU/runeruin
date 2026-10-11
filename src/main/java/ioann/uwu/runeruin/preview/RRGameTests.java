@@ -134,6 +134,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DEEP_CAVES_CEILING =
         TEST_FUNCTIONS.register("deep_caves_ceiling", () -> RRGameTests::deepCavesCeiling);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOOMING_CAVES_CEILING =
+        TEST_FUNCTIONS.register("blooming_caves_ceiling", () -> RRGameTests::bloomingCavesCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
 
@@ -451,6 +453,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("blooming_caves_ceiling"),
+            new FunctionGameTestInstance(
+                BLOOMING_CAVES_CEILING.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("dinosaur_skeleton_burial"),
             new FunctionGameTestInstance(
                 DINOSAUR_SKELETON_BURIAL.getKey(),
@@ -667,27 +676,7 @@ public final class RRGameTests {
                     }
                 }
             }
-            int[] steps = {1, height, height * size};
-            while (count > 0) {
-                int block = tied[--count];
-                int[] place = {block % height, block / height % size, block / height / size};
-                int[] limits = {height, size, size};
-                for (int axis = 0; axis < 3; axis++) {
-                    for (int side = -1; side <= 1; side += 2) {
-                        int next = block + side * steps[axis];
-                        if (place[axis] + side >= 0 && place[axis] + side < limits[axis] && blocks[next] == 1) {
-                            blocks[next] = 2;
-                            tied[count++] = next;
-                        }
-                    }
-                }
-            }
-            int floating = 0;
-            for (byte block : blocks) {
-                if (block == 1) {
-                    floating++;
-                }
-            }
+            int floating = floatingBlocks(blocks, tied, count, size, height);
             helper.assertTrue(floating == 0, floating + " blocks float under the ceiling of the Deep caves");
             helper.assertTrue(highest - lowest >= 15, "the ceiling of the Deep caves only spans Y " + lowest + " to " + highest);
             helper.assertTrue(ledges > 0, "the ceiling of the Deep caves has no ledge");
@@ -702,6 +691,119 @@ public final class RRGameTests {
         } catch (IOException e) {
             helper.fail(e.toString());
         }
+    }
+
+    // The ceiling of the Blooming caves has terraces inside the islands and stays even at their edges, nothing
+    // floats under it, it leaves the top layer closed, and all of it lies in the ceiling biomes, whose plants hang from it.
+    private static void bloomingCavesCeiling(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            long seed = 12345;
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, seed);
+            RRBiomeSource biomes = RRBiomeSource.newDefault(server.registryAccess().lookupOrThrow(Registries.BIOME));
+            int size = 112;
+            int minY = TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 3;
+            int height = 40;
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, seed, new BoundingBox(0, minY, 0, size - 1, minY + height - 1, size - 1));
+
+            // The lowest block of the even ceiling, or 0 between the islands.
+            int[] even = new int[size * size];
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    even[x * size + z] = TopLayerAndBloomingCavesGen.evenCeilingY(x, z, randomState).orElse(0);
+                }
+            }
+
+            // 1 is a block of a terrace, 2 is a block that a path of blocks ties to the even ceiling.
+            byte[] blocks = new byte[size * size * height];
+            int[] tied = new int[blocks.length];
+            int count = 0;
+            int deepest = 0;
+            int highest = 0;
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    int evenY = even[x * size + z];
+                    if (evenY == 0) {
+                        continue;
+                    }
+                    boolean atEdge = false;
+                    for (int dx = -4; dx <= 4; dx++) {
+                        for (int dz = -4; dz <= 4; dz++) {
+                            atEdge |= x + dx >= 0 && x + dx < size && z + dz >= 0 && z + dz < size && even[(x + dx) * size + z + dz] == 0;
+                        }
+                    }
+                    int ceilingY = minY;
+                    while (terrain.get(pos.set(x, ceilingY, z)).isAir()) {
+                        ceilingY++;
+                    }
+                    // An arcane column passes through the ceiling, and its runes are cut into its sides.
+                    if (terrain.get(pos).is(RRBlocks.ARCANE_STONE.get()) || terrain.get(pos).is(RRBlocks.DIAMOND_ARCANE_STONE.get())) {
+                        continue;
+                    }
+                    String at = " at " + x + " " + z;
+                    helper.assertTrue(!atEdge || ceilingY == evenY, "the ceiling at the edge of an island is at Y " + ceilingY + ", not " + evenY + at);
+                    helper.assertTrue(ceilingY == evenY || ceilingY >= TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y, "a terrace hangs down to Y " + ceilingY + at);
+                    helper.assertTrue(terrain.get(pos).is(RRBlocks.DEEP_MOSS.get()), "the ceiling has no moss at Y " + ceilingY + at);
+                    helper.assertTrue(!terrain.get(pos.set(x, ceilingY + 1, z)).is(RRBlocks.DEEP_MOSS.get()), "the moss of the ceiling is two blocks thick" + at);
+                    Holder<Biome> biome = biomes.getNoiseBiome(
+                        QuartPos.fromBlock(x), QuartPos.fromBlock(ceilingY - 1), QuartPos.fromBlock(z), randomState.sampler());
+                    helper.assertTrue(biome.is(RRBiomes.GLOWING_ROOTS) || biome.is(RRBiomes.GLOWING_BALLS),
+                        "the air under the ceiling at Y " + ceilingY + at + " is in " + biome.getRegisteredName());
+                    deepest = Math.max(deepest, evenY - ceilingY);
+                    highest = Math.max(highest, ceilingY - evenY);
+                    // Soil hangs over the surface under a cliff, so the highest block of a column is not its surface.
+                    int surfaceY = Math.min(TopLayerAndBloomingCavesGen.topLayerSurfaceY(x, z, randomState).orElse(ceilingY), minY + height - 1);
+                    for (int y = ceilingY; y <= surfaceY; y++) {
+                        helper.assertTrue(y < surfaceY - 8 || !terrain.get(pos.set(x, y, z)).isAir(), "the top layer is open from below at " + x + " " + y + " " + z);
+                    }
+                    // What lies on the edge may hang on something outside.
+                    boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;
+                    for (int y = ceilingY; y < minY + height; y++) {
+                        if (!terrain.get(pos.set(x, y, z)).isAir()) {
+                            int block = (x * size + z) * height + y - minY;
+                            blocks[block] = 1;
+                            if (edge || y >= evenY) {
+                                blocks[block] = 2;
+                                tied[count++] = block;
+                            }
+                        }
+                    }
+                }
+            }
+            int floating = floatingBlocks(blocks, tied, count, size, height);
+            helper.assertTrue(floating == 0, floating + " blocks float under the ceiling of the Blooming caves");
+            helper.assertTrue(deepest >= 4 && highest >= 3, "the terraces hang only " + deepest + " blocks under the even ceiling and rise " + highest + " above it");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    /** Spreads from the tied blocks (2) through their neighbours and counts the blocks (1) that nothing reached. */
+    private static int floatingBlocks(byte[] blocks, int[] tied, int count, int size, int height) {
+        int[] steps = {1, height, height * size};
+        int[] limits = {height, size, size};
+        while (count > 0) {
+            int block = tied[--count];
+            int[] place = {block % height, block / height % size, block / height / size};
+            for (int axis = 0; axis < 3; axis++) {
+                for (int side = -1; side <= 1; side += 2) {
+                    int next = block + side * steps[axis];
+                    if (place[axis] + side >= 0 && place[axis] + side < limits[axis] && blocks[next] == 1) {
+                        blocks[next] = 2;
+                        tied[count++] = next;
+                    }
+                }
+            }
+        }
+        int floating = 0;
+        for (byte block : blocks) {
+            if (block == 1) {
+                floating++;
+            }
+        }
+        return floating;
     }
 
     private static boolean sameBlocks(PreviewWorld a, PreviewWorld b, BoundingBox box) {

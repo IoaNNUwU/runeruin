@@ -132,7 +132,7 @@ Layers bottom → top (`Const`): Void `0…50` → Lost caves `LOST_CAVES_Y` 56 
 
 Two independent systems:
 
-1. **Terrain**: `RRChunkGenerator.fillFromNoise` → `TopLayerAndBloomingCavesGen`, `DeepCavesGen` (deep caves ceiling), `DeepCavesAndLostCavesGen`, `VoidGen`; pillars and runes in `ArcaneStructureGen`; surface blocks per biome in `RRTerrainSurfaces`. Biomes do not carve the caves.
+1. **Terrain**: `RRChunkGenerator.fillFromNoise` → `TopLayerAndBloomingCavesGen`, `DeepCavesGen` (deep caves ceiling), `DeepCavesAndLostCavesGen`, `VoidGen`; `TerracedCeiling` shapes the ceilings of the Deep and the Blooming caves; pillars and runes in `ArcaneStructureGen`; surface blocks per biome in `RRTerrainSurfaces`. Biomes do not carve the caves.
 2. **Decoration**: the vanilla feature pipeline per biome. `RRBiomeSource.getNoiseBiome` picks a biome by Y and noise from the lists in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`); weights are repeated entries.
 
 These change existing worlds, so design them first: adding, removing or reordering a biome list entry (shifts every border in the layer), renaming noise seed strings, changing `RRTerrainSurfaces`, changing a structure algorithm (seams in half-generated structures).
