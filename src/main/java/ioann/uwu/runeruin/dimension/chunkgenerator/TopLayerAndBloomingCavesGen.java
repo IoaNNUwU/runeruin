@@ -157,12 +157,8 @@ public class TopLayerAndBloomingCavesGen {
                     if (!ceiling.stone(x, y, z) || y > lowest && ceiling.stone(x, y - 1, z)) {
                         continue;
                     }
-                    BlockState surface = underside(chunk, xx, zz, y, randomState);
-                    if (y == CEILING_MAX_Y || ceiling.stone(x, y + 1, z)) {
-                        RRTerrainSurfaces.placeCeilingSurface(terrain, x, y, z, surface);
-                    } else {
-                        terrain.set(x, y, z, surface);
-                    }
+                    // One block of moss: under the top layer it is not two blocks thick as on the other cave surfaces.
+                    terrain.set(x, y, z, underside(chunk, xx, zz, y, randomState));
                 }
             }
         }

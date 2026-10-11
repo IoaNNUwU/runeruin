@@ -716,6 +716,7 @@ public final class RRGameTests {
                     helper.assertTrue(!atEdge || ceilingY == evenY, "the ceiling at the edge of an island is at Y " + ceilingY + ", not " + evenY + at);
                     helper.assertTrue(ceilingY == evenY || ceilingY >= TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y, "a terrace hangs down to Y " + ceilingY + at);
                     helper.assertTrue(terrain.get(pos).is(RRBlocks.DEEP_MOSS.get()), "the ceiling has no moss at Y " + ceilingY + at);
+                    helper.assertTrue(!terrain.get(pos.set(x, ceilingY + 1, z)).is(RRBlocks.DEEP_MOSS.get()), "the moss of the ceiling is two blocks thick" + at);
                     Holder<Biome> biome = biomes.getNoiseBiome(
                         QuartPos.fromBlock(x), QuartPos.fromBlock(ceilingY - 1), QuartPos.fromBlock(z), randomState.sampler());
                     helper.assertTrue(biome.is(RRBiomes.GLOWING_ROOTS) || biome.is(RRBiomes.GLOWING_BALLS),
