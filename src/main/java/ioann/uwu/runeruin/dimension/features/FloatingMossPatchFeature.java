@@ -4,6 +4,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.FloatingMossBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
+import ioann.uwu.runeruin.dimension.structures.GiantGobletStructure;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -54,6 +57,7 @@ public class FloatingMossPatchFeature extends Feature<FloatingMossPatchFeature.C
         int width = config.width().sample(random);
         int length = config.length().sample(random);
         boolean rowsAlongX = random.nextBoolean();
+        List<GiantGobletPiece> goblets = GiantGobletStructure.inChunkOf(level, centre);
 
         for (int across = -width; across <= width; across++) {
             double side = across / (width + 0.5);
@@ -62,7 +66,7 @@ public class FloatingMossPatchFeature extends Feature<FloatingMossPatchFeature.C
             int to = rowEnd(reach, random);
             for (int along = from; along <= to; along++) {
                 pos.setWithOffset(centre, rowsAlongX ? along : across, 0, rowsAlongX ? across : along);
-                if (!isOpenWater(level, pos)) {
+                if (!isOpenWater(level, pos) && !willBeOpenWater(level, goblets, pos)) {
                     continue;
                 }
                 level.setBlock(pos, moss, Block.UPDATE_CLIENTS);
@@ -100,6 +104,22 @@ public class FloatingMossPatchFeature extends Feature<FloatingMossPatchFeature.C
     /** Still water with air above it: the only place where floating moss lies on the surface. */
     static boolean isOpenWater(WorldGenLevel level, BlockPos pos) {
         return level.getBlockState(pos).is(Blocks.WATER) && level.getFluidState(pos).isSource() && level.isEmptyBlock(pos.above());
+    }
+
+    /**
+     * Air where a goblet will have the top of its water. A goblet is built chunk by chunk, so the chunk next to
+     * the raft may still be empty; the goblet later pours its water around the moss that already lies there.
+     */
+    private static boolean willBeOpenWater(WorldGenLevel level, List<GiantGobletPiece> goblets, BlockPos pos) {
+        if (!level.isEmptyBlock(pos) || !level.isEmptyBlock(pos.above())) {
+            return false;
+        }
+        for (GiantGobletPiece goblet : goblets) {
+            if (goblet.isWaterSurface(pos)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public record Config(

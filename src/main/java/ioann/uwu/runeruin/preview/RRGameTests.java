@@ -22,6 +22,7 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
+import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
 import ioann.uwu.runeruin.entities.RREntityTypes;
 import ioann.uwu.runeruin.entities.RunicMinecart;
 import ioann.uwu.runeruin.items.RRItems;
@@ -101,6 +102,8 @@ public final class RRGameTests {
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_GIANT_GOBLET =
         TEST_FUNCTIONS.register("preview_giant_goblet", () -> RRGameTests::previewGiantGoblet);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GIANT_GOBLET_WATER_SURFACE =
+        TEST_FUNCTIONS.register("giant_goblet_water_surface", () -> RRGameTests::giantGobletWaterSurface);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_HANGING_TRACKS =
         TEST_FUNCTIONS.register("preview_hanging_tracks", () -> RRGameTests::previewHangingTracks);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> RUNIC_RAIL_KEEPS_SPEED =
@@ -334,6 +337,13 @@ public final class RRGameTests {
             RR.id("preview_giant_goblet"),
             new FunctionGameTestInstance(
                 PREVIEW_GIANT_GOBLET.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("giant_goblet_water_surface"),
+            new FunctionGameTestInstance(
+                GIANT_GOBLET_WATER_SURFACE.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -973,6 +983,42 @@ public final class RRGameTests {
         } catch (Exception e) {
             helper.fail(e.toString());
         }
+    }
+
+    // A raft of floating moss reaches into a chunk where the goblet is not built yet and asks the goblet where
+    // its water will be. The answer must be the water that the goblet builds, and the goblet, built chunk by
+    // chunk afterwards, must keep the moss and change nothing else.
+    private static void giantGobletWaterSurface(GameTestHelper helper) {
+        BlockState moss = RRBlocks.FLOATING_MOSS.get().defaultBlockState();
+        int[][] sizes = {{61, 20}, {81, 30}, {81, 40}, {101, 60}};
+        for (int seed = 1; seed <= sizes.length; seed++) {
+            int[] size = sizes[seed - 1];
+            GiantGobletPiece goblet = new GiantGobletPiece(8, 8, size[0], size[1], seed);
+            BoundingBox box = goblet.getBoundingBox();
+            PreviewWorld built = PreviewWorld.create(seed);
+            PreviewJobs.placePiece(goblet, built);
+
+            PreviewWorld mossFirst = PreviewWorld.create(seed);
+            int surface = 0;
+            for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+                boolean open = built.get(pos).is(Blocks.WATER) && built.get(pos.above()).isAir();
+                helper.assertTrue(goblet.isWaterSurface(pos) == open, "goblet " + seed + " at " + pos.toShortString()
+                    + (open ? " has open water that it does not foresee" : " foresees open water that it does not build"));
+                if (open) {
+                    mossFirst.set(pos, moss);
+                    surface++;
+                }
+            }
+            helper.assertTrue(surface > 100, "goblet " + seed + " has only " + surface + " blocks of open water");
+
+            PreviewJobs.placePieceAcrossChunks(goblet, mossFirst);
+            for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+                BlockState expected = goblet.isWaterSurface(pos) ? moss : built.get(pos);
+                helper.assertTrue(mossFirst.get(pos) == expected, "goblet " + seed + " built around moss has "
+                    + mossFirst.get(pos).getBlock().getName().getString() + " at " + pos.toShortString());
+            }
+        }
+        helper.succeed();
     }
 
     // The preview job itself fails when no network fits or when the rails of a network break off anywhere.
