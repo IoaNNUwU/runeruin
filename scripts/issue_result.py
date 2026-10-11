@@ -24,9 +24,24 @@ def mark(number):
     return f"<!-- pr-result:{number} -->"
 
 
+def split_sections(description):
+    """The text before the first `## ` heading, then one text per heading. A heading inside a code block is text."""
+    sections, fence = [[]], None
+    for line in description.replace("\r\n", "\n").split("\n"):
+        ticks = re.match(r" {0,3}(`{3,}|~{3,})", line)
+        if ticks and fence is None:
+            fence = ticks[1]
+        elif ticks and ticks[1].startswith(fence) and line.strip() == ticks[1]:
+            fence = None
+        elif fence is None and line.startswith("## "):
+            sections.append([])
+        sections[-1].append(line)
+    return ["\n".join(s).strip() for s in sections]
+
+
 def comment_body(number, description):
     # Text before the first section is the `Fixes` line. A description without the template is shown whole.
-    sections = [s.strip() for s in re.split(r"^(?=## )", description.replace("\r\n", "\n"), flags=re.M)]
+    sections = split_sections(description)
     shown = [s for s in sections if s.startswith(SHOWN)] or sections
     folded = [s for s in sections[1:] if s not in shown]
     parts = [mark(number), f"The result of #{number}:", *shown]
