@@ -63,7 +63,7 @@ Then:
 
 1. Write down what you see: the outline, proportions, what is hollow, what is attached to what, what looks wrong.
 2. Compare it with the request. Change the code only for a difference you can name.
-3. Show the final pictures in the chat, each with its job, seed and parameters; for a change to an existing shape, before and after. The pictures are in `exports/`, which git ignores: attach them, do not commit them.
+3. Show the final pictures in the chat, each with its job, seed and parameters; for a change to an existing shape, before and after. The pictures are in `exports/`, which git ignores: never commit them. With the approved report the same pictures go into the pull request description (`CONTRIBUTING.md`, "Pictures").
 
 Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. Every block is drawn as a full cube in one colour. Lighting, textures, transparency and render layers still need the game: list them under "Check in game".
 
