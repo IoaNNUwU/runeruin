@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.GeometryUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -33,6 +35,11 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
     private static final double MIN_TWIN_TILT_DEGREES = 27.0;
     private static final double MAX_TWIN_TILT_DEGREES = 36.0;
     private static final float TWIN_CHANCE = 0.25F;
+    private static final double MIN_STEM_SWERVE = 0.7;
+    private static final double MAX_STEM_SWERVE = 1.4;
+    private static final double MAX_STEM_BULGE = 1.0;
+    // With the thinnest stem one block in radius, discs this close along the line always share a block.
+    private static final double STEM_SAMPLE_STEP = 0.125;
 
     public GlowingMushroomFeature() {
         super(Config.CODEC);
@@ -138,36 +145,23 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
     ) {
         int capDiameter = config.capDiameter().sample(random);
         int capHeight = (capDiameter + 1) / 2;
-        int stemBaseDiameter = 5 + random.nextInt(2);
-        int stemTopDiameter = 3 + random.nextInt(2);
-        int stemWaistDiameter = Math.min(
-                config.stemWaistDiameter().sample(random),
-                Math.min(stemBaseDiameter, stemTopDiameter) - 1
-        );
-        stemWaistDiameter = Math.max(2, stemWaistDiameter);
-
-        List<BlockPos> stem = createStemPositions(
-                base,
-                stemHeight,
-                capHeight,
-                capDiameter,
-                stemBaseDiameter,
-                stemWaistDiameter,
-                stemTopDiameter
-        );
         CapGeometry cap = createCapGeometry(base, stemHeight, capDiameter, capHeight);
 
-        Set<BlockPos> placedStem = new HashSet<>(tiltPositions(stem, base, capDiameter, tilt));
         Set<BlockPos> placedCap = new HashSet<>(tiltPositions(cap.outer(), base, capDiameter, tilt));
         fillCapSlices(placedCap);
         Set<BlockPos> cavity = new HashSet<>(tiltPositions(cap.cavity(), base, capDiameter, tilt));
         placedCap.removeAll(cavity);
-        Set<BlockPos> crown = new HashSet<>(tiltPositions(cap.crown(), base, capDiameter, tilt));
-        placedStem.removeAll(placedCap);
-        keepLowestConnectedComponent(placedStem);
         keepLargestConnectedComponent(placedCap);
-        crown.retainAll(placedCap);
-        connectStemToCrown(placedStem, placedCap, crown);
+        Set<BlockPos> placedStem = createStem(
+                base,
+                stemHeight,
+                capHeight,
+                capDiameter,
+                config.stemWaistDiameter().sample(random),
+                random,
+                tilt
+        );
+        placedStem.removeAll(placedCap);
         adaptStemBaseToTerrain(level, placedStem, placedCap, base);
         return new MushroomShape(placedStem, placedCap);
     }
@@ -272,40 +266,25 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
 
     private static Tilt sampleTilt(RandomSource random, double minDegrees, double maxDegrees, double direction) {
         double angle = Math.toRadians(minDegrees + random.nextDouble() * (maxDegrees - minDegrees));
-        return new Tilt(angle, direction);
+        return new Tilt(Math.sin(angle), Math.cos(angle), Math.cos(direction), Math.sin(direction));
     }
 
     private static List<BlockPos> tiltPositions(List<BlockPos> positions, BlockPos base, int capDiameter, Tilt tilt) {
-        if (tilt.angleRadians() == 0.0) {
-            return new ArrayList<>(positions);
-        }
-
         // Even-sized caps are centered half a block toward the negative axes by their source geometry.
         double centerOffset = capDiameter % 2 == 0 ? -0.5 : 0.0;
-        double directionX = Math.cos(tilt.directionRadians());
-        double directionZ = Math.sin(tilt.directionRadians());
-        double perpendicularX = -directionZ;
-        double perpendicularZ = directionX;
-        double cosTilt = Math.cos(tilt.angleRadians());
-        double sinTilt = Math.sin(tilt.angleRadians());
         Set<BlockPos> transformed = new HashSet<>();
 
         for (BlockPos pos : positions) {
-            double x = pos.getX() - base.getX() - centerOffset;
-            double y = pos.getY() - base.getY() + 0.5;
-            double z = pos.getZ() - base.getZ() - centerOffset;
-
-            double alongTilt = x * directionX + z * directionZ;
-            double acrossTilt = x * perpendicularX + z * perpendicularZ;
-            double rotatedAlong = alongTilt * cosTilt + y * sinTilt;
-            double rotatedY = -alongTilt * sinTilt + y * cosTilt;
-            double rotatedX = rotatedAlong * directionX + acrossTilt * perpendicularX;
-            double rotatedZ = rotatedAlong * directionZ + acrossTilt * perpendicularZ;
-
-            int blockX = (int) Math.floor(centerOffset + 0.5 + rotatedX);
-            int blockY = Math.max(0, (int) Math.floor(rotatedY));
-            int blockZ = (int) Math.floor(centerOffset + 0.5 + rotatedZ);
-            transformed.add(base.offset(blockX, blockY, blockZ));
+            Vec3 rotated = tilt.apply(
+                    pos.getX() - base.getX() - centerOffset,
+                    pos.getY() - base.getY() + 0.5,
+                    pos.getZ() - base.getZ() - centerOffset
+            );
+            transformed.add(base.offset(
+                    Mth.floor(centerOffset + 0.5 + rotated.x),
+                    Math.max(0, Mth.floor(rotated.y)),
+                    Mth.floor(centerOffset + 0.5 + rotated.z)
+            ));
         }
         return new ArrayList<>(transformed);
     }
@@ -378,96 +357,6 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
         blocks.retainAll(largest);
     }
 
-    private static void keepLowestConnectedComponent(Set<BlockPos> blocks) {
-        if (blocks.size() < 2) {
-            return;
-        }
-
-        Set<BlockPos> remaining = new HashSet<>(blocks);
-        Set<BlockPos> lowest = Set.of();
-        int lowestY = Integer.MAX_VALUE;
-        while (!remaining.isEmpty()) {
-            BlockPos start = remaining.iterator().next();
-            Set<BlockPos> component = new HashSet<>();
-            Deque<BlockPos> queue = new ArrayDeque<>();
-            remaining.remove(start);
-            queue.addLast(start);
-            int componentLowestY = start.getY();
-
-            while (!queue.isEmpty()) {
-                BlockPos pos = queue.removeFirst();
-                component.add(pos);
-                componentLowestY = Math.min(componentLowestY, pos.getY());
-                for (Direction direction : Direction.values()) {
-                    BlockPos neighbor = pos.relative(direction);
-                    if (remaining.remove(neighbor)) {
-                        queue.addLast(neighbor);
-                    }
-                }
-            }
-
-            if (componentLowestY < lowestY
-                    || (componentLowestY == lowestY && component.size() > lowest.size())) {
-                lowest = component;
-                lowestY = componentLowestY;
-            }
-        }
-        blocks.retainAll(lowest);
-    }
-
-    private static void connectStemToCrown(Set<BlockPos> stem, Set<BlockPos> cap, Set<BlockPos> crown) {
-        if (stem.isEmpty() || cap.isEmpty() || crown.isEmpty()) {
-            return;
-        }
-
-        int minX = Integer.MAX_VALUE;
-        int minY = Integer.MAX_VALUE;
-        int minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int maxY = Integer.MIN_VALUE;
-        int maxZ = Integer.MIN_VALUE;
-        for (BlockPos pos : cap) {
-            minX = Math.min(minX, pos.getX());
-            minY = Math.min(minY, pos.getY());
-            minZ = Math.min(minZ, pos.getZ());
-            maxX = Math.max(maxX, pos.getX());
-            maxY = Math.max(maxY, pos.getY());
-            maxZ = Math.max(maxZ, pos.getZ());
-        }
-        for (BlockPos pos : stem) {
-            minY = Math.min(minY, pos.getY());
-        }
-
-        Deque<BlockPos> queue = new ArrayDeque<>(stem);
-        Set<BlockPos> visited = new HashSet<>(stem);
-        Map<BlockPos, BlockPos> parents = new HashMap<>();
-
-        while (!queue.isEmpty()) {
-            BlockPos current = queue.removeFirst();
-            for (Direction direction : Direction.values()) {
-                BlockPos neighbor = current.relative(direction);
-                if (crown.contains(neighbor)) {
-                    BlockPos path = current;
-                    while (!stem.contains(path)) {
-                        if (!cap.contains(path)) {
-                            stem.add(path);
-                        }
-                        path = parents.get(path);
-                    }
-                    return;
-                }
-                if (neighbor.getX() < minX - 1 || neighbor.getX() > maxX + 1
-                        || neighbor.getY() < minY - 1 || neighbor.getY() > maxY + 1
-                        || neighbor.getZ() < minZ - 1 || neighbor.getZ() > maxZ + 1
-                        || cap.contains(neighbor) || !visited.add(neighbor)) {
-                    continue;
-                }
-                parents.put(neighbor, current);
-                queue.addLast(neighbor);
-            }
-        }
-    }
-
     private static CapGeometry createCapGeometry(
             BlockPos base,
             int stemHeight,
@@ -476,7 +365,6 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
     ) {
         List<BlockPos> outer = new ArrayList<>();
         List<BlockPos> cavity = new ArrayList<>();
-        List<BlockPos> crown = new ArrayList<>();
         double radius = diameter / 2.0;
         boolean evenDiameter = diameter % 2 == 0;
         int minOffset = -(diameter / 2);
@@ -502,9 +390,9 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
                     if (distanceSquared <= layerRadius * layerRadius + 1.0e-6) {
                         BlockPos pos = base.offset(x, stemHeight + layer, z);
                         outer.add(pos);
-                        if (layer >= height - 1) {
-                            crown.add(pos);
-                        } else if (innerRadius > 0.0
+                        // The top two layers stay solid: the stem ends where they begin.
+                        if (layer < height - 1
+                                && innerRadius > 0.0
                                 && distanceSquared < innerRadius * innerRadius - 1.0e-6) {
                             cavity.add(pos);
                         }
@@ -512,94 +400,105 @@ public class GlowingMushroomFeature extends Feature<GlowingMushroomFeature.Confi
                 }
             }
         }
-        return new CapGeometry(outer, cavity, crown);
+        return new CapGeometry(outer, cavity);
     }
 
-    private record Tilt(double angleRadians, double directionRadians) {
+    private record Tilt(double sin, double cos, double directionX, double directionZ) {
+
+        /** Leans a point around the foot of the mushroom's axis; the point is given from that foot. */
+        Vec3 apply(double x, double y, double z) {
+            double alongTilt = x * directionX + z * directionZ;
+            double acrossTilt = z * directionX - x * directionZ;
+            double rotatedAlong = alongTilt * cos + y * sin;
+            return new Vec3(
+                    rotatedAlong * directionX - acrossTilt * directionZ,
+                    y * cos - alongTilt * sin,
+                    rotatedAlong * directionZ + acrossTilt * directionX
+            );
+        }
     }
 
     private record SliceLine(int y, int fixed) {}
 
-    private record CapGeometry(List<BlockPos> outer, List<BlockPos> cavity, List<BlockPos> crown) {}
+    private record CapGeometry(List<BlockPos> outer, List<BlockPos> cavity) {}
 
     private record MushroomShape(Set<BlockPos> stem, Set<BlockPos> cap) {}
 
-    private static List<BlockPos> createStemPositions(
+    /**
+     * Discs strung on a line that leans with the cap and swerves from knot to knot, each knot with a
+     * thickness of its own: no two stems bend, swell and pinch alike. The line is built already leaning
+     * and its samples are close enough for neighbouring discs to share a block, so the stem has no gaps
+     * from the foot to the solid top of the cap.
+     */
+    private static Set<BlockPos> createStem(
             BlockPos base,
             int height,
             int capHeight,
             int capDiameter,
-            int baseDiameter,
             int waistDiameter,
-            int topDiameter
+            RandomSource random,
+            Tilt tilt
     ) {
-        List<BlockPos> positions = new ArrayList<>();
-        for (int y = 0; y < height; y++) {
-            double progress = height <= 1 ? 0.0 : y / (double) (height - 1);
-            double endDiameter = baseDiameter + (topDiameter - baseDiameter) * progress;
-            double hourglass = 4.0 * progress * (1.0 - progress);
-            double diameterAtLayer = waistDiameter + (endDiameter - waistDiameter) * (1.0 - hourglass);
-            int diameter = Math.max(waistDiameter, (int) Math.round(diameterAtLayer));
-            addDiscLayer(positions, base, y, diameter);
+        double axis = capDiameter % 2 == 0 ? 0.0 : 0.5;
+        double waistRadius = 0.5 + waistDiameter * 0.25;
+        int segments = Math.max(2, height / 2);
+        // Knots from the foot to the bottom of the cap, then one more where the solid top of the cap begins:
+        // a thin end there stays inside the cap however it leans.
+        double[] offsetX = new double[segments + 2];
+        double[] offsetZ = new double[segments + 2];
+        double[] radius = new double[segments + 2];
+        radius[0] = 2.25 + random.nextDouble() * 0.75;
+        double swerveDirection = random.nextDouble() * Math.PI * 2.0;
+        for (int knot = 1; knot < segments; knot++) {
+            // Each knot swerves to the other side of the axis than the one before, give or take a quarter turn.
+            swerveDirection += Math.PI + (random.nextDouble() - 0.5) * Math.PI;
+            double swerve = MIN_STEM_SWERVE + random.nextDouble() * (MAX_STEM_SWERVE - MIN_STEM_SWERVE);
+            offsetX[knot] = Math.cos(swerveDirection) * swerve;
+            offsetZ[knot] = Math.sin(swerveDirection) * swerve;
         }
+        for (int knot = 1; knot <= segments; knot++) {
+            radius[knot] = waistRadius + random.nextDouble() * MAX_STEM_BULGE;
+        }
+        radius[segments + 1] = waistRadius;
 
-        // Keep the connector white, then flare the inner stalk upward into the cap's crown.
-        boolean evenCap = capDiameter % 2 == 0;
-        int capAlignedDiameter = evenCap ? 4 : 3;
-        int innerStartDiameter = waistDiameter;
-        for (int layer = 0; layer < capHeight; layer++) {
-            double progress = layer / (double) (capHeight - 1);
-            double easedProgress = progress * progress * (3.0 - 2.0 * progress);
-            double diameterAtLayer = innerStartDiameter
-                    + (capAlignedDiameter - innerStartDiameter) * easedProgress;
-            addCapAlignedStemDiscLayer(
-                    positions,
+        Set<BlockPos> stem = new HashSet<>();
+        int top = height + capHeight - 1;
+        for (double y = 0.0; y <= top; y += STEM_SAMPLE_STEP) {
+            int knot = y < height ? (int) (y * segments / height) : segments;
+            double knotY = (double) height * knot / segments;
+            double nextKnotY = knot < segments ? (double) height * (knot + 1) / segments : top;
+            double progress = (y - knotY) / (nextKnotY - knotY);
+            double eased = progress * progress * (3.0 - 2.0 * progress);
+            Vec3 center = tilt.apply(
+                    Mth.lerp(eased, offsetX[knot], offsetX[knot + 1]),
+                    y,
+                    Mth.lerp(eased, offsetZ[knot], offsetZ[knot + 1])
+            );
+            addDisc(
+                    stem,
                     base,
-                    height + layer,
-                    diameterAtLayer,
-                    evenCap
+                    axis + center.x,
+                    Math.max(0, Mth.floor(center.y)),
+                    axis + center.z,
+                    Mth.lerp(eased, radius[knot], radius[knot + 1])
             );
         }
-        return positions;
+        return stem;
     }
 
-    private static void addDiscLayer(List<BlockPos> positions, BlockPos base, int y, int diameter) {
-        boolean evenDiameter = diameter % 2 == 0;
-        double centerOffset = evenDiameter ? 0.5 : 0.0;
-        int minOffset = -(diameter / 2);
-        int maxOffset = (diameter - 1) / 2;
-        double radius = Math.max(0.5, diameter / 2.0 - 0.25);
-        double radiusSquared = radius * radius;
-
-        for (int x = minOffset; x <= maxOffset; x++) {
-            double centeredX = x + centerOffset;
-            for (int z = minOffset; z <= maxOffset; z++) {
-                double centeredZ = z + centerOffset;
-                if (centeredX * centeredX + centeredZ * centeredZ <= radiusSquared + 1.0e-6) {
-                    positions.add(base.offset(x, y, z));
-                }
-            }
-        }
-    }
-
-    private static void addCapAlignedStemDiscLayer(
-            List<BlockPos> positions,
+    private static void addDisc(
+            Set<BlockPos> positions,
             BlockPos base,
+            double centerX,
             int y,
-            double diameter,
-            boolean evenCap
+            double centerZ,
+            double radius
     ) {
-        double centerOffset = evenCap ? 0.5 : 0.0;
-        double radius = diameter / 2.0;
-        double radiusSquared = radius * radius;
-        int minOffset = -2;
-        int maxOffset = evenCap ? 1 : 2;
-
-        for (int x = minOffset; x <= maxOffset; x++) {
-            double centeredX = x + centerOffset;
-            for (int z = minOffset; z <= maxOffset; z++) {
-                double centeredZ = z + centerOffset;
-                if (centeredX * centeredX + centeredZ * centeredZ <= radiusSquared + 1.0e-6) {
+        for (int x = Mth.floor(centerX - radius); x <= Mth.floor(centerX + radius); x++) {
+            double distanceX = x + 0.5 - centerX;
+            for (int z = Mth.floor(centerZ - radius); z <= Mth.floor(centerZ + radius); z++) {
+                double distanceZ = z + 0.5 - centerZ;
+                if (distanceX * distanceX + distanceZ * distanceZ <= radius * radius) {
                     positions.add(base.offset(x, y, z));
                 }
             }
