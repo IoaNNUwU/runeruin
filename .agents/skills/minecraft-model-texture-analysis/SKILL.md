@@ -56,6 +56,18 @@ python scripts/render_model.py exports/model.png glowing_mushroom --scale 24
 
 A bare name tries `runeruin:block/` then `runeruin:item/`. Blockstate rotations, cullfaces, emissive light and render types are not applied; transparency is blended in draw order.
 
+## Render an entity model
+
+`scripts/render_entity_model.py` renders a mob or any other entity model with a texture to one PNG: an isometric view of the front from above and of the back from below, the front, a side and the top. Entity models are built in Java, so the geometry comes from the game: `runData` writes every model layer, vanilla and ours, to `build/entity_models/<namespace>/<model>/<layer>.json`, as faces already built and posed by `ModelPart`. Run `runData` again after a change to a model; a change to a texture needs nothing. Use it for a new or changed entity model or texture instead of writing a renderer:
+
+```powershell
+python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/snail/snail
+python scripts/render_entity_model.py exports/cart.png minecraft:minecart runeruin:entity/minecart/runic_minecart
+python scripts/render_entity_model.py exports/charge.png minecraft:creeper exports/new_charge.png --layer armor
+```
+
+A bare model name tries `runeruin:` then `minecraft:`; the names are the `ModelLayerLocation`s (`ModelLayers` for vanilla). The texture is an id or a path to a PNG. Parts stand in their initial pose, without animation, and the shade is by direction, not the game's entity lighting.
+
 ## Assess model changes
 
 For Java mob models, trace the renderer/model registration to its atlas, then inspect `texOffs(...)`, box dimensions, texture scaling, and any per-face UV declarations in the model source. This project's Minecraft 26.2 source is `.mc-sources/net/minecraft/client/model/geom/ModelPart.java`; custom model code may define a different layout. For the standard `CubeListBuilder.texOffs(u, v).addBox(..., w, h, d)` layout, the source maps face rectangles as follows (coordinates are atlas pixels):

@@ -269,20 +269,25 @@ def main():
         print(f"error: {error}", file=sys.stderr)
         return 1
 
+    save_sheet(args.output, ref.identifier, panels)
+    return 0
+
+
+def save_sheet(output, title, panels):
+    """The panels in a row under the title, each with its name."""
     width = sum(image.width for _, image in panels) + GAP * (len(panels) + 1)
     height = max(image.height for _, image in panels) + LABEL_HEIGHT + GAP * 2 + 4
     sheet = Image.new("RGB", (width, height), BACKGROUND)
     draw = ImageDraw.Draw(sheet)
-    draw.text((GAP, 2), ref.identifier, fill=(230, 230, 230))
+    draw.text((GAP, 2), title, fill=(230, 230, 230))
     x = GAP
     for name, image in panels:
         draw.text((x, LABEL_HEIGHT), name, fill=(170, 170, 170))
         sheet.paste(image, (x, LABEL_HEIGHT + GAP + 4))
         x += image.width + GAP
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    sheet.save(args.output)
-    print(f"wrote {args.output} ({sheet.width}x{sheet.height})")
-    return 0
+    output.parent.mkdir(parents=True, exist_ok=True)
+    sheet.save(output)
+    print(f"wrote {output} ({sheet.width}x{sheet.height})")
 
 
 if __name__ == "__main__":

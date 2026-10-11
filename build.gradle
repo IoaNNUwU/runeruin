@@ -111,6 +111,9 @@ neoForge {
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+
+            // Entity models for scripts/render_entity_model.py: outside the resources, so not in the jar.
+            systemProperty 'runeruin.entityModels', layout.buildDirectory.dir('entity_models').get().asFile.absolutePath
         }
 
         // applies to all the run configs above
@@ -323,6 +326,11 @@ publishing {
             url "file://${project.projectDir}/repo"
         }
     }
+}
+
+// The entity model export runs only with runData and nothing refers to it: keep it out of the mod jar.
+tasks.named('jar', Jar).configure {
+    exclude '**/datagen/EntityModelExport*'
 }
 
 tasks.withType(JavaCompile).configureEach {

@@ -46,7 +46,7 @@ Work with GitHub, in this repository or in the user's fork (issues, pushing, pul
 1. `gradlew.bat compileJava`
 2. `gradlew.bat runData` — after any change to datagen, blocks/items, models, tags, loot or worldgen bootstrap
 3. `gradlew.bat runGameTestServer` — mod and datapack load, GameTests in `preview/RRGameTests`
-4. shapes: `runPreview` of the matching job and pictures from `scripts/render_preview.py` that you have looked at (`headless-preview` skill); models, textures, translations: `python scripts/lint_assets.py` after `runData`, and renders from `scripts/render_model.py` / `scripts/render_texture_tile.py`
+4. shapes: `runPreview` of the matching job and pictures from `scripts/render_preview.py` that you have looked at (`headless-preview` skill); models, textures, translations: `python scripts/lint_assets.py` after `runData`, and renders from `scripts/render_model.py` / `scripts/render_entity_model.py` / `scripts/render_texture_tile.py`
 5. `gradlew.bat build`
 
 Lighting, render layers, interaction and biome placement need the game: list them under "Check in game". Speed benchmarks (`benchmark` skill) are not a check: they run only on the user's command, once the user has closed other programs.
