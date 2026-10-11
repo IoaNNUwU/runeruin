@@ -1,11 +1,13 @@
 package ioann.uwu.runeruin.entities;
 
+import java.util.Comparator;
 import java.util.EnumSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,7 +22,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * A mini-boss: a huge ram overgrown with moss. Leaps onto its target, sending a shockwave over the ground from
- * where it lands, and calls Mossy Warriors when few of them are left around it.
+ * where it lands, calls Mossy Warriors when few of them are left around it, and throws those at hand at the target.
  */
 public class MossyProphet extends MossyRam {
     private static final double LEAP_MIN_DISTANCE = 4.0;
@@ -40,8 +42,14 @@ public class MossyProphet extends MossyRam {
     private static final int ENOUGH_WARRIORS = 3;
     private static final double WARRIOR_COUNT_RANGE = 16.0;
 
+    private static final double THROW_MIN_DISTANCE = 5.0;
+    private static final double THROW_MAX_DISTANCE = 16.0;
+    private static final double THROW_GRAB_RANGE = 6.0;
+    private static final int THROW_WINDUP_TICKS = 12;
+
     private int nextLeap;
     private int nextSummon;
+    private int nextThrow;
     private Vec3 shockwaveCenter;
     private double shockwaveReach;
 
@@ -66,7 +74,14 @@ public class MossyProphet extends MossyRam {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new SummonGoal());
-        this.goalSelector.addGoal(2, new LeapGoal());
+        this.goalSelector.addGoal(2, new ThrowGoal());
+        this.goalSelector.addGoal(3, new LeapGoal());
+    }
+
+    // A mob that rides a mob steers it; the warrior in the hands of the Prophet does not.
+    @Override
+    public LivingEntity getControllingPassenger() {
+        return null;
     }
 
     @Override
@@ -209,6 +224,82 @@ public class MossyProphet extends MossyRam {
         public void stop() {
             MossyProphet.this.setAction(Action.NONE);
             MossyProphet.this.nextLeap = MossyProphet.this.tickCount + 100 + MossyProphet.this.random.nextInt(60);
+        }
+    }
+
+    /** Lifts a warrior that stands close by over its head and throws it at the target. */
+    private class ThrowGoal extends Goal {
+        private LivingEntity target;
+        private MossyWarrior warrior;
+        private int time;
+
+        ThrowGoal() {
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.JUMP, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            this.target = MossyProphet.this.getTarget();
+            if (this.target == null || !MossyProphet.this.onGround() || MossyProphet.this.tickCount < MossyProphet.this.nextThrow) {
+                return false;
+            }
+            double distance = MossyProphet.this.distanceTo(this.target);
+            if (distance < THROW_MIN_DISTANCE || distance > THROW_MAX_DISTANCE) {
+                return false;
+            }
+            AABB reach = MossyProphet.this.getBoundingBox().inflate(THROW_GRAB_RANGE);
+            this.warrior = MossyProphet.this.level()
+                    .getEntitiesOfClass(MossyWarrior.class, reach, near -> near.isAlive() && near.onGround() && near.getAction() == Action.NONE)
+                    .stream()
+                    .min(Comparator.comparingDouble(near -> MossyProphet.this.distanceToSqr(near)))
+                    .orElse(null);
+            return this.warrior != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return this.time < THROW_WINDUP_TICKS && this.warrior.isAlive() && this.target.isAlive();
+        }
+
+        @Override
+        public boolean isInterruptable() {
+            return false;
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void start() {
+            this.time = 0;
+            MossyProphet.this.getNavigation().stop();
+            MossyProphet.this.setAction(Action.RAISE);
+            this.warrior.startRiding(MossyProphet.this, true, false);
+            MossyProphet.this.playSound(SoundEvents.GOAT_SCREAMING_PREPARE_RAM, 2.0F, 0.8F);
+        }
+
+        @Override
+        public void tick() {
+            MossyProphet.this.getLookControl().setLookAt(this.target, 30.0F, 30.0F);
+            if (++this.time == THROW_WINDUP_TICKS) {
+                // Dismounting puts the warrior on the ground beside the Prophet: back up into the hands.
+                Vec3 hands = this.warrior.position();
+                this.warrior.stopRiding();
+                this.warrior.snapTo(hands, MossyProphet.this.getYRot(), 0.0F);
+                this.warrior.throwAt(this.target);
+                MossyProphet.this.swing(InteractionHand.MAIN_HAND);
+            }
+        }
+
+        @Override
+        public void stop() {
+            if (this.warrior.getVehicle() == MossyProphet.this) {
+                this.warrior.stopRiding();
+            }
+            MossyProphet.this.setAction(Action.NONE);
+            MossyProphet.this.nextThrow = MossyProphet.this.tickCount + 80 + MossyProphet.this.random.nextInt(40);
         }
     }
 

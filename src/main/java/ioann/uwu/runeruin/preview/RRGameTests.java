@@ -125,6 +125,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("mossy_prophet_summons_warriors", () -> RRGameTests::mossyProphetSummonsWarriors);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_PROPHET_LEAP =
         TEST_FUNCTIONS.register("mossy_prophet_leap", () -> RRGameTests::mossyProphetLeap);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_PROPHET_THROWS_WARRIOR =
+        TEST_FUNCTIONS.register("mossy_prophet_throws_warrior", () -> RRGameTests::mossyProphetThrowsWarrior);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_WARRIOR_SPIN_JUMP =
         TEST_FUNCTIONS.register("mossy_warrior_spin_jump", () -> RRGameTests::mossyWarriorSpinJump);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
@@ -542,6 +544,13 @@ public final class RRGameTests {
             new FunctionGameTestInstance(
                 MOSSY_PROPHET_LEAP.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 160, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("mossy_prophet_throws_warrior"),
+            new FunctionGameTestInstance(
+                MOSSY_PROPHET_THROWS_WARRIOR.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
             )
         );
         event.registerTest(
@@ -1231,6 +1240,29 @@ public final class RRGameTests {
             helper.assertTrue(above.getHealth() == 200.0F, "the bystander above the ground has health " + above.getHealth());
             endFight(helper, y);
             helper.succeed();
+        });
+    }
+
+    // A warrior beside the Prophet goes up into its hands and from there at the target, which it then fights.
+    private static void mossyProphetThrowsWarrior(GameTestHelper helper) {
+        int y = 110;
+        fightFloor(helper, y);
+        // Enough warriors, so the Prophet does not call more; these two do not move and cannot be picked up.
+        for (int z = 2; z <= 3; z++) {
+            helper.spawn(RREntityTypes.MOSSY_WARRIOR.get(), new BlockPos(2, y, z)).setNoAi(true);
+        }
+        MossyWarrior warrior = helper.spawn(RREntityTypes.MOSSY_WARRIOR.get(), new BlockPos(6, y, 9));
+        MossyProphet prophet = helper.spawn(RREntityTypes.MOSSY_PROPHET.get(), new BlockPos(6, y, 12));
+        Snail target = fightTarget(helper, 16, y, 12);
+        prophet.setTarget(target);
+
+        boolean[] held = {false};
+        helper.onEachTick(() -> held[0] |= warrior.getVehicle() == prophet && warrior.getY() - prophet.getY() > 2.5);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(held[0], "the Prophet did not lift the warrior");
+            helper.assertTrue(target.getHealth() == 192.0F, "the target has health " + target.getHealth());
+            helper.assertTrue(warrior.getTarget() == target, "the thrown warrior fights " + warrior.getTarget());
+            endFight(helper, y);
         });
     }
 
