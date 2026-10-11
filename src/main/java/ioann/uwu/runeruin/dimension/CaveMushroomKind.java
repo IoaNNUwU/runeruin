@@ -17,7 +17,10 @@ import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvi
 import net.minecraft.world.level.levelgen.feature.stateproviders.WeightedStateProvider;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-/** The big cave mushroom varieties; every floor cave biome uses exactly one. */
+/**
+ * The big cave mushroom varieties; a spike biome of the Deep caves uses exactly one.
+ * TRUMPET and PINK_TWIST are parked for now (see PARKED_FEATURES in RRGameTests).
+ */
 public enum CaveMushroomKind {
     /** Short fat stem under a thick brown dome. */
     BROWN_DOME("brown_dome", Shape.DOME,

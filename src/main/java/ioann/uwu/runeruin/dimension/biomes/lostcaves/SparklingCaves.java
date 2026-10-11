@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.dimension.biomes.lostcaves;
 
-import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import ioann.uwu.runeruin.dimension.biomes.WaterDecorations;
 import net.minecraft.core.HolderGetter;
@@ -35,8 +34,6 @@ public class SparklingCaves {
         generation.addFeature(GenerationStep.Decoration.UNDERGROUND_DECORATION, NetherPlacements.SMALL_BASALT_COLUMNS);
 
         generation.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, NetherPlacements.DELTA);
-
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.PINK_TWIST.placedKey());
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);
