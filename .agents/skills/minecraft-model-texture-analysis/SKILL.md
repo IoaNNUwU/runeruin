@@ -56,6 +56,31 @@ python scripts/render_model.py exports/model.png glowing_mushroom --scale 24
 
 A bare name tries `runeruin:block/` then `runeruin:item/`. Blockstate rotations, cullfaces, emissive light and render types are not applied; transparency is blended in draw order.
 
+## Render an entity model
+
+`scripts/render_entity_model.py` renders a mob or any other entity model with a texture to one PNG: an isometric view of the front from above and of the back from below, the front, a side and the top. Entity models are built in Java, so the geometry comes from the game: `runData` writes every model layer, vanilla and ours, to `build/entity_models/<namespace>/<model>/<layer>.json`, the parts with their initial poses and the faces of their boxes as `ModelPart` builds them. Run `runData` again after a change to a model; a change to a texture needs nothing. Use it for a new or changed entity model or texture instead of writing a renderer:
+
+```powershell
+python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/snail/snail
+python scripts/render_entity_model.py exports/cart.png minecraft:minecart runeruin:entity/minecart/runic_minecart
+python scripts/render_entity_model.py exports/charge.png minecraft:creeper exports/new_charge.png --layer armor
+```
+
+A bare model name tries `runeruin:` then `minecraft:`; the names are the `ModelLayerLocation`s (`ModelLayers` for vanilla). The texture is an id or a path to a PNG. The shade is by direction, not the game's entity lighting.
+
+`--view` replaces the five views with cameras at `yaw,pitch` in degrees. Yaw goes around the model: 0 the front, 90 its right side, 180 the back, 270 its left side. Pitch is the height of the camera: 90 straight above, -90 straight below.
+
+```powershell
+python scripts/render_entity_model.py exports/cow.png minecraft:cow entity/cow/cow_temperate --view 20,10 160,45 300,-60
+```
+
+Parts stand in their initial pose: the script does not run `setupAnim`. `--pose` changes the pose as an animation would, by the fields of `ModelPart`: `<part>.<field>=<value>` sets and `+=` adds to `x`, `y`, `z` (1/16 block), `xRot`, `yRot`, `zRot` (degrees here, radians in the game) or `xScale`, `yScale`, `zScale`. A part is its name or its path (`body/head`), the root is `root`; its children move with it. An unknown part lists the parts of the model. Use it to check the pivots of the parts and the poses an animation is going to set:
+
+```powershell
+python scripts/render_entity_model.py exports/cow_walk.png minecraft:cow entity/cow/cow_temperate --pose head.xRot=25 right_front_leg.xRot=-35 left_front_leg.xRot=35
+python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/snail/snail --view 45,30 0,0 --pose left_antenna.zRot+=-30 head.y+=-2
+```
+
 ## Assess model changes
 
 For Java mob models, trace the renderer/model registration to its atlas, then inspect `texOffs(...)`, box dimensions, texture scaling, and any per-face UV declarations in the model source. This project's Minecraft 26.2 source is `.mc-sources/net/minecraft/client/model/geom/ModelPart.java`; custom model code may define a different layout. For the standard `CubeListBuilder.texOffs(u, v).addBox(..., w, h, d)` layout, the source maps face rectangles as follows (coordinates are atlas pixels):
