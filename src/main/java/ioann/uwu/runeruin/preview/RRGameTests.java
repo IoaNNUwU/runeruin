@@ -1092,9 +1092,23 @@ public final class RRGameTests {
         }
     }
 
-    /** A track of 16 rails to the east that climbs one block after the fifth; returns its first rail. */
+    // Above everything that other tests build: the mushroom of glowing_mushroom_bonemeal hangs its cap
+    // over the next row of tests, up to Y 18.
+    private static final int TRACK_Y = 32;
+
+    /**
+     * The block at the given X of the chunk of a test. Entities tick only in the chunks of the test
+     * structures, and the server puts those at a random place in every run: a minecart that leaves the
+     * chunk of its test stops for good, unless a test next to it happens to hold the chunk it enters.
+     */
+    private static BlockPos inTestChunk(GameTestHelper helper, int x, int y) {
+        BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        return origin.offset(x - (origin.getX() & 15), y, 0);
+    }
+
+    /** A track of 16 rails to the east, across the chunk of the test, that climbs one block after the fifth; returns its first rail. */
     private static BlockPos slopedTrack(GameTestHelper helper, int y, Block rail) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, y, 0));
+        BlockPos base = inTestChunk(helper, 0, y);
         var level = helper.getLevel();
         for (int x = 0; x < 16; x++) {
             int step = x < 6 ? 0 : 1;
@@ -1107,7 +1121,7 @@ public final class RRGameTests {
 
     // An empty minecart loses 4% of its speed every tick on a vanilla rail and slides back down a slope.
     private static void runicRailKeepsSpeed(GameTestHelper helper) {
-        BlockPos base = slopedTrack(helper, 5, RRBlocks.RUNIC_RAIL.get());
+        BlockPos base = slopedTrack(helper, TRACK_Y, RRBlocks.RUNIC_RAIL.get());
         var level = helper.getLevel();
 
         double speed = 0.2;
@@ -1128,8 +1142,8 @@ public final class RRGameTests {
     // On vanilla rails a minecart with a rider slows down, most of all on a slope, and an empty one
     // at this speed rolls on for five blocks.
     private static void runicMinecartKeepsSpeed(GameTestHelper helper) {
-        // Higher than the tracks of the runic rail tests, which start a few blocks aside.
-        BlockPos base = slopedTrack(helper, 19, Blocks.RAIL);
+        // Higher than the tracks of the runic rail tests, which can lie in the same chunk.
+        BlockPos base = slopedTrack(helper, TRACK_Y + 14, Blocks.RAIL);
         var level = helper.getLevel();
 
         double speed = 0.2;
@@ -1309,8 +1323,8 @@ public final class RRGameTests {
 
     // On a vanilla rail that lies across its way a minecart turns aside.
     private static void runicRailCrossing(GameTestHelper helper) {
-        // Higher than the track of runic_rail_keeps_speed, which starts a few blocks aside.
-        BlockPos base = helper.absolutePos(new BlockPos(0, 12, 0));
+        // Higher than the track of runic_rail_keeps_speed, which can lie in the same chunk.
+        BlockPos base = inTestChunk(helper, 8, TRACK_Y + 7);
         var level = helper.getLevel();
         BlockState rail = RRBlocks.RUNIC_RAIL.get().defaultBlockState();
         for (int i = -5; i <= 5; i++) {
