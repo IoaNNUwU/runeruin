@@ -9,6 +9,7 @@ import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
 import ioann.uwu.runeruin.dimension.RRStructureTypes;
+import ioann.uwu.runeruin.entities.MossyRam;
 import ioann.uwu.runeruin.entities.RREntityTypes;
 import ioann.uwu.runeruin.entities.Snail;
 import ioann.uwu.runeruin.items.RRItems;
@@ -35,6 +36,7 @@ public class RuneRuinMod {
 
         modEventBus.addListener(this::addBlockEntityTypes);
         modEventBus.addListener(this::addDispenserBehaviors);
+        modEventBus.addListener(MossyRam::registerAttributes);
         modEventBus.addListener(Snail::registerAttributes);
         modEventBus.addListener(Snail::registerSpawnPlacements);
 

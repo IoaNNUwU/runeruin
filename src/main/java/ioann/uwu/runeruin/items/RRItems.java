@@ -84,6 +84,18 @@ public class RRItems {
             )))
     );
 
+    public static final DeferredItem<Item> MOSSY_PROPHET_SPAWN_EGG = REGISTRY.registerItem(
+            "mossy_prophet_spawn_egg",
+            SpawnEggItem::new,
+            properties -> properties.spawnEgg(RREntityTypes.MOSSY_PROPHET.get())
+    );
+
+    public static final DeferredItem<Item> MOSSY_WARRIOR_SPAWN_EGG = REGISTRY.registerItem(
+            "mossy_warrior_spawn_egg",
+            SpawnEggItem::new,
+            properties -> properties.spawnEgg(RREntityTypes.MOSSY_WARRIOR.get())
+    );
+
     public static final DeferredItem<Item> SNAIL_SPAWN_EGG = REGISTRY.registerItem(
             "snail_spawn_egg",
             SpawnEggItem::new,
