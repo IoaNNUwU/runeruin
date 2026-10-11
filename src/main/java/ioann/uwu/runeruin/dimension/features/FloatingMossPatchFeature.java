@@ -77,8 +77,9 @@ public class FloatingMossPatchFeature extends Feature<FloatingMossPatchFeature.C
         }
 
         // Worldgen sends no shape updates, so the moss is joined by hand, to the moss of other rafts too.
-        for (int dx = -MAX_REACH - 1; dx <= MAX_REACH + 1; dx++) {
-            for (int dz = -MAX_REACH - 1; dz <= MAX_REACH + 1; dz++) {
+        int reach = Math.max(width, length) + 1;
+        for (int dx = -reach; dx <= reach; dx++) {
+            for (int dz = -reach; dz <= reach; dz++) {
                 pos.setWithOffset(centre, dx, 0, dz);
                 BlockState state = level.getBlockState(pos);
                 if (state.is(block)) {
@@ -97,7 +98,7 @@ public class FloatingMossPatchFeature extends Feature<FloatingMossPatchFeature.C
     }
 
     /** Still water with air above it: the only place where floating moss lies on the surface. */
-    private static boolean isOpenWater(WorldGenLevel level, BlockPos pos) {
+    static boolean isOpenWater(WorldGenLevel level, BlockPos pos) {
         return level.getBlockState(pos).is(Blocks.WATER) && level.getFluidState(pos).isSource() && level.isEmptyBlock(pos.above());
     }
 

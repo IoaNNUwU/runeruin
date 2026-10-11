@@ -79,6 +79,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch_underwater");
     public static final ResourceKey<ConfiguredFeature<?, ?>> FLOATING_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "floating_moss_patch");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_FLOATING_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_floating_moss_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_SEAGRASS =RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_KELP = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_kelp");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_deep_roots");
@@ -440,14 +441,15 @@ public class RRConfiguredFeatures {
         for (int age = 0; age <= 3; age++) {
             floatingMossVegetation.add(RRBlocks.WISPBERRY_BUSH.get().defaultBlockState().setValue(WispberryBushBlock.AGE, age), 4);
         }
+        BlockStateProvider floatingMossPlants = new WeightedStateProvider(floatingMossVegetation);
         ctx.register(FLOATING_MOSS_PATCH, new ConfiguredFeature<>(
                 RRFeatures.FLOATING_MOSS_PATCH.get(),
-                new FloatingMossPatchFeature.Config(
-                        UniformInt.of(7, 11),
-                        UniformInt.of(10, 15),
-                        new WeightedStateProvider(floatingMossVegetation),
-                        0.6F
-                )
+                new FloatingMossPatchFeature.Config(UniformInt.of(7, 11), UniformInt.of(10, 15), floatingMossPlants, 0.6F)
+        ));
+        // Placed by a goblet moss patch up to 8 blocks from its origin: a longer raft would leave the patch's chunks.
+        ctx.register(SMALL_FLOATING_MOSS_PATCH, new ConfiguredFeature<>(
+                RRFeatures.FLOATING_MOSS_PATCH.get(),
+                new FloatingMossPatchFeature.Config(UniformInt.of(3, 5), UniformInt.of(5, 7), floatingMossPlants, 0.6F)
         ));
 
         ctx.register(GOBLET_SEAGRASS, new ConfiguredFeature<>(

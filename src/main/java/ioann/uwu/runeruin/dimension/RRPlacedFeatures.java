@@ -373,7 +373,7 @@ public class RRPlacedFeatures {
 
         ctx.register(FLOATING_MOSS_PATCH, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.FLOATING_MOSS_PATCH),
-                gobletUnderwaterPlacement(RarityFilter.onAverageOnceEvery(3))
+                gobletUnderwaterPlacement(RarityFilter.onAverageOnceEvery(9))
         ));
         ctx.register(GOBLET_SEAGRASS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_SEAGRASS),
