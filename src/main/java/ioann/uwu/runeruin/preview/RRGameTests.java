@@ -14,7 +14,6 @@ import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.RRBiomes;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
-import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
@@ -319,17 +318,11 @@ public final class RRGameTests {
     }
     // Registered biomes that never generate. biome_registry_complete fails if one of them generates.
     private static final Set<ResourceKey<Biome>> PARKED_BIOMES = Set.of(RRBiomes.GHOST_GROVE);
-    // Registered placed features that no biome uses for now: mushrooms grow only in the Deep caves.
+    // Registered placed features that no biome uses for now: big mushrooms grow only in the Deep caves.
     // biome_registry_complete fails if a biome uses one of them.
     private static final Set<ResourceKey<PlacedFeature>> PARKED_FEATURES = Set.of(
         CaveMushroomKind.TRUMPET.placedKey(),
-        CaveMushroomKind.PINK_TWIST.placedKey(),
-        RRPlacedFeatures.SMALL_RED_WALL_MUSHROOM,
-        RRPlacedFeatures.BIG_RED_WALL_MUSHROOM,
-        RRPlacedFeatures.SMALL_BROWN_WALL_MUSHROOM,
-        RRPlacedFeatures.BIG_BROWN_WALL_MUSHROOM,
-        RRPlacedFeatures.ASHEN_WALL_MUSHROOM_UPPER,
-        RRPlacedFeatures.ASHEN_WALL_MUSHROOM_CLUSTER_UPPER
+        CaveMushroomKind.PINK_TWIST.placedKey()
     );
 
     private RRGameTests() {}
