@@ -13,6 +13,7 @@ import ioann.uwu.runeruin.preview.jobs.GobletMossPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.HangingTracksPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.MiniVolcanoPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.MonolithPreviewJob;
+import ioann.uwu.runeruin.preview.jobs.PirateShipwreckPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.TerrainBenchmarkPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.TerrainRegionPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.WaterLilyPreviewJob;
@@ -39,6 +40,7 @@ public final class PreviewCatalog {
         register(new BaobabPreviewJob());
         register(new DinosaurSkeletonPreviewJob());
         register(new HangingTracksPreviewJob());
+        register(new PirateShipwreckPreviewJob());
         register(new GlowingMushroomPreviewJob());
         register(new AshenMushroomPreviewJob());
         register(new CaveMushroomPreviewJob());

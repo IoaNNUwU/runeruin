@@ -23,6 +23,8 @@ import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
+import ioann.uwu.runeruin.dimension.structures.PirateShipwreckGenerator;
+import ioann.uwu.runeruin.dimension.structures.PirateShipwreckStructure;
 import ioann.uwu.runeruin.entities.RREntityTypes;
 import ioann.uwu.runeruin.entities.RunicMinecart;
 import ioann.uwu.runeruin.items.RRItems;
@@ -146,6 +148,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("blooming_caves_ceiling", () -> RRGameTests::bloomingCavesCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PIRATE_SHIPWRECK_RESTING =
+        TEST_FUNCTIONS.register("pirate_shipwreck_resting", () -> RRGameTests::pirateShipwreckResting);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -495,6 +499,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("pirate_shipwreck_resting"),
+            new FunctionGameTestInstance(
+                PIRATE_SHIPWRECK_RESTING.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -602,6 +613,51 @@ public final class RRGameTests {
                     "seed " + seed + " has " + Math.round(share * 100.0) + "% of the skeleton in the floor");
             }
             helper.assertTrue(placed >= 24, "only " + placed + " of 32 skeletons found a height with 20-50% in the floor");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // A ship picks its height from the floor noise before its chunks exist, so that noise must give the floor the
+    // terrain builds. Then its keel lies in the floor, and nothing of it goes through the crust into the Deep caves.
+    private static void pirateShipwreckResting(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, 1);
+            IntBinaryOperator floorY = (x, z) -> PirateShipwreckStructure.floorY(x, z, randomState);
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, 1,
+                new BoundingBox(0, Const.BLOOMING_CAVES_Y, 0, 15, Const.BLOOMING_CAVES_Y + Const.TERRAIN_HEIGHT + 1, 15));
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    int y = floorY.applyAsInt(x, z);
+                    helper.assertTrue(!terrain.get(pos.set(x, y, z)).isAir() && terrain.get(pos.set(x, y + 1, z)).isAir(),
+                        "the blooming caves floor at " + x + " " + z + " does not end at Y " + y);
+                }
+            }
+
+            int placed = 0;
+            for (int seed = 1; seed <= 32; seed++) {
+                PirateShipwreckGenerator.Ship ship = PirateShipwreckGenerator.generate(seed);
+                helper.assertTrue(ship.equals(PirateShipwreckGenerator.generate(seed)), "seed " + seed + " built two different ships");
+                int x = seed * 100;
+                OptionalInt y = PirateShipwreckStructure.restingY(ship, x, 0, floorY);
+                if (y.isEmpty()) {
+                    continue;
+                }
+                placed++;
+                for (BlockPos keel : ship.keel()) {
+                    helper.assertTrue(y.getAsInt() + keel.getY() < floorY.applyAsInt(x + keel.getX(), keel.getZ()),
+                        "seed " + seed + " has the keel above the floor at " + keel.toShortString());
+                }
+                for (BlockPos block : ship.blocks().keySet()) {
+                    int floor = floorY.applyAsInt(x + block.getX(), block.getZ());
+                    helper.assertTrue(floor - (y.getAsInt() + block.getY()) <= DeepCavesGen.CRUST,
+                        "seed " + seed + " goes through the floor at " + block.toShortString());
+                }
+            }
+            helper.assertTrue(placed >= 8, "the floor holds only " + placed + " of 32 ships");
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());

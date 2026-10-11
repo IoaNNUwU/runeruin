@@ -34,5 +34,9 @@ public class DatagenBiomeTagProvider extends BiomeTagsProvider {
                 .add(RRBiomes.DEEP_ROOTS)
                 .add(RRBiomes.DEEP_INVERTED_FOREST);
 
+        // Not the Swamp jungle: baobabs fill it from end to end.
+        this.tag(RRBiomeTags.HAS_PIRATE_SHIPWRECK)
+                .add(RRBiomes.STONE_FOREST);
+
     }
 }

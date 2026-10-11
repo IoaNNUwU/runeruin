@@ -11,4 +11,5 @@ public class RRBiomeTags {
     public static final TagKey<Biome> HAS_BAOBAB = RR.tagKey(Registries.BIOME, "has_baobab");
     public static final TagKey<Biome> HAS_DINOSAUR_SKELETON = RR.tagKey(Registries.BIOME, "has_dinosaur_skeleton");
     public static final TagKey<Biome> HAS_HANGING_TRACKS = RR.tagKey(Registries.BIOME, "has_hanging_tracks");
+    public static final TagKey<Biome> HAS_PIRATE_SHIPWRECK = RR.tagKey(Registries.BIOME, "has_pirate_shipwreck");
 }
