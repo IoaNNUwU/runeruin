@@ -21,14 +21,12 @@ public class DeepslateSpikeCaves {
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
 
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.ASHEN_WALL_MUSHROOM_CLUSTER);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.ASHEN_WALL_MUSHROOM);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CavePlacements.CLASSIC_VINES);
         WaterDecorations.add(generation);
 
         generation.addFeature(GenerationStep.Decoration.RAW_GENERATION, RRPlacedFeatures.DEEP_DEEPSLATE_SPIKE);
 
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.TRUMPET.placedKey());
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, CaveMushroomKind.RED_ARCH.placedKey());
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.DEEP_MOSS_SPROUTS);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()

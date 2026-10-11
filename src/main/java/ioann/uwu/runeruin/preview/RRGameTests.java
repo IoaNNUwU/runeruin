@@ -8,11 +8,13 @@ import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
 import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.RRBiomes;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
+import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
@@ -78,6 +80,7 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -316,6 +319,18 @@ public final class RRGameTests {
     }
     // Registered biomes that never generate. biome_registry_complete fails if one of them generates.
     private static final Set<ResourceKey<Biome>> PARKED_BIOMES = Set.of(RRBiomes.GHOST_GROVE);
+    // Registered placed features that no biome uses for now: mushrooms grow only in the Deep caves.
+    // biome_registry_complete fails if a biome uses one of them.
+    private static final Set<ResourceKey<PlacedFeature>> PARKED_FEATURES = Set.of(
+        CaveMushroomKind.TRUMPET.placedKey(),
+        CaveMushroomKind.PINK_TWIST.placedKey(),
+        RRPlacedFeatures.SMALL_RED_WALL_MUSHROOM,
+        RRPlacedFeatures.BIG_RED_WALL_MUSHROOM,
+        RRPlacedFeatures.SMALL_BROWN_WALL_MUSHROOM,
+        RRPlacedFeatures.BIG_BROWN_WALL_MUSHROOM,
+        RRPlacedFeatures.ASHEN_WALL_MUSHROOM_UPPER,
+        RRPlacedFeatures.ASHEN_WALL_MUSHROOM_CLUSTER_UPPER
+    );
 
     private RRGameTests() {}
 
@@ -913,7 +928,7 @@ public final class RRGameTests {
     }
 
     // Every mod biome generates or is parked, has its own terrain surface and filters its features
-    // by biome; every mod placed feature is used by some mod biome, directly or nested in another.
+    // by biome; every mod placed feature is used by some mod biome, directly or nested in another, or is parked.
     private static void biomeRegistryComplete(GameTestHelper helper) {
         RegistryAccess registries = helper.getLevel().registryAccess();
         Registry<Biome> biomeRegistry = registries.lookupOrThrow(Registries.BIOME);
@@ -938,8 +953,13 @@ public final class RRGameTests {
             }));
         });
         registries.lookupOrThrow(Registries.PLACED_FEATURE).listElements()
-            .filter(placed -> isModKey(placed.key()) && !usedFeatures.contains(placed.value().feature().value()))
-            .forEach(placed -> problems.add(placed.key().identifier() + " is not used by any biome"));
+            .filter(placed -> isModKey(placed.key()))
+            .forEach(placed -> {
+                boolean parked = PARKED_FEATURES.contains(placed.key());
+                if (usedFeatures.contains(placed.value().feature().value()) == parked) {
+                    problems.add(placed.key().identifier() + (parked ? " is parked but used by a biome" : " is not used by any biome; attach it to a biome or add it to PARKED_FEATURES"));
+                }
+            });
         helper.assertTrue(problems.isEmpty(), String.join("; ", problems));
         helper.succeed();
     }

@@ -1,7 +1,6 @@
 package ioann.uwu.runeruin.dimension.biomes.toplayer;
 
 import ioann.uwu.runeruin.dimension.RRConfiguredCarvers;
-import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
 import net.minecraft.data.worldgen.biome.OverworldBiomes;
@@ -28,10 +27,6 @@ public class SimilarForest {
         mobs.addSpawn(MobCategory.CREATURE, 5, new MobSpawnSettings.SpawnerData(EntityTypes.WOLF, 4, 4));
 
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.SMALL_RED_WALL_MUSHROOM);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.SMALL_BROWN_WALL_MUSHROOM);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.BIG_RED_WALL_MUSHROOM);
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.BIG_BROWN_WALL_MUSHROOM);
 
         generation.addCarver(RRConfiguredCarvers.TOP_LAYER_CAVES);
         generation.addFeature(GenerationStep.Decoration.LAKES, MiscOverworldPlacements.LAKE_LAVA_UNDERGROUND);
@@ -49,7 +44,6 @@ public class SimilarForest {
         BiomeDefaultFeatures.addBushes(generation);
         BiomeDefaultFeatures.addDefaultFlowers(generation);
         BiomeDefaultFeatures.addForestGrass(generation);
-        BiomeDefaultFeatures.addDefaultMushrooms(generation);
         BiomeDefaultFeatures.addDefaultExtraVegetation(generation, true);
 
         BiomeSpecialEffects effects = new BiomeSpecialEffects.Builder()
