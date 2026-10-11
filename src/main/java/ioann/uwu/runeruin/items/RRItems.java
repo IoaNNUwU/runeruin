@@ -10,6 +10,7 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.food.Foods;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.MinecartItem;
 import net.minecraft.world.item.SolidBucketItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.Consumable;
@@ -67,6 +68,12 @@ public class RRItems {
             "powdered_moss_bucket",
             p -> new SolidBucketItem(RRBlocks.POWDERED_MOSS.get(), SoundEvents.BUCKET_EMPTY_POWDER_SNOW, p),
             p -> p.stacksTo(1).useItemDescriptionPrefix()
+    );
+
+    public static final DeferredItem<Item> RUNIC_MINECART = REGISTRY.registerItem(
+            "runic_minecart",
+            p -> new MinecartItem(RREntityTypes.RUNIC_MINECART.get(), p),
+            p -> p.stacksTo(1)
     );
 
     public static final DeferredItem<Item> SNAIL_SPAWN_EGG = REGISTRY.registerItem(

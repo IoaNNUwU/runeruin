@@ -2,11 +2,13 @@ package ioann.uwu.runeruin.dimension.structures;
 
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
 import ioann.uwu.runeruin.dimension.structures.HangingTracksLayout.Port;
+import ioann.uwu.runeruin.loottables.RRLootTables;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.RailShape;
@@ -423,6 +425,9 @@ public abstract class HangingTrackPiece extends HangingPiece {
             squareDeck(canvas, extent);
             if (extent > 2) {
                 stationRailing(canvas, extent);
+                // The chest with the runic minecart of the network, in a corner behind the railing.
+                canvas.container(1, 1, 1 - extent, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, side(1)),
+                        RRLootTables.HANGING_TRACKS_STATION);
             }
 
             Direction[] directions = {this.facing.getOpposite(), side(-1), side(1), this.facing};

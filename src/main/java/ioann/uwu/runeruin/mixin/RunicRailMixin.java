@@ -1,12 +1,15 @@
 package ioann.uwu.runeruin.mixin;
 
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.entities.RunicMinecart;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.entity.vehicle.minecart.MinecartBehavior;
 import net.minecraft.world.entity.vehicle.minecart.OldMinecartBehavior;
+import net.minecraft.world.level.block.PoweredRailBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -16,17 +19,27 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** On a runic rail a minecart keeps the speed it came with; only its rider changes it. */
+/**
+ * On a runic rail a minecart keeps the speed it came with; only its rider changes it. A runic minecart does
+ * the same on any rail while someone rides it, and stops soon once it is empty. Powered rails, switched on
+ * or off, treat it like any other minecart.
+ */
 @Mixin(OldMinecartBehavior.class)
 public abstract class RunicRailMixin extends MinecartBehavior {
 
     // A rider reaches the top speed in about three seconds of holding forward.
     @Unique
     private static final double RIDER_ACCELERATION = 0.008;
+    // What an empty runic minecart keeps of its speed each tick: it stops within three blocks.
+    @Unique
+    private static final double EMPTY_BRAKE = 0.8;
 
-    /** The speed at the start of this tick, or -1 when the rail under the cart is not runic. */
+    /** The speed at the start of this tick, or -1 when nothing keeps it. */
     @Unique
     private double runeruin$keptSpeed = -1;
+    /** An empty runic minecart, away from runic and powered rails. */
+    @Unique
+    private boolean runeruin$brakes;
 
     protected RunicRailMixin(AbstractMinecart minecart) {
         super(minecart);
@@ -34,21 +47,29 @@ public abstract class RunicRailMixin extends MinecartBehavior {
 
     @Inject(method = "moveAlongTrack", at = @At("HEAD"))
     private void runeruin$rememberSpeed(ServerLevel level, CallbackInfo ci) {
-        boolean runic = level.getBlockState(this.minecart.getCurrentBlockPosOrRailBelow()).is(RRBlocks.RUNIC_RAIL);
-        this.runeruin$keptSpeed = runic ? this.getDeltaMovement().horizontalDistance() : -1;
+        BlockState rail = level.getBlockState(this.minecart.getCurrentBlockPosOrRailBelow());
+        boolean runicMinecart = this.minecart instanceof RunicMinecart
+                && !(rail.getBlock() instanceof PoweredRailBlock powered && !powered.isActivatorRail());
+        boolean keeps = rail.is(RRBlocks.RUNIC_RAIL) || runicMinecart && this.minecart.isVehicle();
+        this.runeruin$keptSpeed = keeps ? this.getDeltaMovement().horizontalDistance() : -1;
+        this.runeruin$brakes = runicMinecart && !keeps;
     }
 
     @ModifyConstant(method = "moveAlongTrack", constant = @Constant(doubleValue = 0.0078125))
     private double runeruin$doNotSlideOnSlopes(double slideSpeed) {
-        return this.runeruin$keptSpeed < 0 ? slideSpeed : 0;
+        return this.runeruin$keptSpeed < 0 && !this.runeruin$brakes ? slideSpeed : 0;
     }
 
     @Inject(method = "moveAlongTrack", at = @At("RETURN"))
     private void runeruin$keepSpeed(ServerLevel level, CallbackInfo ci) {
+        Vec3 movement = this.getDeltaMovement();
+        if (this.runeruin$brakes) {
+            this.setDeltaMovement(movement.multiply(EMPTY_BRAKE, 1.0, EMPTY_BRAKE));
+            return;
+        }
         if (this.runeruin$keptSpeed < 0) {
             return;
         }
-        Vec3 movement = this.getDeltaMovement();
         double speed = movement.horizontalDistance();
         // Standing still, or stopped by an obstacle this tick.
         if (speed < 1.0E-5) {
