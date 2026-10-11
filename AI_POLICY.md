@@ -46,6 +46,14 @@ If something in the mod looks like AI slop to you, [open an issue](https://githu
 
 All design decisions are made by a person. AI has no control over design.
 
+## Open questions
+
+Questions that may be controversial and are subject to change:
+
+- If local AI models become able to reach the results that frontier models reach today, a full move to them can be considered, because local models are more ethical than frontier models.
+- **Slop textures are acceptable during development.** There is an opinion on the internet that a picture drawn in Paint in a minute is better than an AI-generated texture. I do not agree: slop textures show what I have in mind more exactly and get me to the goal faster.
+- Does an AI agent have a soul?
+
 ## No labels on commits
 
 Commits and pull requests are not marked as made with AI one by one, and the git hooks refuse attribution lines such as `Co-Authored-By`. This means that every commit was made by a person, and that person is responsible for it. AI is a tool that can be replaced at any moment. The person who made the commit or the pull request is responsible for the work of AI, so we do not allow co-authorship with AI.
