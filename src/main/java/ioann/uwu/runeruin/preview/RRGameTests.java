@@ -629,6 +629,7 @@ public final class RRGameTests {
                         BlockState state = terrain.get(pos.set(x, y, z));
                         String at = " at " + x + " " + y + " " + z;
                         helper.assertTrue(y < ceilingY == state.isAir() || y > ceilingY, "the ceiling does not start at Y " + ceilingY + at);
+                        helper.assertTrue(y != ceilingY + 1 || !state.is(RRBlocks.DEEP_MOSS.get()), "the moss of the ceiling is two blocks thick" + at);
                         helper.assertTrue(y < floorY - 6 || !state.isAir(), "the floor of the Blooming caves is open" + at);
                         helper.assertTrue(y < floorY || !state.is(Blocks.STONE), "the floor of the Blooming caves has no surface" + at);
                         helper.assertTrue(y >= floorY - 6 || !state.is(RRBlocks.ARCANE_STONE.get()), "arcane stone under the Blooming caves" + at);

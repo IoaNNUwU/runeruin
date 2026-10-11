@@ -55,20 +55,11 @@ public class DeepCavesGen {
             for (int z = 0; z < 16; z++) {
                 for (int y = LOWEST_Y; y <= HIGHEST_Y; y++) {
                     boolean solid = ceiling.stone(x, y, z);
-                    // Under the Blooming caves the ceiling is built, in their floor it is dug out.
-                    if (solid != y >= BLOOMING_CAVES_Y) {
+                    if (solid && (y == LOWEST_Y || !ceiling.stone(x, y - 1, z))) {
+                        terrain.set(x, y, z, RRTerrainSurfaces.ceilingAt(chunk, pos.getMinBlockX() + x, y, pos.getMinBlockZ() + z, randomState));
+                    } else if (solid != y >= BLOOMING_CAVES_Y) {
+                        // Under the Blooming caves the ceiling is built, in their floor it is dug out.
                         terrain.set(x, y, z, solid ? stone : air);
-                    }
-                }
-                for (int y = LOWEST_Y; y <= HIGHEST_Y; y++) {
-                    if (!ceiling.stone(x, y, z) || y > LOWEST_Y && ceiling.stone(x, y - 1, z)) {
-                        continue;
-                    }
-                    BlockState surface = RRTerrainSurfaces.ceilingAt(chunk, pos.getMinBlockX() + x, y, pos.getMinBlockZ() + z, randomState);
-                    if (y == HIGHEST_Y || ceiling.stone(x, y + 1, z)) {
-                        RRTerrainSurfaces.placeCeilingSurface(terrain, x, y, z, surface);
-                    } else {
-                        terrain.set(x, y, z, surface);
                     }
                 }
             }
