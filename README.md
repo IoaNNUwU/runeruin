@@ -4,6 +4,8 @@
 
 ![](.github/assets/preview.png)
 
+- [AI usage policy](AI_POLICY.md)
+
 # World Structure
 
 ```
