@@ -2,13 +2,23 @@ package ioann.uwu.runeruin.dimension.structures;
 
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.dimension.RRStructureTypes;
+import ioann.uwu.runeruin.dimension.RRStructures;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_Y;
@@ -80,6 +90,27 @@ public class GiantGobletStructure extends Structure {
         }
 
         return true;
+    }
+
+    /**
+     * The goblets that reach into the chunk of this block, built or not: a goblet is known before any of its
+     * chunks is decorated. Only chunk generation can ask; anything placed later sees the blocks.
+     */
+    public static List<GiantGobletPiece> inChunkOf(WorldGenLevel level, BlockPos pos) {
+        if (!(level instanceof WorldGenRegion region)) {
+            return List.of();
+        }
+        Structure goblet = region.registryAccess().lookupOrThrow(Registries.STRUCTURE).getValueOrThrow(RRStructures.GIANT_GOBLET);
+        StructureManager structures = region.getLevel().structureManager().forWorldGenRegion(region);
+        List<GiantGobletPiece> goblets = new ArrayList<>();
+        for (StructureStart start : structures.startsForStructure(SectionPos.of(pos), goblet)) {
+            for (StructurePiece piece : start.getPieces()) {
+                if (piece instanceof GiantGobletPiece gobletPiece) {
+                    goblets.add(gobletPiece);
+                }
+            }
+        }
+        return goblets;
     }
 
     @Override
