@@ -8,8 +8,7 @@
     "RunicRailMixin"
   ],
   "client": [
-    "ClientLevelMixin",
-    "MinecartTextureMixin"
+    "ClientLevelMixin"
   ],
   "injectors": {
     "defaultRequire": 1
