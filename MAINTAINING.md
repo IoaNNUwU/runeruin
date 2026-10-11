@@ -20,7 +20,8 @@ A maintainer clones the main repository itself, without a fork, so `origin` is t
 - A pull request becomes ready for review only after the maintainer approves the agent's report.
 - A pull request by the maintainer the agent works for, including one the agent opened from their account, is merged right after the maintainer approves its report, once CI is green and the latest `main` is merged in. Pull requests by anyone else are merged only on an explicit request.
 - Merge with `gh pr merge <number> --squash`. GitHub deletes merged branches itself. Never pass `--delete-branch`: it also deletes the local branch, force-removes the task folder that has it checked out and wipes the shared Minecraft sources through the `.mc-sources` link. The Claude Code hook blocks it.
-- After the merge, update `main` in the main checkout (`git pull --ff-only`). Task folders are removed with `.\scripts\finish-task.ps1` when the maintainer asks.
+- After the approval the agent always watches the pull request until it is merged, then updates `main` in the main checkout (`git pull --ff-only`).
+- When the conversation was about this one task, the agent then removes its task folder with `.\scripts\finish-task.ps1` without asking. If the script refuses (uncommitted or untracked files, a running game that locks `build/`), the agent reports it and forces nothing. After a conversation about several tasks, folders are removed when the maintainer asks.
 
 ## Personal agent instructions
 
