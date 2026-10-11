@@ -29,6 +29,8 @@ public class RRCreativeModeTabs {
                     RRItems.POWDERED_MOSS_BUCKET.toStack(),
                     RRItems.RUNIC_MINECART.toStack(),
                     RRItems.SNAIL_SPAWN_EGG.toStack(),
+                    RRItems.MOSSY_PROPHET_SPAWN_EGG.toStack(),
+                    RRItems.MOSSY_WARRIOR_SPAWN_EGG.toStack(),
                     RRBlocks.LAPIS_LIGHT.toStack(),
 
                     // --- Blocks ---
