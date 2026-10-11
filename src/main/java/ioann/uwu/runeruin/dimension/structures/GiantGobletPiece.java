@@ -51,6 +51,7 @@ public class GiantGobletPiece extends StructurePiece {
     /** Packed (dx, dz) vein cells; filled on first chunk so later chunks reuse them. */
     private int[] mainVeins;
     private int[][] miniVeins;
+    private Arms arms;
 
     public static int bowlTopY(int height) {
         return Const.LOST_CAVES_Y + height;
@@ -147,7 +148,7 @@ public class GiantGobletPiece extends StructurePiece {
         int floorRim = innerRim;
         int spillInner = Math.max(innerRim - 1, 0);
 
-        Arms arms = Arms.create(this.seed, this.bowlRadius, baseY, pillarTopY);
+        Arms arms = arms();
 
         float hullMinR = mainHullMinR();
         placeMainGoblet(
@@ -161,6 +162,51 @@ public class GiantGobletPiece extends StructurePiece {
         );
         placeArms(level, chunkBB, stem, arms);
         placeMiniBowls(level, chunkBB, stem, bud, water, arms);
+    }
+
+    private Arms arms() {
+        if (this.arms == null) {
+            this.arms = Arms.create(this.seed, this.bowlRadius, Const.LOST_CAVES_Y, bowlBottomY(this.height) - 1);
+        }
+        return this.arms;
+    }
+
+    /**
+     * Whether the main cup or a side cup fills this block with the top block of its water. The answer does not
+     * depend on which chunks are built: a raft of floating moss reaches from a built chunk into the next one.
+     */
+    public boolean isWaterSurface(BlockPos pos) {
+        Arms arms = arms();
+        if (isWaterSurface(pos, this.centerX, this.centerZ, bowlTopY(this.height), this.bowlRadius, RIM_THICKNESS,
+                arms.spillAngles, arms.spillHalfAngle)) {
+            return true;
+        }
+        for (int i = 0; i < arms.count; i++) {
+            if (isWaterSurface(pos, this.centerX + arms.cupDx(i), this.centerZ + arms.cupDz(i), arms.miniRimTopY[i],
+                    arms.miniRadius, MINI_RIM_THICKNESS, arms.miniSpillAngles[i], arms.miniSpillHalf[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The water line of a cup, inside its rim and off its spillways. */
+    private static boolean isWaterSurface(
+            BlockPos pos,
+            int cx,
+            int cz,
+            int rimTopY,
+            int radius,
+            int rimThickness,
+            float[] spillAngles,
+            float[] spillHalf
+    ) {
+        int dx = pos.getX() - cx;
+        int dz = pos.getZ() - cz;
+        int d2 = dx * dx + dz * dz;
+        int innerRim = Math.max(radius - rimThickness, 0);
+        return pos.getY() == rimTopY - RIM_PEAK_ABOVE_WATER && insideSmooth(d2, innerRim)
+                && (insideSmooth(d2, Math.max(innerRim - 1, 0)) || !hitsSpill(dx, dz, spillAngles, spillHalf));
     }
 
     private void placeMainGoblet(
@@ -432,8 +478,8 @@ public class GiantGobletPiece extends StructurePiece {
         int hullSteps = miniHullSteps(arms.miniRadius);
         float hullMinR = miniHullMinR();
         for (int i = 0; i < arms.count; i++) {
-            int cupX = this.centerX + Math.round(arms.cos[i] * (PILLAR_RADIUS + arms.reach));
-            int cupZ = this.centerZ + Math.round(arms.sin[i] * (PILLAR_RADIUS + arms.reach));
+            int cupX = this.centerX + arms.cupDx(i);
+            int cupZ = this.centerZ + arms.cupDz(i);
             int rimTopY = arms.miniRimTopY[i];
             int floorTopY = rimTopY - RIM_PEAK_ABOVE_WATER - 1;
             placeBowl(
@@ -827,6 +873,14 @@ public class GiantGobletPiece extends StructurePiece {
 
         int extent() {
             return PILLAR_RADIUS + reach + miniRadius;
+        }
+
+        int cupDx(int arm) {
+            return Math.round(this.cos[arm] * (PILLAR_RADIUS + this.reach));
+        }
+
+        int cupDz(int arm) {
+            return Math.round(this.sin[arm] * (PILLAR_RADIUS + this.reach));
         }
 
         int minAttachY() {
