@@ -5,6 +5,7 @@ import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
@@ -149,6 +150,11 @@ public class RRBiomeSource extends BiomeSource {
                 ? BLOOMING_CAVES_Y
                 : DeepCavesGen.roofY(x, z, sampler);
 
+        // The ceiling of the Void rises into the floor of the Lost caves and keeps its biome there.
+        int voidTop = y <= LOST_CAVES_Y || y > VoidGen.HIGHEST_Y
+                ? LOST_CAVES_Y
+                : VoidGen.roofY(x, z, sampler);
+
         // Each layer starts above this Y, top to bottom like `layers`.
         int[] layerBottoms = {
                 baseLine,
@@ -157,7 +163,7 @@ public class RRBiomeSource extends BiomeSource {
                 DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
                 lostBaseLine,
                 LOST_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
-                LOST_CAVES_Y,
+                voidTop,
                 Integer.MIN_VALUE
         };
         int layer = 0;

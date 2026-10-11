@@ -128,11 +128,11 @@ Translations are hand-written in both `assets/runeruin/lang/en_us.json` and `ru_
 
 ## Worldgen
 
-Layers bottom → top (`Const`): Void `0…50` → Lost caves `LOST_CAVES_Y` 56 … `LOST_CAVES_CEILING_Y` 131 → Deep caves 137 … 212 → Blooming caves 218 … 293 → Top layer from `TOP_LAYER_Y` 294 to the build limit 512. The 5 blocks under the Lost caves and under the Blooming caves are rock; the ceiling of the Deep caves rises through it into the floor of the Blooming caves, up to `DeepCavesGen.roofY`.
+Layers bottom → top (`Const`): Void `0…50` → Lost caves `LOST_CAVES_Y` 56 … `LOST_CAVES_CEILING_Y` 131 → Deep caves 137 … 212 → Blooming caves 218 … 293 → Top layer from `TOP_LAYER_Y` 294 to the build limit 512. The 5 blocks under the Lost caves and under the Blooming caves are rock; the ceilings of the Void and of the Deep caves rise through it into the floor of the layer above, up to `VoidGen.roofY` and `DeepCavesGen.roofY`, and take their biomes along.
 
 Two independent systems:
 
-1. **Terrain**: `RRChunkGenerator.fillFromNoise` → `TopLayerAndBloomingCavesGen`, `DeepCavesGen` (deep caves ceiling), `DeepCavesAndLostCavesGen`, `VoidGen`; `TerracedCeiling` shapes the ceilings of the Deep and the Blooming caves; pillars and runes in `ArcaneStructureGen`; surface blocks per biome in `RRTerrainSurfaces`. Biomes do not carve the caves.
+1. **Terrain**: `RRChunkGenerator.fillFromNoise` → `TopLayerAndBloomingCavesGen`, `DeepCavesGen` (deep caves ceiling), `DeepCavesAndLostCavesGen`, `VoidGen`; `TerracedCeiling` shapes the ceilings of the Void, the Deep and the Blooming caves; pillars and runes in `ArcaneStructureGen`; surface blocks per biome in `RRTerrainSurfaces`. Biomes do not carve the caves.
 2. **Decoration**: the vanilla feature pipeline per biome. `RRBiomeSource.getNoiseBiome` picks a biome by Y and noise from the lists in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`); weights are repeated entries.
 
 These change existing worlds, so design them first: adding, removing or reordering a biome list entry (shifts every border in the layer), renaming noise seed strings, changing `RRTerrainSurfaces`, changing a structure algorithm (seams in half-generated structures).

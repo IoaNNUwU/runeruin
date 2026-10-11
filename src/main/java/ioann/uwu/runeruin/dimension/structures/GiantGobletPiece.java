@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension.structures;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
+import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -702,7 +703,8 @@ public class GiantGobletPiece extends StructurePiece {
     }
 
     private static void set(WorldGenLevel level, BlockPos pos, BlockState state, BoundingBox chunkBB) {
-        if (chunkBB.isInside(pos)) {
+        // The stem ends on the ceiling of the Void where it rises into the floor of the Lost caves.
+        if (chunkBB.isInside(pos) && !VoidGen.reaches(level, pos)) {
             level.setBlock(pos, state, 2);
             var fluid = state.getFluidState();
             if (!fluid.isEmpty()) {

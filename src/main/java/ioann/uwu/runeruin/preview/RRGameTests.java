@@ -17,6 +17,7 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
@@ -134,6 +135,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("floating_islands_not_generated", () -> RRGameTests::floatingIslandsNotGenerated);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DEEP_CAVES_CEILING =
         TEST_FUNCTIONS.register("deep_caves_ceiling", () -> RRGameTests::deepCavesCeiling);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> VOID_CEILING =
+        TEST_FUNCTIONS.register("void_ceiling", () -> RRGameTests::voidCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOOMING_CAVES_CEILING =
         TEST_FUNCTIONS.register("blooming_caves_ceiling", () -> RRGameTests::bloomingCavesCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
@@ -446,6 +449,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("void_ceiling"),
+            new FunctionGameTestInstance(
+                VOID_CEILING.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("deep_caves_ceiling"),
             new FunctionGameTestInstance(
                 DEEP_CAVES_CEILING.getKey(),
@@ -627,7 +637,7 @@ public final class RRGameTests {
     }
 
     // The ceiling of the Deep caves has levels and ledges, nothing floats under it, it leaves the floor of the
-    // Blooming caves closed, and no arcane plate lies between the layers.
+    // Blooming caves closed, and no arcane plate lies under it.
     private static void deepCavesCeiling(GameTestHelper helper) {
         try {
             MinecraftServer server = helper.getLevel().getServer();
@@ -680,13 +690,81 @@ public final class RRGameTests {
             helper.assertTrue(floating == 0, floating + " blocks float under the ceiling of the Deep caves");
             helper.assertTrue(highest - lowest >= 15, "the ceiling of the Deep caves only spans Y " + lowest + " to " + highest);
             helper.assertTrue(ledges > 0, "the ceiling of the Deep caves has no ledge");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
 
-            BoundingBox underLostCaves = new BoundingBox(0, Const.CEILING_VOID_Y + 1, 0, 15, Const.LOST_CAVES_Y - 1, 15);
-            PreviewWorld rock = HeadlessTerrainGenerator.generate(server, 1, underLostCaves);
-            for (BlockPos block : BlockPos.betweenClosed(underLostCaves.minX(), underLostCaves.minY(), underLostCaves.minZ(),
-                    underLostCaves.maxX(), underLostCaves.maxY(), underLostCaves.maxZ())) {
-                helper.assertTrue(rock.get(block).is(Blocks.DEEPSLATE), "no deepslate under the Lost caves at " + block.toShortString());
+    // The ceiling of the Void has levels and ledges, nothing floats under it, it is void stone up to the deepslate
+    // that closes the floor of the Lost caves, and the air under it lies in the Void biome, whose plants hang from it.
+    private static void voidCeiling(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, 1);
+            RRBiomeSource biomes = RRBiomeSource.newDefault(server.registryAccess().lookupOrThrow(Registries.BIOME));
+            int size = 96;
+            int minY = VoidGen.LOWEST_Y - 1;
+            int height = Const.LOST_CAVES_Y + Const.TERRAIN_HEIGHT - minY + 2;
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(server, 1, new BoundingBox(0, minY, 0, size - 1, minY + height - 1, size - 1));
+
+            // 1 is a block, 2 is a block that a path of blocks ties to the floor of the Lost caves.
+            byte[] blocks = new byte[size * size * height];
+            int[] tied = new int[blocks.length];
+            int count = 0;
+            int lowest = Integer.MAX_VALUE;
+            int highest = Integer.MIN_VALUE;
+            int ledges = 0;
+            int reads = 0;
+            int misread = 0;
+            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+                    int floorY = DeepCavesAndLostCavesGen.lostCavesFloorY(x + 8, z + 8, randomState);
+                    int ceilingY = VoidGen.ceilingSurfaceY(x, z, randomState);
+                    lowest = Math.min(lowest, ceilingY);
+                    highest = Math.max(highest, ceilingY);
+                    // What lies on the edge may hang on something outside.
+                    boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;
+                    boolean ledge = false;
+                    for (int y = minY; y <= floorY + 1; y++) {
+                        BlockState state = terrain.get(pos.set(x, y, z));
+                        String at = " at " + x + " " + y + " " + z;
+                        helper.assertTrue(y < ceilingY == state.isAir() || y > ceilingY, "the ceiling does not start at Y " + ceilingY + at);
+                        helper.assertTrue(state.isAir() ? y < floorY - 8 || y > floorY
+                            : state.is(y <= floorY - 6 ? RRBlocks.VOID_STONE.get() : Blocks.DEEPSLATE),
+                            state.getBlock().getName().getString() + " in the ceiling of the Void" + at);
+                        ledge |= state.isAir() && y > ceilingY && y < floorY;
+                        if (!state.isAir()) {
+                            int block = (x * size + z) * height + y - minY;
+                            blocks[block] = 1;
+                            if (edge || y == floorY) {
+                                blocks[block] = 2;
+                                tied[count++] = block;
+                            }
+                            continue;
+                        }
+                        // A plant takes the biome of its block as the game does, from one of the 8 biomes around it.
+                        // Where the floor of the Lost caves is steep, a few of them belong to the other layer.
+                        for (int corner = 0; corner < 8; corner++) {
+                            Holder<Biome> biome = biomes.getNoiseBiome((x - 2 >> 2) + (corner & 1), (y - 2 >> 2) + (corner >> 1 & 1),
+                                (z - 2 >> 2) + (corner >> 2), randomState.sampler());
+                            reads++;
+                            if (biome.is(RRBiomes.VOID) != y < floorY) {
+                                misread++;
+                            }
+                        }
+                    }
+                    if (ledge) {
+                        ledges++;
+                    }
+                }
             }
+            int floating = floatingBlocks(blocks, tied, count, size, height);
+            helper.assertTrue(floating == 0, floating + " blocks float under the ceiling of the Void");
+            helper.assertTrue(misread * 10_000L < reads, misread + " of " + reads + " biomes around the air of the Void and of the Lost caves are of the other layer");
+            helper.assertTrue(highest - lowest >= 15, "the ceiling of the Void only spans Y " + lowest + " to " + highest);
+            helper.assertTrue(ledges > 0, "the ceiling of the Void has no ledge");
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());

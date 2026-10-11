@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.placements.ChunkCenterPlacement;
 import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
@@ -104,9 +105,9 @@ public class RRPlacedFeatures {
     private static final int BLOOMING_CEILING_TOP = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
     private static final int DEEP_CEILING_BOTTOM = DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
     private static final int DEEP_CEILING_TOP = DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
-    // Always in the air under the Void ceiling, and within reach of its thinnest part.
-    private static final int VOID_AIR_TOP = CEILING_VOID_Y - CEILING_TERRAIN_HEIGHT - 1;
-    private static final int VOID_AIR_BOTTOM = VOID_AIR_TOP - 5;
+    // Always in the air under the Void ceiling, and within reach of its highest terrace.
+    private static final int VOID_AIR_TOP = VoidGen.LOWEST_Y - 1;
+    private static final int VOID_AIR_BOTTOM = VoidGen.HIGHEST_Y - 32;
 
     public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
         HolderGetter<ConfiguredFeature<?, ?>> configuredFeatures = ctx.lookup(Registries.CONFIGURED_FEATURE);
@@ -467,7 +468,7 @@ public class RRPlacedFeatures {
     /** The air block under void stone: the plants of the Void hang from the stone, never from each other. */
     private static List<PlacementModifier> voidCeilingPlacement(PlacementModifier count) {
         return scanPlacement(count, VOID_AIR_BOTTOM, VOID_AIR_TOP, Direction.UP,
-                BlockPredicate.matchesBlocks(RRBlocks.VOID_STONE.get()), BlockPredicate.ONLY_IN_AIR_PREDICATE, 16, -1);
+                BlockPredicate.matchesBlocks(RRBlocks.VOID_STONE.get()), BlockPredicate.ONLY_IN_AIR_PREDICATE, 32, -1);
     }
 
     /** Lily pads and water lilies: on top of the water surface in the lost and deep caves. */
