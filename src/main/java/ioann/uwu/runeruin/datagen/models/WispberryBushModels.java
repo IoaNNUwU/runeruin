@@ -5,13 +5,13 @@ import static ioann.uwu.runeruin.datagen.models.ModelJson.vector;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.blocks.MossLayerPlantBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import net.minecraft.client.data.models.BlockModelGenerators;
-import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
-import net.minecraft.client.data.models.blockstates.PropertyDispatch;
+import net.minecraft.client.data.models.blockstates.MultiPartGenerator;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -40,28 +40,37 @@ public final class WispberryBushModels {
 
     private WispberryBushModels() {}
 
-    /** One model per age, turned a random quarter: no two bushes side by side look the same way. */
+    /**
+     * One model per age and height of the moss the bush stands in, turned a random quarter: no two bushes side
+     * by side look the same way.
+     */
     public static void createWispberryBush(@NonNull BlockModelGenerators blockModels) {
-        blockModels.blockStateOutput.accept(MultiVariantGenerator.dispatch(RRBlocks.WISPBERRY_BUSH.get())
-                .with(PropertyDispatch.initial(WispberryBushBlock.AGE).generate(age -> {
-                    Identifier id = RR.id("block/wispberry_bush_stage" + age);
-                    JsonObject model = model(age);
-                    blockModels.modelOutput.accept(id, () -> model);
-                    return BlockModelGenerators.createRotatedVariants(BlockModelGenerators.plainModel(id));
-                })));
+        Block block = RRBlocks.WISPBERRY_BUSH.get();
+        MultiPartGenerator blockState = MultiPartGenerator.multiPart(block);
+        for (int moss = 0; moss <= MossLayerPlantBlock.MAX_MOSS; moss++) {
+            for (int age : WispberryBushBlock.AGE.getPossibleValues()) {
+                Identifier id = MossLayerPlantModels.lifted(block, "_stage" + age, moss);
+                JsonObject model = model(age, moss * 2);
+                blockModels.modelOutput.accept(id, () -> model);
+                blockState.with(MossLayerPlantModels.moss(moss).term(WispberryBushBlock.AGE, age),
+                        BlockModelGenerators.createRotatedVariants(BlockModelGenerators.plainModel(id)));
+            }
+        }
+        MossLayerPlantModels.addMoss(blockState);
+        blockModels.blockStateOutput.accept(blockState);
     }
 
-    private static JsonObject model(int age) {
+    private static JsonObject model(int age, int lift) {
         JsonArray elements = new JsonArray();
         for (double[][] box : age == 0 ? SAPLING_STEM : STEM) {
-            addElement(elements, "stem", box[0], box[1], "stem", 0, SIDES);
+            addBox(elements, "stem", box, lift);
         }
         for (double[][] box : age == 0 ? SAPLING_LEAVES : LEAVES) {
-            addElement(elements, "leaves", box[0], box[1], "leaves", 0, SIDES);
+            addBox(elements, "leaves", box, lift);
         }
         int berries = age == 3 ? BERRIES.length : age == 2 ? UNRIPE_BERRIES : 0;
         for (int number = 0; number < berries; number++) {
-            addBerry(elements, BERRIES[number], age == 3);
+            addBerry(elements, BERRIES[number], age == 3, lift);
         }
         JsonObject model = new JsonObject();
         // No smooth lighting: it is meant for block faces, not for boxes this small.
@@ -77,14 +86,31 @@ public final class WispberryBushModels {
     }
 
     /**
+     * A box of the bush {@code lift} pixels up. The game takes the texture area of a face from where the box
+     * stands, so a lifted box names the area it has on the ground.
+     */
+    private static void addBox(JsonArray elements, String texture, double[][] box, int lift) {
+        double[] from = box[0];
+        double[] to = box[1];
+        addElement(elements, texture, new double[]{from[0], from[1] + lift, from[2]}, new double[]{to[0], to[1] + lift, to[2]}, texture, 0, SIDES);
+        JsonObject faces = elements.get(elements.size() - 1).getAsJsonObject().getAsJsonObject("faces");
+        faces.getAsJsonObject("down").add("uv", vector(from[0], 16 - to[2], to[0], 16 - from[2]));
+        faces.getAsJsonObject("up").add("uv", vector(from[0], from[2], to[0], to[2]));
+        faces.getAsJsonObject("north").add("uv", vector(16 - to[0], 16 - to[1], 16 - from[0], 16 - from[1]));
+        faces.getAsJsonObject("south").add("uv", vector(from[0], 16 - to[1], to[0], 16 - from[1]));
+        faces.getAsJsonObject("west").add("uv", vector(from[2], 16 - to[1], to[2], 16 - from[1]));
+        faces.getAsJsonObject("east").add("uv", vector(16 - to[2], 16 - to[1], 16 - from[2], 16 - from[1]));
+    }
+
+    /**
      * block/wispberry_bush_berries.png holds one tile per kind of berry in its top row: ripe 4x4 at u 0, ripe 3x3
      * at u 5, unripe 3x3 at u 9 and unripe 2x2 at u 13. Ripe berries glow.
      */
-    private static void addBerry(JsonArray elements, int[] berry, boolean ripe) {
+    private static void addBerry(JsonArray elements, int[] berry, boolean ripe, int lift) {
         int size = ripe ? berry[3] : berry[3] - 1;
         int u = ripe ? (size == 4 ? 0 : 5) : (size == 3 ? 9 : 13);
-        addElement(elements, "berry", new double[]{berry[0], berry[1], berry[2]},
-                new double[]{berry[0] + size, berry[1] + size, berry[2] + size}, "berries", ripe ? 10 : 0, SIDES);
+        addElement(elements, "berry", new double[]{berry[0], berry[1] + lift, berry[2]},
+                new double[]{berry[0] + size, berry[1] + lift + size, berry[2] + size}, "berries", ripe ? 10 : 0, SIDES);
         JsonObject faces = elements.get(elements.size() - 1).getAsJsonObject().getAsJsonObject("faces");
         for (String side : SIDES) {
             faces.getAsJsonObject(side).add("uv", vector(u, 0, u + size, size));

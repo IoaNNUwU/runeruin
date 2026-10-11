@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
+import ioann.uwu.runeruin.blocks.MossLayerPlantBlock;
 import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.CaveMushroomKind;
@@ -63,6 +64,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
@@ -70,7 +72,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.Biome;
@@ -141,6 +145,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("mossberry_bush_bonemeal", () -> RRGameTests::mossberryBushBonemeal);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSBERRY_BUSH_HARVEST =
         TEST_FUNCTIONS.register("mossberry_bush_harvest", () -> RRGameTests::mossberryBushHarvest);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PLANTS_IN_MOSS_LAYER =
+        TEST_FUNCTIONS.register("plants_in_moss_layer", () -> RRGameTests::plantsInMossLayer);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GLOWING_MUSHROOM_PATCH =
         TEST_FUNCTIONS.register("glowing_mushroom_patch", () -> RRGameTests::glowingMushroomPatch);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_FEATURE_ORDER =
@@ -436,6 +442,13 @@ public final class RRGameTests {
             RR.id("mossberry_bush_harvest"),
             new FunctionGameTestInstance(
                 MOSSBERRY_BUSH_HARVEST.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("plants_in_moss_layer"),
+            new FunctionGameTestInstance(
+                PLANTS_IN_MOSS_LAYER.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -1523,6 +1536,83 @@ public final class RRGameTests {
             .mapToInt(entity -> entity.getItem().getCount())
             .sum();
         helper.assertTrue(berries >= 1 && berries <= 3, "picking dropped " + berries + " mossberries");
+        helper.succeed();
+    }
+
+    // Moss sprouts and the berry bushes go into a deep moss layer they are placed on, and a layer placed on
+    // them goes under them. The moss holds like a layer of its height, stays when a player breaks the plant and
+    // takes the plant along when its ground goes. Moss hummocks grow such plants.
+    private static void plantsInMossLayer(GameTestHelper helper) {
+        BlockPos pos = helper.absolutePos(new BlockPos(0, 5, 0));
+        var level = helper.getLevel();
+        var player = helper.makeMockPlayer(GameType.SURVIVAL);
+        var hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
+        var layer = RRBlocks.DEEP_MOSS_LAYER.get().defaultBlockState();
+        var layerItem = (BlockItem) RRBlocks.DEEP_MOSS_LAYER.asItem();
+        for (var item : List.of(RRBlocks.MOSS_SPROUTS.asItem(), RRBlocks.SMALL_MOSS_SPROUTS.asItem(), RRItems.MOSSBERRY.get(), RRItems.WISPBERRY.get())) {
+            Block plant = ((BlockItem) item).getBlock();
+            level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(pos, layer.setValue(DeepMossLayerBlock.LAYERS, 3));
+            ((BlockItem) item).place(new BlockPlaceContext(player, InteractionHand.MAIN_HAND, new ItemStack(item), hit));
+            BlockState placed = level.getBlockState(pos);
+            helper.assertTrue(placed.is(plant) && placed.getValue(MossLayerPlantBlock.MOSS) == 3, plant + " placed on three layers of moss gave " + placed);
+
+            layerItem.place(new BlockPlaceContext(player, InteractionHand.MAIN_HAND, new ItemStack(layerItem), hit));
+            BlockState lifted = level.getBlockState(pos);
+            BlockState moss = layer.setValue(DeepMossLayerBlock.LAYERS, 4);
+            helper.assertTrue(lifted.is(plant) && lifted.getValue(MossLayerPlantBlock.MOSS) == 4, "a layer placed on " + placed + " gave " + lifted);
+            helper.assertTrue(lifted.getCollisionShape(level, pos).max(Direction.Axis.Y) == moss.getCollisionShape(level, pos).max(Direction.Axis.Y),
+                lifted + " does not hold like four layers of moss");
+
+            lifted.onDestroyedByPlayer(level, pos, player, ItemStack.EMPTY, true, level.getFluidState(pos));
+            helper.assertTrue(level.getBlockState(pos) == moss, "breaking " + lifted + " left " + level.getBlockState(pos));
+
+            level.setBlockAndUpdate(pos, lifted);
+            level.setBlockAndUpdate(pos.below(), Blocks.AIR.defaultBlockState());
+            helper.assertTrue(level.getBlockState(pos).isAir(), lifted + " stayed in the air");
+
+            level.setBlockAndUpdate(pos.below(), RRBlocks.DEEP_MOSS.get().defaultBlockState());
+            level.setBlockAndUpdate(pos, plant.defaultBlockState());
+            layerItem.place(new BlockPlaceContext(player, InteractionHand.MAIN_HAND, new ItemStack(layerItem), hit));
+            helper.assertTrue(level.getBlockState(pos) == plant.defaultBlockState().setValue(MossLayerPlantBlock.MOSS, 1),
+                "a layer placed on " + plant + " without moss gave " + level.getBlockState(pos));
+        }
+
+        // Bone meal starts new bushes in the moss layers around a bush, but not in a full one.
+        var bush = (MossberryBushBlock) RRBlocks.MOSSBERRY_BUSH.get();
+        for (BlockPos near : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
+            level.setBlockAndUpdate(near.below(), RRBlocks.DEEP_MOSS.get().defaultBlockState());
+            level.setBlockAndUpdate(near, layer.setValue(DeepMossLayerBlock.LAYERS, near.getX() == pos.getX() ? DeepMossLayerBlock.MAX_HEIGHT : 2));
+        }
+        level.setBlockAndUpdate(pos, bush.defaultBlockState().setValue(MossLayerPlantBlock.MOSS, 2));
+        RandomSource random = RandomSource.create(42);
+        for (int use = 0; use < 60; use++) {
+            bush.performBonemeal(level, random, pos, level.getBlockState(pos));
+        }
+        int started = 0;
+        for (BlockPos near : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos.offset(1, 0, 1))) {
+            BlockState state = level.getBlockState(near);
+            if (near.getX() == pos.getX() && !near.equals(pos)) {
+                helper.assertTrue(state.is(RRBlocks.DEEP_MOSS_LAYER), "bone meal replaced a full layer of moss with " + state);
+            } else if (state.is(bush)) {
+                helper.assertTrue(state.getValue(MossLayerPlantBlock.MOSS) == 2, "bone meal started " + state + " in two layers of moss");
+                started++;
+            }
+        }
+        helper.assertTrue(started > 1, "bone meal started no bush in the moss layers around the bush");
+
+        BlockPos origin = new BlockPos(0, 64, 0);
+        PreviewWorld world = PreviewWorld.create(42);
+        world.fillBox(new BoundingBox(-12, 63, -12, 12, 63, 12), RRBlocks.DEEP_MOSS.get().defaultBlockState());
+        PreviewJobs.placeFeature(RRFeatures.MOSS_HUMMOCK.get(), NoneFeatureConfiguration.NONE, origin, world, null);
+        int inMoss = 0;
+        for (BlockPos column : BlockPos.betweenClosed(origin.offset(-12, 0, -12), origin.offset(12, 0, 12))) {
+            BlockState state = world.get(column);
+            if (state.getBlock() instanceof MossLayerPlantBlock && state.getValue(MossLayerPlantBlock.MOSS) > 0) {
+                inMoss++;
+            }
+        }
+        helper.assertTrue(inMoss > 0, "a moss hummock grew no plant in its moss");
         helper.succeed();
     }
 

@@ -8,6 +8,7 @@ import ioann.uwu.runeruin.datagen.models.DeepMossModels;
 import ioann.uwu.runeruin.datagen.models.FireflyJarModels;
 import ioann.uwu.runeruin.datagen.models.FloatingMossModels;
 import ioann.uwu.runeruin.datagen.models.LilyPadModels;
+import ioann.uwu.runeruin.datagen.models.MossLayerPlantModels;
 import ioann.uwu.runeruin.datagen.models.MossberryBushModels;
 import ioann.uwu.runeruin.datagen.models.PortalModels;
 import ioann.uwu.runeruin.datagen.models.TreeModels;
@@ -81,8 +82,8 @@ public class DatagenModelProvider extends ModelProvider {
         DeepMossModels.createDeepMoss(blockModels);
         MossberryBushModels.createMossberryBush(blockModels);
         FloatingMossModels.createFloatingMoss(blockModels);
-        blockModels.createCrossBlockWithDefaultItem(RRBlocks.MOSS_SPROUTS.get(), BlockModelGenerators.PlantType.NOT_TINTED);
-        blockModels.createCrossBlockWithDefaultItem(RRBlocks.SMALL_MOSS_SPROUTS.get(), BlockModelGenerators.PlantType.NOT_TINTED);
+        MossLayerPlantModels.createMossSprouts(blockModels, RRBlocks.MOSS_SPROUTS.get());
+        MossLayerPlantModels.createMossSprouts(blockModels, RRBlocks.SMALL_MOSS_SPROUTS.get());
         blockModels.createTrivialBlock(
                 RRBlocks.GLOWING_MUSHROOM_CAP.get(),
                 TexturedModel.CUBE.updateTexture(TextureMapping::forceAllTranslucent)

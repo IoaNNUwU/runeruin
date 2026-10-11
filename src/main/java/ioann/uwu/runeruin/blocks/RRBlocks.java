@@ -326,6 +326,7 @@ public class RRBlocks {
             "mossberry_bush",
             MossberryBushBlock::new,
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
+                    .forceSolidOff()
                     .lightLevel(MossberryBushBlock::lightLevel)
     );
 
@@ -334,13 +335,20 @@ public class RRBlocks {
                     .noOcclusion(),
             FloatingMossBlock::new);
 
-    /** Grass of the mossy caves, in two heights. */
+    /**
+     * Grass of the mossy caves, in two heights. No random offset of the block, as grass has: it would move the
+     * moss under the sprouts too. Their models stand in different places instead.
+     */
     public static final DeferredBlock<Block> MOSS_SPROUTS = register("moss_sprouts",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS),
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+                    .offsetType(BlockBehaviour.OffsetType.NONE)
+                    .forceSolidOff(),
             p -> new MossSproutsBlock(13, p));
 
     public static final DeferredBlock<Block> SMALL_MOSS_SPROUTS = register("small_moss_sprouts",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS),
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+                    .offsetType(BlockBehaviour.OffsetType.NONE)
+                    .forceSolidOff(),
             p -> new MossSproutsBlock(8, p));
 
     public static final DeferredBlock<Block> POWDERED_MOSS = registerNoItem("powdered_moss",
@@ -367,6 +375,7 @@ public class RRBlocks {
             "wispberry_bush",
             WispberryBushBlock::new,
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.SWEET_BERRY_BUSH)
+                    .forceSolidOff()
                     .lightLevel(WispberryBushBlock::getLightLevel)
     );
 

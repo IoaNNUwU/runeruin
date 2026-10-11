@@ -9,7 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
@@ -27,7 +26,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BonemealableBlock;
-import net.minecraft.world.level.block.VegetationBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -35,7 +33,6 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
 import org.jspecify.annotations.Nullable;
@@ -44,7 +41,7 @@ import org.jspecify.annotations.Nullable;
  * A small bush on moss that grows mossberries, each in a place of its own. The berries glow, prick and are
  * picked by hand; they grow again by themselves, and bone meal adds more and spreads bushes over the moss around.
  */
-public class MossberryBushBlock extends VegetationBlock implements BonemealableBlock {
+public class MossberryBushBlock extends MossLayerPlantBlock implements BonemealableBlock {
     public static final MapCodec<MossberryBushBlock> CODEC = simpleCodec(MossberryBushBlock::new);
 
     /**
@@ -74,7 +71,7 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
     private static final VoxelShape SHAPE = Block.column(12.0, 0.0, 6.0);
 
     public MossberryBushBlock(Properties properties) {
-        super(properties);
+        super(_ -> SHAPE, properties);
         BlockState bare = this.defaultBlockState().setValue(TWIGS, false);
         for (Berry berry : BERRIES) {
             bare = bare.setValue(berry.property(), false);
@@ -87,20 +84,8 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
     }
 
     @Override
-    protected MapCodec<? extends VegetationBlock> codec() {
+    protected MapCodec<MossberryBushBlock> codec() {
         return CODEC;
-    }
-
-    @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
-    }
-
-    /** Only moss: any moss block, deep moss among them, and a deep moss layer of full height. */
-    @Override
-    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
-        return state.is(BlockTags.MOSS_BLOCKS)
-                || state.is(RRBlocks.DEEP_MOSS_LAYER) && state.getValue(DeepMossLayerBlock.LAYERS) == DeepMossLayerBlock.MAX_HEIGHT;
     }
 
     private static int berryCount(BlockState state) {
@@ -191,10 +176,11 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
         return berryCount(state) > 0 ? PathType.DAMAGING : super.getBlockPathType(state, level, pos, mob);
     }
 
-    /** A bush with room for a berry, or free moss, where bone meal can start a new bush. */
+    /** A bush with room for a berry, or free moss, a deep moss layer too, where bone meal can start a new bush. */
     private boolean canGrowAt(LevelReader level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        return state.is(this) ? berryCount(state) < BERRIES.size() : state.isAir() && this.defaultBlockState().canSurvive(level, pos);
+        return state.is(this) ? berryCount(state) < BERRIES.size()
+                : (state.isAir() || takesPlant(state)) && inPlaceOf(this.defaultBlockState(), state).canSurvive(level, pos);
     }
 
     @Override
@@ -234,7 +220,7 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
         }
         BlockPos near = Util.getRandom(around, random);
         BlockState nearState = level.getBlockState(near);
-        BlockState bush = nearState.is(this) ? nearState : this.defaultBlockState();
+        BlockState bush = nearState.is(this) ? nearState : inPlaceOf(this.defaultBlockState(), nearState);
         // That berry is the one nearest to the bush with the bone meal.
         double fromX = (pos.getX() - near.getX()) * 16 + 8;
         double fromZ = (pos.getZ() - near.getZ()) * 16 + 8;
@@ -252,6 +238,7 @@ public class MossberryBushBlock extends VegetationBlock implements BonemealableB
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(TWIGS);
         BERRIES.forEach(berry -> builder.add(berry.property()));
     }

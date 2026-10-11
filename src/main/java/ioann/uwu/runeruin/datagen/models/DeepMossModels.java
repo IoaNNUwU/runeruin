@@ -41,7 +41,7 @@ public final class DeepMossModels {
         blockModels.registerSimpleItemModel(layer, heightModel(2));
     }
 
-    private static Identifier heightModel(int height) {
+    static Identifier heightModel(int height) {
         return RR.id("block/deep_moss_layer_height" + height);
     }
 }

@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -30,11 +31,10 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
 
-public class WispberryBushBlock extends VegetationBlock implements BonemealableBlock {
+public class WispberryBushBlock extends MossLayerPlantBlock implements BonemealableBlock {
 
     public static final IntegerProperty AGE = BlockStateProperties.AGE_3;
     private static final VoxelShape SHAPE_SAPLING = Block.column(8.0F, 0.0F, 9.0F);
@@ -44,8 +44,8 @@ public class WispberryBushBlock extends VegetationBlock implements BonemealableB
     private static final VoxelShape CORE_GROWN = Block.column(8.0F, 0.0F, 16.0F);
 
     public WispberryBushBlock(Properties properties) {
-        super(properties);
-        this.registerDefaultState(this.getStateDefinition().any()
+        super(state -> state.getValue(AGE) == 0 ? SHAPE_SAPLING : SHAPE_GROWN, properties);
+        this.registerDefaultState(this.defaultBlockState()
                 .setValue(AGE, 0));
     }
 
@@ -61,9 +61,10 @@ public class WispberryBushBlock extends VegetationBlock implements BonemealableB
         return RRItems.WISPBERRY.toStack();
     }
 
+    /** Any ground that plants grow on, and a deep moss layer of full height. */
     @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return state.getValue(AGE) == 0 ? SHAPE_SAPLING : SHAPE_GROWN;
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.is(BlockTags.SUPPORTS_VEGETATION) || super.mayPlaceOn(state, level, pos);
     }
 
     @Override
@@ -134,6 +135,7 @@ public class WispberryBushBlock extends VegetationBlock implements BonemealableB
     }
 
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(AGE);
     }
 
