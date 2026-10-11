@@ -8,8 +8,10 @@ description: >-
 
 # Region export compare
 
-Use this whenever the user is shaping a structure, feature, or terrain region from an in-game export.
+Use this whenever the user is shaping the terrain, a feature or a structure that code generates from an in-game export.
 Do not eyeball large grids. Run the script first, then change generation math.
+
+A man-made build (a ship, a hut, a dungeon room) is not turned into formulas. What the user built is the build: they save it with `/rrsave` and the structure places the template (`worldgen-structure` skill).
 
 ## Resolve inputs
 

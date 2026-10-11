@@ -10,26 +10,33 @@ import ioann.uwu.runeruin.preview.HeadlessTerrainGenerator;
 import ioann.uwu.runeruin.preview.PreviewWorld;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -57,6 +64,7 @@ public final class RegionCommands {
         registerAliases(dispatcher, "rrpos1", "/rrpos1", RegionCommands::registerPos1);
         registerAliases(dispatcher, "rrpos2", "/rrpos2", RegionCommands::registerPos2);
         registerAliases(dispatcher, "rrexport", "/rrexport", RegionCommands::registerExport);
+        registerAliases(dispatcher, "rrsave", "/rrsave", RegionCommands::registerSave);
         registerAliases(dispatcher, "rrgenerate", "/rrgenerate", RegionCommands::registerGenerate);
         registerAliases(dispatcher, "rrclear", "/rrclear", RegionCommands::registerClear);
     }
@@ -97,6 +105,14 @@ public final class RegionCommands {
                 Commands.argument("name", StringArgumentType.word())
                     .executes(c -> export(c.getSource(), RegionExport.sanitizeName(StringArgumentType.getString(c, "name"))))
             );
+    }
+
+    private static void registerSave(LiteralArgumentBuilder<CommandSourceStack> cmd) {
+        cmd.then(
+            Commands.argument("name", IdentifierArgument.id())
+                .executes(c -> save(c.getSource(), IdentifierArgument.getId(c, "name"), false))
+                .then(Commands.literal("entities").executes(c -> save(c.getSource(), IdentifierArgument.getId(c, "name"), true)))
+        );
     }
 
     private static void registerClear(LiteralArgumentBuilder<CommandSourceStack> cmd) {
@@ -178,6 +194,53 @@ public final class RegionCommands {
             return 0;
         } catch (IOException e) {
             RR.LOGGER.error("Failed to export region", e);
+            source.sendFailure(Component.translatable("commands.runeruin.region.io_error", String.valueOf(e.getMessage())));
+            return 0;
+        }
+    }
+
+    /**
+     * Saves the selection as a structure template of the mod: what a person built becomes a piece of a
+     * structure ({@code TemplatePiece}), and {@code /place template} puts it back into a world. A structure void
+     * block in the selection is left out: there the world keeps its own block. The game directory is shared by
+     * all checkouts, so a game started with {@code runClient} writes into the resources of the checkout it was
+     * started from; any other game writes into its world, as a structure block does.
+     */
+    private static int save(CommandSourceStack source, Identifier name, boolean entities) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        RegionSelection selection = SELECTIONS.get(player.getUUID());
+        if (selection == null || !selection.isComplete()) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.need_both"));
+            return 0;
+        }
+        ServerLevel level = source.getLevel();
+        if (!selection.dimension().equals(level.dimension())) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.wrong_dimension"));
+            return 0;
+        }
+
+        BoundingBox box = selection.box();
+        Identifier id = RR.id(name.getPath());
+        StructureTemplateManager templates = level.getStructureManager();
+        StructureTemplate template = templates.getOrCreate(id);
+        template.fillFromWorld(level, new BlockPos(box.minX(), box.minY(), box.minZ()),
+            new Vec3i(box.getXSpan(), box.getYSpan(), box.getZSpan()), entities, List.of(Blocks.STRUCTURE_VOID));
+        try {
+            String checkout = System.getProperty("runeruin.checkout");
+            Component where;
+            if (checkout != null) {
+                Path file = Path.of(checkout, "src/main/resources/data", id.getNamespace(), "structure", id.getPath() + ".nbt");
+                StructureTemplateManager.save(file, template, false);
+                where = clickablePath(file);
+            } else if (templates.save(id)) {
+                where = Component.translatable("commands.runeruin.region.save_world");
+            } else {
+                throw new IOException(id.toString());
+            }
+            source.sendSuccess(() -> Component.translatable("commands.runeruin.region.save", box.getXSpan(), box.getYSpan(), box.getZSpan(), id.toString(), where), false);
+            return Command.SINGLE_SUCCESS;
+        } catch (IOException e) {
+            RR.LOGGER.error("Failed to save template {}", id, e);
             source.sendFailure(Component.translatable("commands.runeruin.region.io_error", String.valueOf(e.getMessage())));
             return 0;
         }

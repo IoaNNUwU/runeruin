@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Check the mod's client assets in seconds, without the game. Run after runData: models live in src/generated.
+"""Check the mod's client assets in seconds, without the game. Run after runData: blockstates, item definitions
+and the models that data generation derives live in src/generated.
 
     python scripts/lint_assets.py
 
 - blockstates, item definitions and models refer only to models that exist;
+- a model a person keeps as a file says which Minecraft it is for, so that Blockbench saves it for that one,
+  and data generation does not write the same file;
+- the Blockbench project of a mob finds its textures from any checkout;
 - every texture a model uses exists, vanilla ones in .vanilla-textures (gradlew extractVanillaTextures);
 - en_us and ru_ru have the same keys, and every block and item has a name in both;
 - block and item textures are 16x16, or 16 wide with a .mcmeta animation of whole frames, or listed in OTHER_SIZES.
@@ -21,6 +25,9 @@ ASSET_ROOTS = [ROOT / "src/main/resources/assets", ROOT / "src/generated/resourc
 VANILLA = ROOT / ".vanilla-textures/assets"
 LANGS = ("en_us", "ru_ru")
 BUILTIN_PARENTS = {"builtin/generated", "builtin/entity"}
+# What Blockbench writes into a model of Minecraft 1.21.11 - 26.2. Without it Blockbench 5.2 takes the model for
+# one of 26.3 and saves "shade": false as "shade_direction_override", which Minecraft 26.2 does not read.
+MODEL_FORMAT = "1.21.11"
 # Deliberate exceptions to 16x16, with their exact size: models with their own UV scale and the
 # stem atlas that WaterLilyStemTexture slices at runtime.
 OTHER_SIZES = {
@@ -107,6 +114,23 @@ def check_models(problems):
         for texture in (model.get("textures") or {}).values():
             if isinstance(texture, str) and not texture.startswith("#"):
                 check_ref(path, "textures", texture, ".png", problems, missing)
+        if any("shade_direction_override" in element for element in model.get("elements") or []):
+            problems.append(f"{rel(path)}: \"shade_direction_override\" is for Minecraft 26.3, use \"shade\"")
+        if ASSET_ROOTS[0] in path.parents:
+            if model.get("format_version") != MODEL_FORMAT:
+                problems.append(f"{rel(path)}: needs \"format_version\": \"{MODEL_FORMAT}\" (in Blockbench: "
+                                "File > Project, format version 1.21.11 - 26.2)")
+            if (ASSET_ROOTS[1] / path.relative_to(ASSET_ROOTS[0])).is_file():
+                problems.append(f"{rel(path)}: data generation writes this model too; "
+                                "run runData, and if it is still there, stop generating it")
+    # A mob's Blockbench project: Blockbench finds its textures by these paths, and one that starts at a
+    # drive or a home folder works on one computer only.
+    for path in asset_files("models", "*.bbmodel"):
+        for texture in (read_json(path, problems) or {}).get("textures", []):
+            relative = texture.get("relative_path")
+            if texture.get("path") or not relative or not (path.parent / relative).is_file():
+                problems.append(f"{rel(path)}: texture {texture.get('name')} needs a relative_path to its PNG and no path "
+                                "(in Blockbench: Settings > Export, asset paths: relative)")
     # An old or missing .vanilla-textures must not turn unchecked references into "assets OK".
     for assets in sorted(missing):
         problems.append(f"{assets} not checked: missing in .vanilla-textures, run gradlew extractVanillaTextures")

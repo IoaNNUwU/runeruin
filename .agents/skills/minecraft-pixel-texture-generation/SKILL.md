@@ -9,6 +9,8 @@ description: >-
 
 Use this skill whenever creating or modifying Minecraft texture PNGs in this project.
 
+A texture you make is a draft that a person finishes by hand ([AI_POLICY.md](../../../AI_POLICY.md)). Once the person has redrawn a texture, do not regenerate or recolor it unless they ask for that texture: fit the model to it instead.
+
 ## Defaults
 
 - Use pixel art with hard pixel edges. Default output size is 16x16 unless the model UV layout or user explicitly requires another size.

@@ -1,0 +1,37 @@
+{
+	"format_version": "1.21.11",
+	"ambientocclusion": false,
+	"textures": {
+		"clover": "runeruin:block/clover",
+		"particle": "runeruin:block/clover",
+		"stem": "runeruin:block/clover_stem"
+	},
+	"elements": [
+		{
+			"from": [0, 2, 9],
+			"to": [7, 2, 16],
+			"faces": {
+				"up": {"uv": [0, 9, 7, 16], "texture": "#clover"},
+				"down": {"uv": [0, 16, 7, 9], "texture": "#clover"}
+			}
+		},
+		{
+			"from": [3, 0, 12.5],
+			"to": [4, 2, 12.5],
+			"rotation": {"angle": 45, "axis": "y", "origin": [3.5, 0, 12.5]},
+			"faces": {
+				"north": {"uv": [0, 5, 1, 7], "texture": "#stem"},
+				"south": {"uv": [0, 5, 1, 7], "texture": "#stem"}
+			}
+		},
+		{
+			"from": [3, 0, 12.5],
+			"to": [4, 2, 12.5],
+			"rotation": {"angle": -45, "axis": "y", "origin": [3.5, 0, 12.5]},
+			"faces": {
+				"north": {"uv": [0, 5, 1, 7], "texture": "#stem"},
+				"south": {"uv": [0, 5, 1, 7], "texture": "#stem"}
+			}
+		}
+	]
+}

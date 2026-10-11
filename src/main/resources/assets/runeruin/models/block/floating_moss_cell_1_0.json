@@ -1,0 +1,45 @@
+{
+	"format_version": "1.21.11",
+	"textures": {
+		"bottom": "minecraft:block/rooted_dirt",
+		"moss": "minecraft:block/moss_block",
+		"moss_edge": "runeruin:block/floating_moss_edge",
+		"particle": "minecraft:block/moss_block",
+		"soil": "runeruin:block/floating_moss_roots"
+	},
+	"elements": [
+		{
+			"name": "moss_cap",
+			"from": [1, 14, 0],
+			"to": [15, 16, 1],
+			"faces": {
+				"up": {"texture": "#moss"},
+				"down": {"texture": "#moss"}
+			}
+		},
+		{
+			"name": "rooted_soil_floor",
+			"from": [2, 8, 0],
+			"to": [14, 14, 2],
+			"faces": {
+				"down": {"texture": "#bottom"}
+			}
+		},
+		{
+			"name": "moss_edge_wall",
+			"from": [1, 14, 0],
+			"to": [15, 16, 0],
+			"faces": {
+				"north": {"uv": [1, 0, 15, 2], "texture": "#moss_edge"}
+			}
+		},
+		{
+			"name": "soil_wall",
+			"from": [2, 8, 0],
+			"to": [14, 14, 0],
+			"faces": {
+				"north": {"uv": [2, 2, 14, 8], "texture": "#soil"}
+			}
+		}
+	]
+}

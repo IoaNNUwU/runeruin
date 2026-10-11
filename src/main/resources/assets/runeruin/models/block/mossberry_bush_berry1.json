@@ -1,0 +1,41 @@
+{
+	"format_version": "1.21.11",
+	"ambientocclusion": false,
+	"textures": {
+		"berries": "runeruin:block/mossberry_bush_berries",
+		"particle": "runeruin:block/mossberry_bush"
+	},
+	"elements": [
+		{
+			"from": [3, -0.5, 5.5],
+			"to": [6, 2.5, 8.5],
+			"rotation": {"x": 30, "y": -106, "origin": [4.5, 1, 7]},
+			"faces": {
+				"north": {"uv": [0, 6, 3, 9], "texture": "#berries"},
+				"east": {"uv": [0, 6, 3, 9], "texture": "#berries"},
+				"south": {"uv": [0, 6, 3, 9], "texture": "#berries"},
+				"west": {"uv": [0, 6, 3, 9], "texture": "#berries"},
+				"up": {"uv": [0, 6, 3, 9], "texture": "#berries"},
+				"down": {"uv": [0, 6, 3, 9], "texture": "#berries"}
+			}
+		},
+		{
+			"from": [2, -1.5, 7],
+			"to": [7, 3.5, 7],
+			"rotation": {"x": 30, "y": -106, "origin": [4.5, 1, 7]},
+			"faces": {
+				"north": {"uv": [4, 6, 9, 11], "texture": "#berries"},
+				"south": {"uv": [9, 6, 4, 11], "texture": "#berries"}
+			}
+		},
+		{
+			"from": [4.5, -1.5, 4.5],
+			"to": [4.5, 3.5, 9.5],
+			"rotation": {"x": 30, "y": -106, "origin": [4.5, 1, 7]},
+			"faces": {
+				"east": {"uv": [9, 6, 4, 11], "texture": "#berries"},
+				"west": {"uv": [4, 6, 9, 11], "texture": "#berries"}
+			}
+		}
+	]
+}

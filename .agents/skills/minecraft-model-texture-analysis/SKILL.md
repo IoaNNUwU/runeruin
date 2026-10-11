@@ -14,10 +14,11 @@ Use this skill to connect a rendered block or mob part to its model geometry and
 
 For a NeoForge project, check these locations first:
 
-- Datagen output: `src/generated/resources/assets/<namespace>/models/{block,item}/` and related `blockstates/`.
+- Models a person keeps: `src/main/resources/assets/<namespace>/models/{block,item}/`, every model with a geometry of its own.
+- Datagen output: `src/generated/resources/assets/<namespace>/models/{block,item}/`, the models on vanilla parents and the ones derived from a kept model, and the related `blockstates/`.
 - Authored textures: `src/main/resources/assets/<namespace>/textures/{block,item,entity}/`.
-- Model generators: usually `src/main/java/**/datagen/` or `data/` packages.
-- Java mob geometry: entity model/layer definitions and renderers in source, often `client/`; mob UV layouts are commonly declared with `texOffs(...)` and cube dimensions rather than model JSON.
+- Blockstate and derived-model generators: `src/main/java/**/datagen/`.
+- Mob geometry: the Blockbench project `src/main/resources/assets/<namespace>/models/entity/<name>.bbmodel`, bones with cubes and a `uv_offset` per cube (box UV); the Java model in `client/model/` only moves the bones. A vanilla mob is Java: `texOffs(...)` and cube dimensions in its layer definition.
 
 If a model JSON is absent, check whether datagen has run. Do not invent generated JSON. For model selection, follow blockstate variants or item model references until reaching the geometry-bearing model. For mobs, follow the renderer/model registration to its texture identifier and inspect both the UV declarations and the full atlas.
 
@@ -37,7 +38,7 @@ Inspect the resulting `build/libs/*.jar` as a zip to compare the shipped model o
 The bundled script supports Minecraft cuboid/block model JSON with `elements`, `faces`, texture variables, project parent models, common vanilla cube parents (`cube_all`, `cube`, `cube_bottom_top`, vertical/horizontal `cube_column`, and orientable variants), and omitted `uv` values. It writes one PNG per selected face and a `manifest.json` that maps the crop back to the element, direction, texture resource, UV coordinates, source pixels, and face rotation. Other vanilla parents resolve from `.vanilla-textures/assets/minecraft/models`, extracted by the setup script.
 
 ```powershell
-python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_faces.py src/generated/resources/assets/runeruin/models/block/firefly_in_a_jar.json --element jar_glass_body --face north
+python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_faces.py src/main/resources/assets/runeruin/models/block/firefly_in_a_jar.json --element jar_glass_body --face north
 python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_faces.py runeruin:block/firefly_in_a_jar --element jar_glass_body
 ```
 

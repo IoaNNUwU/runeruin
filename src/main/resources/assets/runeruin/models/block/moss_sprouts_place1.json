@@ -1,0 +1,30 @@
+{
+	"format_version": "1.21.11",
+	"ambientocclusion": false,
+	"textures": {
+		"cross": "runeruin:block/moss_sprouts",
+		"particle": "runeruin:block/moss_sprouts"
+	},
+	"elements": [
+		{
+			"from": [4.3, -1, 8.5],
+			"to": [18.7, 15, 8.5],
+			"shade": false,
+			"rotation": {"angle": 45, "axis": "y", "origin": [11.5, 7, 8.5], "rescale": true},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#cross"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#cross"}
+			}
+		},
+		{
+			"from": [11.5, -1, 1.2999999999999998],
+			"to": [11.5, 15, 15.7],
+			"shade": false,
+			"rotation": {"angle": 45, "axis": "y", "origin": [11.5, 7, 8.5], "rescale": true},
+			"faces": {
+				"east": {"uv": [0, 0, 16, 16], "texture": "#cross"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#cross"}
+			}
+		}
+	]
+}
