@@ -6,7 +6,6 @@ import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
-import java.util.Arrays;
 import java.util.OptionalInt;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -89,22 +88,22 @@ public class TopLayerAndBloomingCavesGen {
 
     /** No terrace of the Blooming caves ceiling hangs lower than this. */
     public static final int CEILING_LOWEST_Y = BLOOMING_CAVES_CEILING_Y - 23;
-    // A terrace hangs at most this far under the even ceiling, and rises at most this far into the island.
+    // A terrace hangs at most this far under the even ceiling.
     private static final int CEILING_DROP = 12;
-    private static final int CEILING_RISE = 16;
-    // Stone that always stays between the ceiling and the surface of the top layer, above it and beside it.
-    private static final int CRUST = 8;
+    // Air that stays between the highest terrace and the islands. The biomes of the top layer begin at the
+    // underside of the islands, and the plants of the ceiling biomes do not grow in them.
+    private static final int CEILING_BIOME_GAP = 4;
     // The terraces begin where the noise of the islands passes the first value and are whole from the second:
     // closer to the edge of an island the ceiling stays even.
     private static final float TERRACES_BEGIN = 0.70f;
     private static final float TERRACES_WHOLE = 0.80f;
     private static final int NO_CEILING = Integer.MIN_VALUE;
     private static final int CEILING_MIN_Y = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_OFFSET - CEILING_TERRAIN_HEIGHT;
-    private static final int CEILING_MAX_Y = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_OFFSET + TOP_LAYER_MAX_BASELINE_HEIGHT + CEILING_RISE + 2;
+    private static final int CEILING_MAX_Y = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_OFFSET + TOP_LAYER_MAX_BASELINE_HEIGHT;
 
     private static final TerracedCeiling CEILING = new TerracedCeiling("bloomingCavesCeiling", CEILING_MIN_Y, CEILING_MAX_Y, CeilingColumns::new);
 
-    /** The height of the underside of the islands. The block at this height is their lowest, the ceiling hangs under it. */
+    /** The height of the underside of the islands. The block at this height is the highest of the ceiling. */
     private static float baseLine(int x, int z, RandomState randomState) {
         return BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z) + TOP_LAYER_OFFSET;
     }
@@ -126,7 +125,6 @@ public class TopLayerAndBloomingCavesGen {
         TerracedCeiling.Chunk ceiling = CEILING.chunk(pos.x(), pos.z(), randomState);
         BlockState deepslate = Blocks.DEEPSLATE.defaultBlockState();
         BlockState stone = Blocks.STONE.defaultBlockState();
-        BlockState air = Blocks.AIR.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -136,24 +134,19 @@ public class TopLayerAndBloomingCavesGen {
                 }
                 int xx = pos.getMinBlockX() + x;
                 int zz = pos.getMinBlockZ() + z;
-                int underside = (int) baseLine(xx, zz, randomState);
-                for (int y = Math.min(lowest, underside + 1); y <= CEILING_MAX_Y; y++) {
-                    boolean solid = ceiling.stone(x, y, z);
-                    // Under the islands the ceiling is built, inside them it is dug out.
-                    if (y > underside) {
-                        if (!solid) {
-                            terrain.set(x, y, z, air);
-                        }
-                    } else if (solid) {
-                        terrain.set(x, y, z, y < underside || bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f ? deepslate : stone);
+                int highest = (int) baseLine(xx, zz, randomState);
+                for (int y = lowest; y <= highest; y++) {
+                    if (ceiling.stone(x, y, z)) {
+                        terrain.set(x, y, z, y < highest || bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f ? deepslate : stone);
                     }
                 }
-                for (int y = lowest; y <= CEILING_MAX_Y; y++) {
+                for (int y = lowest; y <= highest; y++) {
                     if (!ceiling.stone(x, y, z) || y > lowest && ceiling.stone(x, y - 1, z)) {
                         continue;
                     }
                     BlockState surface = underside(chunk, xx, zz, y, randomState);
-                    if (y == CEILING_MAX_Y || ceiling.stone(x, y + 1, z)) {
+                    // The island lies on the highest block.
+                    if (y == highest || ceiling.stone(x, y + 1, z)) {
                         RRTerrainSurfaces.placeCeilingSurface(terrain, x, y, z, surface);
                     } else {
                         terrain.set(x, y, z, surface);
@@ -165,22 +158,12 @@ public class TopLayerAndBloomingCavesGen {
 
     /**
      * What the ceiling of the columns around a chunk hangs between. Near the edge of an island and around an
-     * arcane column it is the even ceiling; further in it turns into terraces that hang lower and rise into the
-     * island where the island is thick enough.
+     * arcane column it is the even ceiling; further in it turns into terraces that hang lower.
      */
     private static final class CeilingColumns implements TerracedCeiling.Columns {
-        private static final int GRID = 4;
-        private static final int UNKNOWN = Integer.MIN_VALUE;
-        private static final int NO_ISLAND = -1024;
-
         private final int chunkX;
         private final int chunkZ;
         private final RandomState randomState;
-        // The surface of the top layer every GRID blocks, as far around the chunk as its columns look.
-        private final int gridX;
-        private final int gridZ;
-        private final int gridSize;
-        private final int[] surface;
         // 0 is unknown, 1 is none, 2 is an arcane column: this chunk and its 8 neighbours.
         private final byte[] arcaneColumns = new byte[9];
 
@@ -188,12 +171,6 @@ public class TopLayerAndBloomingCavesGen {
             this.chunkX = chunkX;
             this.chunkZ = chunkZ;
             this.randomState = randomState;
-            int reach = TerracedCeiling.MARGIN + CRUST;
-            this.gridX = Math.floorDiv((chunkX << 4) - reach, GRID);
-            this.gridZ = Math.floorDiv((chunkZ << 4) - reach, GRID);
-            this.gridSize = Math.floorDiv((chunkX << 4) + 15 + reach, GRID) - this.gridX + 2;
-            this.surface = new int[this.gridSize * this.gridSize];
-            Arrays.fill(this.surface, UNKNOWN);
         }
 
         @Override
@@ -204,6 +181,7 @@ public class TopLayerAndBloomingCavesGen {
             if (even == NO_CEILING) {
                 return null;
             }
+            int underside = (int) baseLine;
             float strength = Mth.clamp((island - TERRACES_BEGIN) / (TERRACES_WHOLE - TERRACES_BEGIN), 0f, 1f);
             strength *= strength * (3 - 2 * strength);
             if (strength > 0) {
@@ -213,10 +191,14 @@ public class TopLayerAndBloomingCavesGen {
                 return new TerracedCeiling.Column(even, 0, even, 0);
             }
             int lowest = Math.max(CEILING_LOWEST_Y, even - CEILING_DROP);
-            int highest = Math.max(even, Math.min(lowestSurfaceAround(x, z) - CRUST - 2, (int) baseLine + CEILING_RISE));
-            float relief = (ceilingReliefNoise.getOrCreateNoise(this.randomState).noise(x, z) - 0.5f) * 3f;
+            int highest = Math.max(even, underside - CEILING_BIOME_GAP);
+            // The fine relief only lowers the ceiling, so the highest terrace keeps its gap.
+            float relief = ceilingReliefNoise.getOrCreateNoise(this.randomState).noise(x, z) * 3f;
             return new TerracedCeiling.Column(
-                    even + strength * (Math.max(CEILING_LOWEST_Y, lowest + relief) - even), strength * (highest - lowest), highest + 2, strength
+                    even + strength * (Math.max(CEILING_LOWEST_Y, lowest - relief) - even),
+                    strength * (highest - lowest),
+                    Math.min(highest + 2, underside),
+                    strength
             );
         }
 
@@ -234,22 +216,6 @@ public class TopLayerAndBloomingCavesGen {
                 }
             }
             return Math.max(away, 0);
-        }
-
-        /** The lowest surface of the top layer within CRUST blocks, so that the ceiling opens no cliff from the side. */
-        private int lowestSurfaceAround(int x, int z) {
-            int lowest = Integer.MAX_VALUE;
-            for (int cellX = Math.floorDiv(x - CRUST, GRID); cellX <= -Math.floorDiv(-x - CRUST, GRID); cellX++) {
-                for (int cellZ = Math.floorDiv(z - CRUST, GRID); cellZ <= -Math.floorDiv(-z - CRUST, GRID); cellZ++) {
-                    int i = (cellX - this.gridX) * this.gridSize + cellZ - this.gridZ;
-                    if (this.surface[i] == UNKNOWN) {
-                        HangingTerrainGenerator.TerrainColumn column = topLayerColumnAt(cellX * GRID, cellZ * GRID, this.randomState);
-                        this.surface[i] = column.present() ? column.topY() : NO_ISLAND;
-                    }
-                    lowest = Math.min(lowest, this.surface[i]);
-                }
-            }
-            return lowest;
         }
     }
 
@@ -286,12 +252,6 @@ public class TopLayerAndBloomingCavesGen {
 
     public static void generateHangingSoil(TerrainWriter terrain, RandomState randomState) {
         HangingTerrainGenerator.generate(terrain, randomState, HANGING_SOIL);
-    }
-
-    /** The surface block of the top layer in this column, if an island is here. */
-    public static OptionalInt topLayerSurfaceY(int x, int z, RandomState randomState) {
-        HangingTerrainGenerator.TerrainColumn column = topLayerColumnAt(x, z, randomState);
-        return column.present() ? OptionalInt.of(column.topY()) : OptionalInt.empty();
     }
 
     private static HangingTerrainGenerator.TerrainColumn topLayerColumnAt(int x, int z, RandomState randomState) {
