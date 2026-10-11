@@ -192,6 +192,7 @@ public final class RRGameTests {
             new FeatureCase("bead_vine", Surface.CEILING, voidStone, -1),
             new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
+            new FeatureCase("floating_moss_patch", Surface.UNDERWATER, Blocks.STONE, 1),
             new FeatureCase("goblet_kelp", Surface.UNDERWATER, Blocks.STONE, 1),
             new FeatureCase("goblet_seagrass", Surface.UNDERWATER, Blocks.STONE, 1),
             new FeatureCase("stone_spike", Surface.CAVE, Blocks.STONE, 0),
