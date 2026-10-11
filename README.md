@@ -4,7 +4,7 @@
 
 ![](.github/assets/preview.png)
 
-The mod is made with the help of AI agents, and a person reviews everything they do: see the [AI usage policy](AI_POLICY.md).
+- [AI usage policy](AI_POLICY.md)
 
 # World Structure
 
