@@ -115,6 +115,8 @@ A pull request that changes how something looks shows it in the `Pictures` secti
 
   From a fork, drag the pictures into the description in the browser.
 
+After the merge a workflow copies the description into a comment on every issue the pull request closes, with `Done` and `Pictures` on top and the other sections folded, so the issue shows the result too. Editing the description later, for example to add a screenshot from the game, updates that comment. Whoever closes an issue by hand, without a pull request, adds the pictures in a comment themselves.
+
 When you are done, update your `main` again and remove the task folder with `.\scripts\finish-task.ps1 -Path ..\RuneRuin-ice-biome`. Do not delete it with `git worktree remove --force`: that would follow the link and wipe the shared Minecraft sources.
 
 ## Working with an AI agent
