@@ -5,6 +5,7 @@ import ioann.uwu.runeruin.dimension.structures.BaobabStructure;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletStructure;
 import ioann.uwu.runeruin.dimension.structures.HangingTracksStructure;
+import ioann.uwu.runeruin.dimension.structures.PirateShipwreckStructure;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
@@ -17,6 +18,7 @@ public class RRStructures {
     public static final ResourceKey<Structure> BAOBAB = RR.resourceKey(Registries.STRUCTURE, "baobab");
     public static final ResourceKey<Structure> DINOSAUR_SKELETON = RR.resourceKey(Registries.STRUCTURE, "dinosaur_skeleton");
     public static final ResourceKey<Structure> HANGING_TRACKS = RR.resourceKey(Registries.STRUCTURE, "hanging_tracks");
+    public static final ResourceKey<Structure> PIRATE_SHIPWRECK = RR.resourceKey(Registries.STRUCTURE, "pirate_shipwreck");
 
     public static void bootstrap(BootstrapContext<Structure> ctx) {
         var biomes = ctx.lookup(Registries.BIOME);
@@ -43,6 +45,13 @@ public class RRStructures {
         ctx.register(HANGING_TRACKS, new HangingTracksStructure(
                 new Structure.StructureSettings.Builder(biomes.getOrThrow(RRBiomeTags.HAS_HANGING_TRACKS))
                         .generationStep(GenerationStep.Decoration.UNDERGROUND_STRUCTURES)
+                        .build()
+        ));
+
+        // After the boulders and the monoliths of the floor, before the plants: moss and vines grow over the wreck.
+        ctx.register(PIRATE_SHIPWRECK, new PirateShipwreckStructure(
+                new Structure.StructureSettings.Builder(biomes.getOrThrow(RRBiomeTags.HAS_PIRATE_SHIPWRECK))
+                        .generationStep(GenerationStep.Decoration.SURFACE_STRUCTURES)
                         .build()
         ));
     }

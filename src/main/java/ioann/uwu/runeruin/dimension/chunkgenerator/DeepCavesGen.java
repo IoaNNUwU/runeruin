@@ -17,8 +17,8 @@ public class DeepCavesGen {
 
     /** Nothing of the ceiling is lower than this. */
     public static final int LOWEST_Y = DEEP_CAVES_CEILING_Y - 12;
-    // Stone that always stays under the surface of the Blooming caves floor.
-    private static final int CRUST = 6;
+    /** Stone that always stays under the surface of the Blooming caves floor. */
+    public static final int CRUST = 6;
     /** The highest {@link #roofY}: nothing is open from here up to the Blooming caves. */
     public static final int HIGHEST_Y = BLOOMING_CAVES_Y + TERRAIN_HEIGHT - CRUST;
 

@@ -18,6 +18,7 @@ public class RRStructureSets {
     public static final ResourceKey<StructureSet> BAOBABS = RR.resourceKey(Registries.STRUCTURE_SET, "baobabs");
     public static final ResourceKey<StructureSet> DINOSAUR_SKELETONS = RR.resourceKey(Registries.STRUCTURE_SET, "dinosaur_skeletons");
     public static final ResourceKey<StructureSet> HANGING_TRACKS = RR.resourceKey(Registries.STRUCTURE_SET, "hanging_tracks");
+    public static final ResourceKey<StructureSet> PIRATE_SHIPWRECKS = RR.resourceKey(Registries.STRUCTURE_SET, "pirate_shipwrecks");
 
     public static void bootstrap(BootstrapContext<StructureSet> ctx) {
         var structures = ctx.lookup(Registries.STRUCTURE);
@@ -58,6 +59,16 @@ public class RRStructureSets {
                 new StructureSet(
                         structures.getOrThrow(RRStructures.HANGING_TRACKS),
                         new RandomSpreadStructurePlacement(16, 10, RandomSpreadType.LINEAR, 2857414)
+                )
+        );
+
+        ctx.register(
+                PIRATE_SHIPWRECKS,
+                new StructureSet(
+                        structures.getOrThrow(RRStructures.PIRATE_SHIPWRECK),
+                        // About a third of the places in a Stone forest take a ship: the rest have an uneven floor
+                        // or lie too close to its edge. That leaves one ship in some 320 by 320 blocks of the forest.
+                        new RandomSpreadStructurePlacement(14, 8, RandomSpreadType.LINEAR, 5513079)
                 )
         );
     }
