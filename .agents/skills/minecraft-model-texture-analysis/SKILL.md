@@ -18,7 +18,7 @@ For a NeoForge project, check these locations first:
 - Datagen output: `src/generated/resources/assets/<namespace>/models/{block,item}/`, the models on vanilla parents and the ones derived from a kept model, and the related `blockstates/`.
 - Authored textures: `src/main/resources/assets/<namespace>/textures/{block,item,entity}/`.
 - Blockstate and derived-model generators: `src/main/java/**/datagen/`.
-- Mob geometry: the Blockbench project `src/main/resources/assets/<namespace>/models/entity/<name>.bbmodel`, bones with cubes and a `uv_offset` per cube (box UV); the Java model in `client/model/` only moves the bones. A vanilla mob is Java: `texOffs(...)` and cube dimensions in its layer definition.
+- Mob geometry: the Blockbench project `src/main/resources/assets/<namespace>/models/entity/<name>.bbmodel`, bones with cubes and a `uv_offset` per cube (box UV), and its animations, exported into `client/model/<Name>Animation.java`; the Java model in `client/model/` only plays them. A vanilla mob is Java: `texOffs(...)` and cube dimensions in its layer definition.
 
 If a model JSON is absent, check whether datagen has run. Do not invent generated JSON. For model selection, follow blockstate variants or item model references until reaching the geometry-bearing model. For mobs, follow the renderer/model registration to its texture identifier and inspect both the UV declarations and the full atlas.
 
