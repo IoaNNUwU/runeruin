@@ -2,6 +2,8 @@ package ioann.uwu.runeruin.client.model;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.client.MossyRamRenderState;
+import net.minecraft.client.animation.AnimationDefinition;
+import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -11,9 +13,13 @@ import net.minecraft.util.Mth;
 
 /**
  * The Mossy Prophet and the Mossy Warrior: a boxy body on short legs with a small ram's head on top of its front.
- * Their shapes are the Blockbench projects {@code mossy_prophet.bbmodel} and {@code mossy_warrior.bbmodel}; this
- * class moves their bones. Each has a second layer for the moss, the same boxes a little larger: the moss lies
- * on the body like wool on a sheep, and the texture decides how far it hangs down the sides.
+ * Their shapes and animations are the Blockbench projects {@code mossy_prophet.bbmodel} and
+ * {@code mossy_warrior.bbmodel}; the animations are exported from Blockbench into {@link MossyProphetAnimation}
+ * and {@link MossyWarriorAnimation}. Each has a second layer for the moss, the same boxes a little larger: the moss
+ * lies on the body like wool on a sheep, and the texture decides how far it hangs down the sides.
+ *
+ * <p>An animation follows the progress of a movement that the mob counts: its first frame is the start of the
+ * movement, its last frame the full pose. The walk loops with the distance walked.</p>
  */
 public class MossyRamModel extends EntityModel<MossyRamRenderState> {
     public static final ModelLayerLocation PROPHET = new ModelLayerLocation(RR.id("mossy_prophet"), "main");
@@ -24,30 +30,46 @@ public class MossyRamModel extends EntityModel<MossyRamRenderState> {
     public static final CubeDeformation PROPHET_MOSS_DEPTH = new CubeDeformation(1.0F);
     public static final CubeDeformation WARRIOR_MOSS_DEPTH = new CubeDeformation(0.5F);
 
-    private final ModelPart body;
-    private final ModelPart head;
-    private final ModelPart rightArm;
-    private final ModelPart leftArm;
-    private final ModelPart rightLeg;
-    private final ModelPart leftLeg;
+    /** A second of the walk is one stride, the swing of the vanilla mobs' legs: {@code cos(0.6662 * distance)}. */
+    private static final float STRIDES = 1000.0F * 0.6662F / (50.0F * Mth.TWO_PI);
 
-    public MossyRamModel(ModelPart root) {
+    private final ModelPart head;
+    private final KeyframeAnimation walk;
+    private final Movement punch;
+    private final Movement raise;
+    private final Movement hold;
+    private final Movement crouch;
+    private final Movement somersault;
+
+    private MossyRamModel(ModelPart root, AnimationDefinition walk, AnimationDefinition punch, AnimationDefinition raise,
+                          AnimationDefinition hold, AnimationDefinition crouch, AnimationDefinition somersault) {
         super(root);
-        this.body = root.getChild("body");
-        this.head = this.body.getChild("head");
-        this.rightArm = this.body.getChild("right_arm");
-        this.leftArm = this.body.getChild("left_arm");
-        this.rightLeg = root.getChild("right_leg");
-        this.leftLeg = root.getChild("left_leg");
+        this.head = root.getChild("whole").getChild("body").getChild("head");
+        this.walk = walk.bake(root);
+        this.punch = new Movement(root, punch);
+        this.raise = new Movement(root, raise);
+        this.hold = new Movement(root, hold);
+        this.crouch = new Movement(root, crouch);
+        this.somersault = new Movement(root, somersault);
     }
 
-    public static LayerDefinition createProphet(CubeDeformation deformation) {
-        return BlockbenchModel.layer("mossy_prophet", deformation, MossyRamModel::new);
+    public static MossyRamModel prophet(ModelPart root) {
+        return new MossyRamModel(root, MossyProphetAnimation.walk, MossyProphetAnimation.punch, MossyProphetAnimation.raise,
+                MossyProphetAnimation.hold, MossyProphetAnimation.crouch, MossyProphetAnimation.somersault);
     }
 
     /** The Prophet at a third of its size, with fewer boxes: horns of three bars and no tips. */
+    public static MossyRamModel warrior(ModelPart root) {
+        return new MossyRamModel(root, MossyWarriorAnimation.walk, MossyWarriorAnimation.punch, MossyWarriorAnimation.raise,
+                MossyWarriorAnimation.hold, MossyWarriorAnimation.crouch, MossyWarriorAnimation.somersault);
+    }
+
+    public static LayerDefinition createProphet(CubeDeformation deformation) {
+        return BlockbenchModel.layer("mossy_prophet", deformation, MossyRamModel::prophet);
+    }
+
     public static LayerDefinition createWarrior(CubeDeformation deformation) {
-        return BlockbenchModel.layer("mossy_warrior", deformation, MossyRamModel::new);
+        return BlockbenchModel.layer("mossy_warrior", deformation, MossyRamModel::warrior);
     }
 
     @Override
@@ -55,28 +77,22 @@ public class MossyRamModel extends EntityModel<MossyRamRenderState> {
         super.setupAnim(state);
         this.head.yRot = state.yRot * Mth.DEG_TO_RAD;
         this.head.xRot = state.xRot * Mth.DEG_TO_RAD;
+        this.walk.applyWalk(state.walkAnimationPos, state.walkAnimationSpeed, STRIDES, 1.0F);
+        this.punch.show(state.attackAnim);
+        this.raise.show(state.raise);
+        this.hold.show(state.hold);
+        this.crouch.show(state.crouch);
+        this.somersault.show(state.spin / Mth.TWO_PI);
+    }
 
-        float step = Mth.cos(state.walkAnimationPos * 0.6662F) * state.walkAnimationSpeed;
-        this.rightLeg.xRot = step * 1.2F;
-        this.leftLeg.xRot = -step * 1.2F;
-        // A punch: both fists go up in front of the body and come down.
-        float punch = Mth.sin(state.attackAnim * Mth.PI) * 2.2F;
-        this.rightArm.xRot = -step * 0.6F - punch;
-        this.leftArm.xRot = step * 0.6F - punch;
+    /** An animation shown at the progress of a movement: 0 is its first frame, 1 its last. */
+    private record Movement(KeyframeAnimation animation, float length) {
+        Movement(ModelPart root, AnimationDefinition definition) {
+            this(definition.bake(root), definition.lengthInSeconds());
+        }
 
-        // The arms go up and apart to call warriors and through a leap; holding a warrior, they go on past
-        // the vertical and lean in over the head.
-        float lift = state.raise * 2.5F + state.hold * 3.66F;
-        this.rightArm.zRot = lift;
-        this.leftArm.zRot = -lift;
-        // The body sinks onto the legs before a leap and after it.
-        this.body.y += state.crouch * 4.0F;
-        this.body.xRot = state.crouch * 0.1F;
-
-        // A somersault, forward around the middle of the body.
-        float middle = this.body.getInitialPose().y();
-        this.root.xRot = state.spin;
-        this.root.y = middle * (1.0F - Mth.cos(state.spin));
-        this.root.z = -middle * Mth.sin(state.spin);
+        void show(float progress) {
+            this.animation.apply((long) (progress * this.length * 1000.0F), 1.0F);
+        }
     }
 }

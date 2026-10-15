@@ -104,9 +104,9 @@ public class RuneRuinClient {
     static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(RREntityTypes.SNAIL.get(), SnailRenderer::new);
         event.registerEntityRenderer(RREntityTypes.MOSSY_PROPHET.get(),
-                context -> new MossyRamRenderer(context, MossyRamModel.PROPHET, MossyRamModel.PROPHET_MOSS, 1.3F));
+                context -> new MossyRamRenderer(context, MossyRamModel.PROPHET, MossyRamModel.PROPHET_MOSS, MossyRamModel::prophet, 1.3F));
         event.registerEntityRenderer(RREntityTypes.MOSSY_WARRIOR.get(),
-                context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel.WARRIOR_MOSS, 0.4F));
+                context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel.WARRIOR_MOSS, MossyRamModel::warrior, 0.4F));
         event.registerEntityRenderer(RREntityTypes.RUNIC_MINECART.get(), RunicMinecartRenderer::new);
     }
 
