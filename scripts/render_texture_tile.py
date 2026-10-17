@@ -5,7 +5,7 @@
         [--grid 3] [--scale 8]
 
 A texture is a file path or a texture id (namespace:path, e.g. runeruin:block/moss_light), looked up in
-src/main/resources, src/generated/resources and .vanilla-textures. Animated textures show frame 0.
+src/main/resources, src/generated/resources and .mc-sources/textures. Animated textures show frame 0.
 Each texture gets its own labeled panel, side by side.
 """
 import argparse
@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ASSET_ROOTS = [
     ROOT / "src/main/resources/assets",
     ROOT / "src/generated/resources/assets",
-    ROOT / ".vanilla-textures/assets",
+    ROOT / ".mc-sources/textures/assets",
 ]
 BACKGROUND = (48, 48, 48)
 LABEL_HEIGHT = 14

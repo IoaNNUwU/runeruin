@@ -2,7 +2,5 @@
 # the vanilla textures and models (see VERSION.txt) and the generated resources searchable.
 !.mc-sources/
 !.mc-sources/**
-!.vanilla-textures/
-!.vanilla-textures/**
 !src/generated/
 !src/generated/**
