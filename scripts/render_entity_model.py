@@ -16,7 +16,7 @@ assets/runeruin/models/entity, so the geometry comes from the game: `gradlew run
 to build/entity_models/<namespace>/<model>/<layer>.json (EntityModelExport), the parts with their initial poses
 and the faces of their boxes as ModelPart builds them. Run it again after a change to a model or its project.
 A bare model name tries runeruin: then minecraft:. The texture is an id resolved through src/main and
-.vanilla-textures, or a path to a PNG. --layer draws several layers of the model together, such as a mob and its
+.mc-sources/textures, or a path to a PNG. --layer draws several layers of the model together, such as a mob and its
 moss: <layer>=<texture> gives a layer a texture of its own, a layer without one takes the texture argument.
 
 The model stands as the game draws it, turned over from the model space where Y points down; the front is -Z,
@@ -86,7 +86,7 @@ def find_model(name, layer):
 def load_texture(name):
     if Path(name).is_file():
         return name, Image.open(name).convert("RGBA")
-    roots = discover_assets_roots(None, [ROOT / "src/main/resources/assets", ROOT / ".vanilla-textures/assets"])
+    roots = discover_assets_roots(None, [ROOT / "src/main/resources/assets", ROOT / ".mc-sources/textures/assets"])
     path, identifier = resolve_texture_file(name, "minecraft", roots)
     return identifier, Image.open(path).convert("RGBA")
 
@@ -168,7 +168,7 @@ def find_animation(identifier, name):
             raise ModelError(f"--animation {name}: {identifier} has no Blockbench project; pass <Class>.<FIELD>")
         class_name = json.loads(project.read_text(encoding="utf-8"))["model_identifier"] + "Animation"
         field = name
-    files = [file for folder in (ROOT / "src/main/java", ROOT / ".mc-sources/net/minecraft/client/animation")
+    files = [file for folder in (ROOT / "src/main/java", ROOT / ".mc-sources/code/net/minecraft/client/animation")
              for file in folder.rglob(f"{class_name}.java")]
     if not files:
         raise ModelError(f"--animation {name}: no class {class_name} in src/main/java or the Minecraft sources")
