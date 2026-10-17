@@ -13,6 +13,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.particle.FallingLeavesParticle;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -110,6 +111,8 @@ public class RuneRuinClient {
         event.registerEntityRenderer(RREntityTypes.MOSSY_WARRIOR.get(),
                 context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel.WARRIOR_MOSS, MossyRamModel::warrior, 0.4F));
         event.registerEntityRenderer(RREntityTypes.RUNIC_MINECART.get(), RunicMinecartRenderer::new);
+        // The berry's own item at half the size of a snowball.
+        event.registerEntityRenderer(RREntityTypes.BLOWPIPE_BERRY.get(), context -> new ThrownItemRenderer<>(context, 0.5F, false));
     }
 
     @SubscribeEvent

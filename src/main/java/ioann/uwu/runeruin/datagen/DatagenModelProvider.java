@@ -18,14 +18,18 @@ import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.model.ItemModelUtils;
+import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
+import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.item.Item;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -56,6 +60,7 @@ public class DatagenModelProvider extends ModelProvider {
         itemModels.generateFlatItem(RRItems.MOSSY_WARRIOR_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.WISPBERRY.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.MOSSBERRY.get(), ModelTemplates.FLAT_ITEM);
+        createBlowpipe(itemModels);
         itemModels.generateFlatItem(RRItems.POWDERED_MOSS_BUCKET.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.RUNIC_MINECART.get(), ModelTemplates.FLAT_ITEM);
 
@@ -110,6 +115,19 @@ public class DatagenModelProvider extends ModelProvider {
 
         PortalModels.createRuneRuinPortal(blockModels);
         WispberryBushModels.createWispberryBush(blockModels, this.resources);
+    }
+
+    /**
+     * As the vanilla spyglass: a flat icon in the inventory, on the ground and in frames, the pipe of
+     * {@code item/blowpipe_in_hand} in the hands, and {@code item/blowpipe_blowing} at the mouth while the player blows.
+     */
+    private static void createBlowpipe(@NonNull ItemModelGenerators itemModels) {
+        Item blowpipe = RRItems.BLOWPIPE.get();
+        ItemModel.Unbaked flat = ItemModelUtils.plainModel(itemModels.createFlatItemModel(blowpipe, ModelTemplates.FLAT_ITEM));
+        ItemModel.Unbaked inHand = ItemModelUtils.plainModel(ModelLocationUtils.getModelLocation(blowpipe, "_in_hand"));
+        ItemModel.Unbaked blowing = ItemModelUtils.plainModel(ModelLocationUtils.getModelLocation(blowpipe, "_blowing"));
+        itemModels.itemModelOutput.accept(blowpipe, ItemModelGenerators.createFlatModelDispatch(
+                flat, ItemModelUtils.conditional(ItemModelUtils.isUsingItem(), blowing, inHand)));
     }
 
     private static void createAshenMushroomBlock(@NonNull BlockModelGenerators blockModels) {

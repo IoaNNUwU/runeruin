@@ -49,6 +49,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntBinaryOperator;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -71,15 +72,18 @@ import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
@@ -145,6 +149,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("mossy_prophet_throws_warrior", () -> RRGameTests::mossyProphetThrowsWarrior);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_WARRIOR_SPIN_JUMP =
         TEST_FUNCTIONS.register("mossy_warrior_spin_jump", () -> RRGameTests::mossyWarriorSpinJump);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOWPIPE_SHOOTS_BERRIES =
+        TEST_FUNCTIONS.register("blowpipe_shoots_berries", () -> RRGameTests::blowpipeShootsBerries);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
@@ -609,6 +615,13 @@ public final class RRGameTests {
             RR.id("mossy_warrior_spin_jump"),
             new FunctionGameTestInstance(
                 MOSSY_WARRIOR_SPIN_JUMP.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("blowpipe_shoots_berries"),
+            new FunctionGameTestInstance(
+                BLOWPIPE_SHOOTS_BERRIES.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
             )
         );
@@ -1439,6 +1452,43 @@ public final class RRGameTests {
             helper.assertTrue(target.getHealth() == 195.0F, "the target has health " + target.getHealth());
             endFight(helper, y);
         });
+    }
+
+    // A full breath blows one berry at a snail ten blocks away: a mossberry from the bag poisons it, a glow berry
+    // in the other hand, which goes first, makes it glow.
+    private static void blowpipeShootsBerries(GameTestHelper helper) {
+        int y = 130;
+        fightFloor(helper, y);
+        Snail poisoned = fightTarget(helper, 14, y, 8);
+        Snail glowing = fightTarget(helper, 14, y, 16);
+        Player mossShooter = blowpipeShooter(helper, poisoned);
+        Player glowShooter = blowpipeShooter(helper, glowing);
+        glowShooter.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.GLOW_BERRIES, 2));
+        for (Player shooter : List.of(mossShooter, glowShooter)) {
+            ItemStack blowpipe = shooter.getMainHandItem();
+            blowpipe.releaseUsing(helper.getLevel(), shooter, blowpipe.getUseDuration(shooter) - 20);
+            helper.assertTrue(blowpipe.getDamageValue() == 1, "a shot wore the blowpipe by " + blowpipe.getDamageValue());
+        }
+        helper.assertTrue(mossShooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 2, "a shot did not take one mossberry");
+        helper.assertTrue(glowShooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 3, "a shot took a mossberry past the glow berries");
+        helper.assertTrue(glowShooter.getOffhandItem().getCount() == 1, "a shot did not take one glow berry");
+
+        helper.succeedWhen(() -> {
+            helper.assertTrue(poisoned.hasEffect(MobEffects.POISON), "the mossberry did not poison its snail");
+            helper.assertTrue(glowing.hasEffect(MobEffects.GLOWING), "the glow berry did not make its snail glow");
+            helper.assertTrue(!glowing.hasEffect(MobEffects.POISON), "the snail hit by a glow berry is poisoned");
+            endFight(helper, y);
+        });
+    }
+
+    /** A player ten blocks west of the target, aiming at it with a blowpipe and three mossberries in the bag. */
+    private static Player blowpipeShooter(GameTestHelper helper, Snail target) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setPos(target.position().add(-10, 0, 0));
+        player.lookAt(EntityAnchorArgument.Anchor.EYES, target.getBoundingBox().getCenter());
+        player.setItemInHand(InteractionHand.MAIN_HAND, RRItems.BLOWPIPE.toStack());
+        player.getInventory().add(RRItems.MOSSBERRY.toStack(3));
+        return player;
     }
 
     // The chest of a station is what puts a runic minecart into every network.
