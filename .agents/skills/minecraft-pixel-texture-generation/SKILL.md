@@ -7,19 +7,17 @@ description: >-
 
 # Minecraft pixel texture generation
 
-Use this skill whenever creating or modifying Minecraft texture PNGs in this project.
-
-A texture you make is a draft that a person finishes by hand ([AI_POLICY.md](../../../AI_POLICY.md)). Once the person has redrawn a texture, do not regenerate or recolor it unless they ask for that texture: fit the model to it instead.
+A texture you make is a draft that goes to a person (`hand-off` skill). Once the person has redrawn a texture, do not regenerate or recolor it unless they ask for that texture: fit the model to it instead.
 
 ## Defaults
 
-- Use pixel art with hard pixel edges. Default output size is 16x16 unless the model UV layout or user explicitly requires another size.
-- Do not blur, anti-alias, smooth, or dither textures.
-- Do not create semitransparent pixels unless the user explicitly asks. Alpha should be binary: pixels are either fully transparent (`A=0`) or fully opaque (`A=255`). For solid wood, bark, planks, and log ends, make every pixel fully opaque.
+- Pixel art with hard pixel edges, 16x16 unless the model UV layout or the user requires another size.
+- No blur, anti-aliasing, smoothing or dithering.
+- No semitransparent pixels unless the user explicitly asks: every pixel is fully transparent (`A=0`) or fully opaque (`A=255`). Solid wood, bark, planks and log ends are fully opaque.
 
 ## Where the colors come from
 
-When a part of the texture means the same as a block, draw it after that block: take its colors and its structure, such as the pattern, the direction of the grain and the size of the spots. Look for the block in this mod first (`src/main/resources/assets/runeruin/textures/block/`), then in vanilla (`.vanilla-textures/assets/minecraft/textures/block/`). The wool of a new ram is drawn after the wool block that the ram drops, if the mod has one; without such a block, after vanilla `white_wool`. The moss on the back of the Mossy Prophet is drawn after the mod's `deep_moss` or `moss_light`, not after vanilla `moss_block`.
+When a part of the texture means the same as a block, draw it after that block: take its colors and its structure, such as the pattern, the direction of the grain and the size of the spots. Look for the block in this mod first (`src/main/resources/assets/runeruin/textures/block/`), then in vanilla (`.mc-sources/textures/assets/minecraft/textures/block/`). The wool of a new ram is drawn after the wool block that the ram drops, if the mod has one; without such a block, after vanilla `white_wool`. The moss on the back of the Mossy Prophet is drawn after the mod's `deep_moss` or `moss_light`, not after vanilla `moss_block`.
 
 Keep the palette of the reference and bring it down to the limit of the part below by dropping shades the eye cannot tell apart: vanilla `white_wool` has 40 colors that look like 3. Name the reference block of each part in the report.
 
@@ -39,13 +37,10 @@ The checker counts the colors of each part from a parts map: a PNG of the textur
 
 ## Vanilla alternatives
 
-When creating a custom alternative to a vanilla block or item (such as a log, planks, sign, door, or hanging sign), compare it with the equivalent from the project's pinned Minecraft version before editing:
+A custom alternative to a vanilla block or item (a log, planks, a sign, a door) starts from the vanilla one of the pinned version in `.mc-sources/textures`:
 
-- Inspect the vanilla blockstate, model geometry, parent model, UV mapping, and inventory model. Keep the vanilla shape, UV layout, and model behavior unless the user asks for a different design.
-- Use the vanilla texture as the recoloring base when available. Change color values only in intended painted pixels; keep transparent pixels in the same positions and preserve the canvas dimensions. A 16x16 default does not override a larger vanilla texture layout: pass its exact dimensions to the conversion script.
-- Compare the candidate texture's dimensions and alpha silhouette to vanilla. Do not resize the candidate to 16x16 for this comparison when vanilla uses another size. The default shape comparison checks transparent versus visible pixels; use exact-alpha comparison when the alpha values themselves must also match.
-- If the vanilla source is unavailable, inspect an explicitly supplied reference or report that the shape comparison could not be completed. Do not substitute a different Minecraft version's asset.
-- Use the available Minecraft model and texture analysis skill when model parents or UV regions are unclear.
+- Keep its blockstate, model geometry, parent, UV layout and inventory model unless the user asks for another design (`minecraft-model-texture-analysis` skill when parents or UVs are unclear).
+- Recolor its texture: change only the painted pixels, keep the transparent ones where they are and keep its exact size, also when it is not 16x16. Compare the result with `compare_texture_shape.py`. Without the vanilla source, use a reference the user supplies or report that the comparison could not be done; never use another version's asset.
 
 ## Planes seen from both sides
 
@@ -57,34 +52,16 @@ The two isometric views of `scripts/render_model.py` look at the model from oppo
 
 ## Convert and check
 
-Use the bundled scripts rather than rewriting palette and alpha handling for each texture. They require Python 3 and Pillow.
+Use the bundled scripts in `.agents/skills/minecraft-pixel-texture-generation/scripts/` (Python 3, Pillow; options in `--help`) rather than rewriting palette and alpha handling:
 
-`quantize_texture.py` resizes with nearest-neighbor to 16x16 by default, chooses a deterministic weighted palette with k-means when `--colors` is used, or accepts an explicit `--palette`, then maps pixels with no dithering. The default `--palette-match rgb` chooses the nearest color by RGB distance. Use `--palette-match luminance` when recoloring a vanilla texture to a new hue family: it preserves the source's light-to-shadow ordering while mapping across the target palette's brightness range. Pass the vanilla texture's exact dimensions with `--size` when it is not 16x16. Its default `--alpha-mode binary` preserves fully transparent pixels and promotes all visible pixels to fully opaque; use `--alpha-mode opaque` for solid textures. `--alpha-mode preserve` is an explicit opt-in for tasks that genuinely require alpha gradients.
+- `quantize_texture.py` resizes with nearest-neighbor and maps to a palette without dithering. Pass the colors chosen for the parts with `--palette`: `--colors` picks one k-means palette for the whole texture and can give two elements of one part different shades. `--palette-match luminance` recolors a vanilla texture into another hue family and keeps its light-to-shadow order; `--size` keeps a vanilla size other than 16x16. `--alpha-mode binary` (default) keeps transparent pixels and makes the rest opaque, `opaque` fills everything; `preserve` only for alpha gradients the task requires.
+- `check_texture.py`, run with the parts map on every texture you make, fails on a size other than 16x16 or a semitransparent pixel. With `--parts` it fails on a part with more colors than its largest element allows or a visible pixel without a part, and lists every part with its colors. `--require-opaque` for solid textures, `--max-colors` to keep the palette size of a recolored vanilla texture.
+- `compare_texture_shape.py vanilla.png custom.png` fails on a size or alpha-silhouette mismatch; `--exact-alpha` also compares every alpha value.
 
 ```powershell
-python .agents/skills/minecraft-pixel-texture-generation/scripts/quantize_texture.py input.png output.png --colors 3 --alpha-mode opaque
 python .agents/skills/minecraft-pixel-texture-generation/scripts/quantize_texture.py input.png output.png --palette '#F7D171' '#E1AE3A' '#704B2D' --alpha-mode binary
-python .agents/skills/minecraft-pixel-texture-generation/scripts/quantize_texture.py input.png output.png --palette '#684A2B' '#A47A35' '#D2A340' '#E1AE3A' '#F5CA62' '#F5E084' '#FAEDB4' '#FFF8E2' --palette-match luminance --size 32x32
-```
-
-`check_texture.py` reports dimensions, unique visible RGB colors, alpha values, and the most common colors. It fails by default if dimensions are not 16x16 or any pixel is semitransparent. `--parts` reads the parts map and fails when a part has more colors than its largest element allows or a visible pixel has no part; it lists every part with its colors and the total that the parts allow. Use `--require-opaque` for fully solid textures and `--max-colors` to keep the palette size of a vanilla texture you recolor.
-
-```powershell
-python .agents/skills/minecraft-pixel-texture-generation/scripts/check_texture.py output.png --parts exports/output_parts.png --require-opaque
 python .agents/skills/minecraft-pixel-texture-generation/scripts/check_texture.py output.png --parts exports/output_parts.png --rough '#00C800'
-python .agents/skills/minecraft-pixel-texture-generation/scripts/check_texture.py output.png --max-colors 5 --histogram 5
 ```
-
-With `quantize_texture.py`, pass the colors chosen for the parts with `--palette`: `--colors` picks one k-means palette for the whole texture and can give two elements of one part different shades.
-
-`compare_texture_shape.py` compares a custom texture to its vanilla counterpart without changing either file. It fails on dimension or alpha-silhouette mismatches and reports the alpha histograms; `--exact-alpha` also requires every alpha value to match at each pixel.
-
-```powershell
-python .agents/skills/minecraft-pixel-texture-generation/scripts/compare_texture_shape.py vanilla.png custom.png
-python .agents/skills/minecraft-pixel-texture-generation/scripts/compare_texture_shape.py vanilla.png custom.png --exact-alpha
-```
-
-Run the checker with the parts map after conversion and the shape comparator for vanilla alternatives.
 
 Judge seams and repetition on a tiled 3×3 render, the way a wall of the block looks, never on the single 16×16 file. Pass texture ids or paths; several textures go side by side, e.g. the new one next to its vanilla counterpart:
 
@@ -92,6 +69,6 @@ Judge seams and repetition on a tiled 3×3 render, the way a wall of the block l
 python scripts/render_texture_tile.py exports/tile.png runeruin:block/moss_light minecraft:block/moss_block --grid 3 --scale 8
 ```
 
-Under the picture this script, `render_model.py` and `render_entity_model.py` draw a row per texture: its name, the number of its colors and a swatch per color from dark to light, so whoever looks at the picture sees the palette without running the checker.
+Under the picture this script, `render_model.py` and `render_entity_model.py` draw a row per texture with its colors from dark to light, so whoever looks at the picture sees the palette without running the checker.
 
 On a model, check the texture with `scripts/render_model.py` (the `minecraft-model-texture-analysis` skill). After `runData`, `python scripts/lint_assets.py` checks that every texture a model uses exists and that block and item textures are 16×16 (or animated 16-wide strips); a deliberate other size goes into its `OTHER_SIZES` with the reason.

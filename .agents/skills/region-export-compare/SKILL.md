@@ -8,29 +8,23 @@ description: >-
 
 # Region export compare
 
-Use this whenever the user is shaping the terrain, a feature or a structure that code generates from an in-game export.
 Do not eyeball large grids. Run the script first, then change generation math.
 
 A man-made build (a ship, a hut, a dungeon room) is not turned into formulas. What the user built is the build: they save it with `/rrsave` and the structure places the template (`worldgen-structure` skill).
 
 ## Resolve inputs
 
-Exports land in one of two folders (`RegionExport.resolveExportDir`):
+Exports land in `%USERPROFILE%\.runeruin\game\runeruin-exports\` (a game started with `runClient`, whichever checkout started it) or in `exports/` of the checkout (server, preview and GameTest runs, terrain replays). Pick one, in this order:
 
-- `%USERPROFILE%\.runeruin\game\runeruin-exports\` — a game started with `runClient`, whichever checkout started it;
-- `exports/` of the checkout — server, preview and GameTest runs, and terrain replays.
+1. **Two paths**: first the `/rrexport` dump (actual), then the corrected one (expected).
+2. **One dump and a verbal fix**: profile the dump, then apply the description (e.g. "rim 1 thinner", "water one block lower").
+3. **Nothing named**: in both folders, the newest `region_YYYYMMDD_HHMMSS.txt` is actual (prefer `.txt` over its twin `.json`), and a file whose name contains `should`, `expected`, `want`, `correct`, `target` or `built` is expected. The script finds them itself in `exports/`, or in `--dir`, skipping `preview_*` and `*_generated*` replays; when the two files are in different folders, pass both full paths.
 
-Pick one, in this order:
+Snapshots the user named, such as `was.json` and `built.json`: look for exactly those names in both folders, the newest first when the user says "the latest". A terrain replay needs the full `.json` volume.
 
-1. **Two paths** — first the `/rrexport` dump (actual), then the corrected one (expected).
-2. **One dump + a verbal fix** — profile the dump, then apply the description (e.g. "rim 1 thinner", "water one block lower").
-3. **Nothing named** — in both folders, the newest `region_YYYYMMDD_HHMMSS.txt` is actual (prefer `.txt` over its twin `.json`), and a file whose name contains `should`, `expected`, `want`, `correct`, `target` or `built` is expected. Discovery skips `preview_*` and `*_generated*` replay outputs. When the two files are in different folders, pass both full paths.
+`.txt` exists only when the selection is 1 block thick on some axis (a readable slice); thick volumes are `.json` only. Palette tokens are case-sensitive (`D` and `d` are different blocks): read the JSON with Python, not with Windows PowerShell's `ConvertFrom-Json`, which refuses keys that differ only in case. The format of both: [references/format.md](references/format.md).
 
-For snapshots the user named, such as `was.json` and `built.json`, look for exactly those names in both folders, the newest first when the user says "the latest". Use the full `.json` volume for a terrain replay.
-
-`.txt` exists only when the selection is 1 block thick on some axis (a readable slice). Thick volumes are `.json` only. Palette tokens are case-sensitive (`D` and `d` are different blocks): read the JSON with Python, not with Windows PowerShell's `ConvertFrom-Json`, which refuses keys that differ only in case.
-
-Check `format`, `dimension`, `worldSeed`, `origin`, and `size` before comparing. A seeded replay needs a `runeruin.region/1` JSON with `worldSeed`; if it is absent, ask the user to run `/rrexport` again with the updated mod. `was` and `built` should have the same dimension, seed, origin, and size. For a directional analysis, pass `was` as actual and `built` as expected: `missing` means blocks added in `built`, `extra` means blocks removed, and `mismatch` means a block-state replacement.
+Check `format`, `dimension`, `worldSeed`, `origin` and `size` before comparing: `was` and `built` must agree in all of them, and a seeded replay needs a `runeruin.region/1` JSON with `worldSeed`; if it is absent, ask the user to run `/rrexport` again with the updated mod. For a directional analysis pass `was` as actual and `built` as expected: `missing` means blocks added in `built`, `extra` blocks removed, `mismatch` a block-state replacement.
 
 ## Run the script
 
@@ -42,8 +36,6 @@ python .agents/skills/region-export-compare/scripts/compare_region.py exports/ac
 python .agents/skills/region-export-compare/scripts/compare_region.py --profile --actual exports/actual.txt
 python .agents/skills/region-export-compare/scripts/compare_region.py --dir "$env:USERPROFILE\.runeruin\game\runeruin-exports"
 ```
-
-The script picks from `exports/` by default; `--dir` points it at the game's folder.
 
 Read the whole stdout. Overlay legend:
 
@@ -73,11 +65,11 @@ Do **not** patch individual cells or hand-edit `exports/`. Change the Java that 
 
 ## After the code change
 
-For **structure pieces / write-only features**, re-dump the job you are editing without the client (`headless-preview` skill), then compare `exports/preview_<job>_yz.txt` (or the matching midplane) against the expected slice. Do not start or stop the user's `runClient`. If Gradle says `build/` is locked, ask them to close the game and run preview themselves.
+For **structure pieces / write-only features**, re-dump the job you are editing without the client (`headless-preview` skill), then compare `exports/preview_<job>_yz.txt` (or the matching midplane) against the expected slice.
 
-### Seeded terrain workflow: prove `was`, then converge to `expected`
+### Seeded terrain: prove `was`, then converge to `expected`
 
-Use this when the user provides `was` (the untouched world region) and `expected` (the same region after their desired edits). Both must be full JSON exports from the same dimension, seed, origin, and size. Keep both source files unchanged. `/rrexport <name>` records `worldSeed` in new exports; if it is missing, ask for a fresh export before replaying.
+Use this when the user provides `was` (the untouched world region) and `expected` (the same region after their desired edits), both full JSON exports that agree as above. Keep both source files unchanged.
 
 1. **Understand the requested change.** Compare `was` with `expected`, with `was` as actual and `expected` as target. Explain the block additions, removals, material changes, and coordinates before editing generation code:
 
@@ -94,7 +86,7 @@ Use this when the user provides `was` (the untouched world region) and `expected
    python .agents/skills/region-export-compare/scripts/compare_terrain.py exports/was_generated.json '<path-to-expected.json>'
    ```
 
-   Treat the replay as a valid baseline only when `generated` is nearly identical to `was` in the terrain-only comparison: near-total block/shape agreement with no systematic offsets. The comparison against `expected` records how far the current algorithm is from the target. If substantial terrain differences remain against `was`, investigate seed, dimension, bounds, code version, and generation stages before tuning toward `expected`; otherwise the baseline does not establish that this algorithm generated `was`.
+   The replay is a valid baseline only when `generated` is nearly identical to `was` in the terrain-only comparison: near-total block/shape agreement with no systematic offsets. The comparison against `expected` records how far the current algorithm is from the target. If substantial terrain differences remain against `was`, investigate seed, dimension, bounds, code version, and generation stages before tuning toward `expected`.
 
 3. **Change the algorithm toward `expected`.** Preserve `was_generated.json` as the before snapshot. Edit terrain-generation math, not either export. Replay the same immutable `was.json` after each meaningful code change:
 
@@ -107,45 +99,8 @@ Use this when the user provides `was` (the untouched world region) and `expected
 
    Read the raw diff for every block difference and the terrain-only diff for geometry/material agreement. Repeat the edit → replay → compare loop until the remaining unmasked differences are very close to the user's target and their coordinates match the intended changes. Report both scores and the residual cells; do not declare success from a high percentage alone. `generated_after_modify` is overwritten on the next replay, so copy it outside `exports/` if an iteration needs to be retained.
 
-`world_region` calls `RRChunkGenerator.fillFromNoise` on temporary in-memory chunks using the export's seed and bounds. It produces terrain and arcane pillars, but does not run carvers, biome features (including ores and vegetation), or structures. `compare_terrain.py` excludes changed cells matching its printed post-terrain block-id patterns, reports exact block and solid/air-shape match, and lists residual world-coordinate differences. Add a project-specific glob with `--ignore-id 'runeruin:some_feature*'` only when that block is known to come from a later feature stage. Always run and report the raw `compare_region.py` diff too: masking a feature cell can hide terrain that the feature replaced. The terrain helper requires both JSONs to have matching seed, dimension, origin, and size.
+`world_region` calls `RRChunkGenerator.fillFromNoise` on temporary in-memory chunks using the export's seed and bounds. It produces terrain and arcane pillars, but does not run carvers, biome features (including ores and vegetation), or structures. `compare_terrain.py` excludes changed cells matching its printed post-terrain block-id patterns, reports exact block and solid/air-shape match, and lists residual world-coordinate differences. Add a project-specific glob with `--ignore-id 'runeruin:some_feature*'` only when that block is known to come from a later feature stage. Always run and report the raw `compare_region.py` diff too: masking a feature cell can hide terrain that the feature replaced.
 
 Replay output is written under the active code checkout's `exports/` as `<input-stem>_<stage>.json`; an absolute `-Pregion` path may point to an export from another checkout. Quote the whole `-Pregion=...` PowerShell argument. Replay is limited to Y=0..511, 64 chunks, and the export's 500,000-block volume limit.
 
-Existing **world** chunks keep the old piece. In-game `/rrexport` of an already generated goblet shows the new math only in a fresh area. For terrain, `/rrgenerate` rebuilds the selection in the game with the current code, the same way as `world_region` (terrain and pillars only).
-
-## Export format (`runeruin.region/1`)
-
-Written by `region/RegionExport`. Commands: `/rrpos1` `/rrpos2` `/rrexport` `/rrgenerate` `/rrclear`.
-
-**`.txt` slice** (one axis size 1):
-
-- Header: origin (inclusive min), size `X Y Z`, projection
-- Legend: `token  blockstate  count` — `.` air, `,` cave_air, `W` water, letters from the block id (`G` = giant_goblet_piece)
-- Grid: comment lines with a local index, then the tokens
-
-| projection | when | right → | up the page | fixed |
-|------------|------|---------|-------------|-------|
-| `YZ` | size X = 1 | +Z | +Y | world X |
-| `XY` | size Z = 1 | +X | +Y | world Z |
-| `XZ` | size Y = 1 | +X | +Z down the page | world Y |
-
-**`.json` volume**: `origin`, `size`, `worldSeed`, `palette`, `layers[y][z]` = string of X tokens. Local `(0,0,0)` = origin; +X east, +Z south, +Y up.
-
-## Example
-
-`exports/region_20260829_235719.txt` vs `exports/region_should_be.txt` (YZ, 1×11×77):
-
-- Y 10: `+.- ... -.+` — 2-wide rim cap shifted 1 outward on both +Z and −Z
-- Y 8: `+ ... +` — same 1-block outset at the bowl wall
-- diagnosis: outer silhouette 1 too large at the top, not a hole and not a water-fill bug
-- fix: the formula that decides the outer radius / rim at those local Y values
-
-## Checklist
-
-- [ ] Inputs resolved (paths, the newest files in `%USERPROFILE%\.runeruin\game\runeruin-exports\` and `exports/`, or one file + words)
-- [ ] Script ran; overlay read
-- [ ] Terrain task: current generator replay agrees closely with `was` before edits
-- [ ] Terrain task: each modified replay was compared with `expected` using raw and terrain-only diffs
-- [ ] One geometric diagnosis written
-- [ ] Generation math changed (not the dump)
-- [ ] User asked to re-export a fresh area, or to run `/rrgenerate` on the selection
+Existing **world** chunks keep the old generation: an in-game `/rrexport` of an already generated structure shows the new math only in a fresh area, so ask the user to re-export a fresh area. For terrain, `/rrgenerate` rebuilds the selection in the game with the current code, the same way as `world_region` (terrain and pillars only).
