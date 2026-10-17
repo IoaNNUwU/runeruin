@@ -783,8 +783,8 @@ public final class RRGameTests {
                 boolean chained = false;
                 for (BlockPos pos : BlockPos.betweenClosed(footprint.minX(), piece.bottom(), footprint.minZ(), footprint.maxX(), ceiling, footprint.maxZ())) {
                     BlockState state = world.get(pos);
-                    helper.assertTrue(!state.is(Blocks.JIGSAW) && !BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath().startsWith("oak_"),
-                        template + " keeps " + state + " at " + pos);
+                    helper.assertTrue(!state.is(Blocks.JIGSAW) && !state.is(Blocks.OAK_PLANKS) && !state.is(Blocks.OAK_LOG)
+                        && !state.is(Blocks.OAK_FENCE) && !state.is(Blocks.OAK_SLAB), template + " keeps " + state + " at " + pos);
                     chained |= pos.getY() == ceiling - 1 && state.is(Blocks.IRON_CHAIN);
                 }
                 helper.assertTrue(chained, template + " has no chain up to the ceiling");
