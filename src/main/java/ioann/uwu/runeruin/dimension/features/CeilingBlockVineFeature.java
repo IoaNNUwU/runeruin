@@ -106,136 +106,53 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
                     setTrunk(level, mutable, origin.getX() + xOffset + 1, py, origin.getZ() + zOffset + 1, trunkBlock);
                 }
 
-                // --- Additional 2 blocks on top and bottom of the segment for smoothness ---
+                int x0 = origin.getX() + xOffset;
+                int z0 = origin.getZ() + zOffset;
+
+                // --- Additional 2 blocks on top and bottom of the segment for smoothness: one diagonal of it ---
+                boolean antiDiagonal = rotate == mirror;
                 for (int y : List.of(segmentHeight * nSeg, segmentHeight * (nSeg + 1) + 1)) {
-
-                    BlockPos blockPos1;
-                    BlockPos blockPos2;
-                    if (rotate) {
-                        if (mirror) {
-                            blockPos1 = new BlockPos(origin.getX() + xOffset + 1, origin.getY() - y, origin.getZ() + zOffset);
-                            blockPos2 = new BlockPos(origin.getX() + xOffset, origin.getY() - y, origin.getZ() + zOffset + 1);
-                        } else {
-                            blockPos1 = new BlockPos(origin.getX() + xOffset + 1, origin.getY() - y, origin.getZ() + zOffset + 1);
-                            blockPos2 = new BlockPos(origin.getX() + xOffset, origin.getY() - y, origin.getZ() + zOffset);
-                        }
-                    } else {
-                        if (mirror) {
-                            blockPos1 = new BlockPos(origin.getX() + xOffset + 1, origin.getY() - y, origin.getZ() + zOffset + 1);
-                            blockPos2 = new BlockPos(origin.getX() + xOffset, origin.getY() - y, origin.getZ() + zOffset);
-                        } else {
-                            blockPos1 = new BlockPos(origin.getX() + xOffset + 1, origin.getY() - y, origin.getZ() + zOffset);
-                            blockPos2 = new BlockPos(origin.getX() + xOffset, origin.getY() - y, origin.getZ() + zOffset + 1);
-                        }
-                    }
-
-                    level.setBlock(blockPos1, trunkBlock, GeometryUtils.BULK_FLAG);
-                    level.setBlock(blockPos2, trunkBlock, GeometryUtils.BULK_FLAG);
+                    setTrunk(level, mutable, x0 + 1, origin.getY() - y, antiDiagonal ? z0 : z0 + 1, trunkBlock);
+                    setTrunk(level, mutable, x0, origin.getY() - y, antiDiagonal ? z0 + 1 : z0, trunkBlock);
                 }
 
-                // --- Thorns in the middle of the segment ---
+                // --- Thorns in the middle of the segment: a diagonal pair at one of its corners ---
+                boolean odd = nSeg % 2 == 1;
+                boolean west = mirror == odd;
+                boolean south = rotate != odd;
                 for (int y : List.of((segmentHeight * nSeg) + segmentHeight / 2, (segmentHeight * nSeg) + segmentHeight / 2 + 1)) {
-
-                    BlockPos blockPos1;
-                    BlockPos blockPos2;
-                    if (nSeg % 2 == 0) {
-                        if (!mirror) {
-                            if (rotate) {
-                                blockPos1 = new BlockPos(origin.getX() - 1, origin.getY() - y, origin.getZ() + 1);
-                                blockPos2 = new BlockPos(origin.getX(), origin.getY() - y, origin.getZ() + 2);
-                            } else {
-                                blockPos1 = new BlockPos(origin.getX() - 1, origin.getY() - y, origin.getZ());
-                                blockPos2 = new BlockPos(origin.getX(), origin.getY() - y, origin.getZ() - 1);
-                            }
-                        } else {
-                            if (rotate) {
-                                blockPos1 = new BlockPos(origin.getX() + 2, origin.getY() - y, origin.getZ() + 1);
-                                blockPos2 = new BlockPos(origin.getX() + 1, origin.getY() - y, origin.getZ() + 2);
-                            } else {
-                                blockPos1 = new BlockPos(origin.getX() + 2, origin.getY() - y, origin.getZ());
-                                blockPos2 = new BlockPos(origin.getX() + 1, origin.getY() - y, origin.getZ() - 1);
-                            }
-                        }
-                    } else {
-                        if (!mirror) {
-                            if (!rotate) {
-                                blockPos1 = new BlockPos(origin.getX() + 3, origin.getY() - y, origin.getZ() + 2);
-                                blockPos2 = new BlockPos(origin.getX() + 2, origin.getY() - y, origin.getZ() + 3);
-                            } else {
-                                blockPos1 = new BlockPos(origin.getX() + 3, origin.getY() - y, origin.getZ() - 1);
-                                blockPos2 = new BlockPos(origin.getX() + 2, origin.getY() - y, origin.getZ() - 2);
-                            }
-                        } else {
-                            if (!rotate) {
-                                blockPos1 = new BlockPos(origin.getX() - 2, origin.getY() - y, origin.getZ() + 2);
-                                blockPos2 = new BlockPos(origin.getX() - 1, origin.getY() - y, origin.getZ() + 3);
-                            } else {
-                                blockPos1 = new BlockPos(origin.getX() - 2, origin.getY() - y, origin.getZ() - 1);
-                                blockPos2 = new BlockPos(origin.getX() - 1, origin.getY() - y, origin.getZ() - 2);
-                            }
-                        }
-                    }
-
-                    level.setBlock(blockPos1, trunkBlock, GeometryUtils.BULK_FLAG);
-                    level.setBlock(blockPos2, trunkBlock, GeometryUtils.BULK_FLAG);
+                    setTrunk(level, mutable, west ? x0 - 1 : x0 + 2, origin.getY() - y, south ? z0 + 1 : z0, trunkBlock);
+                    setTrunk(level, mutable, west ? x0 : x0 + 1, origin.getY() - y, south ? z0 + 2 : z0 - 1, trunkBlock);
                 }
             }
 
-            BlockPos tipOrigin;
-            BlockPos tipSide1;
-            BlockPos tipSide2;
-            BlockPos tipThorns;
-
-            // --- Tip of the vine ---
+            // --- Tip of the vine: a column at one corner of the last segment, shorter ones beside it and a thorn
+            // under the opposite corner ---
+            int tipX;
+            int tipZ;
+            int stepX;
+            int stepZ;
             if (nSegments % 2 == 0) {
-                if (!mirror) {
-                    if (rotate) {
-                        tipOrigin = new BlockPos(origin.getX() + 1, origin.getY() - segmentHeight * nSegments, origin.getZ());
-                        tipSide1 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() + 1);
-                        tipSide2 = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() + 1, tipOrigin.getZ());
-                        tipThorns = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() - 1, tipOrigin.getZ() + 1);
-                    } else {
-                        tipOrigin = new BlockPos(origin.getX() + 1, origin.getY() - segmentHeight * nSegments, origin.getZ() + 1);
-                        tipSide1 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() - 1);
-                        tipSide2 = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() + 1, tipOrigin.getZ());
-                        tipThorns = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() - 1, tipOrigin.getZ()- 1);
-                    }
-                } else {
-                    if (rotate) {
-                        tipOrigin = new BlockPos(origin.getX(), origin.getY() - segmentHeight * nSegments, origin.getZ());
-                        tipSide1 = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() + 1, tipOrigin.getZ());
-                        tipSide2 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() + 1);
-                        tipThorns = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() - 1, tipOrigin.getZ() + 1);
-                    } else {
-                        tipOrigin = new BlockPos(origin.getX(), origin.getY() - segmentHeight * nSegments, origin.getZ() + 1);
-                        tipSide1 = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() + 1, tipOrigin.getZ());
-                        tipSide2 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() - 1);
-                        tipThorns = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() - 1, tipOrigin.getZ() - 1);
-                    }
-                }
+                tipX = mirror ? 0 : 1;
+                tipZ = rotate ? 0 : 1;
+                stepX = 1 - 2 * tipX;
+                stepZ = 1 - 2 * tipZ;
             } else {
-                if (!mirror) {
-                    tipOrigin = new BlockPos(origin.getX() + 1, origin.getY() - segmentHeight * nSegments, origin.getZ() + 1);
-                    tipSide1 = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() + 1, tipOrigin.getZ());
-                    tipSide2 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() + 1);
-                    tipThorns = new BlockPos(tipOrigin.getX() + 1, tipOrigin.getY() - 1, tipOrigin.getZ() + 1);
-                } else {
-                    tipOrigin = new BlockPos(origin.getX(), origin.getY() - segmentHeight * nSegments, origin.getZ());
-                    tipSide1 = new BlockPos(tipOrigin.getX(), tipOrigin.getY() + 1, tipOrigin.getZ() - 1);
-                    tipSide2 = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() + 1, tipOrigin.getZ());
-                    tipThorns = new BlockPos(tipOrigin.getX() - 1, tipOrigin.getY() - 1, tipOrigin.getZ() - 1);
-                }
+                tipX = tipZ = mirror ? 0 : 1;
+                stepX = stepZ = mirror ? -1 : 1;
             }
-
+            int tx = origin.getX() + tipX;
+            int ty = origin.getY() - segmentHeight * nSegments;
+            int tz = origin.getZ() + tipZ;
             for (int y = 0; y < 6; y++) {
-                setTrunk(level, mutable, tipOrigin.getX(), tipOrigin.getY() - y, tipOrigin.getZ(), trunkBlock);
+                setTrunk(level, mutable, tx, ty - y, tz, trunkBlock);
             }
             for (int y = 0; y < 4; y++) {
-                setTrunk(level, mutable, tipSide1.getX(), tipOrigin.getY() - y, tipSide1.getZ(), trunkBlock);
-                setTrunk(level, mutable, tipSide2.getX(), tipOrigin.getY() - y, tipSide2.getZ(), trunkBlock);
+                setTrunk(level, mutable, tx + stepX, ty - y, tz, trunkBlock);
+                setTrunk(level, mutable, tx, ty - y, tz + stepZ, trunkBlock);
             }
             for (int y = 0; y < 2; y++) {
-                setTrunk(level, mutable, tipThorns.getX(), tipThorns.getY() - y, tipThorns.getZ(), trunkBlock);
+                setTrunk(level, mutable, tx + stepX, ty - 1 - y, tz + stepZ, trunkBlock);
             }
 
             // --- Berries ---

@@ -158,53 +158,12 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
             }
         }
 
-        int trunkDiameter = 3;
-
-        for (int x = -2; x < trunkDiameter; x++) {
-            for (int z = -1; z < trunkDiameter - 1; z++) {
-                for (int y = 0; y < trunkDiameter; y++) {
-                    int xx = ox + x - trunkDiameter / 2 + 1;
-                    int yy = oy + y - trunkDiameter / 2;
-                    int zz = oz + z - trunkDiameter / 2 + 1;
-                    GeometryUtils.setSolid(level, mutable, xx, yy, zz, trunkBlock);
-                }
-            }
-        }
-        for (int x = -1; x < trunkDiameter - 1; x++) {
-            for (int z = -2; z < trunkDiameter; z++) {
-                for (int y = 0; y < trunkDiameter; y++) {
-                    int xx = ox + x - trunkDiameter / 2 + 1;
-                    int yy = oy + y - trunkDiameter / 2;
-                    int zz = oz + z - trunkDiameter / 2 + 1;
-                    GeometryUtils.setSolid(level, mutable, xx, yy, zz, trunkBlock);
-                }
-            }
-        }
-        for (int z = -1; z < trunkDiameter - 1; z++) {
-            for (int x = -1; x < trunkDiameter - 1; x++) {
-                int xx = ox + x - trunkDiameter / 2 + 1;
-                int zz = oz + z - trunkDiameter / 2 + 1;
-                GeometryUtils.setSolid(level, mutable, xx, oy + 1, zz, trunkBlock);
-            }
-        }
-
-        for (int x = -2; x < trunkDiameter; x++) {
-            for (int z = -1; z < trunkDiameter - 1; z++) {
-                if (random.nextBoolean()) {
-                    int xx = ox + x - trunkDiameter / 2 + 1;
-                    int zz = oz + z - trunkDiameter / 2 + 1;
-                    int yy = oy - trunkDiameter / 2 + 2;
-                    GeometryUtils.setSolid(level, mutable, xx, yy, zz, trunkBlock);
-                }
-            }
-        }
-        for (int x = -1; x < trunkDiameter - 1; x++) {
-            for (int z = -2; z < trunkDiameter; z++) {
-                if (random.nextBoolean()) {
-                    int xx = ox + x - trunkDiameter / 2 + 1;
-                    int zz = oz + z - trunkDiameter / 2 + 1;
-                    int yy = oy - trunkDiameter / 2 + 2;
-                    GeometryUtils.setSolid(level, mutable, xx, yy, zz, trunkBlock);
+        // The root in the ceiling: a cross of two 5 × 3 bars, 3 blocks high.
+        for (int y = oy - 1; y <= oy + 1; y++) {
+            for (int a = -2; a <= 2; a++) {
+                for (int b = -1; b <= 1; b++) {
+                    GeometryUtils.setSolid(level, mutable, ox + a, y, oz + b, trunkBlock);
+                    GeometryUtils.setSolid(level, mutable, ox + b, y, oz + a, trunkBlock);
                 }
             }
         }
