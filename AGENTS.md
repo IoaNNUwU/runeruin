@@ -105,7 +105,7 @@ Step-by-step procedures live in skills; load the matching one before starting su
 
 | Skill | Use for |
 |-------|---------|
-| `block-and-item` | adding, renaming or removing a block or item, its model file included |
+| `block-and-item` | adding, renaming or removing a block or item, its model file and outline included |
 | `mob` | adding or changing a mob: entity, spawns, Blockbench project, animations, renderer, textures, spawn egg, GameTest |
 | `worldgen-feature` | decoration features: plants, rocks, vines, mushrooms, spikes |
 | `worldgen-biome` | adding, reweighting, moving or changing biomes |

@@ -100,6 +100,7 @@ A pull request that changes how something looks shows it in the `Pictures` secti
 |--------------------------------------------------------------|------------------------------------------------------------------------|
 | shape of a feature, a structure or the terrain               | preview render, `scripts/render_preview.py`                            |
 | model of a block or an item                                  | render of the model, `scripts/render_model.py`                         |
+| outline of a block (the box you see and click)               | render of the model with its outline, `render_model.py --outline`      |
 | model or texture of a mob or another entity                  | render of the model, `scripts/render_entity_model.py`                  |
 | animation of a mob or another entity                         | GIF of the animation, `scripts/render_entity_model.py --animation`     |
 | block texture                                                | 3×3 tile next to the old texture, `scripts/render_texture_tile.py`     |

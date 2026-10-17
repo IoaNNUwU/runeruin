@@ -53,9 +53,10 @@ Minecraft's cuboid element format has no standard semantic `name` field. The mod
 ```powershell
 python scripts/render_model.py exports/firefly_in_a_jar.png runeruin:block/firefly_in_a_jar
 python scripts/render_model.py exports/model.png glowing_mushroom --scale 24
+python scripts/render_model.py exports/bush.png wispberry_bush_stage3 --y-rot 90 --outline 7,0,7,9,6,9 --outline 3,5,3,13,16,13
 ```
 
-A bare name tries `runeruin:block/` then `runeruin:item/`. Blockstate rotations, cullfaces, emissive light and render types are not applied; transparency is blended in draw order.
+A bare name tries `runeruin:block/` then `runeruin:item/`. Cullfaces, emissive light and render types are not applied; transparency is blended in draw order. `--y-rot 90` turns the model as the `y` of a blockstate variant does. `--outline x1,y1,z1,x2,y2,z2`, repeated for every `Block.box` of the block's `getShape`, draws the outline as a black wireframe over the model inside a grey frame of the block, turned with the model.
 
 ## Render an entity model
 

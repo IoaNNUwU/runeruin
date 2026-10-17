@@ -3,13 +3,19 @@
 
     python scripts/render_model.py out.png runeruin:block/stone_lily [--scale 16] [--tint 91BD59]
     python scripts/render_model.py out.png src/main/resources/assets/runeruin/models/block/x.json
+    python scripts/render_model.py out.png wispberry_bush_stage3 --y-rot 90 --outline 7,0,7,9,6,9 --outline 3,5,3,13,16,13
 
 A bare name (stone_lily) tries block/ then item/. Parents and textures resolve through src/main,
 src/generated and .vanilla-textures (vanilla models included). Follows the game's baking: face vertex
 order and UV rotation as in FaceBakery, element rotation with rescale, directional shade
 (up 1.0, north/south 0.8, east/west 0.6, down 0.5). Faces with a tintindex are multiplied by --tint.
-Item models built on item/generated show their layers as a flat sprite. Blockstate rotations, cullfaces,
-emissive light and render types are ignored: the PNG is for judging geometry and UV placement.
+Item models built on item/generated show their layers as a flat sprite. Cullfaces, emissive light and
+render types are ignored: the PNG is for judging geometry and UV placement.
+
+--y-rot turns the model as the y of a blockstate variant does (90: the north side faces east).
+--outline x1,y1,z1,x2,y2,z2 in model units, as in Block.box, draws a box of the block's outline shape as a
+black wireframe over the model, hidden edges included, inside a grey frame of the block; repeat it for
+every box. The boxes turn with the model, as Shapes.rotateHorizontal turns a north shape to that side.
 """
 import argparse
 import json
@@ -105,6 +111,19 @@ def element_transform(rotation):
     return matrix, origin
 
 
+def turn(point, degrees, center=8):
+    """A point turned about the block's vertical axis as the y of a blockstate variant turns a model."""
+    x, y, z = apply(axis_rotation("y", -degrees), (point[0] - center, point[1], point[2] - center))
+    return (x + center, y, z + center)
+
+
+def box_edges(box):
+    """The 12 edges of a box (x1, y1, z1, x2, y2, z2) as pairs of corners."""
+    corners = [(x, y, z) for x in (box[0], box[3]) for y in (box[1], box[4]) for z in (box[2], box[5])]
+    return [(a, b) for i, a in enumerate(corners) for b in corners[i + 1:]
+            if sum(u != v for u, v in zip(a, b)) == 1]
+
+
 def load_texture(resource, namespace, roots, cache):
     if resource not in cache:
         path, _ = resolve_texture_file(resource, namespace, roots)
@@ -183,13 +202,19 @@ def face_texels(texture, corners, uv, normal, light, tint):
     return texels
 
 
-def render_view(quads, camera, scale, right=None):
+def render_view(quads, camera, scale, right=None, outline=()):
+    """outline: edges drawn in black over the faces, inside the grey frame of the block that then sets the size."""
     projected = project(quads, camera, scale, right)
-    return draw_view(projected, bounds(projected, scale))
+    if not outline:
+        return draw_view(projected, bounds(projected, scale))
+    frame = project([(edge, (96, 96, 96), camera) for edge in box_edges((0, 0, 0, 16, 16, 16))], camera, scale, right)
+    lines = project([(edge, (0, 0, 0), camera) for edge in outline], camera, scale, right)
+    return draw_view(projected, bounds(projected + frame, scale), under=frame, over=lines)
 
 
 def project(quads, camera, scale, right=None):
-    """The faces towards the camera as (screen points, color, depth)."""
+    """The faces towards the camera as (screen points, color, depth). An edge with the camera as its normal
+    is always seen."""
     camera = normalize(camera)
     if right is None:
         right = normalize(cross((0, 1, 0), camera)) if abs(camera[1]) < 0.999 else (1, 0, 0)
@@ -207,14 +232,19 @@ def bounds(projected, scale):
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def draw_view(projected, box):
-    """The faces inside box, a frame that several views can share so that they line up."""
+def draw_view(projected, box, under=(), over=()):
+    """The faces inside box, a frame that several views can share so that they line up; projected edges
+    under them as thin lines and over them as thick ones."""
     left, top, right, bottom = box
     image = Image.new("RGB", (math.ceil(right - left) + 2 * GAP, math.ceil(bottom - top) + 2 * GAP), BACKGROUND)
     draw = ImageDraw.Draw(image, "RGBA")
+    shift = lambda points: [(x - left + GAP, y - top + GAP) for x, y in points]
+    for points, color, _ in under:
+        draw.line(shift(points), fill=color, width=1)
     for points, color, _ in sorted(projected, key=lambda item: item[2]):
-        polygon = [(x - left + GAP, y - top + GAP) for x, y in points]
-        draw.polygon(polygon, fill=color, outline=color if color[3] == 255 else None)
+        draw.polygon(shift(points), fill=color, outline=color if color[3] == 255 else None)
+    for points, color, _ in over:
+        draw.line(shift(points), fill=color, width=2)
     return image
 
 
@@ -264,6 +294,10 @@ def main():
     parser.add_argument("model", help="model id (runeruin:block/x), bare name, or path to a model JSON")
     parser.add_argument("--scale", type=int, default=16, help="screen pixels per model unit (1/16 block), default 16")
     parser.add_argument("--tint", default="91BD59", help="RRGGBB for faces with a tintindex, default grass 91BD59")
+    parser.add_argument("--y-rot", type=int, choices=(0, 90, 180, 270), default=0,
+                        help="turn the model and the outline as the y of a blockstate variant does")
+    parser.add_argument("--outline", action="append", default=[], metavar="X1,Y1,Z1,X2,Y2,Z2",
+                        help="a box of the outline shape in model units, drawn as a wireframe; repeatable")
     args = parser.parse_args()
     tint = tuple(int(args.tint[i:i + 2], 16) for i in (0, 2, 4))
 
@@ -279,13 +313,16 @@ def main():
             model = load_model(ref, roots)
             if not isinstance(model.get("elements"), list):
                 raise ModelError(f"{ref.identifier} has no elements and is not built on item/generated")
-            quads = texel_quads(model, ref, roots, tint)
-            panels = [(name, render_view(quads, camera, args.scale)) for name, camera in VIEWS.items()]
+            quads = [([turn(p, args.y_rot) for p in quad], color, turn(normal, args.y_rot, center=0))
+                     for quad, color, normal in texel_quads(model, ref, roots, tint)]
+            boxes = [numbers(box.split(","), "--outline", 6) for box in args.outline]
+            outline = [tuple(turn(p, args.y_rot) for p in edge) for box in boxes for edge in box_edges(box)]
+            panels = [(name, render_view(quads, camera, args.scale, outline=outline)) for name, camera in VIEWS.items()]
     except ModelError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
 
-    save_sheet(args.output, ref.identifier, panels)
+    save_sheet(args.output, ref.identifier + (f", y {args.y_rot}" if args.y_rot else ""), panels)
     return 0
 
 
