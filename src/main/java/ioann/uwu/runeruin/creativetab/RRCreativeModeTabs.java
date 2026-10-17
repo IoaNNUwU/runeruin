@@ -26,6 +26,7 @@ public class RRCreativeModeTabs {
 
                     RRItems.WISPBERRY.toStack(),
                     RRItems.MOSSBERRY.toStack(),
+                    RRItems.BLOWPIPE.toStack(),
                     RRItems.POWDERED_MOSS_BUCKET.toStack(),
                     RRItems.RUNIC_MINECART.toStack(),
                     RRItems.GRAPPLING_HOOK.toStack(),

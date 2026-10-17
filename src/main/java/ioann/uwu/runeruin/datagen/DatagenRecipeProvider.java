@@ -41,6 +41,15 @@ public class DatagenRecipeProvider extends RecipeProvider {
                 .unlockedBy(getHasName(RRItems.MOSSBERRY), has(RRItems.MOSSBERRY))
                 .save(this.output);
 
+        // A pipe hollowed out of baobab, laid across the grid.
+        this.shaped(RecipeCategory.COMBAT, RRItems.BLOWPIPE)
+                .define('#', Ingredient.of(RRBlocks.BAOBAB_LOG, RRBlocks.BAOBAB_WOOD))
+                .pattern("  #")
+                .pattern(" # ")
+                .pattern("#  ")
+                .unlockedBy(getHasName(RRBlocks.BAOBAB_LOG), has(RRBlocks.BAOBAB_LOG))
+                .save(this.output);
+
         // The anchor on top, the chain, and a bow that shoots it.
         this.shaped(RecipeCategory.TOOLS, RRItems.GRAPPLING_HOOK)
                 .define('I', Items.IRON_INGOT)

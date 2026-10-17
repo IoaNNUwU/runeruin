@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntBinaryOperator;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -76,6 +77,7 @@ import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntityTypes;
@@ -83,9 +85,11 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
@@ -152,6 +156,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("mossy_prophet_throws_warrior", () -> RRGameTests::mossyProphetThrowsWarrior);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_WARRIOR_SPIN_JUMP =
         TEST_FUNCTIONS.register("mossy_warrior_spin_jump", () -> RRGameTests::mossyWarriorSpinJump);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOWPIPE_SHOOTS_BERRIES =
+        TEST_FUNCTIONS.register("blowpipe_shoots_berries", () -> RRGameTests::blowpipeShootsBerries);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_CLIMBS_WALL =
         TEST_FUNCTIONS.register("grappling_hook_climbs_wall", () -> RRGameTests::grapplingHookClimbsWall);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_PULLS_CREATURE =
@@ -639,6 +645,13 @@ public final class RRGameTests {
             RR.id("mossy_warrior_spin_jump"),
             new FunctionGameTestInstance(
                 MOSSY_WARRIOR_SPIN_JUMP.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("blowpipe_shoots_berries"),
+            new FunctionGameTestInstance(
+                BLOWPIPE_SHOOTS_BERRIES.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
             )
         );
@@ -1564,6 +1577,50 @@ public final class RRGameTests {
         });
     }
 
+    // A full breath blows one berry at a snail ten blocks away: a mossberry from the bag poisons it, a glow berry
+    // or a wispberry in the other hand, which goes first, makes it glow.
+    private static void blowpipeShootsBerries(GameTestHelper helper) {
+        // Far enough above the Prophet's fight that ending this one does not take its thrown warrior.
+        int y = 150;
+        fightFloor(helper, y);
+        Snail poisoned = fightTarget(helper, 14, y, 4);
+        Snail glowing = fightTarget(helper, 14, y, 12);
+        Snail wispLit = fightTarget(helper, 14, y, 20);
+        Player mossShooter = blowpipeShooter(helper, poisoned);
+        Player glowShooter = blowpipeShooter(helper, glowing);
+        glowShooter.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.GLOW_BERRIES, 2));
+        Player wispShooter = blowpipeShooter(helper, wispLit);
+        wispShooter.setItemInHand(InteractionHand.OFF_HAND, RRItems.WISPBERRY.toStack(2));
+        for (Player shooter : List.of(mossShooter, glowShooter, wispShooter)) {
+            ItemStack blowpipe = shooter.getMainHandItem();
+            blowpipe.releaseUsing(helper.getLevel(), shooter, blowpipe.getUseDuration(shooter) - 20);
+            helper.assertTrue(blowpipe.getDamageValue() == 1, "a shot wore the blowpipe by " + blowpipe.getDamageValue());
+        }
+        helper.assertTrue(mossShooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 2, "a shot did not take one mossberry");
+        for (Player shooter : List.of(glowShooter, wispShooter)) {
+            helper.assertTrue(shooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 3, "a shot took a mossberry past the berries in hand");
+            helper.assertTrue(shooter.getOffhandItem().getCount() == 1, "a shot did not take one berry from the other hand");
+        }
+
+        helper.succeedWhen(() -> {
+            helper.assertTrue(poisoned.hasEffect(MobEffects.POISON), "the mossberry did not poison its snail");
+            helper.assertTrue(glowing.hasEffect(MobEffects.GLOWING), "the glow berry did not make its snail glow");
+            helper.assertTrue(wispLit.hasEffect(MobEffects.GLOWING), "the wispberry did not make its snail glow");
+            helper.assertTrue(!glowing.hasEffect(MobEffects.POISON), "the snail hit by a glow berry is poisoned");
+            endFight(helper, y);
+        });
+    }
+
+    /** A player ten blocks west of the target, aiming at it with a blowpipe and three mossberries in the bag. */
+    private static Player blowpipeShooter(GameTestHelper helper, Snail target) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setPos(target.position().add(-10, 0, 0));
+        player.lookAt(EntityAnchorArgument.Anchor.EYES, target.getBoundingBox().getCenter());
+        player.setItemInHand(InteractionHand.MAIN_HAND, RRItems.BLOWPIPE.toStack());
+        player.getInventory().add(RRItems.MOSSBERRY.toStack(3));
+        return player;
+    }
+
     /** A creature that holds the grappling hook and shoots its anchor at the given point, as a player would. */
     private static GrapplingAnchor shootAnchor(GameTestHelper helper, Mob owner, Vec3 at) {
         owner.setItemSlot(EquipmentSlot.MAINHAND, RRItems.GRAPPLING_HOOK.toStack());
@@ -1576,8 +1633,8 @@ public final class RRGameTests {
 
     // An anchor in the side of the top of a wall pulls its owner up onto the wall, then comes back.
     private static void grapplingHookClimbsWall(GameTestHelper helper) {
-        // Thirty blocks over the fights and under the next test: endFight clears sixteen blocks around its floor.
-        int y = 150;
+        // Thirty blocks over the blowpipe test and under the next one: endFight clears sixteen blocks around its floor.
+        int y = 210;
         fightFloor(helper, y);
         for (int z = 6; z <= 18; z++) {
             for (int dy = 0; dy < 3; dy++) {
@@ -1598,7 +1655,7 @@ public final class RRGameTests {
 
     // An anchor in a creature pulls it to the owner of the anchor, then comes back.
     private static void grapplingHookPullsCreature(GameTestHelper helper) {
-        int y = 180;
+        int y = 240;
         fightFloor(helper, y);
         Snail owner = fightTarget(helper, 4, y, 12);
         Snail target = fightTarget(helper, 16, y, 12);
