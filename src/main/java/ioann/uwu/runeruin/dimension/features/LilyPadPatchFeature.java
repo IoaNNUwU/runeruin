@@ -115,8 +115,13 @@ public class LilyPadPatchFeature extends Feature<LilyPadPatchFeature.Config> {
         return placed;
     }
 
+    private static BlockState padState(int size, int x, int z, Direction facing) {
+        return RRBlocks.BIG_LILY_PAD.get().defaultBlockState()
+                .setValue(BigLilyPadBlock.PART, BigLilyPadBlock.partAt(size, x, z))
+                .setValue(BigLilyPadBlock.FACING, facing);
+    }
+
     private static boolean placePad(WorldGenLevel level, BlockPos origin, int size, Direction facing) {
-        BlockState baseState = RRBlocks.BIG_LILY_PAD.get().defaultBlockState();
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
                 BlockPos pos = origin.offset(x, 0, z);
@@ -126,10 +131,7 @@ public class LilyPadPatchFeature extends Feature<LilyPadPatchFeature.Config> {
                     return false;
                 }
 
-                BlockState state = baseState
-                        .setValue(BigLilyPadBlock.PART, BigLilyPadBlock.partAt(size, x, z))
-                        .setValue(BigLilyPadBlock.FACING, facing);
-                if (!state.canSurvive(level, pos)) {
+                if (!padState(size, x, z, facing).canSurvive(level, pos)) {
                     return false;
                 }
             }
@@ -137,13 +139,7 @@ public class LilyPadPatchFeature extends Feature<LilyPadPatchFeature.Config> {
 
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
-                level.setBlock(
-                        origin.offset(x, 0, z),
-                        baseState
-                                .setValue(BigLilyPadBlock.PART, BigLilyPadBlock.partAt(size, x, z))
-                                .setValue(BigLilyPadBlock.FACING, facing),
-                        Block.UPDATE_CLIENTS
-                );
+                level.setBlock(origin.offset(x, 0, z), padState(size, x, z, facing), Block.UPDATE_CLIENTS);
             }
         }
         return true;

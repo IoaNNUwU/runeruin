@@ -103,8 +103,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_FLOATING_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_floating_moss_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_SEAGRASS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_KELP = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_kelp");
-    public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_deep_roots");
-    public static final ResourceKey<ConfiguredFeature<?, ?>> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deep_roots_grass");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deep_roots");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_LILY_PAD_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_lily_pad_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> WATER_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "water_lily");
@@ -392,8 +391,8 @@ public class RRConfiguredFeatures {
         ctx.register(DRIPSTONE_SPIKE, new ConfiguredFeature<>(
                 RRFeatures.MOSSY_SPIKE.get(),
                 new MossySpikeFeature.Config(
-                        // This is very volatile number that prevents deepslate spikes from
-                        // generating on lower level of deep caves
+                        // Five blocks less search than the stone and deepslate spikes: no dripstone spike
+                        // in the tallest caves.
                         30,
                         UniformInt.of(3, 19),
                         UniformFloat.of(0.4F, 2.0F),
@@ -477,12 +476,7 @@ public class RRConfiguredFeatures {
                 NoneFeatureConfiguration.INSTANCE
         ));
 
-        ctx.register(GOBLET_DEEP_ROOTS, new ConfiguredFeature<>(
-                Feature.SIMPLE_BLOCK,
-                new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DEEP_ROOTS.get()))
-        ));
-
-        ctx.register(DEEP_ROOTS_GRASS, new ConfiguredFeature<>(
+        ctx.register(DEEP_ROOTS, new ConfiguredFeature<>(
                 Feature.SIMPLE_BLOCK,
                 new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.DEEP_ROOTS.get()))
         ));

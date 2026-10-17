@@ -6,38 +6,34 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.placement.PlacementContext;
 import net.minecraft.world.level.levelgen.placement.PlacementFilter;
 import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
 
 public class WallPlacementFilter extends PlacementFilter {
 
-    // The lists hold block states, but only their blocks are compared.
     public static final MapCodec<WallPlacementFilter> CODEC = RecordCodecBuilder.<WallPlacementFilter>create(codec -> codec.group(
-            BlockState.CODEC.listOf().fieldOf("place_on").forGetter(filter -> filter.placeOn),
-            BlockState.CODEC.listOf().fieldOf("forbid_nearby").forGetter(filter -> filter.forbidNearby)
+            BuiltInRegistries.BLOCK.byNameCodec().listOf().fieldOf("place_on").forGetter(filter -> filter.placeOn),
+            BuiltInRegistries.BLOCK.byNameCodec().listOf().fieldOf("forbid_nearby").forGetter(filter -> filter.forbidNearby)
     ).apply(codec, WallPlacementFilter::new)).fieldOf("wall_placement");
 
-    private final List<BlockState> placeOn;
-    private final List<BlockState> forbidNearby;
+    private final List<Block> placeOn;
+    private final List<Block> forbidNearby;
 
-    public WallPlacementFilter(List<BlockState> placeOn, List<BlockState> forbidNearby) {
+    public WallPlacementFilter(List<Block> placeOn, List<Block> forbidNearby) {
         this.placeOn = placeOn;
         this.forbidNearby = forbidNearby;
     }
 
     public static WallPlacementFilter ashenMushroom() {
         return new WallPlacementFilter(
-                List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
-                List.of(
-                        Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(),
-                        Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState(),
-                        RRBlocks.ASHEN_MUSHROOM_BLOCK.get().defaultBlockState()
-                )
+                List.of(Blocks.STONE, Blocks.DEEPSLATE),
+                List.of(Blocks.RED_MUSHROOM_BLOCK, Blocks.BROWN_MUSHROOM_BLOCK, RRBlocks.ASHEN_MUSHROOM_BLOCK.get())
         );
     }
 
@@ -47,9 +43,7 @@ public class WallPlacementFilter extends PlacementFilter {
     }
 
     public boolean canPlaceAt(WorldGenLevel level, BlockPos origin) {
-        BlockState originBlock = level.getBlockState(origin);
-
-        if (placeOn.stream().noneMatch(block -> originBlock.is(block.getBlock()))) {
+        if (!placeOn.contains(level.getBlockState(origin).getBlock())) {
             return false;
         }
 
@@ -64,13 +58,7 @@ public class WallPlacementFilter extends PlacementFilter {
                 origin.east().below()
         );
 
-        boolean anyForbiddenBlocks = potentialNeighbours.stream()
-                .map(level::getBlockState)
-                .anyMatch(neighbour -> forbidNearby.stream()
-                        .anyMatch(forbiddenBlockState -> forbiddenBlockState.is(neighbour.getBlock()))
-                );
-
-        if (anyForbiddenBlocks) {
+        if (potentialNeighbours.stream().anyMatch(pos -> forbidNearby.contains(level.getBlockState(pos).getBlock()))) {
             return false;
         }
 
@@ -83,11 +71,7 @@ public class WallPlacementFilter extends PlacementFilter {
 
         long holeCount = surrounding.stream().filter(level::isEmptyBlock).count();
 
-        long blockCount = surrounding.stream()
-                .map(level::getBlockState)
-                .filter(neighbour -> placeOn.stream()
-                        .anyMatch(allowedBlockState -> allowedBlockState.is(neighbour.getBlock()))
-                ).count();
+        long blockCount = surrounding.stream().filter(pos -> placeOn.contains(level.getBlockState(pos).getBlock())).count();
 
         return blockCount > 0 && holeCount > 0;
     }

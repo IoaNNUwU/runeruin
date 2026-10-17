@@ -391,12 +391,12 @@ public class RRPlacedFeatures {
         ));
 
         ctx.register(GOBLET_DEEP_ROOTS, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.GOBLET_DEEP_ROOTS),
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEP_ROOTS),
                 floorPlacement(CountPlacement.of(64), LOST_CAVES_Y, DEEP_CAVES_CEILING_Y,
                         BlockPredicate.matchesBlocks(RRBlocks.GIANT_GOBLET_BUD.get()), 32, 1)
         ));
         ctx.register(DEEP_ROOTS_GRASS, new PlacedFeature(
-                configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEP_ROOTS_GRASS),
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.DEEP_ROOTS),
                 floorPlacement(CountPlacement.of(64), DEEP_CAVES_Y, DEEP_CAVES_CEILING_Y,
                         BlockPredicate.matchesBlocks(RRBlocks.GLOWING_MOSS.get()), 32, 1)
         ));
@@ -524,8 +524,8 @@ public class RRPlacedFeatures {
                         1
                 )),
                 new WallPlacementFilter(
-                        List.of(Blocks.STONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState()),
-                        List.of(Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(), Blocks.BROWN_MUSHROOM_BLOCK.defaultBlockState())
+                        List.of(Blocks.STONE, Blocks.DEEPSLATE),
+                        List.of(Blocks.RED_MUSHROOM_BLOCK, Blocks.BROWN_MUSHROOM_BLOCK)
                 ),
                 BiomeFilter.biome()
         );
