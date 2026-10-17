@@ -86,6 +86,12 @@ public class RRItems {
             )))
     );
 
+    public static final DeferredItem<Item> GRAPPLING_HOOK = REGISTRY.registerItem(
+            "grappling_hook",
+            GrapplingHookItem::new,
+            p -> p.durability(256)
+    );
+
     public static final DeferredItem<Item> MOSSY_PROPHET_SPAWN_EGG = REGISTRY.registerItem(
             "mossy_prophet_spawn_egg",
             SpawnEggItem::new,

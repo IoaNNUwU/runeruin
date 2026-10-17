@@ -13,11 +13,13 @@
   "item.runeruin.mossy_warrior_spawn_egg": "Яйцо призыва мшистого воина",
   "item.runeruin.runic_minecart": "Руническая вагонетка",
   "item.runeruin.runic_minecart.tooltip": "Сохраняет скорость даже на обычных рельсах",
+  "item.runeruin.grappling_hook": "Крюк-кошка",
   "entity.runeruin.snail": "Улитка",
   "entity.runeruin.mossy_prophet": "Мшистый пророк",
   "entity.runeruin.mossy_warrior": "Мшистый воин",
   "entity.runeruin.runic_minecart": "Руническая вагонетка",
   "entity.runeruin.blowpipe_berry": "Ягода из духовой трубки",
+  "entity.runeruin.grappling_anchor": "Якорь крюка-кошки",
 
   "block.runeruin.arcane_stone": "Мистический камень",
   "block.runeruin.arcane_stone_bricks": "Кирпичи из мистического камня",

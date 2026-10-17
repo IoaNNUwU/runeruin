@@ -29,6 +29,7 @@ public class RRCreativeModeTabs {
                     RRItems.BLOWPIPE.toStack(),
                     RRItems.POWDERED_MOSS_BUCKET.toStack(),
                     RRItems.RUNIC_MINECART.toStack(),
+                    RRItems.GRAPPLING_HOOK.toStack(),
                     RRItems.SNAIL_SPAWN_EGG.toStack(),
                     RRItems.MOSSY_PROPHET_SPAWN_EGG.toStack(),
                     RRItems.MOSSY_WARRIOR_SPAWN_EGG.toStack(),

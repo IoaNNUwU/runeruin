@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.client.GrapplingAnchorOut;
 import ioann.uwu.runeruin.datagen.models.CloverModels;
 import ioann.uwu.runeruin.datagen.models.DeepMossModels;
 import ioann.uwu.runeruin.datagen.models.FireflyJarModels;
@@ -25,6 +26,7 @@ import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
+import net.minecraft.client.renderer.item.ClientItem;
 import net.minecraft.client.renderer.item.EmptyModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.properties.select.DisplayContext;
@@ -68,6 +70,7 @@ public class DatagenModelProvider extends ModelProvider {
         createBlowpipe(itemModels);
         itemModels.generateFlatItem(RRItems.POWDERED_MOSS_BUCKET.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.RUNIC_MINECART.get(), ModelTemplates.FLAT_ITEM);
+        createGrapplingHook(itemModels);
 
         // --- Blocks ---
         blockModels.createTrivialCube(RRBlocks.ARCANE_STONE.get());
@@ -138,6 +141,18 @@ public class DatagenModelProvider extends ModelProvider {
                         new EmptyModel.Unbaked()));
         itemModels.itemModelOutput.accept(blowpipe, ItemModelGenerators.createFlatModelDispatch(
                 flat, ItemModelUtils.conditional(ItemModelUtils.isUsingItem(), blowing, inHand)));
+    }
+
+    /**
+     * The hook and its anchor are two files of one size and pose, so that the anchor sits at the muzzle; the anchor
+     * also has an item definition of its own, which the flying anchor draws ({@code GrapplingAnchorRenderer}).
+     */
+    private static void createGrapplingHook(@NonNull ItemModelGenerators itemModels) {
+        ItemModel.Unbaked hook = ItemModelUtils.plainModel(RR.id("item/grappling_hook"));
+        ItemModel.Unbaked anchor = ItemModelUtils.plainModel(RR.id("item/grappling_anchor"));
+        itemModels.itemModelOutput.accept(RRItems.GRAPPLING_HOOK.get(),
+                ItemModelUtils.conditional(new GrapplingAnchorOut(), hook, ItemModelUtils.composite(hook, anchor)));
+        itemModels.itemModelOutput.register(RR.id("grappling_anchor"), new ClientItem(anchor, ClientItem.Properties.DEFAULT));
     }
 
     private static void createAshenMushroomBlock(@NonNull BlockModelGenerators blockModels) {

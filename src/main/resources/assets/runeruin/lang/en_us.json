@@ -13,11 +13,13 @@
   "item.runeruin.mossy_warrior_spawn_egg": "Mossy Warrior Spawn Egg",
   "item.runeruin.runic_minecart": "Runic Minecart",
   "item.runeruin.runic_minecart.tooltip": "Keeps its speed even on ordinary rails",
+  "item.runeruin.grappling_hook": "Grappling Hook",
   "entity.runeruin.snail": "Snail",
   "entity.runeruin.mossy_prophet": "Mossy Prophet",
   "entity.runeruin.mossy_warrior": "Mossy Warrior",
   "entity.runeruin.runic_minecart": "Runic Minecart",
   "entity.runeruin.blowpipe_berry": "Blowpipe Berry",
+  "entity.runeruin.grappling_anchor": "Grappling Anchor",
 
   "block.runeruin.arcane_stone": "Arcane Stone",
   "block.runeruin.arcane_stone_bricks": "Arcane Stone Bricks",

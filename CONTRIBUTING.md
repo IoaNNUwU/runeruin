@@ -27,6 +27,7 @@ Labels show where an issue stands:
 | biome         | `biome: <name>`                                                           | a specific biome                              |
 | infra         | `infra`                                                                   | scripts, build, CI, agent docs                |
 | perf          | `perf`                                                                    | speed and memory use                          |
+| slop          | `slop`                                                                    | an AI draft that a person has to finish       |
 
 Only the maintainer can change labels. A bug becomes `confirmed` once it is reproduced, a feature becomes `accepted` once the maintainer agrees with it. Issues that will not be done are closed with the reason "not planned".
 

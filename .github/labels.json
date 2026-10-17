@@ -13,5 +13,6 @@
   } },
   { "group": "biome",       "color": "c5def5", "labels": {} },
   { "group": "infra",       "color": "6e7781", "labels": { "infra": "Scripts, build, CI, agent docs" } },
-  { "group": "perf",        "color": "e4572e", "labels": { "perf": "Performance: speed and memory" } }
+  { "group": "perf",        "color": "e4572e", "labels": { "perf": "Performance: speed and memory" } },
+  { "group": "slop",        "color": "bfa36f", "labels": { "slop": "AI draft that a person has to finish" } }
 ]
