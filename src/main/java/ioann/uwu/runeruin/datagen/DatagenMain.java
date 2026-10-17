@@ -8,6 +8,7 @@ import ioann.uwu.runeruin.dimension.RRDimension;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import ioann.uwu.runeruin.dimension.RRStructureSets;
 import ioann.uwu.runeruin.dimension.RRStructures;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -17,6 +18,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.LootTableProvider;
+import net.minecraft.data.structures.SnbtToNbt;
+import net.minecraft.data.structures.StructureUpdater;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -74,5 +77,8 @@ public class DatagenMain {
         gen.addProvider(true, new DatagenBiomeTagProvider(packOutput, lookupProvider));
 
         gen.addProvider(true, new DatagenRecipeProvider.Runner(packOutput, lookupProvider));
+
+        // The templates a person saves as text (.snbt) become the .nbt that the game loads, as the game does for its own.
+        gen.addProvider(true, new SnbtToNbt(packOutput, Path.of(System.getProperty("runeruin.templates"))).addFilter(StructureUpdater::update));
     }
 }

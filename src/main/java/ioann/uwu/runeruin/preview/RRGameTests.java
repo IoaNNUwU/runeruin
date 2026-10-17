@@ -24,6 +24,9 @@ import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
+import ioann.uwu.runeruin.dimension.structures.HangingPiece;
+import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece;
+import ioann.uwu.runeruin.dimension.structures.HangingTracksLayout;
 import ioann.uwu.runeruin.dimension.structures.TemplatePiece;
 import ioann.uwu.runeruin.entities.MossyProphet;
 import ioann.uwu.runeruin.entities.MossyRam;
@@ -62,6 +65,7 @@ import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -91,6 +95,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
@@ -185,6 +190,10 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("template_piece", () -> RRGameTests::templatePiece);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> SAVE_COMMAND =
         TEST_FUNCTIONS.register("save_command", () -> RRGameTests::saveCommand);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> HANGING_PLATFORM_TEMPLATES =
+        TEST_FUNCTIONS.register("hanging_platform_templates", () -> RRGameTests::hangingPlatformTemplates);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> STONE_LILY_ON_TRUNK =
+        TEST_FUNCTIONS.register("stone_lily_on_trunk", () -> RRGameTests::stoneLilyOnTrunk);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
@@ -562,6 +571,20 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("hanging_platform_templates"),
+            new FunctionGameTestInstance(
+                HANGING_PLATFORM_TEMPLATES.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("stone_lily_on_trunk"),
+            new FunctionGameTestInstance(
+                STONE_LILY_ON_TRUNK.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -733,31 +756,109 @@ public final class RRGameTests {
         helper.succeed();
     }
 
-    // The command a person saves a build with: the selection becomes a template file in the resources of the
-    // checkout the game was started from, without its structure void block.
+    // Every platform of the hanging tracks has its entrance, a jigsaw block facing sideways. Turned, plain or mirrored,
+    // to a track that runs east in an inverted tree network, the platform lies beyond the end of the track with the
+    // entrance on it, is built of inverted tree, keeps no jigsaw, and its chains go on up to the ceiling.
+    private static void hangingPlatformTemplates(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        StructureTemplateManager templates = level.getStructureManager();
+        List<Identifier> variants = new ArrayList<>(TemplatePiece.variants(templates, HangingPlatformPiece.PLATFORMS));
+        variants.addAll(TemplatePiece.variants(templates, HangingPlatformPiece.DUNGEONS));
+        helper.assertTrue(variants.size() >= 2, "the hanging tracks have only " + variants + " to build platforms of");
+        HangingTracksLayout.Port port = new HangingTracksLayout.Port(0, 100, 0, Direction.EAST);
+        for (Identifier template : variants) {
+            for (Mirror mirror : List.of(Mirror.NONE, Mirror.FRONT_BACK)) {
+                HangingPlatformPiece piece = HangingPlatformPiece.create(templates, template, port, mirror, HangingPiece.Wood.INVERTED_TREE);
+                helper.assertTrue(piece != null, template + " has no jigsaw block facing sideways");
+                BoundingBox footprint = piece.footprint();
+                helper.assertTrue(footprint.minX() == port.x() && piece.lowestDeck() == port.y(),
+                    template + " " + mirror + " does not start at the end of the track: " + footprint);
+                PreviewWorld world = PreviewWorld.create(1, level);
+                int ceiling = piece.top() + 5;
+                world.fillBox(new BoundingBox(footprint.minX(), ceiling, footprint.minZ(), footprint.maxX(), ceiling, footprint.maxZ()),
+                    Blocks.STONE.defaultBlockState());
+                PreviewJobs.placePieceAcrossChunks(piece, world);
+                helper.assertTrue(world.get(new BlockPos(port.x(), port.y(), port.z())).is(RRBlocks.INVERTED_TREE_PLANKS),
+                    template + " has no inverted tree planks at its entrance");
+                boolean chained = false;
+                for (BlockPos pos : BlockPos.betweenClosed(footprint.minX(), piece.bottom(), footprint.minZ(), footprint.maxX(), ceiling, footprint.maxZ())) {
+                    BlockState state = world.get(pos);
+                    helper.assertTrue(!state.is(Blocks.JIGSAW) && !state.is(Blocks.OAK_PLANKS) && !state.is(Blocks.OAK_LOG)
+                        && !state.is(Blocks.OAK_FENCE) && !state.is(Blocks.OAK_SLAB), template + " keeps " + state + " at " + pos);
+                    chained |= pos.getY() == ceiling - 1 && state.is(Blocks.IRON_CHAIN);
+                }
+                helper.assertTrue(chained, template + " has no chain up to the ceiling");
+            }
+        }
+
+        // An empty chest or barrel gets supplies; one that names its loot keeps it.
+        HangingPlatformPiece.NetworkProcessor network = new HangingPlatformPiece.NetworkProcessor(HangingPiece.Wood.OAK);
+        CompoundTag treasure = new CompoundTag();
+        treasure.putString("LootTable", RRLootTables.HANGING_TRACKS_TREASURE.identifier().toString());
+        for (StructureTemplate.StructureBlockInfo info : List.of(
+                new StructureTemplate.StructureBlockInfo(BlockPos.ZERO, Blocks.BARREL.defaultBlockState(), null),
+                new StructureTemplate.StructureBlockInfo(BlockPos.ZERO, Blocks.CHEST.defaultBlockState(), treasure))) {
+            CompoundTag nbt = network.processBlock(level, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, info, new StructurePlaceSettings()).nbt();
+            String expected = (info.nbt() == null ? RRLootTables.HANGING_TRACKS_SUPPLY : RRLootTables.HANGING_TRACKS_TREASURE).identifier().toString();
+            helper.assertTrue(nbt != null && nbt.getStringOr("LootTable", "").equals(expected), info.state() + " got the loot " + nbt);
+        }
+        helper.succeed();
+    }
+
+    // The lily is a template of its folder that the feature puts with its middle, the moss light, on the trunk.
+    private static void stoneLilyOnTrunk(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        for (int seed = 1; seed <= 8; seed++) {
+            FeaturePreviewJob.Placement placement = FeaturePreviewJob.place(server, RR.id("stone_lily"), Surface.FLOOR,
+                Blocks.STONE.defaultBlockState(), 1, seed, 16, 0, 0);
+            BoundingBox written = placement.world().writtenBox();
+            BlockPos light = BlockPos.betweenClosedStream(written).filter(pos -> placement.world().get(pos).is(RRBlocks.MOSS_LIGHT))
+                .findFirst().map(BlockPos::immutable).orElse(null);
+            helper.assertTrue(light != null && placement.world().get(light.below()).getBlock() instanceof WallBlock,
+                "the stone lily of seed " + seed + " does not sit on its trunk");
+        }
+        helper.succeed();
+    }
+
+    // The commands a person saves a build with and loads it back with: the selection becomes a text template in the
+    // resources of the checkout the game was started from, without its structure void block; loading it puts the
+    // void back and selects the build, so that saving without a name writes the same file again.
     private static void saveCommand(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos build = helper.absolutePos(new BlockPos(0, 2, 0));
+        BlockPos copy = build.above(2);
         level.setBlockAndUpdate(build, Blocks.GOLD_BLOCK.defaultBlockState());
         level.setBlockAndUpdate(build.east(), Blocks.STRUCTURE_VOID.defaultBlockState());
+        level.setBlockAndUpdate(copy.east(), Blocks.STONE.defaultBlockState());
         String startedFrom = System.getProperty("runeruin.checkout");
         try {
             Path checkout = Files.createTempDirectory("runeruin_checkout");
             System.setProperty("runeruin.checkout", checkout.toString());
             CommandSourceStack player = ((ServerPlayer) helper.makeMockServerPlayer(GameType.CREATIVE)).createCommandSourceStack()
                 .withPermission(PermissionSet.ALL_PERMISSIONS).withSuppressedOutput();
+            Path file = checkout.resolve("src/main/resources/data/runeruin/structure/test_save_command/build.snbt");
             for (String command : List.of("rrpos1 " + build.toShortString().replace(",", ""),
                 "rrpos2 " + build.east().toShortString().replace(",", ""), "rrsave test_save_command/build")) {
                 level.getServer().getCommands().performPrefixedCommand(player, command);
             }
-            Path file = checkout.resolve("src/main/resources/data/runeruin/structure/test_save_command/build.nbt");
-            helper.assertTrue(Files.isRegularFile(file) && Files.size(file) > 0, "/rrsave wrote no " + file);
+            helper.assertTrue(Files.isRegularFile(file) && Files.readString(file).contains("minecraft:gold_block"),
+                "/rrsave wrote no text template " + file);
             StructureTemplate template = level.getStructureManager().get(RR.id("test_save_command/build")).orElseThrow();
             helper.assertTrue(template.getSize().equals(new Vec3i(2, 1, 1)), "the template is " + template.getSize());
             StructurePlaceSettings asBuilt = new StructurePlaceSettings();
             helper.assertTrue(template.filterBlocks(BlockPos.ZERO, asBuilt, Blocks.GOLD_BLOCK).size() == 1
                 && template.filterBlocks(BlockPos.ZERO, asBuilt, Blocks.STRUCTURE_VOID).isEmpty(),
                 "the template must hold the gold block and no structure void");
+
+            Files.delete(file);
+            for (String command : List.of("rrload test_save_command/build " + copy.toShortString().replace(",", ""), "rrsave")) {
+                level.getServer().getCommands().performPrefixedCommand(player, command);
+            }
+            helper.assertTrue(level.getBlockState(copy).is(Blocks.GOLD_BLOCK) && level.getBlockState(copy.east()).is(Blocks.STRUCTURE_VOID),
+                "/rrload must put the gold block back and a structure void where the template keeps the world");
+            helper.assertTrue(Files.isRegularFile(file), "/rrsave without a name did not write the loaded template back");
+            helper.assertTrue(template.getSize().equals(new Vec3i(2, 1, 1))
+                && template.filterBlocks(BlockPos.ZERO, asBuilt, Blocks.STONE).isEmpty(), "the template saved back is " + template.getSize());
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());
@@ -1210,8 +1311,9 @@ public final class RRGameTests {
             for (int seed = 1; seed <= 8; seed++) {
                 PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(server), Map.of())
                     .with("seed", Integer.toString(seed));
-                PreviewJobs.Result result = PreviewCatalog.require("hanging_tracks").run(args);
+                PreviewJobs.Result result = PreviewCatalog.require("hanging_tracks").run(args, server);
                 helper.assertTrue(result.count("minecraft:iron_chain") > 100, "hanging tracks " + seed + " hang on too few chains");
+                helper.assertTrue(result.count("minecraft:jigsaw") == 0, "a platform of hanging tracks " + seed + " kept its jigsaw block");
                 // Under the ceiling and above the floor that the Deep caves have with this seed.
                 // Between the steps of the ceiling a station sometimes has no room.
                 try {

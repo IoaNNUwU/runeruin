@@ -7,6 +7,7 @@ import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
+import ioann.uwu.runeruin.dimension.RRStructureProcessors;
 import ioann.uwu.runeruin.dimension.RRStructureTypes;
 import ioann.uwu.runeruin.dimension.biomes.bloomingcaves.StoneForest;
 import ioann.uwu.runeruin.entities.MossyRam;
@@ -16,7 +17,9 @@ import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.particles.RRParticleTypes;
 import ioann.uwu.runeruin.portal.RRPoiTypes;
 import ioann.uwu.runeruin.preview.RRGameTests;
+import java.nio.file.Path;
 import net.minecraft.core.dispenser.MinecartDispenseItemBehavior;
+import net.minecraft.gametest.framework.StructureUtils;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.entity.BlockEntityTypes;
 import net.neoforged.bus.api.IEventBus;
@@ -53,9 +56,17 @@ public class RuneRuinMod {
 
         RRStructureTypes.REGISTRY.register(modEventBus);
         RRStructurePieceTypes.REGISTRY.register(modEventBus);
+        RRStructureProcessors.REGISTRY.register(modEventBus);
         RRGameTests.TEST_FUNCTIONS.register(modEventBus);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON_SPEC);
+
+        // A game started with runClient reads the templates that /rrsave writes as text straight from the checkout,
+        // through the source the game has for its own text templates: the latest save, before runData converts it.
+        String checkout = System.getProperty("runeruin.checkout");
+        if (checkout != null) {
+            StructureUtils.testStructuresSourceDir = Path.of(checkout, "src/main/resources");
+        }
     }
 
     private void addDispenserBehaviors(FMLCommonSetupEvent event) {
