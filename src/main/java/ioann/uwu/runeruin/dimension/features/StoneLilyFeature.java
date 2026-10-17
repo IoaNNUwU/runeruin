@@ -3,8 +3,8 @@ package ioann.uwu.runeruin.dimension.features;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRTags;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -12,32 +12,36 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.frog.Frog;
 import net.minecraft.world.entity.animal.frog.FrogVariant;
 import net.minecraft.world.entity.animal.frog.FrogVariants;
-import net.minecraft.world.entity.variant.VariantUtils;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.block.state.properties.WallSide;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.FossilFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
-import net.minecraft.world.level.levelgen.structure.templatesystem.*;
-import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.levelgen.structure.templatesystem.AlwaysTrueTest;
+import net.minecraft.world.level.levelgen.structure.templatesystem.BlockMatchTest;
+import net.minecraft.world.level.levelgen.structure.templatesystem.ProcessorRule;
+import net.minecraft.world.level.levelgen.structure.templatesystem.ProtectedBlockProcessor;
+import net.minecraft.world.level.levelgen.structure.templatesystem.RuleProcessor;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.Tags;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
 
     private static final Identifier STONE_LILY_TEMPLATE = RR.id("stone_lily");
+    private static final Direction[] TRUNK_DIRECTIONS = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
 
     public StoneLilyFeature() {
         super(Config.CODEC);
@@ -52,9 +56,6 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
         BlockPos origin = ctx.origin();
 
         BlockState root = config.rootBlock.getState(level, random, origin);
-
-        // BlockState slab = config.flowerSlab.getState(level, random, origin);
-
         BlockState wall = config.trunkWall.getState(level, random, origin);
         BlockState straightWall = wall.setValue(WallBlock.UP, true);
 
@@ -69,108 +70,65 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
         );
 
         for (BlockPos rootPos : roots) {
-            level.setBlock(rootPos, root, 1);
+            level.setBlock(rootPos, root, Block.UPDATE_CLIENTS);
         }
 
-        BlockPos.MutableBlockPos currentBlockState = origin.mutable();
-        currentBlockState.setY(currentBlockState.getY() + 2);
+        BlockPos.MutableBlockPos cursor = origin.mutable().move(Direction.UP, 2);
 
         if (random.nextBoolean()) {
-            level.setBlock(currentBlockState, straightWall, 1);
-            currentBlockState.setY(currentBlockState.getY() + 1);
+            level.setBlock(cursor, straightWall, Block.UPDATE_CLIENTS);
+            cursor.move(Direction.UP);
         }
 
         int nSegments = random.nextIntBetweenInclusive(2, 7);
 
         // --- Trunk ---
         for (int i = 0; i < nSegments; i++) {
+            Direction direction = Util.getRandom(TRUNK_DIRECTIONS, random);
 
-            int rand = random.nextIntBetweenInclusive(0, 3);
-            var dirs = new Direction[] {
-                    Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST
-            };
-            Direction direction = dirs[rand];
-
-            BlockState wallBlock = straightWall.setValue(
-                    WallBlock.PROPERTY_BY_DIRECTION.get(direction),
-                    WallSide.LOW
-            );
-            level.setBlock(currentBlockState, wallBlock, 1);
-
-            currentBlockState.move(direction);
-
-            wallBlock = straightWall.setValue(
-                    WallBlock.PROPERTY_BY_DIRECTION.get(direction.getOpposite()),
-                    WallSide.LOW
-            );
-            level.setBlock(currentBlockState, wallBlock, 1);
-
-            currentBlockState.move(Direction.UP);
-
-            level.setBlock(currentBlockState, straightWall, 1);
-            currentBlockState.move(Direction.UP);
+            level.setBlock(cursor, straightWall.setValue(WallBlock.PROPERTY_BY_DIRECTION.get(direction), WallSide.LOW), Block.UPDATE_CLIENTS);
+            cursor.move(direction);
+            level.setBlock(cursor, straightWall.setValue(WallBlock.PROPERTY_BY_DIRECTION.get(direction.getOpposite()), WallSide.LOW), Block.UPDATE_CLIENTS);
+            cursor.move(Direction.UP);
+            level.setBlock(cursor, straightWall, Block.UPDATE_CLIENTS);
+            cursor.move(Direction.UP);
         }
 
         // --- Lily ---
-
-        StructureTemplateManager manager = level.getLevel().getStructureManager();
-
-        StructureTemplate structureTemplate = manager.get(STONE_LILY_TEMPLATE).orElseThrow();
-
+        StructureTemplate template = level.getLevel().getStructureManager().get(STONE_LILY_TEMPLATE).orElseThrow();
         Rotation rotation = Rotation.getRandom(random);
-        int rand = random.nextIntBetweenInclusive(0, Mirror.values().length - 1);
-        Mirror mirror = Mirror.values()[rand];
-
-        var blockProcessor = new ProtectedBlockProcessor(
-                level.registryAccess().lookupOrThrow(Registries.BLOCK).getOrThrow(RRTags.VEGETABLES_NON_REPLACEABLE)
-        );
-
-        structureTemplate.placeInWorld(
+        Mirror mirror = Util.getRandom(Mirror.values(), random);
+        template.placeInWorld(
                 level,
-                currentBlockState,
-                currentBlockState,
+                cursor,
+                cursor,
                 new StructurePlaceSettings()
                         .setRotation(rotation)
                         .setMirror(mirror)
-                        .addProcessor(blockProcessor)
+                        .addProcessor(new ProtectedBlockProcessor(
+                                level.registryAccess().lookupOrThrow(Registries.BLOCK).getOrThrow(RRTags.VEGETABLES_NON_REPLACEABLE)
+                        ))
                         // The template is built with vanilla moss carpets.
                         .addProcessor(new RuleProcessor(List.of(new ProcessorRule(
                                 new BlockMatchTest(Blocks.MOSS_CARPET),
                                 AlwaysTrueTest.INSTANCE,
                                 config.mossCarpet.getState(level, random, origin)
-                        ))))
-                ,
+                        )))),
                 random,
-                1
-                );
+                Block.UPDATE_CLIENTS
+        );
 
-        // --- Frog xD ---
-
-        currentBlockState.move(Direction.UP);
-
-        int frogRand = random.nextIntBetweenInclusive(0, 9);
-        int nFrogs;
-        if (frogRand == 9) {
-            nFrogs = 2;
-        } else if (frogRand == 8) {
-            nFrogs = 1;
-        } else {
-            nFrogs = 0;
-        }
-
-        var frogVariants = ctx.level().holderLookup(Registries.FROG_VARIANT);
-
-        Holder<FrogVariant> greenFrogVariant = frogVariants.get(FrogVariants.COLD).orElseThrow();
-
-        for (int i = 0; i < nFrogs; i++) {
+        // --- Frogs: one lily in ten has one, another one in ten has two ---
+        cursor.move(Direction.UP);
+        int frogs = Math.max(0, random.nextInt(10) - 7);
+        Holder<FrogVariant> greenFrog = level.holderLookup(Registries.FROG_VARIANT).get(FrogVariants.COLD).orElseThrow();
+        for (int i = 0; i < frogs; i++) {
             Frog frog = new Frog(EntityTypes.FROG, level.getLevel());
-            frog.setComponent(DataComponents.FROG_VARIANT, greenFrogVariant);
-            frog.setPos(Vec3.atCenterOf(currentBlockState));
-
+            frog.setComponent(DataComponents.FROG_VARIANT, greenFrog);
+            frog.setPos(Vec3.atCenterOf(cursor));
             frog.setBaby(random.nextBoolean());
-
             level.addFreshEntity(frog);
-            currentBlockState.move(Direction.UP);
+            cursor.move(Direction.UP);
         }
 
         return true;
@@ -179,7 +137,6 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
     public record Config(
             BlockStateProvider rootBlock,
             BlockStateProvider trunkWall,
-            BlockStateProvider flowerSlab,
             BlockStateProvider mossCarpet
     ) implements FeatureConfiguration {
 
@@ -187,7 +144,6 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
                 codec.group(
                         BlockStateProvider.CODEC.fieldOf("root_block").forGetter(Config::rootBlock),
                         BlockStateProvider.CODEC.fieldOf("trunk_block").forGetter(Config::trunkWall),
-                        BlockStateProvider.CODEC.fieldOf("flower_block").forGetter(Config::flowerSlab),
                         BlockStateProvider.CODEC.fieldOf("moss_carpet").forGetter(Config::mossCarpet)
                 ).apply(codec, Config::new));
     }

@@ -2,10 +2,9 @@ package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
-import ioann.uwu.runeruin.dimension.GeometryUtils;
 import ioann.uwu.runeruin.dimension.structures.HangingTracksStructure;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -21,23 +20,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfigur
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
-import java.util.List;
-
 public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
-
-    private static final int[][] CEILING_ANCHORS = {
-            {0, 3, -2},
-            {0, 3, 2},
-            {2, 3, 0},
-            {-2, 3, 0}
-    };
-
-    private static final int[][] CARDINALS = {
-            {0, -1},
-            {0, 1},
-            {-1, 0},
-            {1, 0}
-    };
 
     private static final int[][] TRUNK_CROSS = {
             {0, 0},
@@ -250,8 +233,6 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                 branchSupplier,
                 radius - 1,
                 radius * 3 / 4 - 1,
-                0,
-                0,
                 GeometryUtils.SOLID_FLAG
         );
 
@@ -303,8 +284,6 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                             additionalBranchesLeavesSupplier,
                             4,
                             4,
-                            0,
-                            0,
                             Block.UPDATE_ALL
                     );
 
@@ -346,8 +325,6 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
                 leaveSupplier,
                 radius,
                 radius * 3 / 4,
-                0,
-                0,
                 Block.UPDATE_ALL
         );
 
@@ -361,7 +338,7 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             GeometryUtils.setSolid(level, mutable, ox + offset[0], crownY + offset[1], oz + offset[2], trunkBlock);
         }
 
-        return false;
+        return true;
     }
 
     private static int[][] extraBranchTargets(int rand, int randYOffset) {
@@ -381,27 +358,13 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             int height,
             BlockPos.MutableBlockPos mutable
     ) {
-        if (!level.getBlockState(origin).is(ceilingBlock.getBlock())) {
+        if (!FeatureScans.isHangingTrunkAnchor(level, origin, ceilingBlock, trunkBlock, mutable)) {
             return false;
         }
 
         int ox = origin.getX();
         int oy = origin.getY();
         int oz = origin.getZ();
-
-        for (int[] offset : CEILING_ANCHORS) {
-            if (level.isEmptyBlock(mutable.set(ox + offset[0], oy + offset[1], oz + offset[2]))) {
-                return false;
-            }
-        }
-
-        for (int[] offset : CARDINALS) {
-            BlockState neighbor = level.getBlockState(mutable.set(ox + offset[0], oy, oz + offset[1]));
-            if (neighbor.is(trunkBlock.getBlock()) || neighbor.is(RRBlocks.ARCANE_STONE)) {
-                return false;
-            }
-        }
-
         int radius = height / 2;
         int[][] probes = {
                 {0, 0},
@@ -434,13 +397,15 @@ public class InvertedTreeFeature extends Feature<InvertedTreeFeature.Config> {
             List<BlockStateProvider> leavesBlock,
             IntProvider maxLength
     ) implements FeatureConfiguration {
+        /** Also the length of the ceiling block vines. */
+        static final Codec<IntProvider> MAX_LENGTH = IntProviders.codec(5, Const.UNDERGROUND_LEVEL_HEIGHT);
+
         public static final Codec<Config> CODEC = RecordCodecBuilder.create(codec ->
                 codec.group(
                         BlockStateProvider.CODEC.fieldOf("place_on").forGetter(Config::placeOn),
                         BlockStateProvider.CODEC.fieldOf("trunk_block").forGetter(Config::trunkBlock),
                         Codec.list(BlockStateProvider.CODEC).fieldOf("leaves_block").forGetter(Config::leavesBlock),
-                        IntProviders.codec(5, Const.BLOOMING_CAVES_CEILING_Y - Const.BLOOMING_CAVES_Y)
-                                .fieldOf("max_length").forGetter(Config::maxLength)
+                        MAX_LENGTH.fieldOf("max_length").forGetter(Config::maxLength)
                 ).apply(codec, Config::new));
     }
 }

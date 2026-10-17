@@ -2,15 +2,12 @@ package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.dimension.Const;
-import ioann.uwu.runeruin.dimension.GeometryUtils;
 import ioann.uwu.runeruin.dimension.structures.HangingTracksStructure;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
-import net.minecraft.util.valueproviders.IntProviders;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -18,8 +15,6 @@ import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-
-import java.util.List;
 
 public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Config> {
 
@@ -306,29 +301,13 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
             int height,
             BlockPos.MutableBlockPos mutable
     ) {
-        if (!level.getBlockState(origin).is(ceilingBlock.getBlock())) {
+        if (!FeatureScans.isHangingTrunkAnchor(level, origin, ceilingBlock, trunkBlock, mutable)) {
             return false;
         }
 
         int ox = origin.getX();
         int oy = origin.getY();
         int oz = origin.getZ();
-
-        if (level.isEmptyBlock(mutable.set(ox, oy + 3, oz - 2))
-                || level.isEmptyBlock(mutable.set(ox, oy + 3, oz + 2))
-                || level.isEmptyBlock(mutable.set(ox + 2, oy + 3, oz))
-                || level.isEmptyBlock(mutable.set(ox - 2, oy + 3, oz))) {
-            return false;
-        }
-
-        int[][] cardinals = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
-        for (int[] offset : cardinals) {
-            BlockState neighbor = level.getBlockState(mutable.set(ox + offset[0], oy, oz + offset[1]));
-            if (neighbor.is(trunkBlock.getBlock()) || neighbor.is(RRBlocks.ARCANE_STONE)) {
-                return false;
-            }
-        }
-
         for (int y = 1; y < height; y++) {
             if (!level.getBlockState(mutable.set(ox, oy - y, oz)).isAir()) {
                 return false;
@@ -350,8 +329,7 @@ public class CeilingBlockVineFeature extends Feature<CeilingBlockVineFeature.Con
                         BlockStateProvider.CODEC.fieldOf("place_on").forGetter(Config::placeOn),
                         BlockStateProvider.CODEC.fieldOf("trunk_block").forGetter(Config::trunkBlock),
                         Codec.list(BlockStateProvider.CODEC).fieldOf("berry_blocks").forGetter(Config::berryBlocks),
-                        IntProviders.codec(5, Const.BLOOMING_CAVES_CEILING_Y - Const.BLOOMING_CAVES_Y)
-                                .fieldOf("max_length").forGetter(Config::maxLength)
+                        InvertedTreeFeature.Config.MAX_LENGTH.fieldOf("max_length").forGetter(Config::maxLength)
                 ).apply(codec, Config::new));
     }
 }

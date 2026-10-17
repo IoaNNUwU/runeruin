@@ -2,7 +2,6 @@ package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import ioann.uwu.runeruin.dimension.GeometryUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -34,38 +33,22 @@ public class MonolithFeature extends Feature<MonolithFeature.Config> {
         int maxRadius = config.maxRadius.sample(random);
         int radius = random.nextIntBetweenInclusive(minRadius, maxRadius);
 
-        int minSurrounding = config.minSubMonoliths.sample(random);
-        int maxSurrounding = config.maxSubMonoliths.sample(random);
-        int surrounding = random.nextIntBetweenInclusive(minSurrounding, maxSurrounding);
-
-        GeometryUtils.smoothCyl(
-                level,
-                origin.below(3),
-                block,
-                radius,
-                30
-        );
+        GeometryUtils.smoothCyl(level, origin.below(3), block, radius, 30);
 
         return true;
     }
 
     public record Config(
             BlockStateProvider stoneBlock,
-            BlockStateProvider innerBlock,
             IntProvider minRadius,
-            IntProvider maxRadius,
-            IntProvider minSubMonoliths,
-            IntProvider maxSubMonoliths
+            IntProvider maxRadius
     ) implements FeatureConfiguration {
 
         public static final Codec<Config> CODEC = RecordCodecBuilder.create(codec ->
                 codec.group(
                         BlockStateProvider.CODEC.fieldOf("stone_block").forGetter(Config::stoneBlock),
-                        BlockStateProvider.CODEC.fieldOf("inner_block").forGetter(Config::innerBlock),
                         IntProviders.codec(3, 32).fieldOf("min_radius").forGetter(Config::minRadius),
-                        IntProviders.codec(3, 32).fieldOf("max_radius").forGetter(Config::maxRadius),
-                        IntProviders.codec(3, 32).fieldOf("min_sub_monoliths").forGetter(Config::minSubMonoliths),
-                        IntProviders.codec(3, 32).fieldOf("max_sub_monoliths").forGetter(Config::maxSubMonoliths)
+                        IntProviders.codec(3, 32).fieldOf("max_radius").forGetter(Config::maxRadius)
                 ).apply(codec, Config::new)
         );
     }

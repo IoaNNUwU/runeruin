@@ -3,28 +3,48 @@ package ioann.uwu.runeruin.blocks;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.RRConfiguredFeatures;
 import ioann.uwu.runeruin.dimension.RRTags;
-import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.items.FloatingMossItem;
+import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.particles.RRParticleTypes;
 import ioann.uwu.runeruin.portal.RuneRuinPortalBlock;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.HangingSignItem;
 import net.minecraft.world.item.PlaceOnWaterBlockItem;
 import net.minecraft.world.item.SignItem;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.CeilingHangingSignBlock;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.FlowerPotBlock;
+import net.minecraft.world.level.block.NetherRootsBlock;
+import net.minecraft.world.level.block.PressurePlateBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SaplingBlock;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.StandingSignBlock;
+import net.minecraft.world.level.block.TintedParticleLeavesBlock;
+import net.minecraft.world.level.block.TransparentBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
+import net.minecraft.world.level.block.UntintedParticleLeavesBlock;
+import net.minecraft.world.level.block.WallHangingSignBlock;
+import net.minecraft.world.level.block.WallSignBlock;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
-
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 public class RRBlocks {
 
@@ -304,8 +324,19 @@ public class RRBlocks {
             MossLightBlock::new
     );
 
-    public static final DeferredBlock<Block> GLOWING_MOSS = registerGlowingMoss("glowing_moss", MapColor.COLOR_CYAN);
-    public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = registerGlowingMossCarpet("glowing_moss_carpet", MapColor.COLOR_CYAN);
+    public static final DeferredBlock<Block> GLOWING_MOSS = register("glowing_moss",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)
+                    .mapColor(MapColor.COLOR_CYAN)
+                    .lightLevel(GlowingMossBlock::getLightLevel)
+                    .randomTicks(),
+            GlowingMossBlock::new);
+
+    public static final DeferredBlock<Block> GLOWING_MOSS_CARPET = register("glowing_moss_carpet",
+            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_CARPET)
+                    .mapColor(MapColor.COLOR_CYAN)
+                    .lightLevel(GlowingMossBlock::getLightLevel)
+                    .randomTicks(),
+            GlowingMossCarpetBlock::new);
 
     /** Deep moss and its layers are to moss what the snow block and snow layers are to snow: shovel only. */
     public static final DeferredBlock<Block> DEEP_MOSS = register("deep_moss",
@@ -431,24 +462,6 @@ public class RRBlocks {
             RuneRuinPortalBlock::new,
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_PORTAL)
     );
-
-    private static DeferredBlock<Block> registerGlowingMoss(String name, MapColor color) {
-        return register(name,
-                _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)
-                        .mapColor(color)
-                        .lightLevel(GlowingMossBlock::getLightLevel)
-                        .randomTicks(),
-                GlowingMossBlock::new);
-    }
-
-    private static DeferredBlock<Block> registerGlowingMossCarpet(String name, MapColor color) {
-        return register(name,
-                _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_CARPET)
-                        .mapColor(color)
-                        .lightLevel(GlowingMossBlock::getLightLevel)
-                        .randomTicks(),
-                GlowingMossCarpetBlock::new);
-    }
 
     /**
      * A copy of a vanilla wall sign takes the loot table and the name of the vanilla standing sign along:

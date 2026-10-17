@@ -7,10 +7,10 @@ import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -205,7 +205,7 @@ public class RuneRuinPortalShape {
                 .setValue(RuneRuinPortalBlock.AXIS, this.axis)
                 .setValue(RuneRuinPortalBlock.UNSTABLE, unstable);
         BlockPos.betweenClosed(this.bottomLeft, this.bottomLeft.relative(Direction.UP, this.height - 1).relative(this.rightDir, this.width - 1))
-                .forEach(pos -> level.setBlock(pos, portalState, 18));
+                .forEach(pos -> level.setBlock(pos, portalState, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE));
     }
 
     /** Replaces portal frame positions with their matching decorative part. */

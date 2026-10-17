@@ -1,11 +1,12 @@
 package ioann.uwu.runeruin.dimension;
 
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.client.Renderers;
+import java.util.Optional;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.biome.OverworldBiomes;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.UniformInt;
@@ -15,13 +16,12 @@ import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.level.CardinalLighting;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.*;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.timeline.Timelines;
 import net.neoforged.neoforge.common.world.NeoForgeEnvironmentAttributes;
 
-import java.util.Optional;
+import static ioann.uwu.runeruin.dimension.Const.WORLD_HEIGHT;
 
 public class RRDimension {
 
@@ -33,6 +33,9 @@ public class RRDimension {
 
     public static final ResourceKey<DimensionType> DIMENSION_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, RR.id("runeruin_dimension_type"));
 
+    /** The cloud renderer of the dimension, registered on the client. */
+    public static final Identifier CLOUDS_ID = RR.id("double_cloud_renderer");
+
     public static void bootstrapType(BootstrapContext<DimensionType> ctx) {
 
         var clocks = ctx.lookup(Registries.WORLD_CLOCK);
@@ -41,10 +44,9 @@ public class RRDimension {
 
         EnvironmentAttributeMap environmentAttributeMap = EnvironmentAttributeMap.builder()
                 .set(EnvironmentAttributes.CLOUD_COLOR, 0xDDDDDDDD)
-                // .set(EnvironmentAttributes.CLOUD_HEIGHT, 320.33f)
                 .set(EnvironmentAttributes.BED_RULE, BedRule.CAN_SLEEP_WHEN_DARK)
                 .set(EnvironmentAttributes.SKY_COLOR, OverworldBiomes.calculateSkyColor(0.8F))
-                .set(NeoForgeEnvironmentAttributes.CUSTOM_CLOUDS, Renderers.RUNE_RUIN_CLOUDS_ID)
+                .set(NeoForgeEnvironmentAttributes.CUSTOM_CLOUDS, CLOUDS_ID)
                 .build();
 
         DimensionType dimensionType = new DimensionType(
@@ -54,8 +56,8 @@ public class RRDimension {
                 false,
                 1.0,
                 0,
-                512,
-                512,
+                WORLD_HEIGHT,
+                WORLD_HEIGHT,
                 blocks.getOrThrow(BlockTags.INFINIBURN_OVERWORLD),
                 0.0f,
                 new DimensionType.MonsterSettings(UniformInt.of(0, 7), 0),
@@ -72,7 +74,6 @@ public class RRDimension {
     public static void bootstrapStem(BootstrapContext<LevelStem> ctx) {
         var biomeRegistry = ctx.lookup(Registries.BIOME);
         var dimTypes = ctx.lookup(Registries.DIMENSION_TYPE);
-        var noiseGenSettings = ctx.lookup(Registries.NOISE_SETTINGS);
 
         RRChunkGenerator chunkGenerator = new RRChunkGenerator(RRBiomeSource.newDefault(biomeRegistry));
 

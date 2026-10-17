@@ -4,21 +4,20 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.GlowingMossBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRBiomes;
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.RandomState;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public final class RRTerrainSurfaces {
 
@@ -39,15 +38,14 @@ public final class RRTerrainSurfaces {
             GlowingMossBlock.stateForPlacement(RRBlocks.GLOWING_MOSS.get().defaultBlockState(), random);
     private static final SurfaceResolver VOID_STONE = random -> RRBlocks.VOID_STONE.get().defaultBlockState();
 
-    private static final SurfaceResolver DEFAULT_FLOOR = STONE;
-    private static final SurfaceResolver DEFAULT_CEILING = MOSS;
+    private static final Profile DEFAULT_PROFILE = new Profile(STONE, MOSS);
+    private static final Identifier SURFACE_RANDOM = RR.id("terrain_surface");
 
     private static final Map<ResourceKey<Biome>, Profile> PROFILES = new HashMap<>();
 
     static {
         register(RRBiomes.ELDEN_GARDEN, GRASS, MOSS);
         register(RRBiomes.SIMILAR_FOREST, GRASS, MOSS);
-        register(Biomes.FOREST, GRASS, MOSS);
 
         register(RRBiomes.GLOWING_ROOTS, MOSS, MOSS);
         register(RRBiomes.GLOWING_BALLS, MOSS, MOSS);
@@ -57,7 +55,7 @@ public final class RRTerrainSurfaces {
         register(RRBiomes.GHOST_GROVE, PALE_MOSS, PALE_MOSS);
 
         register(RRBiomes.DEEP_ROOTS, STONE, MOSS);
-        register(RRBiomes.DEEP_INVERTED_FOREST, STONE, MOSS);
+        register(RRBiomes.INVERTED_FOREST, STONE, MOSS);
 
         register(RRBiomes.DEEP_DRIPSTONE_CAVES, MOSS, STONE);
         register(RRBiomes.GLOWING_MOSS_CAVES, GLOWING_MOSS, STONE);
@@ -81,11 +79,11 @@ public final class RRTerrainSurfaces {
         return random -> state;
     }
 
-    public static BlockState floor(Holder<Biome> biome, RandomSource random) {
+    private static BlockState floor(Holder<Biome> biome, RandomSource random) {
         return profile(biome).floor.resolve(random);
     }
 
-    public static BlockState ceiling(Holder<Biome> biome, RandomSource random) {
+    private static BlockState ceiling(Holder<Biome> biome, RandomSource random) {
         return profile(biome).ceiling.resolve(random);
     }
 
@@ -126,23 +124,16 @@ public final class RRTerrainSurfaces {
         return PROFILES.containsKey(biome);
     }
 
+    /** Dirt lies under a grass floor. */
     public static boolean usesGrassySubfloor(Holder<Biome> biome) {
-        return biome.is(RRBiomes.ELDEN_GARDEN)
-                || biome.is(RRBiomes.SIMILAR_FOREST)
-                || biome.is(Biomes.FOREST);
+        return profile(biome).floor == GRASS;
     }
 
     private static Profile profile(Holder<Biome> biome) {
-        return biome.unwrapKey()
-                .map(PROFILES::get)
-                .orElse(defaultProfile());
-    }
-
-    private static Profile defaultProfile() {
-        return new Profile(DEFAULT_FLOOR, DEFAULT_CEILING);
+        return biome.unwrapKey().map(PROFILES::get).orElse(DEFAULT_PROFILE);
     }
 
     private static RandomSource surfaceRandom(RandomState randomState, int x, int y, int z) {
-        return randomState.getOrCreateRandomFactory(RR.id("terrain_surface")).at(x, y, z);
+        return randomState.getOrCreateRandomFactory(SURFACE_RANDOM).at(x, y, z);
     }
 }

@@ -8,13 +8,23 @@ import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.RandomState;
 
-import static ioann.uwu.runeruin.dimension.Const.*;
+import static ioann.uwu.runeruin.dimension.Const.ARCANE_PLATE_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.CEILING_TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.CEILING_VOID_Y;
+import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_Y;
+import static ioann.uwu.runeruin.dimension.Const.LOST_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.LOST_CAVES_Y;
+import static ioann.uwu.runeruin.dimension.Const.TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TERRAIN_MIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_MAX_BASELINE_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_OFFSET;
 
 public class DeepCavesAndLostCavesGen {
 
@@ -48,12 +58,13 @@ public class DeepCavesAndLostCavesGen {
     }
 
     public static void generateLostCavesFloor(TerrainWriter terrain, RandomState randomState) {
-        ChunkAccess chunk = terrain.chunk();
+        ChunkPos pos = terrain.chunk().getPos();
         BlockState deepslate = Blocks.DEEPSLATE.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int topY = lostCavesFloorY(chunk.getPos().getMiddleBlockX() + x, chunk.getPos().getMiddleBlockZ() + z, randomState);
+                // The floor reads its noise 8 blocks aside.
+                int topY = lostCavesFloorY(pos.getMinBlockX() + x + 8, pos.getMinBlockZ() + z + 8, randomState);
                 for (int y = CEILING_VOID_Y + 1; y <= topY; y++) {
                     terrain.set(x, y, z, deepslate);
                 }
@@ -74,36 +85,38 @@ public class DeepCavesAndLostCavesGen {
     private static final LazyNoise topLevelBaselineNoise = RRChunkGenerator.topLevelBaselineNoise;
     private static final LazyNoise flattenedBaseLostTopLevelNoise = RRChunkGenerator.flattenedLostBaseTopLevelNoise;
 
+    private static final int NO_CEILING = Integer.MIN_VALUE;
+
+    /** The block at this height is the highest of the Lost caves ceiling; the islands of the Deep caves floor start above it. */
+    private static float lostCavesCeilingBaseLine(int x, int z, RandomState randomState) {
+        return LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z) + TOP_LAYER_OFFSET;
+    }
+
+    /** The lowest block of the Lost caves ceiling, or {@link #NO_CEILING}. */
+    private static int lostCavesCeilingLowestY(int x, int z, float baseLine, RandomState randomState) {
+        float thickness = lostCavesCeilingNoise.getOrCreateNoise(randomState).noise(x, z)
+                * flattenedBaseLostTopLevelNoise.getOrCreateNoise(randomState).noise(x, z);
+        return thickness < 0.01f ? NO_CEILING : (int) (baseLine - (int) (CEILING_TERRAIN_HEIGHT * thickness));
+    }
+
     public static void generateLostCavesCeiling(TerrainWriter terrain, RandomState randomState) {
-        ChunkAccess chunk = terrain.chunk();
+        ChunkPos pos = terrain.chunk().getPos();
         BlockState deepslate = Blocks.DEEPSLATE.defaultBlockState();
         BlockState stone = Blocks.STONE.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-
-                int xx = chunk.getPos().getBlockAt(0, 0, 0).getX() + x;
-                int zz = chunk.getPos().getBlockAt(0, 0, 0).getZ() + z;
-
-                float ceilingNoise = lostCavesCeilingNoise.getOrCreateNoise(randomState).noise(xx, zz);
-                ceilingNoise = ceilingNoise * flattenedBaseLostTopLevelNoise.getOrCreateNoise(randomState).noise(xx, zz);
-
-                if (ceilingNoise < 0.01) {
+                int xx = pos.getMinBlockX() + x;
+                int zz = pos.getMinBlockZ() + z;
+                float baseLine = lostCavesCeilingBaseLine(xx, zz, randomState);
+                int lowest = lostCavesCeilingLowestY(xx, zz, baseLine, randomState);
+                if (lowest == NO_CEILING) {
                     continue;
                 }
-
-                float ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
-
-                float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
-                float baseLine = LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
-
-                BlockState blockState = bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f
-                        ? deepslate
-                        : stone;
-                for (int y = (int) (baseLine - ceilingHeight); y < (int) baseLine; y++) {
+                for (int y = lowest; y < (int) baseLine; y++) {
                     terrain.set(x, y, z, deepslate);
                 }
-                terrain.set(x, (int) baseLine, z, blockState);
+                terrain.set(x, (int) baseLine, z, bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f ? deepslate : stone);
             }
         }
     }
@@ -114,29 +127,17 @@ public class DeepCavesAndLostCavesGen {
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-
-                int xx = chunk.getPos().getBlockAt(0, 0, 0).getX() + x;
-                int zz = chunk.getPos().getBlockAt(0, 0, 0).getZ() + z;
-
-                float noise = lostTopLevelNoise.getOrCreateNoise(randomState).noise(xx, zz);
-
-                if (noise < 0.01) {
+                int xx = chunk.getPos().getMinBlockX() + x;
+                int zz = chunk.getPos().getMinBlockZ() + z;
+                HangingTerrainGenerator.TerrainColumn column = deepCavesFloorColumnAt(xx, zz, randomState);
+                if (!column.present()) {
                     continue;
                 }
-
-                float biomeHeight = noise * (TOP_LAYER_TERRAIN_HEIGHT) - ARCANE_PLATE_HEIGHT;
-
-                float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
-                float baseLine = DEEP_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET - ARCANE_PLATE_HEIGHT;
-                int topY = (int) (baseLine + biomeHeight);
-
-                for (int y = (int) (baseLine); y < baseLine + biomeHeight - 2; y++) {
+                int topY = column.topY();
+                // Two blocks of stone at least carry the surface, also where the island is thinner.
+                for (int y = Math.min((int) column.baseline(), topY - 2); y < topY; y++) {
                     terrain.set(x, y, z, stone);
                 }
-                for (int y = (int) (baseLine + biomeHeight) - 2; y < baseLine + biomeHeight; y++) {
-                    terrain.set(x, y, z, stone);
-                }
-
                 RRTerrainSurfaces.placeFloorSurface(
                         terrain, x, topY, z, RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState)
                 );
@@ -148,21 +149,8 @@ public class DeepCavesAndLostCavesGen {
         HangingTerrainGenerator.generate(terrain, randomState, HANGING_MOSS);
     }
 
-    private static HangingTerrainGenerator.TerrainColumn deepCavesFloorColumnAt(
-            int x,
-            int z,
-            RandomState randomState
-    ) {
-        float noise = lostTopLevelNoise.getOrCreateNoise(randomState).noise(x, z);
-        if (noise < 0.01f) {
-            return new HangingTerrainGenerator.TerrainColumn(false, 0, 0);
-        }
-        float biomeHeight = noise * TOP_LAYER_TERRAIN_HEIGHT - ARCANE_PLATE_HEIGHT;
-        float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
-        float baseline = DEEP_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise
-                + TOP_LAYER_OFFSET - ARCANE_PLATE_HEIGHT;
-        int topY = (int) (baseline + biomeHeight);
-        return new HangingTerrainGenerator.TerrainColumn(true, baseline, topY);
+    private static HangingTerrainGenerator.TerrainColumn deepCavesFloorColumnAt(int x, int z, RandomState randomState) {
+        return TopLayerAndBloomingCavesGen.islandColumnAt(x, z, lostTopLevelNoise, DEEP_CAVES_Y - ARCANE_PLATE_HEIGHT, randomState);
     }
 
     private static BlockState mossAt(ChunkAccess chunk, BlockPos start, RandomState randomState) {
@@ -173,32 +161,13 @@ public class DeepCavesAndLostCavesGen {
      * True if lost-caves ceiling or deep-caves floor stone occupies any Y in {@code [minY, maxY]} at this column.
      */
     public static boolean interLayerTerrainOverlaps(int x, int z, int minY, int maxY, RandomState randomState) {
-        float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
-
-        float floorNoise = lostTopLevelNoise.getOrCreateNoise(randomState).noise(x, z);
-        if (floorNoise >= 0.01f) {
-            float biomeHeight = floorNoise * TOP_LAYER_TERRAIN_HEIGHT - ARCANE_PLATE_HEIGHT;
-            float baseLine = DEEP_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET - ARCANE_PLATE_HEIGHT;
-            int floorMin = (int) baseLine;
-            int floorMax = (int) (baseLine + biomeHeight);
-            if (rangesOverlap(floorMin, floorMax, minY, maxY)) {
-                return true;
-            }
+        HangingTerrainGenerator.TerrainColumn floor = deepCavesFloorColumnAt(x, z, randomState);
+        if (floor.present() && rangesOverlap((int) floor.baseline(), floor.topY(), minY, maxY)) {
+            return true;
         }
-
-        float ceilingNoise = lostCavesCeilingNoise.getOrCreateNoise(randomState).noise(x, z);
-        ceilingNoise = ceilingNoise * flattenedBaseLostTopLevelNoise.getOrCreateNoise(randomState).noise(x, z);
-        if (ceilingNoise >= 0.01f) {
-            float ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
-            float baseLine = LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
-            int ceilMin = (int) (baseLine - ceilingHeight);
-            int ceilMax = (int) baseLine;
-            if (rangesOverlap(ceilMin, ceilMax, minY, maxY)) {
-                return true;
-            }
-        }
-
-        return false;
+        float baseLine = lostCavesCeilingBaseLine(x, z, randomState);
+        int lowest = lostCavesCeilingLowestY(x, z, baseLine, randomState);
+        return lowest != NO_CEILING && rangesOverlap(lowest, (int) baseLine, minY, maxY);
     }
 
     private static boolean rangesOverlap(int a0, int a1, int b0, int b1) {

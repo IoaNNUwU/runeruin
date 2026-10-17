@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.blocks;
 
 import com.mojang.serialization.MapCodec;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -24,8 +25,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 import static ioann.uwu.runeruin.blocks.WaterLilyLeafBlock.MAX_HEIGHT;
 import static ioann.uwu.runeruin.blocks.WaterLilyLeafBlock.REACH;

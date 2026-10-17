@@ -17,9 +17,9 @@ public class GlowingMossCarpetBlock extends CarpetBlock {
     public GlowingMossCarpetBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
-                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.DEFAULT_MIN_LIGHT)
-                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.DEFAULT_MIN_LIGHT)
-                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.DEFAULT_MIN_LIGHT));
+                .setValue(GlowingMossBlock.MIN_LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MIN)
+                .setValue(GlowingMossBlock.LIGHT, GlowingMossBlock.PLACEMENT_LIGHT_MIN)
+                .setValue(GlowingMossBlock.TARGET_LIGHT_LEVEL, GlowingMossBlock.PLACEMENT_LIGHT_MIN));
     }
 
     @Override

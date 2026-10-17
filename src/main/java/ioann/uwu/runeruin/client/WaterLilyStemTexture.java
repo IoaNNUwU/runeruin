@@ -1,10 +1,9 @@
 package ioann.uwu.runeruin.client;
 
 import ioann.uwu.runeruin.RR;
-import net.minecraft.resources.Identifier;
-
 import java.util.Arrays;
 import java.util.stream.IntStream;
+import net.minecraft.resources.Identifier;
 
 import static ioann.uwu.runeruin.blocks.WaterLilyLeafBlock.MAX_HEIGHT;
 import static ioann.uwu.runeruin.blocks.WaterLilyLeafBlock.REACH;

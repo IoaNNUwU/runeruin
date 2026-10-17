@@ -1,11 +1,9 @@
-package ioann.uwu.runeruin.dimension;
+package ioann.uwu.runeruin.dimension.features;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.function.Supplier;
 
 public class GeometryUtils {
 
@@ -15,10 +13,6 @@ public class GeometryUtils {
     @FunctionalInterface
     public interface BlockStateSupplier {
         BlockState apply(int x, int y, int z);
-
-        default BlockState apply(BlockPos blockPos) {
-            return this.apply(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-        }
     }
 
     @FunctionalInterface
@@ -38,7 +32,7 @@ public class GeometryUtils {
         cyl(level, origin, block, radius - 1, height);
     }
 
-    public static void cyl(WorldGenLevel level, BlockPos origin, BlockState block, int radius, int height) {
+    private static void cyl(WorldGenLevel level, BlockPos origin, BlockState block, int radius, int height) {
         if (radius < 0 || height < 0) {
             return;
         }
@@ -70,11 +64,6 @@ public class GeometryUtils {
         forEachInSphere(origin, radius, (x, y, z, d2) -> setSolid(level, mutable, x, y, z, block));
     }
 
-    public static void sphere(WorldGenLevel level, BlockPos origin, Supplier<BlockState> block, int radius) {
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        forEachInSphere(origin, radius, (x, y, z, d2) -> level.setBlock(mutable.set(x, y, z), block.get(), BULK_FLAG));
-    }
-
     public static void forEachInSphere(BlockPos origin, int radius, SphereVisitor visitor) {
         if (radius < 0) {
             return;
@@ -97,7 +86,7 @@ public class GeometryUtils {
                 int zBound = sqrtFloor(rem - x2);
                 for (int z = -zBound; z <= zBound; z++) {
                     int d2 = x2 + y2 + z * z;
-                    if (d2 * 20 < r2 * 19) {
+                    if (insideSphere(d2, radius)) {
                         visitor.visit(ox + x, oy + y, oz + z, d2);
                     }
                 }
@@ -105,75 +94,8 @@ public class GeometryUtils {
         }
     }
 
-    public static void bottomHalfEmptySphere(WorldGenLevel level, BlockPos origin, Supplier<BlockState> block, int radius) {
-        if (radius < 0) {
-            return;
-        }
-
-        int inner2 = (radius - 1) * (radius - 1);
-        int outer2 = (radius + 1) * (radius + 1);
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        int ox = origin.getX();
-        int oy = origin.getY();
-        int oz = origin.getZ();
-
-        for (int y = -radius; y <= 0; y++) {
-            int y2 = y * y;
-            int rem = outer2 - y2;
-            if (rem < 0) {
-                continue;
-            }
-            int xzBound = sqrtFloor(rem);
-            for (int x = -xzBound; x <= xzBound; x++) {
-                int x2 = x * x;
-                int zBound = sqrtFloor(rem - x2);
-                int xx = ox + x;
-                int yy = oy + y;
-                for (int z = -zBound; z <= zBound; z++) {
-                    int d2 = x2 + y2 + z * z;
-                    if (d2 > inner2 && d2 * 20 < outer2 * 19) {
-                        level.setBlock(mutable.set(xx, yy, oz + z), block.get(), BULK_FLAG);
-                    }
-                }
-            }
-        }
-    }
-
-    public static void emptyCyl(WorldGenLevel level, BlockPos origin, Supplier<BlockState> block, int radius) {
-        if (radius < 0) {
-            return;
-        }
-
-        int inner2 = (radius - 1) * (radius - 1);
-        int outer2 = (radius + 1) * (radius + 1);
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        int ox = origin.getX();
-        int oy = origin.getY();
-        int oz = origin.getZ();
-
-        int xzBound = sqrtFloor(outer2);
-        for (int x = -xzBound; x <= xzBound; x++) {
-            int x2 = x * x;
-            int rem = outer2 - x2;
-            if (rem < 0) {
-                continue;
-            }
-            int zBound = sqrtFloor(rem);
-            int xx = ox + x;
-            for (int z = -zBound; z <= zBound; z++) {
-                int d2 = x2 + z * z;
-                if (d2 > inner2 && d2 * 20 < outer2 * 19) {
-                    level.setBlock(mutable.set(xx, oy, oz + z), block.get(), BULK_FLAG);
-                }
-            }
-        }
-    }
-
-    public static void emptySphere(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height, int cropFromTop, int cropFromBottom) {
-        emptySphere(level, origin, block, radius, height, cropFromTop, cropFromBottom, BULK_FLAG);
-    }
-
-    public static void emptySphere(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height, int cropFromTop, int cropFromBottom, int flags) {
+    /** The shell of an ellipsoid; air from the supplier leaves the block as it is. */
+    public static void emptySphere(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height, int flags) {
         if (radius <= 0 || height <= 0) {
             return;
         }
@@ -185,10 +107,7 @@ public class GeometryUtils {
         int oy = origin.getY();
         int oz = origin.getZ();
 
-        int yMin = -height + cropFromBottom - 1;
-        int yMax = height - cropFromTop;
-
-        for (int y = yMin; y <= yMax; y++) {
+        for (int y = -height - 1; y <= height; y++) {
             float fy = y;
             float yTerm = (fy * fy) * invH2;
             if (yTerm >= 1f) {
@@ -220,10 +139,6 @@ public class GeometryUtils {
     }
 
     public static void cube(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height) {
-        cube(level, origin, block, radius, height, SOLID_FLAG);
-    }
-
-    public static void cube(WorldGenLevel level, BlockPos origin, BlockStateSupplier block, int radius, int height, int flags) {
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         int ox = origin.getX();
         int oy = origin.getY();
@@ -239,17 +154,14 @@ public class GeometryUtils {
                     if (blockState.isAir()) {
                         continue;
                     }
-                    level.setBlock(mutable.set(xx, yy, zz), blockState, flags);
+                    level.setBlock(mutable.set(xx, yy, zz), blockState, SOLID_FLAG);
                 }
             }
         }
     }
 
+    /** A line two blocks high: every block also fills the one below it. */
     public static void line(WorldGenLevel level, BlockPos origin, BlockPos target, BlockStateSupplier blockSupplier) {
-        line(level, origin, target, blockSupplier, SOLID_FLAG);
-    }
-
-    public static void line(WorldGenLevel level, BlockPos origin, BlockPos target, BlockStateSupplier blockSupplier, int flags) {
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
 
         int x0 = origin.getX();
@@ -267,13 +179,6 @@ public class GeometryUtils {
         int sz = z0 < z1 ? 1 : -1;
         int dm = Math.max(dx, Math.max(dy, dz));
 
-        if (dm == 0) {
-            BlockState block = blockSupplier.apply(x0, y0, z0);
-            level.setBlock(mutable.set(x0, y0, z0), block, flags);
-            level.setBlock(mutable.set(x0, y0 - 1, z0), block, flags);
-            return;
-        }
-
         int xErr = dm / 2;
         int yErr = dm / 2;
         int zErr = dm / 2;
@@ -283,8 +188,8 @@ public class GeometryUtils {
 
         for (int i = 0; i <= dm; i++) {
             BlockState block = blockSupplier.apply(x, y, z);
-            level.setBlock(mutable.set(x, y, z), block, flags);
-            level.setBlock(mutable.set(x, y - 1, z), block, flags);
+            setSolid(level, mutable, x, y, z, block);
+            setSolid(level, mutable, x, y - 1, z, block);
 
             if (i == dm) {
                 break;

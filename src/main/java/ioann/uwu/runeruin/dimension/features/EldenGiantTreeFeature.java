@@ -2,20 +2,6 @@ package ioann.uwu.runeruin.dimension.features;
 
 import ioann.uwu.runeruin.blocks.EldenVinesBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.LeafLitterBlock;
-import net.minecraft.world.level.block.LeavesBlock;
-import net.minecraft.world.level.block.RotatedPillarBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +11,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LeafLitterBlock;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
 /** Cherry-like tree with a 2x2 trunk, radiating branches, and a small crown on each branch tip. */
 public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
@@ -36,6 +36,8 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
     private static final int MAX_DOWNWARD_EXTENSION = 3;
     private static final int LEAF_LITTER_PATCH_ATTEMPTS = 32;
     private static final int LEAF_LITTER_RADIUS = 8;
+    /** The flags vanilla trees are placed with. */
+    private static final int TREE_FLAGS = Block.UPDATE_ALL | Block.UPDATE_KNOWN_SHAPE;
 
     private record RootCandidate(BlockPos position, Direction direction) {
     }
@@ -140,7 +142,7 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
         }
 
         for (BlockPos trunkPos : trunkPositions) {
-            level.setBlock(trunkPos, trunkState, 19);
+            level.setBlock(trunkPos, trunkState, TREE_FLAGS);
         }
 
         Set<BlockPos> placedWood = new LinkedHashSet<>(trunkPositions);
@@ -151,7 +153,7 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
                     ? isRootReplaceable(existingState, level, branchPos)
                     : isTreeReplaceable(existingState);
             if (replaceable) {
-                level.setBlock(branchPos, branchLog.getValue(), 19);
+                level.setBlock(branchPos, branchLog.getValue(), TREE_FLAGS);
                 placedWood.add(branchPos);
             }
         }
@@ -171,7 +173,7 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
             int distance = leafDistances.getOrDefault(leafPos, LeavesBlock.DECAY_DISTANCE);
             BlockState leafState = RRBlocks.ELDEN_LEAVES.get().defaultBlockState()
                     .setValue(LeavesBlock.DISTANCE, distance);
-            level.setBlock(leafPos, leafState, 19);
+            level.setBlock(leafPos, leafState, TREE_FLAGS);
         }
 
         placeEldenVines(level, placeableLeaves, random);
@@ -186,46 +188,33 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
             double radius = 3.0 + random.nextDouble() * (LEAF_LITTER_RADIUS - 3.0);
             int x = origin.getX() + (int) Math.round(Math.cos(angle) * radius);
             int z = origin.getZ() + (int) Math.round(Math.sin(angle) * radius);
-            BlockPos target = findLeafLitterPosition(level, x, z, origin.getY());
-            if (target == null) {
+            // The highest sturdy ground under free space or litter, from one block above the origin down.
+            BlockPos support = FeatureScans.findDown(new BlockPos(x, origin.getY(), z), 1, -LEAF_LITTER_RADIUS, pos -> {
+                if (!level.getBlockState(pos).isFaceSturdy(level, pos, Direction.UP)) {
+                    return false;
+                }
+                BlockState above = level.getBlockState(pos.above());
+                return above.isAir() || above.is(RRBlocks.ELDEN_LEAF_LITTER.get()) || above.canBeReplaced() && above.getFluidState().isEmpty();
+            });
+            if (support == null) {
                 continue;
             }
 
+            BlockPos target = support.above();
             BlockState existing = level.getBlockState(target);
             if (existing.is(RRBlocks.ELDEN_LEAF_LITTER.get())) {
                 int amount = existing.getValue(BlockStateProperties.SEGMENT_AMOUNT);
                 if (amount < LeafLitterBlock.MAX_SEGMENT && random.nextBoolean()) {
-                    level.setBlock(target, existing.setValue(BlockStateProperties.SEGMENT_AMOUNT, amount + 1), 19);
+                    level.setBlock(target, existing.setValue(BlockStateProperties.SEGMENT_AMOUNT, amount + 1), TREE_FLAGS);
                 }
-                continue;
-            }
-
-            if (!existing.isAir() && (!existing.canBeReplaced() || !existing.getFluidState().isEmpty())) {
                 continue;
             }
 
             BlockState litter = RRBlocks.ELDEN_LEAF_LITTER.get().defaultBlockState()
                     .setValue(LeafLitterBlock.FACING, Direction.Plane.HORIZONTAL.getRandomDirection(random))
                     .setValue(BlockStateProperties.SEGMENT_AMOUNT, 1 + random.nextInt(LeafLitterBlock.MAX_SEGMENT));
-            level.setBlock(target, litter, 19);
+            level.setBlock(target, litter, TREE_FLAGS);
         }
-    }
-
-    private static BlockPos findLeafLitterPosition(WorldGenLevel level, int x, int z, int baseY) {
-        for (int y = baseY + 1; y >= baseY - LEAF_LITTER_RADIUS; y--) {
-            BlockPos support = new BlockPos(x, y, z);
-            if (!level.getBlockState(support).isFaceSturdy(level, support, Direction.UP)) {
-                continue;
-            }
-
-            BlockPos target = support.above();
-            BlockState state = level.getBlockState(target);
-            if (state.isAir() || state.is(RRBlocks.ELDEN_LEAF_LITTER.get())
-                    || (state.canBeReplaced() && state.getFluidState().isEmpty())) {
-                return target;
-            }
-        }
-        return null;
     }
 
     private static void placeEldenVines(WorldGenLevel level, Set<BlockPos> leaves, RandomSource random) {
@@ -248,7 +237,7 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
                 boolean hasOrb = segment == 0 || random.nextInt(4) == 0;
                 BlockState vineState = RRBlocks.ELDEN_VINES.get().defaultBlockState()
                         .setValue(EldenVinesBlock.ORB, hasOrb);
-                level.setBlock(vinePos, vineState, 19);
+                level.setBlock(vinePos, vineState, TREE_FLAGS);
                 vinePos = vinePos.below();
             }
         }
@@ -265,9 +254,8 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
                 || !state.isCollisionShapeFullBlock(level, pos);
     }
 
-    private static boolean isNonFullTreeReplaceable(WorldGenLevel level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
-        return isRootReplaceable(state, level, pos) && !state.isCollisionShapeFullBlock(level, pos);
+    private static boolean isNonFullBlock(WorldGenLevel level, BlockPos pos) {
+        return !level.getBlockState(pos).isCollisionShapeFullBlock(level, pos);
     }
 
     private static void addUndergroundTrunk(WorldGenLevel level, BlockPos origin, Set<BlockPos> trunkPositions) {
@@ -276,7 +264,7 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
                 for (int depth = 1; depth <= MAX_DOWNWARD_EXTENSION; depth++) {
                     BlockPos undergroundPos = origin.offset(x, -depth, z);
                     if (undergroundPos.getY() < level.getMinY()
-                            || !isNonFullTreeReplaceable(level, undergroundPos)) {
+                            || !isNonFullBlock(level, undergroundPos)) {
                         break;
                     }
                     trunkPositions.add(undergroundPos);
@@ -330,14 +318,14 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
             boolean lowerRootReplaceable = lowerRootPos.getY() >= level.getMinY()
                     && isRootReplaceable(level.getBlockState(lowerRootPos), level, lowerRootPos);
             boolean extendDown = lowerRootReplaceable
-                    && (random.nextBoolean() || isNonFullTreeReplaceable(level, lowerRootPos));
+                    && (random.nextBoolean() || isNonFullBlock(level, lowerRootPos));
             int rootDepth = 1 + random.nextInt(MAX_DOWNWARD_EXTENSION);
             for (int depth = 0; depth < rootDepth && extendDown; depth++) {
                 roots.put(lowerRootPos, baseLog.setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y));
                 rootPositions.add(lowerRootPos);
                 lowerRootPos = lowerRootPos.below();
                 extendDown = lowerRootPos.getY() >= level.getMinY()
-                        && isNonFullTreeReplaceable(level, lowerRootPos);
+                        && isNonFullBlock(level, lowerRootPos);
             }
         }
 
@@ -355,7 +343,7 @@ public class EldenGiantTreeFeature extends Feature<NoneFeatureConfiguration> {
     ) {
         double dirX = Math.cos(angle);
         double dirZ = Math.sin(angle);
-        List<BlockPos> path = new java.util.ArrayList<>();
+        List<BlockPos> path = new ArrayList<>();
         BlockPos previous = start;
 
         for (int step = 1; step <= length; step++) {

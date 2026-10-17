@@ -70,7 +70,7 @@ What an agent makes is a draft ([AI_POLICY.md](AI_POLICY.md)): a person reworks 
 - Commit subject in the imperative, no prefix: `Make floating moss sink under creatures that stand still`. No attribution lines (`Co-Authored-By`, "Generated with …").
 - Reduce code rather than grow it: fix existing code instead of adding more, change an algorithm instead of adding another condition, comment only important points. Keep the surrounding style; packing code onto one line is not less code.
 - No mixin where the same can be done without one: a class of our own, an overridden method, a NeoForge event or hook, even when that takes more code. A mixin is only for vanilla behaviour that leaves no other way in, and its class comment says why.
-- Imports one per line, sorted, no wildcards: the shared registry files then merge cleanly.
+- Imports one per line, no wildcards (`import static …Const.*` included), sorted as plain text in one block, static imports in a block after it: the shared registry files then merge cleanly.
 
 ## Gradle, datagen and the game
 

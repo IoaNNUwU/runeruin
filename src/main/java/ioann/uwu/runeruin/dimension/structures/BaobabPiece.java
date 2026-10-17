@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension.structures;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
+import java.util.Arrays;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -122,7 +123,7 @@ public final class BaobabPiece extends StructurePiece {
 
     private static int[] defaultGroundHeights() {
         int[] values = new int[BaobabTreeGenerator.groundProfileLength()];
-        java.util.Arrays.fill(values, Const.BLOOMING_CAVES_Y + Const.TERRAIN_HEIGHT);
+        Arrays.fill(values, Const.BLOOMING_CAVES_Y + Const.TERRAIN_HEIGHT);
         return values;
     }
 }

@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.blocks.RRBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -34,24 +35,18 @@ public class PowderedMossVeinFeature extends Feature<NoneFeatureConfiguration> {
                     continue;
                 }
 
-                for (int y = origin.getY() + SEARCH_RANGE; y >= origin.getY() - SEARCH_RANGE; y--) {
-                    BlockPos surface = new BlockPos(origin.getX() + x, y, origin.getZ() + z);
-                    // A moss layer needs solid ground under it.
-                    if (!level.getBlockState(surface).is(RRBlocks.DEEP_MOSS.get())
-                            || level.getBlockState(surface.above()).is(RRBlocks.DEEP_MOSS_LAYER.get())) {
-                        continue;
+                // Deep moss on stone or moss, with no moss layer on it: a moss layer needs solid ground under it.
+                BlockPos surface = FeatureScans.findDown(origin.offset(x, 0, z), SEARCH_RANGE, -SEARCH_RANGE, pos -> {
+                    if (!level.getBlockState(pos).is(RRBlocks.DEEP_MOSS.get()) || level.getBlockState(pos.above()).is(RRBlocks.DEEP_MOSS_LAYER.get())) {
+                        return false;
                     }
-
-                    BlockPos lower = surface.below();
-                    BlockState lowerState = level.getBlockState(lower);
-                    if (!lowerState.is(Blocks.STONE) && !lowerState.is(RRBlocks.DEEP_MOSS.get())) {
-                        continue;
-                    }
-
-                    level.setBlock(surface, powderedMoss, 2);
-                    level.setBlock(lower, powderedMoss, 2);
+                    BlockState lower = level.getBlockState(pos.below());
+                    return lower.is(Blocks.STONE) || lower.is(RRBlocks.DEEP_MOSS.get());
+                });
+                if (surface != null) {
+                    level.setBlock(surface, powderedMoss, Block.UPDATE_CLIENTS);
+                    level.setBlock(surface.below(), powderedMoss, Block.UPDATE_CLIENTS);
                     placed = true;
-                    break;
                 }
             }
         }

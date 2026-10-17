@@ -7,6 +7,7 @@ import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SupportedIslandsNoise;
 import ioann.uwu.runeruin.dimension.runes.Runes;
+import java.util.List;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -14,9 +15,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.RandomState;
 
-import java.util.List;
-
-import static ioann.uwu.runeruin.dimension.Const.*;
 import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_CEILING_Y;
 import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_MAX_BASELINE_HEIGHT;
 import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_OFFSET;
@@ -53,8 +51,8 @@ public class ArcaneStructureGen {
     private static void generateArcaneColumn(TerrainWriter terrain, RandomState randomState) {
         BlockState arcaneStone = RRBlocks.ARCANE_STONE.get().defaultBlockState();
 
-        int chX = terrain.chunk().getPos().getBlockAt(0, 0, 0).getX();
-        int chZ = terrain.chunk().getPos().getBlockAt(0, 0, 0).getZ();
+        int chX = terrain.chunk().getPos().getMinBlockX();
+        int chZ = terrain.chunk().getPos().getMinBlockZ();
 
         float baselineNoiseXZ = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(chX + 3, chZ + 3);
         float baselineNoiseXN = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(chX + 12, chZ + 3);
@@ -93,45 +91,18 @@ public class ArcaneStructureGen {
 
         int y = BLOOMING_CAVES_CEILING_Y - 15 - random.nextIntBetweenInclusive(-2, 15);
 
+        // The rune is cut into the west or the east side of the column, rotated into the north or the south one.
         boolean rotate = random.nextBoolean();
         boolean opposite = random.nextBoolean();
+        int side = opposite ? 13 : 2;
+        int inner = opposite ? 12 : 3;
 
-        if (!rotate) {
-            int x;
-            int xInner;
-            if (!opposite) {
-                x = 2;
-                xInner = 3;
-            } else {
-                x = 13;
-                xInner = 12;
-            }
-            int z = 3;
-            for (int zz = 0; zz < 10; zz++) {
-                for (int yy = 0; yy < 16; yy++) {
-                    if (runeDesc.get(yy).get(zz)) {
-                        terrain.set(x, y - yy, z + zz, air);
-                        terrain.set(xInner, y - yy, z + zz, diamondArcane);
-                    }
-                }
-            }
-        } else {
-            int z;
-            int zInner;
-            if (!opposite) {
-                z = 2;
-                zInner = 3;
-            } else {
-                z = 13;
-                zInner = 12;
-            }
-            int x = 3;
-            for (int xx = 0; xx < 10; xx++) {
-                for (int yy = 0; yy < 16; yy++) {
-                    if (runeDesc.get(yy).get(xx)) {
-                        terrain.set(x + xx, y - yy, z, air);
-                        terrain.set(x + xx, y - yy, zInner, diamondArcane);
-                    }
+        for (int i = 0; i < 10; i++) {
+            int along = 3 + i;
+            for (int yy = 0; yy < 16; yy++) {
+                if (runeDesc.get(yy).get(i)) {
+                    terrain.set(rotate ? along : side, y - yy, rotate ? side : along, air);
+                    terrain.set(rotate ? along : inner, y - yy, rotate ? inner : along, diamondArcane);
                 }
             }
         }

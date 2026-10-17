@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.blocks;
 
 import com.mojang.serialization.MapCodec;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -32,8 +33,6 @@ import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
-
-import java.util.function.Function;
 
 public class FloatingMossBlock extends Block implements SimpleWaterloggedBlock {
     public static final MapCodec<FloatingMossBlock> CODEC = simpleCodec(FloatingMossBlock::new);

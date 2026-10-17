@@ -3,14 +3,13 @@ package ioann.uwu.runeruin.dimension.placements;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
+import java.util.stream.Stream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.placement.PlacementContext;
 import net.minecraft.world.level.levelgen.placement.PlacementModifier;
 import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
-
-import java.util.stream.Stream;
 
 import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_CEILING_Y;
 import static ioann.uwu.runeruin.dimension.Const.LOST_CAVES_Y;

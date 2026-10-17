@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 
 public class RR {
     public static final String MODID = "runeruin";
-    public static final Identifier MOD_ID = id(MODID);
 
     public static final Logger LOGGER = LogUtils.getLogger();
 

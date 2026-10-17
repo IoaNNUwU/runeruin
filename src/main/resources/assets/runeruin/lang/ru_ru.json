@@ -122,10 +122,8 @@
   "runeruin.configuration.title": "Настройки RuneRuin",
   "runeruin.configuration.section.runeruin.common.toml": "Настройки RuneRuin",
   "runeruin.configuration.section.runeruin.common.toml.title": "Настройки RuneRuin",
-  "runeruin.configuration.items": "Список предметов",
-  "runeruin.configuration.logDirtBlock": "Логировать блок земли",
-  "runeruin.configuration.magicNumberIntroduction": "Текст магического числа",
-  "runeruin.configuration.magicNumber": "Магическое число",
+  "runeruin.configuration.section.runeruin.client.toml": "Клиентские настройки RuneRuin",
+  "runeruin.configuration.section.runeruin.client.toml.title": "Клиентские настройки RuneRuin",
   "runeruin.configuration.render_clouds_below_top_layer": "Отображать облака под верхним слоем",
   "runeruin.configuration.glowing_moss_dynamic_light": "Динамический свет светящегося мха",
 

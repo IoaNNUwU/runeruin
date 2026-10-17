@@ -19,7 +19,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.RandomState;
 
-import static ioann.uwu.runeruin.dimension.Const.*;
+import static ioann.uwu.runeruin.dimension.Const.ARCANE_PLATE_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_Y;
+import static ioann.uwu.runeruin.dimension.Const.CEILING_TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TERRAIN_MIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_MAX_BASELINE_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_OFFSET;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_Y;
 
 public class TopLayerAndBloomingCavesGen {
 
@@ -231,8 +240,8 @@ public class TopLayerAndBloomingCavesGen {
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
-                int xx = chunk.getPos().getBlockAt(0, 0, 0).getX() + x;
-                int zz = chunk.getPos().getBlockAt(0, 0, 0).getZ() + z;
+                int xx = chunk.getPos().getMinBlockX() + x;
+                int zz = chunk.getPos().getMinBlockZ() + z;
                 HangingTerrainGenerator.TerrainColumn column = topLayerColumnAt(xx, zz, randomState);
                 if (!column.present()) {
                     continue;
@@ -266,18 +275,20 @@ public class TopLayerAndBloomingCavesGen {
     }
 
     private static HangingTerrainGenerator.TerrainColumn topLayerColumnAt(int x, int z, RandomState randomState) {
-        float noise = topLevelNoise.getOrCreateNoise(randomState).noise(x, z);
+        HangingTerrainGenerator.TerrainColumn column = islandColumnAt(x, z, topLevelNoise, TOP_LAYER_Y, randomState);
+        // Columns of 2 blocks or less are left out; the Deep caves floor keeps them.
+        return column.topY() - (int) column.baseline() <= 2 ? HangingTerrainGenerator.TerrainColumn.NONE : column;
+    }
+
+    /** An island of the top layer or of the Deep caves floor: the relief noise stands on a baseline from {@code baseY}. */
+    static HangingTerrainGenerator.TerrainColumn islandColumnAt(int x, int z, LazyNoise relief, int baseY, RandomState randomState) {
+        float noise = relief.getOrCreateNoise(randomState).noise(x, z);
         if (noise < 0.01f) {
-            return new HangingTerrainGenerator.TerrainColumn(false, 0, 0);
+            return HangingTerrainGenerator.TerrainColumn.NONE;
         }
         float biomeHeight = noise * TOP_LAYER_TERRAIN_HEIGHT - ARCANE_PLATE_HEIGHT;
-        float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
-        float baseline = TOP_LAYER_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
-        int topY = (int) (baseline + biomeHeight);
-        if (topY - (int) baseline <= 2) {
-            return new HangingTerrainGenerator.TerrainColumn(false, 0, 0);
-        }
-        return new HangingTerrainGenerator.TerrainColumn(true, baseline, topY);
+        float baseline = baseY + TOP_LAYER_MAX_BASELINE_HEIGHT * topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z) + TOP_LAYER_OFFSET;
+        return new HangingTerrainGenerator.TerrainColumn(true, baseline, (int) (baseline + biomeHeight));
     }
 
     /** Visible underside of the plate: top-layer biome when an island is present, otherwise the ceiling biome at Y. */

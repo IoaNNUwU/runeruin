@@ -4,8 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import ioann.uwu.runeruin.dimension.RRDimension;
-import ioann.uwu.runeruin.preview.PreviewArgs;
 import ioann.uwu.runeruin.preview.HeadlessTerrainGenerator;
+import ioann.uwu.runeruin.preview.PreviewArgs;
 import ioann.uwu.runeruin.preview.PreviewJob;
 import ioann.uwu.runeruin.preview.PreviewJobs;
 import ioann.uwu.runeruin.preview.PreviewWorld;
@@ -15,13 +15,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 /** Replays the real Runeruin terrain generator for an exported world region. */
 public final class TerrainRegionPreviewJob implements PreviewJob {
     private static final List<String> STAGES = List.of("generated", "generated_after_modify");
-    private static final int MAX_CHUNKS = 64;
 
     @Override
     public String id() {
@@ -89,7 +89,7 @@ public final class TerrainRegionPreviewJob implements PreviewJob {
         if (!Files.isRegularFile(path)) {
             throw new IOException("Region export not found: " + path.toAbsolutePath());
         }
-        if (!path.getFileName().toString().toLowerCase(java.util.Locale.ROOT).endsWith(".json")) {
+        if (!path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".json")) {
             throw new IOException("Pass the .json volume from //rrexport; the .txt file is only a projection");
         }
         return path.toAbsolutePath().normalize();

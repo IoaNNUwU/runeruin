@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.preview;
 
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -8,6 +7,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.region.RegionCommands;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -16,9 +16,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.Block;
@@ -45,8 +43,7 @@ public final class PreviewCommands {
 
     @SubscribeEvent
     public static void registerCommands(RegisterCommandsEvent event) {
-        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        registerAliases(dispatcher, "rrpreview", "/rrpreview", PreviewCommands::registerPreview);
+        RegionCommands.registerAliases(event.getDispatcher(), "rrpreview", PreviewCommands::registerPreview);
     }
 
     @SubscribeEvent
@@ -74,20 +71,6 @@ public final class PreviewCommands {
             return;
         }
         server.halt(false);
-    }
-
-    private static void registerAliases(
-        CommandDispatcher<CommandSourceStack> dispatcher,
-        String name,
-        String slashName,
-        java.util.function.Consumer<LiteralArgumentBuilder<CommandSourceStack>> builder
-    ) {
-        LiteralArgumentBuilder<CommandSourceStack> a = Commands.literal(name).requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
-        LiteralArgumentBuilder<CommandSourceStack> b = Commands.literal(slashName).requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
-        builder.accept(a);
-        builder.accept(b);
-        dispatcher.register(a);
-        dispatcher.register(b);
     }
 
     private static void registerPreview(LiteralArgumentBuilder<CommandSourceStack> cmd) {
@@ -120,7 +103,7 @@ public final class PreviewCommands {
     private static int list(CommandSourceStack source) {
         try {
             Path path = PreviewCatalog.writeList(RegionExport.resolveExportDir(source.getServer()));
-            source.sendSuccess(() -> Component.literal(PreviewCatalog.listText()).append(clickablePath(path)), false);
+            source.sendSuccess(() -> Component.literal(PreviewCatalog.listText()).append(RegionCommands.clickablePath(path)), false);
             return PreviewCatalog.all().size();
         } catch (IOException e) {
             source.sendFailure(Component.translatable("commands.runeruin.preview.io_error", String.valueOf(e.getMessage())));
@@ -178,25 +161,14 @@ public final class PreviewCommands {
             jobId,
             result.world().seed(),
             result.world().placedCount(),
-            clickablePath(result.jsonPath())
+            RegionCommands.clickablePath(result.jsonPath())
         );
         for (Path file : result.files()) {
             if (file.getFileName().toString().endsWith(".txt")) {
                 message.append(Component.literal("\n"));
-                message.append(clickablePath(file).withStyle(ChatFormatting.AQUA));
+                message.append(RegionCommands.clickablePath(file).withStyle(ChatFormatting.AQUA));
             }
         }
         return message;
-    }
-
-    private static MutableComponent clickablePath(Path path) {
-        Path absolute = path.toAbsolutePath();
-        return Component.literal(absolute.toString())
-            .withStyle(
-                style -> style.withColor(ChatFormatting.AQUA)
-                    .withUnderlined(Boolean.TRUE)
-                    .withClickEvent(new ClickEvent.OpenFile(absolute))
-                    .withHoverEvent(new HoverEvent.ShowText(Component.translatable("commands.runeruin.region.open_file")))
-            );
     }
 }

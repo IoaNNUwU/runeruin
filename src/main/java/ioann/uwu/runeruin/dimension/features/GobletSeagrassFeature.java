@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension.features;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.TallSeagrassBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,10 +39,10 @@ public class GobletSeagrassFeature extends Feature<ProbabilityFeatureConfigurati
             if (!level.getBlockState(above).is(Blocks.WATER)) {
                 return false;
             }
-            level.setBlock(pos, state, 2);
-            level.setBlock(above, state.setValue(TallSeagrassBlock.HALF, DoubleBlockHalf.UPPER), 2);
+            level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+            level.setBlock(above, state.setValue(TallSeagrassBlock.HALF, DoubleBlockHalf.UPPER), Block.UPDATE_CLIENTS);
         } else {
-            level.setBlock(pos, state, 2);
+            level.setBlock(pos, state, Block.UPDATE_CLIENTS);
         }
         return true;
     }

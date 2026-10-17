@@ -1,5 +1,8 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -7,10 +10,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.RandomState;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.function.Predicate;
 
 /** Builds deterministic hanging profiles along exposed edges of noise-defined terrain. */
 public final class HangingTerrainGenerator {
@@ -389,7 +388,9 @@ public final class HangingTerrainGenerator {
         BlockState at(ChunkAccess chunk, BlockPos start, RandomState randomState);
     }
 
-    public record TerrainColumn(boolean present, float baseline, int topY) {}
+    public record TerrainColumn(boolean present, float baseline, int topY) {
+        public static final TerrainColumn NONE = new TerrainColumn(false, 0, 0);
+    }
 
     public record Supports(
             Predicate<BlockState> core,

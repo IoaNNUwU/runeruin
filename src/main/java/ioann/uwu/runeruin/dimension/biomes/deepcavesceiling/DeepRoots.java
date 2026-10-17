@@ -13,7 +13,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-public class DeepRootsCeilingBiome {
+public class DeepRoots {
     public static Biome bootstrap(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
 
         MobSpawnSettings.Builder mobs = new MobSpawnSettings.Builder();
@@ -47,6 +47,5 @@ public class DeepRootsCeilingBiome {
                 .specialEffects(effects.build());
 
         return biomeBuilder.build();
-
     }
 }

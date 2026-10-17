@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.preview.jobs;
 
-import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.features.BoulderFeature;
 import ioann.uwu.runeruin.preview.PreviewArgs;
 import ioann.uwu.runeruin.preview.PreviewJob;
@@ -35,7 +34,6 @@ public final class BoulderPreviewJob implements PreviewJob {
             feature,
             new BoulderFeature.Config(
                 BlockStateProvider.simple(Blocks.STONE),
-                BlockStateProvider.simple(RRBlocks.DEEP_MOSS.get()),
                 ConstantInt.of(radius),
                 ConstantInt.of(radius)
             ),

@@ -1,7 +1,11 @@
 package ioann.uwu.runeruin.blocks;
 
-import ioann.uwu.runeruin.Config;
 import com.mojang.serialization.MapCodec;
+import ioann.uwu.runeruin.Config;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -17,16 +21,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Predicate;
-
 public class GlowingMossBlock extends Block implements BonemealableBlock {
 
     private static final int NEIGHBOR_LIGHT_INCREASE_COUNT = 2;
     private static final int NEIGHBOR_LIGHT_DECREASE_COUNT = 4;
 
-    public static final int DEFAULT_MIN_LIGHT = 4;
     public static final int PLACEMENT_LIGHT_MIN = 4;
     public static final int PLACEMENT_LIGHT_MAX = 5;
     public static final int MAX_LIGHT = 15;
@@ -39,9 +38,9 @@ public class GlowingMossBlock extends Block implements BonemealableBlock {
     public GlowingMossBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
-                .setValue(MIN_LIGHT, DEFAULT_MIN_LIGHT)
-                .setValue(LIGHT, DEFAULT_MIN_LIGHT)
-                .setValue(TARGET_LIGHT_LEVEL, DEFAULT_MIN_LIGHT));
+                .setValue(MIN_LIGHT, PLACEMENT_LIGHT_MIN)
+                .setValue(LIGHT, PLACEMENT_LIGHT_MIN)
+                .setValue(TARGET_LIGHT_LEVEL, PLACEMENT_LIGHT_MIN));
     }
 
     @Override
@@ -85,61 +84,48 @@ public class GlowingMossBlock extends Block implements BonemealableBlock {
             return;
         }
 
+        int light = state.getValue(LIGHT);
+        BlockState next = light < state.getValue(TARGET_LIGHT_LEVEL) ? brighter(state) : dimmer(state);
+        if (next == state) {
+            return;
+        }
+        level.setBlock(pos, next, Block.UPDATE_CLIENTS);
+        if (next.getValue(LIGHT) > light) {
+            changeRandomNeighbors(level, pos, state, random, NEIGHBOR_LIGHT_INCREASE_COUNT,
+                    neighbor -> neighbor.getValue(LIGHT) < neighbor.getValue(TARGET_LIGHT_LEVEL), GlowingMossBlock::brighter);
+        } else if (next.getValue(LIGHT) < light) {
+            changeRandomNeighbors(level, pos, state, random, NEIGHBOR_LIGHT_DECREASE_COUNT,
+                    neighbor -> neighbor.getValue(LIGHT) > neighbor.getValue(MIN_LIGHT), GlowingMossBlock::dimmer);
+        }
+    }
+
+    /** One step towards the target, which itself sinks back towards the minimum. Only for a light below its target. */
+    private static BlockState brighter(BlockState state) {
+        int target = state.getValue(TARGET_LIGHT_LEVEL);
+        return state.setValue(LIGHT, state.getValue(LIGHT) + 1)
+                .setValue(TARGET_LIGHT_LEVEL, Math.max(target - 1, state.getValue(MIN_LIGHT)));
+    }
+
+    /** One step down to the minimum; a target the light has reached sinks with it. */
+    private static BlockState dimmer(BlockState state) {
         int minLight = state.getValue(MIN_LIGHT);
         int light = state.getValue(LIGHT);
         int target = state.getValue(TARGET_LIGHT_LEVEL);
-
-        int nextLight = light;
-        int nextTarget = target;
-
-        if (light < target) {
-            nextLight = light + 1;
-            nextTarget = Math.max(target - 1, minLight);
-        } else {
-            nextLight = Math.max(light - 1, minLight);
-            if (light == target) {
-                nextTarget = Math.max(target - 1, minLight);
-            }
-        }
-
-        if (nextLight != light || nextTarget != target) {
-            level.setBlock(pos, state.setValue(LIGHT, nextLight).setValue(TARGET_LIGHT_LEVEL, nextTarget), Block.UPDATE_CLIENTS);
-            if (nextLight < light) {
-                spreadLightDecreaseToNeighbors(level, pos, state, random);
-            } else if (nextLight > light) {
-                spreadLightIncreaseToNeighbors(level, pos, state, random);
-            }
-        }
+        return state.setValue(LIGHT, Math.max(light - 1, minLight))
+                .setValue(TARGET_LIGHT_LEVEL, light == target ? Math.max(target - 1, minLight) : target);
     }
 
-    private static void spreadLightIncreaseToNeighbors(ServerLevel level, BlockPos pos, BlockState sourceState, RandomSource random) {
-        List<BlockPos> candidates = collectGlowingMossNeighbors(level, pos, sourceState, neighborState -> neighborState.getValue(LIGHT) < neighborState.getValue(TARGET_LIGHT_LEVEL));
-
-        applyLightChangeToRandomNeighbors(level, candidates, random, NEIGHBOR_LIGHT_INCREASE_COUNT, GlowingMossBlock::applyLightIncrease);
-    }
-
-    private static void spreadLightDecreaseToNeighbors(ServerLevel level, BlockPos pos, BlockState sourceState, RandomSource random) {
-        List<BlockPos> candidates = collectGlowingMossNeighbors(level, pos, sourceState, neighborState -> neighborState.getValue(LIGHT) > neighborState.getValue(MIN_LIGHT));
-
-        applyLightChangeToRandomNeighbors(level, candidates, random, NEIGHBOR_LIGHT_DECREASE_COUNT, GlowingMossBlock::applyLightDecrease);
-    }
-
-    @FunctionalInterface
-    private interface LightChangeApplier {
-        void apply(ServerLevel level, BlockPos pos, BlockState state);
-    }
-
-    private static void applyLightChangeToRandomNeighbors(
-            ServerLevel level,
-            List<BlockPos> candidates,
-            RandomSource random,
-            int count,
-            LightChangeApplier applier
-    ) {
+    /** Changes up to {@code count} random glowing moss neighbors for which {@code applies} holds. */
+    private static void changeRandomNeighbors(ServerLevel level, BlockPos pos, BlockState sourceState, RandomSource random,
+                                              int count, Predicate<BlockState> applies, UnaryOperator<BlockState> change) {
+        List<BlockPos> candidates = collectGlowingMossNeighbors(level, pos, sourceState, applies);
         int spreadCount = Math.min(count, candidates.size());
         for (int i = 0; i < spreadCount; i++) {
             BlockPos chosen = candidates.remove(random.nextInt(candidates.size()));
-            applier.apply(level, chosen, level.getBlockState(chosen));
+            BlockState chosenState = level.getBlockState(chosen);
+            if (applies.test(chosenState)) {
+                level.setBlock(chosen, change.apply(chosenState), Block.UPDATE_CLIENTS);
+            }
         }
     }
 
@@ -166,46 +152,8 @@ public class GlowingMossBlock extends Block implements BonemealableBlock {
 
     private static void tryAddGlowingMossNeighbor(List<BlockPos> candidates, ServerLevel level, BlockPos pos, Predicate<BlockState> predicate) {
         BlockState neighborState = level.getBlockState(pos);
-        if (!isGlowingMoss(neighborState) || !predicate.test(neighborState)) {
-            return;
-        }
-
-        BlockPos immutablePos = pos.immutable();
-        if (!candidates.contains(immutablePos)) {
-            candidates.add(immutablePos);
-        }
-    }
-
-    private static void applyLightIncrease(ServerLevel level, BlockPos pos, BlockState state) {
-        int minLight = state.getValue(MIN_LIGHT);
-        int light = state.getValue(LIGHT);
-        int target = state.getValue(TARGET_LIGHT_LEVEL);
-
-        if (light >= target) {
-            return;
-        }
-
-        int nextLight = light + 1;
-        int nextTarget = Math.max(target - 1, minLight);
-
-        if (nextLight != light || nextTarget != target) {
-            level.setBlock(pos, state.setValue(LIGHT, nextLight).setValue(TARGET_LIGHT_LEVEL, nextTarget), Block.UPDATE_CLIENTS);
-        }
-    }
-
-    private static void applyLightDecrease(ServerLevel level, BlockPos pos, BlockState state) {
-        int minLight = state.getValue(MIN_LIGHT);
-        int light = state.getValue(LIGHT);
-        int target = state.getValue(TARGET_LIGHT_LEVEL);
-
-        int nextLight = Math.max(light - 1, minLight);
-        int nextTarget = target;
-        if (light == target) {
-            nextTarget = Math.max(target - 1, minLight);
-        }
-
-        if (nextLight != light || nextTarget != target) {
-            level.setBlock(pos, state.setValue(LIGHT, nextLight).setValue(TARGET_LIGHT_LEVEL, nextTarget), Block.UPDATE_CLIENTS);
+        if (isGlowingMoss(neighborState) && predicate.test(neighborState)) {
+            candidates.add(pos.immutable());
         }
     }
 

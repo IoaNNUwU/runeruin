@@ -2,6 +2,9 @@ package ioann.uwu.runeruin.dimension;
 
 public class Const {
 
+    /** The dimension spans Y 0 up to here. */
+    public static final int WORLD_HEIGHT = 512;
+
     public static final int VOID_HEIGHT = 50;
     public static final int UNDERGROUND_LEVEL_HEIGHT = 75;
     public static final int ARCANE_PLATE_HEIGHT = 5;

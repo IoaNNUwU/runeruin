@@ -3,12 +3,11 @@ package ioann.uwu.runeruin.datagen;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.RRBiomeTags;
 import ioann.uwu.runeruin.dimension.RRBiomes;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.BiomeTagsProvider;
 import net.minecraft.tags.BiomeTags;
-
-import java.util.concurrent.CompletableFuture;
 
 public class DatagenBiomeTagProvider extends BiomeTagsProvider {
 
@@ -32,7 +31,7 @@ public class DatagenBiomeTagProvider extends BiomeTagsProvider {
                 .add(RRBiomes.SPARKLING_CAVES);
         this.tag(RRBiomeTags.HAS_HANGING_TRACKS)
                 .add(RRBiomes.DEEP_ROOTS)
-                .add(RRBiomes.DEEP_INVERTED_FOREST);
+                .add(RRBiomes.INVERTED_FOREST);
 
     }
 }

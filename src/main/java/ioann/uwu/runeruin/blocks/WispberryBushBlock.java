@@ -83,7 +83,7 @@ public class WispberryBushBlock extends MossLayerPlantBlock implements Bonemeala
 
         if (age < 3 && CommonHooks.canCropGrow(level, pos, state, random.nextInt(5) == 0)) {
             BlockState newState = state.setValue(AGE, age + 1);
-            level.setBlock(pos, newState, 2);
+            level.setBlock(pos, newState, Block.UPDATE_CLIENTS);
             CommonHooks.fireCropGrowPost(level, pos, state);
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(newState));
         }
@@ -124,7 +124,7 @@ public class WispberryBushBlock extends MossLayerPlantBlock implements Bonemeala
                 serverLevel.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + serverLevel.getRandom().nextFloat() * 0.4F);
 
                 BlockState newState = state.setValue(AGE, 1);
-                serverLevel.setBlock(pos, newState, 2);
+                serverLevel.setBlock(pos, newState, Block.UPDATE_CLIENTS);
                 serverLevel.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState));
             }
 
@@ -134,11 +134,13 @@ public class WispberryBushBlock extends MossLayerPlantBlock implements Bonemeala
         }
     }
 
+    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(AGE);
     }
 
+    @Override
     public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
         return state.getValue(AGE) < 3 && level.getBlockState(pos.above()).isAir() && level.isInsideBuildHeight(pos.above());
     }
@@ -148,19 +150,13 @@ public class WispberryBushBlock extends MossLayerPlantBlock implements Bonemeala
         return true;
     }
 
+    @Override
     public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
         int newAge = Math.min(3, state.getValue(AGE) + 1);
-        level.setBlock(pos, state.setValue(AGE, newAge), 2);
+        level.setBlock(pos, state.setValue(AGE, newAge), Block.UPDATE_CLIENTS);
     }
 
     public static int getLightLevel(BlockState state) {
-        int lightLevel;
-        switch (state.getValue(AGE)) {
-            case 0 -> lightLevel = 0;
-            case 1 -> lightLevel = 3;
-            case 2 -> lightLevel = 6;
-            default -> lightLevel = 9;
-        }
-        return lightLevel;
+        return state.getValue(AGE) * 3;
     }
 }

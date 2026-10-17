@@ -3,9 +3,22 @@ package ioann.uwu.runeruin.dimension;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.BeadVineBlock;
 import ioann.uwu.runeruin.blocks.GlowingMossBlock;
-import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.dimension.features.*;
+import ioann.uwu.runeruin.blocks.WispberryBushBlock;
+import ioann.uwu.runeruin.dimension.features.BoulderFeature;
+import ioann.uwu.runeruin.dimension.features.CaveMushroomKind;
+import ioann.uwu.runeruin.dimension.features.CeilingBallFeature;
+import ioann.uwu.runeruin.dimension.features.CeilingBlockVineFeature;
+import ioann.uwu.runeruin.dimension.features.FloatingMossPatchFeature;
+import ioann.uwu.runeruin.dimension.features.GlowingMushroomFeature;
+import ioann.uwu.runeruin.dimension.features.InvertedTreeFeature;
+import ioann.uwu.runeruin.dimension.features.LilyPadPatchFeature;
+import ioann.uwu.runeruin.dimension.features.MiniVolcanoFeature;
+import ioann.uwu.runeruin.dimension.features.MonolithFeature;
+import ioann.uwu.runeruin.dimension.features.MossySpikeFeature;
+import ioann.uwu.runeruin.dimension.features.StoneLilyFeature;
+import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
+import java.util.List;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
@@ -16,7 +29,12 @@ import net.minecraft.data.worldgen.placement.TreePlacements;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
-import net.minecraft.util.valueproviders.*;
+import net.minecraft.util.valueproviders.BiasedToBottomInt;
+import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.util.valueproviders.UniformFloat;
+import net.minecraft.util.valueproviders.UniformInt;
+import net.minecraft.util.valueproviders.WeightedListInt;
 import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -27,21 +45,24 @@ import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.WeightedPlacedFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.*;
+import net.minecraft.world.level.levelgen.feature.configurations.BlockColumnConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.ProbabilityFeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.RandomFeatureConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.RandomizedIntStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.WeightedStateProvider;
 import net.minecraft.world.level.levelgen.placement.CaveSurface;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-import java.util.List;
-
 public class RRConfiguredFeatures {
 
-    public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_RED_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_red_mushroom");
-    public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_RED_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_red_mushroom");
-    public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_brown_mushroom");
-    public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_brown_mushroom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_RED_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_red_wall_mushroom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_RED_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_red_wall_mushroom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_brown_wall_mushroom");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> BIG_BROWN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "big_brown_wall_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> ASHEN_WALL_MUSHROOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ashen_wall_mushroom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> ASHEN_WALL_MUSHROOM_CLUSTER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ashen_wall_mushroom_cluster");
     public static final ResourceKey<ConfiguredFeature<?, ?>> ASHEN_WALL_MUSHROOM_UPPER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "ashen_wall_mushroom_upper");
@@ -80,7 +101,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_moss_patch_underwater");
     public static final ResourceKey<ConfiguredFeature<?, ?>> FLOATING_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "floating_moss_patch");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_FLOATING_MOSS_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "small_floating_moss_patch");
-    public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_SEAGRASS =RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_seagrass");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_SEAGRASS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_KELP = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_kelp");
     public static final ResourceKey<ConfiguredFeature<?, ?>> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "goblet_deep_roots");
     public static final ResourceKey<ConfiguredFeature<?, ?>> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.CONFIGURED_FEATURE, "deep_roots_grass");
@@ -226,7 +247,6 @@ public class RRConfiguredFeatures {
                 RRFeatures.BOULDER.get(),
                 new BoulderFeature.Config(
                         BlockStateProvider.simple(Blocks.TUFF),
-                        BlockStateProvider.simple(Blocks.PALE_MOSS_BLOCK),
                         ConstantInt.of(5),
                         ConstantInt.of(7)
                 )
@@ -241,12 +261,8 @@ public class RRConfiguredFeatures {
                 RRFeatures.MONOLITH.get(),
                 new MonolithFeature.Config(
                         BlockStateProvider.simple(RRBlocks.ARCANE_STONE.get()),
-                        BlockStateProvider.simple(Blocks.DIAMOND_BLOCK.defaultBlockState()),
                         ConstantInt.of(7),
-                        ConstantInt.of(13),
-                        ConstantInt.of(3),
-                        ConstantInt.of(7)
-
+                        ConstantInt.of(13)
                 )
         ));
 
@@ -271,7 +287,6 @@ public class RRConfiguredFeatures {
                 new StoneLilyFeature.Config(
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE),
                         BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_WALL),
-                        BlockStateProvider.simple(Blocks.MOSSY_COBBLESTONE_SLAB),
                         BlockStateProvider.simple(RRBlocks.DEEP_MOSS_LAYER.get())
                 )
         ));
@@ -375,8 +390,8 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(DRIPSTONE_SPIKE, new ConfiguredFeature<>(
-                RRFeatures.GIANT_SPIKE.get(),
-                new MossySpikeFeature.SpikeConfiguration(
+                RRFeatures.MOSSY_SPIKE.get(),
+                new MossySpikeFeature.Config(
                         // This is very volatile number that prevents deepslate spikes from
                         // generating on lower level of deep caves
                         30,
@@ -393,8 +408,8 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(STONE_SPIKE, new ConfiguredFeature<>(
-                RRFeatures.GIANT_SPIKE.get(),
-                new MossySpikeFeature.SpikeConfiguration(
+                RRFeatures.MOSSY_SPIKE.get(),
+                new MossySpikeFeature.Config(
                         35,
                         UniformInt.of(3, 19),
                         UniformFloat.of(0.4F, 2.0F),
@@ -409,8 +424,8 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(DEEPSLATE_SPIKE, new ConfiguredFeature<>(
-                RRFeatures.GIANT_SPIKE.get(),
-                new MossySpikeFeature.SpikeConfiguration(
+                RRFeatures.MOSSY_SPIKE.get(),
+                new MossySpikeFeature.Config(
                         35,
                         UniformInt.of(3, 19),
                         UniformFloat.of(0.4F, 2.0F),
@@ -473,7 +488,7 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(SMALL_LILY_PAD_PATCH, new ConfiguredFeature<>(
-                RRFeatures.SMALL_LILY_PAD_PATCH.get(),
+                RRFeatures.LILY_PAD_PATCH.get(),
                 new LilyPadPatchFeature.Config(
                         UniformInt.of(0, 1),
                         UniformInt.of(1, 2),
@@ -484,7 +499,7 @@ public class RRConfiguredFeatures {
         ));
 
         ctx.register(BIG_LILY_PAD_PATCH, new ConfiguredFeature<>(
-                RRFeatures.BIG_LILY_PAD_PATCH.get(),
+                RRFeatures.LILY_PAD_PATCH.get(),
                 new LilyPadPatchFeature.Config(
                         UniformInt.of(1, 3),
                         UniformInt.of(2, 4),

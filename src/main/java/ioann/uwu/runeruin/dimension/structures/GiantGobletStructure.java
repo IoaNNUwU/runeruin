@@ -4,6 +4,9 @@ import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.dimension.RRStructureTypes;
 import ioann.uwu.runeruin.dimension.RRStructures;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
@@ -16,10 +19,6 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.StructureType;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_Y;
 import static ioann.uwu.runeruin.dimension.Const.LOST_CAVES_Y;

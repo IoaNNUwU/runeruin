@@ -7,7 +7,12 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
-import net.minecraft.core.*;
+import java.util.List;
+import java.util.stream.Stream;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
@@ -15,10 +20,14 @@ import net.minecraft.world.level.biome.Climate;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import java.util.List;
-import java.util.stream.Stream;
-
-import static ioann.uwu.runeruin.dimension.Const.*;
+import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_Y;
+import static ioann.uwu.runeruin.dimension.Const.CEILING_TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.LOST_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.LOST_CAVES_Y;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_MAX_BASELINE_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_OFFSET;
 
 public class RRBiomeSource extends BiomeSource {
 
@@ -41,7 +50,11 @@ public class RRBiomeSource extends BiomeSource {
             LazyNoise.single("voidCeilingBiomesNoise", 0.4f)
     );
 
-    private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT + 15;
+    /** The ceiling biomes of the Blooming caves start above this Y, under the lowest terrace of their ceiling. */
+    public static final int BLOOMING_CEILING_BIOME_BOTTOM = TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 10;
+    // The Lost caves ceiling hangs down to this far under LOST_CAVES_CEILING_Y. The ceiling biomes of the Lost and
+    // the Deep caves start above this depth under their ceiling Y.
+    private static final int CEILING_BIOME_HEIGHT = CEILING_TERRAIN_HEIGHT - TOP_LAYER_OFFSET;
 
     /**
      * Biome lists top to bottom: top layer, blooming caves ceiling, blooming caves, deep caves ceiling,
@@ -87,7 +100,7 @@ public class RRBiomeSource extends BiomeSource {
                 ),
                 HolderSet.direct(
                         biomeRegistry.getOrThrow(RRBiomes.DEEP_ROOTS),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEP_INVERTED_FOREST)
+                        biomeRegistry.getOrThrow(RRBiomes.INVERTED_FOREST)
                 ),
                 HolderSet.direct(
                         // Glowing moss keeps one sixth, the three spike biomes split the rest evenly:
@@ -157,7 +170,7 @@ public class RRBiomeSource extends BiomeSource {
         // Each layer starts above this Y, top to bottom like `layers`.
         int[] layerBottoms = {
                 baseLine,
-                TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 10,
+                BLOOMING_CEILING_BIOME_BOTTOM,
                 deepCeilingTop,
                 DEEP_CAVES_CEILING_Y - CEILING_BIOME_HEIGHT,
                 lostBaseLine,

@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension.features;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.KelpBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,15 +31,15 @@ public class GobletKelpFeature extends Feature<NoneFeatureConfiguration> {
                     && level.getBlockState(pos.above()).is(Blocks.WATER)
                     && body.canSurvive(level, pos)) {
                 if (i == height) {
-                    level.setBlock(pos, head.setValue(KelpBlock.AGE, context.random().nextInt(4) + 20), 2);
+                    level.setBlock(pos, head.setValue(KelpBlock.AGE, context.random().nextInt(4) + 20), Block.UPDATE_CLIENTS);
                     placed++;
                 } else {
-                    level.setBlock(pos, body, 2);
+                    level.setBlock(pos, body, Block.UPDATE_CLIENTS);
                 }
             } else if (i > 0) {
                 BlockPos top = pos.below();
                 if (head.canSurvive(level, top) && !level.getBlockState(top.below()).is(Blocks.KELP)) {
-                    level.setBlock(top, head.setValue(KelpBlock.AGE, context.random().nextInt(4) + 20), 2);
+                    level.setBlock(top, head.setValue(KelpBlock.AGE, context.random().nextInt(4) + 20), Block.UPDATE_CLIENTS);
                     placed++;
                 }
                 break;

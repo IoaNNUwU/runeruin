@@ -17,15 +17,15 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -99,7 +99,7 @@ public class EldenVinesBlock extends Block implements BonemealableBlock {
             float pitch = Mth.randomBetween(serverLevel.getRandom(), 0.8F, 1.2F);
             serverLevel.playSound(null, pos, SoundEvents.CAVE_VINES_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, pitch);
             BlockState newState = state.setValue(ORB, false);
-            serverLevel.setBlock(pos, newState, 2);
+            serverLevel.setBlock(pos, newState, Block.UPDATE_CLIENTS);
             serverLevel.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState));
         }
 
@@ -124,7 +124,7 @@ public class EldenVinesBlock extends Block implements BonemealableBlock {
     @Override
     public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
         if (!state.getValue(ORB)) {
-            level.setBlock(pos, state.setValue(ORB, true), 2);
+            level.setBlock(pos, state.setValue(ORB, true), Block.UPDATE_CLIENTS);
         }
 
         if (random.nextBoolean()) {
@@ -147,7 +147,7 @@ public class EldenVinesBlock extends Block implements BonemealableBlock {
 
             if (!growableNeighbours.isEmpty()) {
                 BlockPos growPos = growableNeighbours.get(random.nextInt(growableNeighbours.size()));
-                level.setBlock(growPos, this.defaultBlockState(), 2);
+                level.setBlock(growPos, this.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
         }
 
@@ -161,7 +161,7 @@ public class EldenVinesBlock extends Block implements BonemealableBlock {
             if (growDownPos.getY() >= level.getMinY()
                     && level.isEmptyBlock(growDownPos)
                     && this.defaultBlockState().canSurvive(level, growDownPos)) {
-                level.setBlock(growDownPos, this.defaultBlockState(), 2);
+                level.setBlock(growDownPos, this.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
         }
     }
@@ -179,7 +179,7 @@ public class EldenVinesBlock extends Block implements BonemealableBlock {
         }
 
         BlockState newVine = this.defaultBlockState().setValue(ORB, random.nextInt(5) == 0);
-        level.setBlock(belowPos, newVine, 2);
+        level.setBlock(belowPos, newVine, Block.UPDATE_CLIENTS);
     }
 
     private boolean canGrowNearby(BlockGetter level, BlockPos pos) {

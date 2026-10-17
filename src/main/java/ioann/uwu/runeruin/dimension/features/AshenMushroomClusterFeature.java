@@ -1,16 +1,15 @@
 package ioann.uwu.runeruin.dimension.features;
 
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class AshenMushroomClusterFeature extends Feature<WallMushroomFeature.Config> {
 
@@ -29,7 +28,7 @@ public class AshenMushroomClusterFeature extends Feature<WallMushroomFeature.Con
         BlockPos origin = context.origin();
         RandomSource random = context.random();
         int targetCount = 3 + random.nextInt(3);
-        if (!placeAt(level, context.config(), origin, random)) {
+        if (!WALL_FILTER.canPlaceAt(level, origin) || !WallMushroomFeature.placeAt(level, context.config(), origin, random)) {
             return false;
         }
 
@@ -54,15 +53,11 @@ public class AshenMushroomClusterFeature extends Feature<WallMushroomFeature.Con
             if (!attempted.add(candidate) || !WALL_FILTER.canPlaceAt(level, candidate)) {
                 continue;
             }
-            if (placeAt(level, context.config(), candidate, random)) {
+            if (WallMushroomFeature.placeAt(level, context.config(), candidate, random)) {
                 placed.add(candidate);
             }
         }
 
-        return !placed.isEmpty();
-    }
-
-    private static boolean placeAt(WorldGenLevel level, WallMushroomFeature.Config config, BlockPos origin, RandomSource random) {
-        return WALL_FILTER.canPlaceAt(level, origin) && WallMushroomFeature.placeAt(level, config, origin, random);
+        return true;
     }
 }

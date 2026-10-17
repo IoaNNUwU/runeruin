@@ -1,7 +1,5 @@
 package ioann.uwu.runeruin.portal;
 
-import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_Y;
-
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRDimension;
 import java.util.Comparator;
@@ -14,11 +12,14 @@ import net.minecraft.util.BlockUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.levelgen.Heightmap;
+
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_Y;
 
 /**
  * Locates / builds RuneRuin portals. Mirrors {@link net.minecraft.world.level.portal.PortalForcer}
@@ -150,7 +151,7 @@ public class RuneRuinPortalForcer {
             for (int height = -1; height < 4; height++) {
                 if (width == -1 || width == 2 || height == -1 || height == 3) {
                     mutable.setWithOffset(closestFullPosition, width * direction.getStepX(), height, width * direction.getStepZ());
-                    this.level.setBlock(mutable, RRBlocks.ARCANE_STONE.get().defaultBlockState(), 3);
+                    this.level.setBlock(mutable, RRBlocks.ARCANE_STONE.get().defaultBlockState(), Block.UPDATE_ALL);
                 }
             }
         }
@@ -166,7 +167,7 @@ public class RuneRuinPortalForcer {
         for (int width = 0; width < 2; width++) {
             for (int height = 0; height < 3; height++) {
                 mutable.setWithOffset(closestFullPosition, width * direction.getStepX(), height, width * direction.getStepZ());
-                this.level.setBlock(mutable, portalBlockState, 18);
+                this.level.setBlock(mutable, portalBlockState, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             }
         }
 
