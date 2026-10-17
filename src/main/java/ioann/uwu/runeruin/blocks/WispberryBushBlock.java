@@ -3,7 +3,11 @@ package ioann.uwu.runeruin.blocks;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -31,22 +35,41 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
 
 public class WispberryBushBlock extends MossLayerPlantBlock implements BonemealableBlock {
 
     public static final IntegerProperty AGE = BlockStateProperties.AGE_3;
-    private static final VoxelShape SHAPE_SAPLING = Block.column(8.0F, 0.0F, 9.0F);
-    private static final VoxelShape SHAPE_GROWN = Block.column(14.0F, 0.0F, 16.0F);
+    // The stem and the leaves of the models wispberry_bush_stage*.json, without the berries.
+    private static final Map<Direction, VoxelShape> SHAPE_SAPLING = Shapes.rotateHorizontal(Shapes.or(
+            Block.box(7.0, 0.0, 7.0, 9.0, 4.0, 9.0),
+            Block.box(5.0, 3.0, 5.0, 11.0, 9.0, 11.0),
+            Block.box(3.0, 2.0, 3.0, 7.0, 6.0, 7.0)));
+    private static final Map<Direction, VoxelShape> SHAPE_GROWN = Shapes.rotateHorizontal(Shapes.or(
+            Block.box(7.0, 0.0, 7.0, 9.0, 6.0, 9.0),
+            Block.box(3.0, 5.0, 3.0, 13.0, 16.0, 13.0),
+            Block.box(1.0, 4.0, 1.0, 7.0, 11.0, 7.0),
+            Block.box(10.0, 4.0, 10.0, 15.0, 9.0, 15.0)));
+    /** The turns of the model in the order of its variants in the blockstate ({@code createRotatedVariants}). */
+    private static final List<Direction> TURNS = List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
     // Only the middle of the bush holds whoever walks into it: its edge can be brushed past.
     private static final VoxelShape CORE_SAPLING = Block.column(4.0F, 0.0F, 9.0F);
     private static final VoxelShape CORE_GROWN = Block.column(8.0F, 0.0F, 16.0F);
 
+    private final List<Function<BlockState, VoxelShape>> turnedShapes;
+
     public WispberryBushBlock(Properties properties) {
-        super(state -> state.getValue(AGE) == 0 ? SHAPE_SAPLING : SHAPE_GROWN, properties);
+        super(state -> plantShape(state, Direction.NORTH), properties);
         this.registerDefaultState(this.defaultBlockState()
                 .setValue(AGE, 0));
+        this.turnedShapes = TURNS.stream().map(turn -> this.withMoss(state -> plantShape(state, turn))).toList();
+    }
+
+    private static VoxelShape plantShape(BlockState state, Direction turn) {
+        return (state.getValue(AGE) == 0 ? SHAPE_SAPLING : SHAPE_GROWN).get(turn);
     }
 
     public static final MapCodec<WispberryBushBlock> CODEC = simpleCodec(WispberryBushBlock::new);
@@ -65,6 +88,14 @@ public class WispberryBushBlock extends MossLayerPlantBlock implements Bonemeala
     @Override
     protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
         return state.is(BlockTags.SUPPORTS_VEGETATION) || super.mayPlaceOn(state, level, pos);
+    }
+
+    /** The outline turns with the model: the client picks the turn from the seed of the position as {@code MultiPartModel} does. */
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        RandomSource random = RandomSource.createThreadLocalInstance(state.getSeed(pos));
+        random.setSeed(random.nextLong());
+        return this.turnedShapes.get(random.nextInt(TURNS.size())).apply(state);
     }
 
     @Override

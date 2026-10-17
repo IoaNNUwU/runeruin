@@ -40,7 +40,12 @@ public abstract class MossLayerPlantBlock extends VegetationBlock {
     protected MossLayerPlantBlock(Function<BlockState, VoxelShape> plantShape, Properties properties) {
         super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(MOSS, 0));
-        this.shapes = this.getShapeForEachState(state -> {
+        this.shapes = this.withMoss(plantShape);
+    }
+
+    /** The shape of each state: its moss layer and the plant standing on top of it. */
+    protected Function<BlockState, VoxelShape> withMoss(Function<BlockState, VoxelShape> plantShape) {
+        return this.getShapeForEachState(state -> {
             int moss = state.getValue(MOSS);
             return Shapes.or(Block.column(16.0, 0.0, moss * 2), plantShape.apply(state).move(0.0, moss / 8.0, 0.0));
         });
