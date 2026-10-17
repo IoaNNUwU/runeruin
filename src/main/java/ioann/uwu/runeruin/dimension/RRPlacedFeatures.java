@@ -220,7 +220,6 @@ public class RRPlacedFeatures {
                         CountPlacement.of(1),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(VerticalAnchor.absolute(BLOOMING_CAVES_Y), VerticalAnchor.absolute(BLOOMING_FLOOR_TOP)),
-                        PlacementUtils.HEIGHTMAP,
                         RarityFilter.onAverageOnceEvery(128),
                         EnvironmentScanPlacement.scanningFor(
                                 Direction.DOWN,

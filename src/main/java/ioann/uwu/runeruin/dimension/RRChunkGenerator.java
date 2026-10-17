@@ -182,27 +182,21 @@ public class RRChunkGenerator extends ChunkGenerator {
         return new SupportedIslandsNoise(base, ArcaneStructureGen::doGenerateColumn);
     }
 
-    private static final LazyNoise baseTopLevelNoise = new LazyNoise("baseTopLevelNoise", seed -> withoutSmallIslands(Noise.multi(
+    private static final LazyNoise baseTopLevelNoise = new LazyNoise(seed -> withoutSmallIslands(Noise.multi(
             new SingleNoise(Noise.hashString("bigNoise1" + seed), 0.5f),
             new SingleNoise(Noise.hashString("bigNoise2" + seed), 0.4f),
             new SingleNoise(Noise.hashString("bigNoise3" + seed), 0.3f)
     )));
 
-    public static final LazyNoise flattenedBaseTopLevelNoise = LazyNoise.chain(
-            "flattenedBaseTopLevelNoise",
-            baseTopLevelNoise,
-            noise -> Noise.flatten(0.152f, noise)
-    );
+    public static final LazyNoise flattenedBaseTopLevelNoise = LazyNoise.chain(baseTopLevelNoise, noise -> Noise.flatten(0.152f, noise));
 
-    public static final LazyNoise topLevelNoise = LazyNoise.chain(
-            "topLevelNoise",
-            baseTopLevelNoise,
-            flattenedBaseTopLevelNoise,
-            TopLevelNoise::new
-    );
+    public static final LazyNoise topLevelNoise = new LazyNoise(seed -> new TopLevelNoise(
+            "topLevelDetail", seed, baseTopLevelNoise.forSeed(seed), flattenedBaseTopLevelNoise.forSeed(seed)
+    ));
 
+    // The baseline of the top layer islands, of the Blooming caves ceiling, the Lost caves ceiling and the Deep
+    // caves floor; its seed strings keep their first name.
     public static final LazyNoise topLevelBaselineNoise = new LazyNoise(
-            "topLevelBaselineNoise",
             seed -> Noise.multi(
                     new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise1" + seed), 1f),
                     new SingleNoise(Noise.hashString("lostTopLevelBaselineNoise2" + seed), 0.1f),
@@ -210,37 +204,23 @@ public class RRChunkGenerator extends ChunkGenerator {
             )
     );
 
-    private static final LazyNoise baseLostTopLevelNoise = new LazyNoise("baseLostTopLevelNoise", seed -> withoutSmallIslands(Noise.multi(
+    private static final LazyNoise baseLostTopLevelNoise = new LazyNoise(seed -> withoutSmallIslands(Noise.multi(
             new SingleNoise(Noise.hashString("bigLostNoise1" + seed), 0.5f),
             new SingleNoise(Noise.hashString("bigLostNoise2" + seed), 0.4f),
             new SingleNoise(Noise.hashString("bigLostNoise3" + seed), 0.3f)
     )));
 
-    public static final LazyNoise flattenedLostBaseTopLevelNoise = LazyNoise.chain(
-            "flattenedLostBaseTopLevelNoise",
-            baseLostTopLevelNoise,
-            noise -> Noise.flatten(0.152f, noise)
-    );
+    public static final LazyNoise flattenedLostBaseTopLevelNoise = LazyNoise.chain(baseLostTopLevelNoise, noise -> Noise.flatten(0.152f, noise));
 
-    public static final LazyNoise lostTopLevelNoise = LazyNoise.chain(
-            "topLevelNoise",
-            baseLostTopLevelNoise,
-            flattenedLostBaseTopLevelNoise,
-            TopLevelNoise::new
-    );
+    public static final LazyNoise lostTopLevelNoise = new LazyNoise(seed -> new TopLevelNoise(
+            "lostTopLevelDetail", seed, baseLostTopLevelNoise.forSeed(seed), flattenedLostBaseTopLevelNoise.forSeed(seed)
+    ));
 
-    // Preserve the shared baseline shape without relying on which layer wins LazyNoise's cache race.
-    public static final LazyNoise lostTopLevelBaselineNoise = topLevelBaselineNoise;
-
+    /** The first free block above an island of the top layer, or else above the Blooming caves floor, open to the sky there. */
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types types, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
-
-        float topNoise = topLevelNoise.getOrCreateNoise(randomState).noise(x, z);
-        if (topNoise > 0.01f) {
-            return (int) (topNoise * (TOP_LAYER_TERRAIN_HEIGHT)) - ARCANE_PLATE_HEIGHT + TOP_LAYER_Y;
-        } else {
-            return BLOOMING_CAVES_Y + TERRAIN_HEIGHT;
-        }
+        return TopLayerAndBloomingCavesGen.topLayerSurfaceY(x, z, randomState)
+                .orElseGet(() -> TopLayerAndBloomingCavesGen.bloomingCavesFloorY(x + 8, z + 8, randomState)) + 1;
     }
 
     @Override

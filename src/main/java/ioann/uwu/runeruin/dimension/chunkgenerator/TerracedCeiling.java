@@ -68,7 +68,7 @@ public final class TerracedCeiling {
         this.height = maxY - minY + 1;
         this.steps = steps;
         this.layer = layer;
-        this.levelNoise = new LazyNoise(name + "Levels", seed -> {
+        this.levelNoise = new LazyNoise(seed -> {
             Noise wide = new SingleNoise(Noise.hashString(name + "Levels1" + seed), 1f);
             Noise narrow = new SingleNoise(Noise.hashString(name + "Levels2" + seed), 2.6f);
             return (x, y, z) -> 0.65f * wide.noise(x, y, z) + 0.35f * narrow.noise(x, y, z);
@@ -78,7 +78,7 @@ public final class TerracedCeiling {
     }
 
     private static LazyNoise shiftNoise(String name) {
-        return new LazyNoise(name, seed -> new SingleNoise(Noise.hashString(name + seed), 1.6f, 3.5f));
+        return new LazyNoise(seed -> new SingleNoise(Noise.hashString(name + seed), 1.6f, 3.5f));
     }
 
     public Chunk chunk(int chunkX, int chunkZ, RandomState randomState) {

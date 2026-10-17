@@ -3,7 +3,6 @@ package ioann.uwu.runeruin.dimension.noise;
 import com.google.common.collect.MapMaker;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -15,18 +14,17 @@ public class LazyNoise {
     // the seed to the sampler of each level's RandomState. Weak identity keys: one entry per level.
     private static final Map<Climate.Sampler, Long> SEEDS = new MapMaker().weakKeys().makeMap();
 
-    private final String noiseName;
     private final Function<Long, Noise> seedToNoise;
     private final Map<Long, Noise> noisesBySeed = new ConcurrentHashMap<>();
 
-    public LazyNoise(String noiseName, Function<Long, Noise> seedToNoise) {
-        this.noiseName = noiseName;
+    /** {@code seedToNoise} takes a name of its own into the seed, as {@link #single} does. */
+    public LazyNoise(Function<Long, Noise> seedToNoise) {
         this.seedToNoise = seedToNoise;
     }
 
     /** A noise seeded by its name and the world seed, so two noises with different names never repeat each other. */
     public static LazyNoise single(String noiseName, float frequency) {
-        return new LazyNoise(noiseName, seed -> new SingleNoise(Noise.hashString(noiseName + seed), frequency));
+        return new LazyNoise(seed -> new SingleNoise(Noise.hashString(noiseName + seed), frequency));
     }
 
     public static void bindSeed(RandomState randomState, long seed) {
@@ -45,22 +43,12 @@ public class LazyNoise {
         return forSeed(seed);
     }
 
-    // Chained noises share the base instance, and with it what the base caches.
-    private Noise forSeed(long seed) {
+    /** The noise of this world seed. Noises built on it share the instance, and with it what it caches. */
+    public Noise forSeed(long seed) {
         return noisesBySeed.computeIfAbsent(seed, this.seedToNoise);
     }
 
-    public static LazyNoise chain(String noiseName, LazyNoise base, Function<Noise, Noise> transform) {
-        return new LazyNoise(
-                base.noiseName + ":" + noiseName,
-                seed -> transform.apply(base.forSeed(seed))
-        );
-    }
-
-    public static LazyNoise chain(String noiseName, LazyNoise base1, LazyNoise base2, BiFunction<Noise, Noise, Noise> transform) {
-        return new LazyNoise(
-                base1.noiseName + "/" + base2.noiseName + ":" + noiseName,
-                seed -> transform.apply(base1.forSeed(seed), base2.forSeed(seed))
-        );
+    public static LazyNoise chain(LazyNoise base, Function<Noise, Noise> transform) {
+        return new LazyNoise(seed -> transform.apply(base.forSeed(seed)));
     }
 }

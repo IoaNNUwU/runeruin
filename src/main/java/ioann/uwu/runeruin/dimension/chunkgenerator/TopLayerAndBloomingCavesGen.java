@@ -73,13 +73,12 @@ public class TopLayerAndBloomingCavesGen {
     }
 
     private static final LazyNoise bloomingCavesCeilingNoise = new LazyNoise(
-            "bloomingCavesCeilingNoise",
             seed -> Noise.multi(
                     new SingleNoise(Noise.hashString("bloomingCavesCeilingNoise1" + seed)),
                     Noise.constant(1f)
             )
     );
-    private static final LazyNoise bedrockNoise = new LazyNoise("bedrockNoise", PositionalRandomNoise::new);
+    private static final LazyNoise bedrockNoise = new LazyNoise(seed -> new PositionalRandomNoise("bloomingCavesCeilingRock", seed));
     private static final LazyNoise topLevelNoise = RRChunkGenerator.topLevelNoise;
     private static final LazyNoise topLevelBaselineNoise = RRChunkGenerator.topLevelBaselineNoise;
     private static final LazyNoise flattenedBaseTopLevelNoise = RRChunkGenerator.flattenedBaseTopLevelNoise;
