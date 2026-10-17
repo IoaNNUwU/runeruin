@@ -80,7 +80,7 @@ public class RRBlocks {
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHERRY_SAPLING).mapColor(MapColor.COLOR_YELLOW),
             p -> new SaplingBlock(ELDEN_TREE_GROWER, p));
 
-    public static final DeferredBlock<Block> POTTED_ELDEN_SAPLING = register("potted_elden_sapling",
+    public static final DeferredBlock<Block> POTTED_ELDEN_SAPLING = registerNoItem("potted_elden_sapling",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.POTTED_CHERRY_SAPLING).mapColor(MapColor.COLOR_YELLOW),
             p -> new FlowerPotBlock(ELDEN_SAPLING.get(), p));
 
@@ -132,7 +132,7 @@ public class RRBlocks {
             p -> new StandingSignBlock(ELDEN_WOOD_TYPE, p));
 
     public static final DeferredBlock<Block> ELDEN_WALL_SIGN = registerNoItem("elden_wall_sign",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_WALL_SIGN),
+            _ -> wallVariant(Blocks.OAK_WALL_SIGN, ELDEN_SIGN.get()),
             p -> new WallSignBlock(ELDEN_WOOD_TYPE, p));
 
     public static final DeferredBlock<Block> ELDEN_HANGING_SIGN = registerNoItem("elden_hanging_sign",
@@ -140,7 +140,7 @@ public class RRBlocks {
             p -> new CeilingHangingSignBlock(ELDEN_WOOD_TYPE, p));
 
     public static final DeferredBlock<Block> ELDEN_WALL_HANGING_SIGN = registerNoItem("elden_wall_hanging_sign",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_WALL_HANGING_SIGN),
+            _ -> wallVariant(Blocks.OAK_WALL_HANGING_SIGN, ELDEN_HANGING_SIGN.get()),
             p -> new WallHangingSignBlock(ELDEN_WOOD_TYPE, p));
 
     /** Gray pale-oak look; planks recipes, not tagged as logs/wood. */
@@ -265,7 +265,7 @@ public class RRBlocks {
     );
 
     public static final DeferredBlock<Block> INVERTED_TREE_WALL_SIGN = registerNoItem("inverted_tree_wall_sign",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_WALL_SIGN),
+            _ -> wallVariant(Blocks.PALE_OAK_WALL_SIGN, INVERTED_TREE_SIGN.get()),
             p -> new WallSignBlock(INVERTED_TREE_WOOD_TYPE, p)
     );
 
@@ -275,7 +275,7 @@ public class RRBlocks {
     );
 
     public static final DeferredBlock<Block> INVERTED_TREE_WALL_HANGING_SIGN = registerNoItem("inverted_tree_wall_hanging_sign",
-            _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.PALE_OAK_WALL_HANGING_SIGN),
+            _ -> wallVariant(Blocks.PALE_OAK_WALL_HANGING_SIGN, INVERTED_TREE_HANGING_SIGN.get()),
             p -> new WallHangingSignBlock(INVERTED_TREE_WOOD_TYPE, p)
     );
 
@@ -448,6 +448,16 @@ public class RRBlocks {
                         .lightLevel(GlowingMossBlock::getLightLevel)
                         .randomTicks(),
                 GlowingMossCarpetBlock::new);
+    }
+
+    /**
+     * A copy of a vanilla wall sign takes the loot table and the name of the vanilla standing sign along:
+     * point both at our standing sign, as {@code Blocks.wallVariant} does.
+     */
+    private static BlockBehaviour.Properties wallVariant(Block vanillaWallSign, Block standingSign) {
+        return BlockBehaviour.Properties.ofFullCopy(vanillaWallSign)
+                .overrideLootTable(standingSign.getLootTable())
+                .overrideDescription(standingSign.getDescriptionId());
     }
 
     private static DeferredBlock<Block> registerWaterLily(

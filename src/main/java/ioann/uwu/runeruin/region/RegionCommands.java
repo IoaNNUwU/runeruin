@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.ChatFormatting;
+import net.minecraft.IdentifierException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.IdentifierArgument;
@@ -26,10 +27,12 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -37,6 +40,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import net.minecraft.world.level.levelgen.structure.templatesystem.loader.TemplatePathFactory;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -53,6 +57,8 @@ public final class RegionCommands {
     private static final DustParticleOptions BOX_DUST = new DustParticleOptions(0xFFE14A, 0.65F);
     private static final DustParticleOptions POS1_DUST = new DustParticleOptions(0x3DDCFF, 1.1F);
     private static final DustParticleOptions POS2_DUST = new DustParticleOptions(0xFF4D9A, 1.1F);
+
+    private static final FileToIdConverter STRUCTURE_FILES = new FileToIdConverter("structure", ".nbt");
 
     private static final Map<UUID, RegionSelection> SELECTIONS = new ConcurrentHashMap<>();
 
@@ -161,33 +167,43 @@ public final class RegionCommands {
             box.getXSpan(),
             box.getYSpan(),
             box.getZSpan(),
-            box.getXSpan() * box.getYSpan() * box.getZSpan()
+            volume(box)
         ).withStyle(ChatFormatting.YELLOW);
     }
 
-    private static int export(CommandSourceStack source, String name) throws CommandSyntaxException {
-        ServerPlayer player = source.getPlayerOrException();
-        RegionSelection selection = SELECTIONS.get(player.getUUID());
+    private static long volume(BoundingBox box) {
+        return (long) box.getXSpan() * box.getYSpan() * box.getZSpan();
+    }
+
+    /** The player's selection when it is complete, in this dimension and not too big; else null and a failure message. */
+    private static @Nullable BoundingBox checkedSelection(CommandSourceStack source) throws CommandSyntaxException {
+        RegionSelection selection = SELECTIONS.get(source.getPlayerOrException().getUUID());
         if (selection == null || !selection.isComplete()) {
             source.sendFailure(Component.translatable("commands.runeruin.region.need_both"));
-            return 0;
+            return null;
         }
         if (!selection.dimension().equals(source.getLevel().dimension())) {
             source.sendFailure(Component.translatable("commands.runeruin.region.wrong_dimension"));
-            return 0;
+            return null;
         }
-
         BoundingBox box = selection.box();
-        int volume = box.getXSpan() * box.getYSpan() * box.getZSpan();
-        if (volume > RegionExport.MAX_VOLUME) {
-            source.sendFailure(Component.translatable("commands.runeruin.region.too_big", volume, RegionExport.MAX_VOLUME));
+        if (volume(box) > RegionExport.MAX_VOLUME) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.too_big", volume(box), RegionExport.MAX_VOLUME));
+            return null;
+        }
+        return box;
+    }
+
+    private static int export(CommandSourceStack source, String name) throws CommandSyntaxException {
+        BoundingBox box = checkedSelection(source);
+        if (box == null) {
             return 0;
         }
 
         try {
             RegionExport.Result result = RegionExport.write(source.getLevel(), box, name);
             source.sendSuccess(() -> exportSuccess(result, box), false);
-            return volume;
+            return (int) volume(box);
         } catch (RegionExport.UnloadedChunkException e) {
             BlockPos pos = e.pos;
             source.sendFailure(Component.translatable("commands.runeruin.region.unloaded", pos.getX(), pos.getY(), pos.getZ()));
@@ -204,22 +220,15 @@ public final class RegionCommands {
      * structure ({@code TemplatePiece}), and {@code /place template} puts it back into a world. A structure void
      * block in the selection is left out: there the world keeps its own block. The game directory is shared by
      * all checkouts, so a game started with {@code runClient} writes into the resources of the checkout it was
-     * started from; any other game writes into its world, as a structure block does.
+     * started from; any other game writes into its world, as a structure block does. A bare name is the mod's.
      */
     private static int save(CommandSourceStack source, Identifier name, boolean entities) throws CommandSyntaxException {
-        ServerPlayer player = source.getPlayerOrException();
-        RegionSelection selection = SELECTIONS.get(player.getUUID());
-        if (selection == null || !selection.isComplete()) {
-            source.sendFailure(Component.translatable("commands.runeruin.region.need_both"));
-            return 0;
-        }
-        ServerLevel level = source.getLevel();
-        if (!selection.dimension().equals(level.dimension())) {
-            source.sendFailure(Component.translatable("commands.runeruin.region.wrong_dimension"));
+        BoundingBox box = checkedSelection(source);
+        if (box == null) {
             return 0;
         }
 
-        BoundingBox box = selection.box();
+        ServerLevel level = source.getLevel();
         Identifier id = RR.id(name.getPath());
         StructureTemplateManager templates = level.getStructureManager();
         StructureTemplate template = templates.getOrCreate(id);
@@ -229,7 +238,9 @@ public final class RegionCommands {
             String checkout = System.getProperty("runeruin.checkout");
             Component where;
             if (checkout != null) {
-                Path file = Path.of(checkout, "src/main/resources/data", id.getNamespace(), "structure", id.getPath() + ".nbt");
+                // Refuses a path such as ../x that would leave the structure folder, as the game does for its own.
+                Path file = new TemplatePathFactory(Path.of(checkout, "src/main/resources"), PackType.SERVER_DATA)
+                    .createAndValidatePathToStructure(id, STRUCTURE_FILES);
                 StructureTemplateManager.save(file, template, false);
                 where = clickablePath(file);
             } else if (templates.save(id)) {
@@ -239,7 +250,7 @@ public final class RegionCommands {
             }
             source.sendSuccess(() -> Component.translatable("commands.runeruin.region.save", box.getXSpan(), box.getYSpan(), box.getZSpan(), id.toString(), where), false);
             return Command.SINGLE_SUCCESS;
-        } catch (IOException e) {
+        } catch (IOException | IdentifierException e) {
             RR.LOGGER.error("Failed to save template {}", id, e);
             source.sendFailure(Component.translatable("commands.runeruin.region.io_error", String.valueOf(e.getMessage())));
             return 0;
@@ -247,24 +258,12 @@ public final class RegionCommands {
     }
 
     private static int generate(CommandSourceStack source) throws CommandSyntaxException {
-        ServerPlayer player = source.getPlayerOrException();
-        RegionSelection selection = SELECTIONS.get(player.getUUID());
-        if (selection == null || !selection.isComplete()) {
-            source.sendFailure(Component.translatable("commands.runeruin.region.need_both"));
-            return 0;
-        }
-        ServerLevel level = source.getLevel();
-        if (!selection.dimension().equals(level.dimension())) {
-            source.sendFailure(Component.translatable("commands.runeruin.region.wrong_dimension"));
+        BoundingBox box = checkedSelection(source);
+        if (box == null) {
             return 0;
         }
 
-        BoundingBox box = selection.box();
-        long volume = (long) box.getXSpan() * box.getYSpan() * box.getZSpan();
-        if (volume > RegionExport.MAX_VOLUME) {
-            source.sendFailure(Component.translatable("commands.runeruin.region.too_big", volume, RegionExport.MAX_VOLUME));
-            return 0;
-        }
+        ServerLevel level = source.getLevel();
         if (box.minY() < level.getMinY() || box.maxY() > level.getMaxY()) {
             source.sendFailure(Component.translatable("commands.runeruin.region.generate_height", level.getMinY(), level.getMaxY()));
             return 0;

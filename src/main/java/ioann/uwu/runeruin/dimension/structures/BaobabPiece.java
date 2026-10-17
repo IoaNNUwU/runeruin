@@ -24,7 +24,8 @@ public final class BaobabPiece extends StructurePiece {
     private final int height;
     private final long seed;
     private final int[] groundHeights;
-    private transient Map<BlockPos, BlockState> treePlan;
+    // Chunks of one structure are decorated on several threads at once: volatile hands each of them the finished plan.
+    private volatile Map<BlockPos, BlockState> treePlan;
 
     public BaobabPiece(int centerX, int centerZ, int radius, int height, long seed, int[] groundHeights) {
         super(RRStructurePieceTypes.BAOBAB_PIECE.get(), 0, boundingBox(centerX, centerZ, groundHeights));
@@ -103,8 +104,9 @@ public final class BaobabPiece extends StructurePiece {
     }
 
     private Map<BlockPos, BlockState> treePlan() {
-        if (this.treePlan == null) {
-            this.treePlan = BaobabTreeGenerator.generate(
+        Map<BlockPos, BlockState> plan = this.treePlan;
+        if (plan == null) {
+            this.treePlan = plan = BaobabTreeGenerator.generate(
                     this.centerX,
                     this.centerZ,
                     this.radius,
@@ -115,7 +117,7 @@ public final class BaobabPiece extends StructurePiece {
                     RRBlocks.BAOBAB_LEAVES.get().defaultBlockState()
             );
         }
-        return this.treePlan;
+        return plan;
     }
 
     private static int[] defaultGroundHeights() {
