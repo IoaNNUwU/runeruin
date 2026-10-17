@@ -3,7 +3,7 @@ version = 1
 name = "RuneRuin"
 
 [setup]
-script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\setup-codex-worktree.ps1"
+script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\setup-worktree.ps1"
 
 [[actions]]
 name = "Run Client"

@@ -1,8 +1,8 @@
-﻿# .mc-sources is gitignored (Mojang EULA, huge, version-specific) but agents must
-# be able to search the extracted Minecraft / NeoForge Java for this project version.
+# Cursor reads this on top of .gitignore: keep the extracted Minecraft and NeoForge Java,
+# the vanilla textures and models (see VERSION.txt) and the generated resources searchable.
 !.mc-sources/
 !.mc-sources/**
-
-# Vanilla client textures for this project version, used as visual references.
 !.vanilla-textures/
 !.vanilla-textures/**
+!src/generated/
+!src/generated/**

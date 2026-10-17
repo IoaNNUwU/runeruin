@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.mc-sources/VERSION.txt\" ] || echo 'WARNING: .mc-sources/VERSION.txt is missing, so Minecraft/NeoForge sources are unavailable. Run scripts/setup-codex-worktree.ps1 before relying on vanilla APIs.'",
+            "command": "[ -f \"$CLAUDE_PROJECT_DIR/.mc-sources/VERSION.txt\" ] || echo 'WARNING: .mc-sources/VERSION.txt is missing, so Minecraft/NeoForge sources are unavailable. Run scripts/setup-worktree.ps1 before relying on vanilla APIs.'",
             "timeout": 10
           }
         ]

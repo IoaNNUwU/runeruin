@@ -104,8 +104,8 @@ Gradle needs any installed JDK; the wrapper downloads Java 25.
 
 Do not use Minecraft or NeoForge APIs from memory. Search `.mc-sources/` (`net/minecraft`, `com/mojang`, `net/neoforged`, `VERSION.txt`), a junction to the shared cache `~/.runeruin/mc-sources/<version>`. Never edit it or copy it into `src/`.
 
-- No `.mc-sources/VERSION.txt`: run `.\scripts\setup-codex-worktree.ps1`. If it fails or the file is still missing, find the cause in the script's output, report it to the user and stop the task.
-- `.ignore` un-ignores `.mc-sources` for ripgrep; if Grep still skips it, use `rg --no-ignore-vcs`. Do not search `~/.gradle`.
+- No `.mc-sources/VERSION.txt`: run `.\scripts\setup-worktree.ps1`. If it fails or the file is still missing, find the cause in the script's output, report it to the user and stop the task.
+- `.mc-sources` is a link, and ripgrep does not follow links while it walks the checkout: a search from the root never reaches it. Pass it as the path (Grep with `path` `.mc-sources`, `rg <pattern> .mc-sources`) or use `rg -L`. `.ignore` keeps it, `.vanilla-textures` and `src/generated` searchable. Do not search `~/.gradle`.
 - Vanilla textures and models: `.vanilla-textures/assets/minecraft/{textures,models}/`.
 
 ## Skills

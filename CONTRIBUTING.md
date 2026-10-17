@@ -46,10 +46,10 @@ Labels live in [.github/labels.json](.github/labels.json), and a workflow applie
 
    Maintainers have no fork: their clone of the main repository has only `origin`, and they read `upstream` in this file as `origin` ([MAINTAINING.md](MAINTAINING.md#remotes)).
 
-2. Run the setup script once. It enables the git hooks and links the Minecraft and NeoForge sources:
+2. Run the setup script once. It enables the git hooks, links the Minecraft and NeoForge sources and generates the data (`runData`):
 
    ```powershell
-   .\scripts\setup-codex-worktree.ps1
+   .\scripts\setup-worktree.ps1
    ```
 
    Gradle needs any installed JDK; the wrapper downloads Java 25 itself. On Linux or macOS run the scripts with `pwsh`.

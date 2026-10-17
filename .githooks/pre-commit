@@ -14,7 +14,7 @@ case "$branch" in
         fail "commits are not allowed from a detached HEAD." ;;
     main)
         fail "every change goes in a task branch; main only receives merged pull requests." ;;
-    feature/add_*)
+    feature/add_*|bug/add_*)
         fail "branch names do not start with add_: $branch" ;;
     feature/*|bug/*)
         echo "${branch#*/}" | grep -qE '^[a-z0-9]+(_[a-z0-9]+)*$' || fail "use snake_case after feature/ or bug/: $branch" ;;

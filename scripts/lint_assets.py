@@ -112,6 +112,8 @@ def check_models(problems):
         if isinstance(model.get("parent"), str):
             check_ref(path, "models", model["parent"], ".json", problems, missing)
         for texture in (model.get("textures") or {}).values():
+            if isinstance(texture, dict):  # {"sprite": ..., "force_translucent": true}
+                texture = texture.get("sprite")
             if isinstance(texture, str) and not texture.startswith("#"):
                 check_ref(path, "textures", texture, ".png", problems, missing)
         if any("shade_direction_override" in element for element in model.get("elements") or []):

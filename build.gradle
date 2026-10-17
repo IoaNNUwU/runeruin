@@ -1,16 +1,10 @@
 plugins {
     id 'java-library'
-    id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.144'
     id 'idea'
 }
 
 tasks.named('wrapper', Wrapper).configure {
-    // Define wrapper values here so as to not have to always do so when updating gradlew.properties.
-    // Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
-    // documentation attached on cursor hover of gradle classes and methods. However, this comes with increased
-    // file size for Gradle. If you do switch this to ALL, run the Gradle wrapper task twice afterwards.
-    // (Verify by checking gradle/wrapper/gradle-wrapper.properties to see if distributionUrl now points to `-all`)
     distributionType = Wrapper.DistributionType.BIN
 }
 
@@ -26,10 +20,6 @@ sourceSets.main.resources {
     exclude(".cache/**") // datagen cache files (paths are relative to the resource root)
 }
 
-repositories {
-    // Add here additional repositories if required by some of the dependencies below.
-}
-
 base {
     archivesName = mod_id
 }
@@ -38,14 +28,9 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 neoForge {
-    // Specify the version of NeoForge to use.
     version = project.neo_version
 
-    // This line is optional. Access Transformers are automatically detected
-    // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
-
-    // Default run configurations.
-    // These can be tweaked, removed, or duplicated as needed.
+    // runClient only; RUNERUIN_GAME_DIR moves it elsewhere.
     def persistentGameDirectory = project.file(
             System.getenv('RUNERUIN_GAME_DIR')
                     ?: new File(System.getProperty('user.home'), '.runeruin/game').absolutePath
@@ -91,7 +76,7 @@ neoForge {
             if (findProperty('previewName') != null) {
                 systemProperty 'runeruin.preview.name', findProperty('previewName')
             }
-            ['seeds', 'height', 'radius', 'minRadius', 'maxRadius', 'stage'].each { key ->
+            ['seeds', 'height', 'radius', 'stage'].each { key ->
                 if (findProperty(key) != null) {
                     systemProperty "runeruin.preview.${key}", findProperty(key)
                 }
@@ -109,10 +94,6 @@ neoForge {
         data {
             clientData()
 
-            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-            // gameDirectory = project.file('run-data')
-
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
 
             // Entity models for scripts/render_entity_model.py: outside the resources, so not in the jar.
@@ -145,7 +126,7 @@ neoForge {
     }
 }
 
-// Cursor's agent sandbox remaps GRADLE_USER_HOME to a temp dir, which would make
+// An agent sandbox may remap GRADLE_USER_HOME to a temp dir, which would make
 // downloadAssets / createMinecraftArtifacts re-fetch and re-decompile Minecraft.
 // Pin NFRT to the real user Gradle cache so datagen reuses client jars, assets, and decompiles.
 def persistentNfrtHome = new File(
@@ -160,7 +141,7 @@ tasks.withType(net.neoforged.nfrtgradle.NeoFormRuntimeTask).configureEach {
 // come from createMinecraftArtifacts as minecraft-patched-*-sources.jar.
 configurations {
     neoForgeAgentSources {
-        description = 'NeoForge sources jar extracted into .mc-sources for Cursor agents'
+        description = 'NeoForge sources jar extracted into .mc-sources'
         canBeConsumed = false
         canBeResolved = true
         transitive = false
@@ -209,8 +190,8 @@ tasks.register('writeVanillaTexturesVersion') {
 }
 
 tasks.register('extractVanillaTextures', Sync) {
-    group = 'documentation'
-    description = 'Extract the pinned Minecraft client textures and models into .vanilla-textures for agents.'
+    group = 'setup'
+    description = 'Extract the pinned Minecraft client textures and models into .vanilla-textures.'
     dependsOn 'createMinecraftArtifacts', 'writeVanillaTexturesVersion'
     from(provider { extractArchives.zipTree(minecraftClientJar) }) {
         include 'assets/minecraft/textures/**', 'assets/minecraft/models/**'
@@ -224,8 +205,8 @@ tasks.register('extractVanillaTextures', Sync) {
 }
 
 tasks.register('extractMcSources', Sync) {
-    group = 'documentation'
-    description = 'Extract Minecraft and NeoForge sources into .mc-sources for Cursor agents.'
+    group = 'setup'
+    description = 'Extract Minecraft and NeoForge sources into .mc-sources.'
     dependsOn 'createMinecraftArtifacts', 'writeMcSourcesVersion', 'extractVanillaTextures'
     onlyIf {
         def versionFile = mcSourcesDir.file('VERSION.txt').asFile
@@ -236,7 +217,7 @@ tasks.register('extractMcSources', Sync) {
             def absolutePath = sourcePath.toAbsolutePath().normalize().toString()
             if (!realPath.equalsIgnoreCase(absolutePath)) {
                 throw new GradleException(
-                        "'.mc-sources' points to a cache for another version. Run scripts/setup-codex-worktree.ps1 before extractMcSources."
+                        "'.mc-sources' points to a cache for another version. Run scripts/setup-worktree.ps1 before extractMcSources."
                 )
             }
         }
@@ -260,38 +241,8 @@ tasks.register('extractMcSources', Sync) {
 
 neoForge.ideSyncTask tasks.named('extractMcSources')
 
-// Sets up a dependency configuration called 'localRuntime'.
-// This configuration should be used instead of 'runtimeOnly' to declare
-// a dependency that will be present for runtime testing but that is
-// "optional", meaning it will not be pulled by dependents of this mod.
-configurations {
-    runtimeClasspath.extendsFrom localRuntime
-}
-
 dependencies {
     neoForgeAgentSources "net.neoforged:neoforge:${project.neo_version}:sources"
-
-    // Example optional mod dependency with JEI
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
-    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
-    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
-
-    // Example mod dependency using a mod jar from ./libs with a flat dir repository
-    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
-    // The group id is ignored when searching -- in this case, it is "blank"
-    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
-
-    // Example mod dependency using a file as dependency
-    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
-
-    // Example project dependency using a sister or child project:
-    // implementation project(":myproject")
-
-    // For more info:
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -316,20 +267,6 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
 sourceSets.main.resources.srcDir generateModMetadata
 // To avoid having to run "generateModMetadata" manually, make it run on every project reload
 neoForge.ideSyncTask generateModMetadata
-
-// Example configuration to allow publishing using the maven-publish plugin
-publishing {
-    publications {
-        register('mavenJava', MavenPublication) {
-            from components.java
-        }
-    }
-    repositories {
-        maven {
-            url "file://${project.projectDir}/repo"
-        }
-    }
-}
 
 // A model that moves from data generation into src/main/resources stays in src/generated until the next
 // runData removes it there. src/main/resources comes first, so the file a person keeps wins;
