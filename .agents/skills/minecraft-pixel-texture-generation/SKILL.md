@@ -33,7 +33,7 @@ When creating a custom alternative to a vanilla block or item (such as a log, pl
 
 A flat model element (a cross plant, a spike plane) has two faces, and each shows the texture unmirrored to whoever looks at it. From behind, a pixel therefore sits on the other half of the plane than from the front: a spike drawn on the left is on the viewer's left from both sides, which are two different places in the world.
 
-When the pixels have to stay where they are (spikes, thorns, anything that must meet the rest of the model), mirror the UV of the back face: `[16, 0, 0, 16]` instead of `[0, 0, 16, 16]`, as `createDeepRoots` in `DatagenModelProvider` does. Otherwise draw the texture left-right symmetric. Vanilla `block/cross` mirrors nothing, which is enough for a plant that only has to look right from each side on its own.
+When the pixels have to stay where they are (spikes, thorns, anything that must meet the rest of the model), mirror the UV of the back face: `[16, 0, 0, 16]` instead of `[0, 0, 16, 16]`, as the model file `assets/runeruin/models/block/deep_roots.json` does. Otherwise draw the texture left-right symmetric. Vanilla `block/cross` mirrors nothing, which is enough for a plant that only has to look right from each side on its own.
 
 The two isometric views of `scripts/render_model.py` look at the model from opposite sides: compare a marked pixel in both.
 

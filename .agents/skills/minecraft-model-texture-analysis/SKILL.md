@@ -44,7 +44,7 @@ python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_fac
 
 The output defaults to `exports/model_faces/<namespace>/<model path>/`. Read `manifest.json` before judging the image: the script crops the source UV rectangle and records rotation/mirroring without baking those transforms into the PNG. UVs outside the texture bounds are clipped and called out in the manifest and warnings. If Pillow is missing, install it in the active Python environment with `python -m pip install Pillow`.
 
-Minecraft's cuboid element format has no standard semantic `name` field. A project may add `name` to its generated element JSON for analysis selectors; the Minecraft 26.2 model deserializer ignores this extra field. If names are unavailable, select by array index with `--element '#0'`, then use `from`, `to`, face directions, and texture variables in the manifest to identify the part. Report ambiguity instead of treating array order as a stable semantic label.
+Minecraft's cuboid element format has no standard semantic `name` field. The model files of this mod give every element a `name` (Blockbench writes it, and the `block-and-item` skill requires it); the Minecraft 26.2 model deserializer ignores it. If names are unavailable, select by array index with `--element '#0'`, then use `from`, `to`, face directions, and texture variables in the manifest to identify the part. Report ambiguity instead of treating array order as a stable semantic label.
 
 ## Render a model
 
@@ -59,7 +59,7 @@ A bare name tries `runeruin:block/` then `runeruin:item/`. Blockstate rotations,
 
 ## Render an entity model
 
-`scripts/render_entity_model.py` renders a mob or any other entity model with a texture to one PNG: an isometric view of the front from above and of the back from below, the front, a side and the top. Entity models are built in Java, so the geometry comes from the game: `runData` writes every model layer, vanilla and ours, to `build/entity_models/<namespace>/<model>/<layer>.json`, the parts with their initial poses and the faces of their boxes as `ModelPart` builds them. Run `runData` again after a change to a model; a change to a texture needs nothing. Use it for a new or changed entity model or texture instead of writing a renderer:
+`scripts/render_entity_model.py` renders a mob or any other entity model with a texture to one PNG: an isometric view of the front from above and of the back from below, the front, a side and the top. The game builds entity models in code, vanilla ones from Java and ours from the Blockbench projects in `assets/runeruin/models/entity/`, so the geometry comes from the game: `runData` writes every model layer, vanilla and ours, to `build/entity_models/<namespace>/<model>/<layer>.json`, the parts with their initial poses and the faces of their boxes as `ModelPart` builds them. Run `runData` again after a change to a model or its project; a change to a texture needs nothing. Use it for a new or changed entity model or texture instead of writing a renderer:
 
 ```powershell
 python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/snail/snail
@@ -84,7 +84,7 @@ python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/sn
 
 ## Assess model changes
 
-For Java mob models, trace the renderer/model registration to its atlas, then inspect `texOffs(...)`, box dimensions, texture scaling, and any per-face UV declarations in the model source. This project's Minecraft 26.2 source is `.mc-sources/net/minecraft/client/model/geom/ModelPart.java`; custom model code may define a different layout. For the standard `CubeListBuilder.texOffs(u, v).addBox(..., w, h, d)` layout, the source maps face rectangles as follows (coordinates are atlas pixels):
+The mobs of this mod keep their geometry and UVs in their Blockbench project (`assets/runeruin/models/entity/<name>.bbmodel`: the `uv_offset` and size of each cube, read by `client/model/BlockbenchModel`); look there first. For vanilla mobs in Java, trace the renderer/model registration to its atlas, then inspect `texOffs(...)`, box dimensions, texture scaling, and any per-face UV declarations in the model source. This project's Minecraft 26.2 source is `.mc-sources/net/minecraft/client/model/geom/ModelPart.java`; custom model code may define a different layout. For the standard `CubeListBuilder.texOffs(u, v).addBox(..., w, h, d)` layout, the source maps face rectangles as follows (coordinates are atlas pixels):
 
 | Face | Rectangle `[left, top, right, bottom]` |
 |------|-----------------------------------------|
@@ -114,8 +114,8 @@ The face rectangles are `[left, top, right, bottom]` in source-atlas pixels; eac
 python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_faces.py --entity-uv-map exports/creature_uv_map.json --element body
 ```
 
-This map is analysis input, not a Minecraft asset. Keep the source texture and model untouched unless the user asks for an edit. If a mob has no geometry definition in this repository, report that and analyze only the available atlas rather than inventing part mappings.
+This map is analysis input, not a Minecraft asset. Keep the source texture and model untouched unless the user asks for an edit. If a mob has neither a `.bbmodel` nor a Java model in this repository, report that and analyze only the available atlas rather than inventing part mappings.
 
 When reviewing or changing an asset, inspect the full source texture alongside relevant crops. Verify transparency, UV bounds, face direction, texture-variable resolution, parent inheritance, model bounds, element rotation, and any animation metadata.
 
-Describe findings using the element name (or index and bounds), face direction, texture id, and UV/pixel rectangle. If proposing a fix, identify the authored source (model generator or source texture) and explain which faces or UV values would change before editing.
+Describe findings using the element name (or index and bounds), face direction, texture id, and UV/pixel rectangle. If proposing a fix, name the file a person edits (the model JSON in `assets/runeruin/models/`, the mob's `.bbmodel` or the texture PNG; never a generator) and explain which faces or UV values would change before editing.

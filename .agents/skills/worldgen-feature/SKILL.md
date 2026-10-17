@@ -16,10 +16,10 @@ Decoration runs after terrain, through the vanilla feature pipeline of each biom
 | 2 | `dimension/RRFeatures` | `REGISTRY.register(...)` (runtime type) |
 | 3 | `dimension/RRConfiguredFeatures` | key + `bootstrap` entry: blocks and parameters |
 | 4 | `dimension/RRPlacedFeatures` | key + placement, usually from the factories there: `floorPlacement` (scan down to ground), `ceilingPlacement` (scan up to a ceiling), `bandPlacement` (height band only); heights from `Const` and the band constants at the top of the class |
-| 5 | `dimension/biomes/<layer>/Bar.java` | `generation.addFeature(<step>, RRPlacedFeatures.FOO)` |
+| 5 | `dimension/biomes/<layer>/Bar.java` | `generation.addFeature(<step>, RRPlacedFeatures.FOO)`. A placed feature that no biome uses yet goes into `PARKED_FEATURES` in `RRGameTests`, or `biome_registry_complete` fails |
 | 6 | `RRGameTests.featureCases` | a row with the surface for the GameTests `feature_placement` and `feature_reach`; a preview job of its own in `preview/jobs/` only when the registry config is not enough (`headless-preview` skill) |
 
-Then `compileJava`, `runData` (the configured, placed and biome JSON is generated) and the preview.
+Then `compileJava`, `runData` (the configured, placed and biome JSON is generated), `runGameTestServer` (`feature_placement`, `feature_reach`, `biome_registry_complete`) and the preview.
 
 Rules:
 

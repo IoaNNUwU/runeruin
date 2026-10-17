@@ -1,9 +1,9 @@
 ---
 name: region-export-compare
 description: >-
-  Compares Minecraft region dumps against corrected exports or verbal fixes, then guides
-  structure, feature, or seeded terrain-generation changes. Use for /rrexport, terrain_old,
-  was/built exports, or generated-versus-expected region comparisons.
+  Compare a Minecraft region dump with a corrected export or a verbal fix, then change the
+  structure, feature or seeded terrain generation to match. Use for /rrexport dumps, was/built
+  exports and generated-versus-expected region comparisons.
 ---
 
 # Region export compare
@@ -15,23 +15,20 @@ A man-made build (a ship, a hut, a dungeon room) is not turned into formulas. Wh
 
 ## Resolve inputs
 
+Exports land in one of two folders (`RegionExport.resolveExportDir`):
+
+- `%USERPROFILE%\.runeruin\game\runeruin-exports\` — a game started with `runClient`, whichever checkout started it;
+- `exports/` of the checkout — server, preview and GameTest runs, and terrain replays.
+
 Pick one, in this order:
 
-1. **Two paths** — first is the `/rrexport` dump (actual), second is the corrected slice (expected). Game exports may be under `run/runeruin-exports/` or the user data directory `%USERPROFILE%\.runeruin\game\runeruin-exports/` (equivalent to `~/.runeruin/game/runeruin-exports/`); project and preview exports are under `exports/`. Typical names: `region_YYYYMMDD_HHMMSS.txt` and `region_should_be.txt`.
+1. **Two paths** — first the `/rrexport` dump (actual), then the corrected one (expected).
 2. **One dump + a verbal fix** — profile the dump, then apply the description (e.g. "rim 1 thinner", "water one block lower").
-3. **Nothing named** — look in `run/runeruin-exports/`, `%USERPROFILE%\.runeruin\game\runeruin-exports/` (and, if needed, other subfolders under `%USERPROFILE%\.runeruin/`), and `exports/`. The first two hold game `/rrexport` output; `exports/` holds project/preview output. Across these folders, the newest `region_YYYYMMDD_HHMMSS.txt` is actual (prefer `.txt` over its twin `.json`). A file whose name contains `should`, `expected`, `want`, `correct`, or `built` is expected. Auto-discovery skips `preview_*` and `*_generated*` replay outputs. If exports are in different folders, pass both full paths to the compare script.
+3. **Nothing named** — in both folders, the newest `region_YYYYMMDD_HHMMSS.txt` is actual (prefer `.txt` over its twin `.json`), and a file whose name contains `should`, `expected`, `want`, `correct`, `target` or `built` is expected. Discovery skips `preview_*` and `*_generated*` replay outputs. When the two files are in different folders, pass both full paths.
 
-`.txt` exists only when the selection is 1 block thick on some axis (a readable slice). Thick volumes are `.json` only.
+For snapshots the user named, such as `was.json` and `built.json`, look for exactly those names in both folders, the newest first when the user says "the latest". Use the full `.json` volume for a terrain replay.
 
-For user-named snapshots such as `was.json` and `built.json`, do not rely on automatic name guessing. Search the active project’s `exports/`, `runeruin-exports/`, and `run/runeruin-exports/` folders, plus the corresponding export folders of the known checkout that launched the client. Sort by modification time when the user says “the latest files”; ignore `preview_*` outputs unless named. Use the full `.json` volume for terrain replay. A quick PowerShell discovery pass is:
-
-```powershell
-$roots = @('exports', 'runeruin-exports', 'run/runeruin-exports', '<known-client-checkout>/exports', '<known-client-checkout>/run/runeruin-exports') | Where-Object { Test-Path -LiteralPath $_ }
-$files = foreach ($root in $roots) { Get-ChildItem -LiteralPath $root -File -Filter '*.json' }
-$files | Where-Object { $_.BaseName -notlike 'preview_*' -and $_.BaseName -notmatch '_(generated|generated_after_modify)(_(xy|xz|yz|info))?$' } | Sort-Object LastWriteTime -Descending | Select-Object -First 20 FullName, LastWriteTime
-```
-
-Replace `<known-client-checkout>` with a real path or remove those two entries. In PowerShell, parse metadata with `ConvertFrom-Json -AsHashtable`: palette tokens are case-sensitive (`D` and `d` are separate keys).
+`.txt` exists only when the selection is 1 block thick on some axis (a readable slice). Thick volumes are `.json` only. Palette tokens are case-sensitive (`D` and `d` are different blocks): read the JSON with Python, not with Windows PowerShell's `ConvertFrom-Json`, which refuses keys that differ only in case.
 
 Check `format`, `dimension`, `worldSeed`, `origin`, and `size` before comparing. A seeded replay needs a `runeruin.region/1` JSON with `worldSeed`; if it is absent, ask the user to run `/rrexport` again with the updated mod. `was` and `built` should have the same dimension, seed, origin, and size. For a directional analysis, pass `was` as actual and `built` as expected: `missing` means blocks added in `built`, `extra` means blocks removed, and `mismatch` means a block-state replacement.
 
@@ -43,11 +40,10 @@ From the repo root (Python stdlib only):
 python .agents/skills/region-export-compare/scripts/compare_region.py
 python .agents/skills/region-export-compare/scripts/compare_region.py exports/actual.txt exports/region_should_be.txt
 python .agents/skills/region-export-compare/scripts/compare_region.py --profile --actual exports/actual.txt
-python .agents/skills/region-export-compare/scripts/compare_region.py --dir run/runeruin-exports
 python .agents/skills/region-export-compare/scripts/compare_region.py --dir "$env:USERPROFILE\.runeruin\game\runeruin-exports"
 ```
 
-The script's default auto-pick folder is `exports/`. Use `--dir` with the folder containing both files, such as `run/runeruin-exports` or `"$env:USERPROFILE\.runeruin\game\runeruin-exports"`; use explicit paths when the actual and expected files are split between folders.
+The script picks from `exports/` by default; `--dir` points it at the game's folder.
 
 Read the whole stdout. Overlay legend:
 
@@ -77,19 +73,11 @@ Do **not** patch individual cells or hand-edit `exports/`. Change the Java that 
 
 ## After the code change
 
-For **structure pieces / write-only features**, re-dump without the client (pick the job you are editing):
-
-```
-.\gradlew.bat runPreview -Ppreview=list
-.\gradlew.bat runPreview -Ppreview=giant_goblet
-.\gradlew.bat runPreview -Ppreview=boulder -Pradius=10
-```
-
-Then compare `exports/preview_<job>_yz.txt` (or the matching midplane) against the expected slice. Do not start or stop the user's `runClient`. If Gradle says `build/` is locked, ask them to close the game and run preview themselves.
+For **structure pieces / write-only features**, re-dump the job you are editing without the client (`headless-preview` skill), then compare `exports/preview_<job>_yz.txt` (or the matching midplane) against the expected slice. Do not start or stop the user's `runClient`. If Gradle says `build/` is locked, ask them to close the game and run preview themselves.
 
 ### Seeded terrain workflow: prove `was`, then converge to `expected`
 
-Use this when the user provides `was` (the untouched world region) and `expected` (the same region after their desired edits). Both must be full JSON exports from the same dimension, seed, origin, and size. Keep both source files unchanged. `//rrexport <name>` (or `/rrexport <name>`) records `worldSeed` in new exports; if it is missing, ask for a fresh export before replaying.
+Use this when the user provides `was` (the untouched world region) and `expected` (the same region after their desired edits). Both must be full JSON exports from the same dimension, seed, origin, and size. Keep both source files unchanged. `/rrexport <name>` records `worldSeed` in new exports; if it is missing, ask for a fresh export before replaying.
 
 1. **Understand the requested change.** Compare `was` with `expected`, with `was` as actual and `expected` as target. Explain the block additions, removals, material changes, and coordinates before editing generation code:
 
@@ -123,11 +111,11 @@ Use this when the user provides `was` (the untouched world region) and `expected
 
 Replay output is written under the active code checkout's `exports/` as `<input-stem>_<stage>.json`; an absolute `-Pregion` path may point to an export from another checkout. Quote the whole `-Pregion=...` PowerShell argument. Replay is limited to Y=0..511, 64 chunks, and the export's 500,000-block volume limit.
 
-Existing **world** chunks keep the old piece. In-game `/rrexport` of a already-generated goblet will not show the new math until a fresh area is generated.
+Existing **world** chunks keep the old piece. In-game `/rrexport` of an already generated goblet shows the new math only in a fresh area. For terrain, `/rrgenerate` rebuilds the selection in the game with the current code, the same way as `world_region` (terrain and pillars only).
 
 ## Export format (`runeruin.region/1`)
 
-Written by `region/RegionExport`. Commands: `/rrpos1` `/rrpos2` `/rrexport` `/rrclear`.
+Written by `region/RegionExport`. Commands: `/rrpos1` `/rrpos2` `/rrexport` `/rrgenerate` `/rrclear`.
 
 **`.txt` slice** (one axis size 1):
 
@@ -154,10 +142,10 @@ Written by `region/RegionExport`. Commands: `/rrpos1` `/rrpos2` `/rrexport` `/rr
 
 ## Checklist
 
-- [ ] Inputs resolved (paths, search game exports under `run/runeruin-exports/` and `%USERPROFILE%\.runeruin/` plus project `exports/`, or one file + words)
+- [ ] Inputs resolved (paths, the newest files in `%USERPROFILE%\.runeruin\game\runeruin-exports\` and `exports/`, or one file + words)
 - [ ] Script ran; overlay read
 - [ ] Terrain task: current generator replay agrees closely with `was` before edits
 - [ ] Terrain task: each modified replay was compared with `expected` using raw and terrain-only diffs
 - [ ] One geometric diagnosis written
 - [ ] Generation math changed (not the dump)
-- [ ] User asked to re-export a fresh area
+- [ ] User asked to re-export a fresh area, or to run `/rrgenerate` on the selection

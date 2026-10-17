@@ -10,7 +10,7 @@ description: >-
 
 # Headless preview
 
-`runPreview` builds one named job in an in-memory world without the client and writes `exports/preview_<job>.json`, the midplanes `_xy.txt` / `_xz.txt` / `_yz.txt` and `_info.txt` (seed, parameters, block counts). A failed job exits non-zero. Run it from the task worktree; it locks `build/` like any Gradle run.
+`runPreview` builds one named job in an in-memory world without the client and writes `exports/preview_<job>.json` (`preview_<feature path>` for the `feature` job, or the name given with `-PpreviewName`), the midplanes `_xy.txt` / `_xz.txt` / `_yz.txt` and `_info.txt` (seed, parameters, block counts). A failed job exits non-zero. Run it from the task worktree; it locks `build/` like any Gradle run.
 
 ```powershell
 .\gradlew.bat runPreview -Ppreview=list
@@ -20,7 +20,7 @@ python scripts/render_preview.py exports/boulder.png exports/preview_boulder.jso
 
 Jobs: `giant_goblet` (default; `'-Parg.moss=1'` adds goblet moss patches and floating moss, placed chunk by chunk as in the world), `baobab`, `dinosaur_skeleton`, `hanging_tracks` (a whole network, or one piece with `'-Parg.piece=stairs'`; `'-Parg.terrain=real'` puts it under the Deep caves ceiling of the seed), `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below) and `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill). `terrain_bench` is in the list too, but it measures speed, not shapes: follow the `benchmark` skill.
 
-Parameters: `-Pseed`, `-Pseeds`, `-Pheight`, `-Pradius`, `-PminRadius`, `-PmaxRadius`, `-Pstage`, `-Pregion=<export.json>`, `-PpreviewName=<name>`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`). In PowerShell quote the `-Parg.` ones: `'-Parg.id=runeruin:stone_spike'`; unquoted, PowerShell splits them at the dot and Gradle looks for a task.
+Parameters: `-Pseed`, `-Pseeds`, `-Pheight`, `-Pradius`, `-Pstage`, `-Pregion=<export.json>`, `-PpreviewName=<name>`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`). In PowerShell quote the `-Parg.` ones: `'-Parg.id=runeruin:stone_spike'`; unquoted, PowerShell splits them at the dot and Gradle looks for a task.
 
 `-Pseeds=1-9` or `-Pseeds=1,4,7` (not negative) builds every seed in one run, at most 64, and names the files `preview_<job>_s<seed>.*`.
 
@@ -57,7 +57,7 @@ How to read the picture:
 - A cut face is pale and unshaded. The half nearer to the camera is removed.
 - Colours are the average of the block's texture. The script prints the blocks it found no texture for.
 
-For before and after, export the old shape first under another name (`-PpreviewName=preview_boulder_before`, in the task worktree before your change or in the main checkout), then the new one. `--diff` draws added blocks green, removed ones red and replaced ones orange.
+For before and after, export the old shape first under another name (`-PpreviewName=preview_boulder_before`) in the task worktree before you change the code, then the new one. Never run Gradle in the main checkout. `--diff` draws added blocks green, removed ones red and replaced ones orange.
 
 Then:
 
@@ -84,7 +84,7 @@ The `feature` job places a configured feature from the registry on a prepared su
 | `wall` | ground x 1–4, y 48–80 | the wall block 1 64 0 (`offset=0`), as wall placements expect |
 | `cave` | floor y 32–35, ceiling y 93–96 | air at 0 64 0, for spikes that scan both ways |
 
-`offset` shifts the origin from the surface block, like the scan of a placed feature: features rooted in the ceiling block itself (`inverted_tree`, `long_ceiling_block_vine`) need `offset=0`. `ground` defaults to stone. `x` and `z` (0–15) move the origin and its surface away from the chunk corner: giant spikes are wider in the middle of a chunk (`'-Parg.x=8' '-Parg.z=8'`). The GameTests `feature_placement` and `feature_reach` run every configured feature this way (the table in `RRGameTests.featureCases`); add a row for every new configured feature, `feature_reach` fails without it.
+`-Pradius` (default 16) is how far the prepared surface reaches from the origin in blocks, for a feature wider than that. `offset` shifts the origin from the surface block, like the scan of a placed feature: features rooted in the ceiling block itself (`inverted_tree`, `long_ceiling_block_vine`) need `offset=0`. `ground` defaults to stone. `x` and `z` (0–15) move the origin and its surface away from the chunk corner: giant spikes are wider in the middle of a chunk (`'-Parg.x=8' '-Parg.z=8'`). The GameTests `feature_placement` and `feature_reach` run every configured feature this way (the table in `RRGameTests.featureCases`); add a row for every new configured feature, `feature_reach` fails without it.
 
 In game: `/rrpreview list`, `/rrpreview <job> [seed] [key=value | name]…`. The client writes `/rrpreview` and `/rrexport` output to `~/.runeruin/game/runeruin-exports/`, not `exports/`; `render_preview.py` draws those files too.
 
