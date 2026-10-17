@@ -10,7 +10,8 @@ src/generated and .mc-sources/textures (vanilla models included). Follows the ga
 order and UV rotation as in FaceBakery, element rotation with rescale, directional shade
 (up 1.0, north/south 0.8, east/west 0.6, down 0.5). Faces with a tintindex are multiplied by --tint.
 Item models built on item/generated show their layers as a flat sprite. Cullfaces, emissive light and
-render types are ignored: the PNG is for judging geometry and UV placement.
+render types are ignored: the PNG is for judging geometry and UV placement. Under the views every texture
+gets a row with its visible colors from dark to light, tinted where a face tints it.
 
 --y-rot turns the model as the y of a blockstate variant does (90: the north side faces east).
 --outline x1,y1,z1,x2,y2,z2 in model units, as in Block.box, draws a box of the block's outline shape as a
@@ -43,6 +44,7 @@ from extract_model_faces import (  # noqa: E402
 BACKGROUND = (48, 48, 48)
 LABEL_HEIGHT = 14
 GAP = 8
+SWATCH = 12
 SHADE = {"up": 1.0, "down": 0.5, "north": 0.8, "south": 0.8, "east": 0.6, "west": 0.6}
 NORMALS = {"up": (0, 1, 0), "down": (0, -1, 0), "north": (0, 0, -1), "south": (0, 0, 1),
            "west": (-1, 0, 0), "east": (1, 0, 0)}
@@ -307,8 +309,10 @@ def main():
                                              ROOT / ".mc-sources/textures/assets"])
         ref = resolve_ref(args.model, roots)
         layers = sprite_layers(ref, roots)
+        cache = {}
         if layers:
             panels = render_sprite(layers, ref, roots, args.scale)
+            palettes = [(layer, load_texture(layer, ref.namespace, roots, cache), None) for layer in layers]
         else:
             model = load_model(ref, roots)
             if not isinstance(model.get("elements"), list):
@@ -318,16 +322,29 @@ def main():
             boxes = [numbers(box.split(","), "--outline", 6) for box in args.outline]
             outline = [tuple(turn(p, args.y_rot) for p in edge) for box in boxes for edge in box_edges(box)]
             panels = [(name, render_view(quads, camera, args.scale, outline=outline)) for name, camera in VIEWS.items()]
+            palettes = [(resource, load_texture(resource, ref.namespace, roots, cache), tint if tinted else None)
+                        for resource, tinted in used_textures(model).items()]
     except ModelError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
 
-    save_sheet(args.output, ref.identifier + (f", y {args.y_rot}" if args.y_rot else ""), panels)
+    save_sheet(args.output, ref.identifier + (f", y {args.y_rot}" if args.y_rot else ""), panels, palettes)
     return 0
 
 
-def save_sheet(output, title, panels):
-    save_image(output, sheet(title, panels))
+def used_textures(model):
+    """The texture resources of the faces, each with whether a face with a tintindex shows it."""
+    used = {}
+    for element in model["elements"]:
+        for direction, face in (element.get("faces") or {}).items():
+            if direction in VERTICES:
+                _, resource = resolve_texture_token(face.get("texture"), model["textures"])
+                used[resource] = used.get(resource, False) or face.get("tintindex", -1) >= 0
+    return used
+
+
+def save_sheet(output, title, panels, palettes=()):
+    save_image(output, sheet(title, panels, palettes))
 
 
 def save_image(output, image, **options):
@@ -336,8 +353,40 @@ def save_image(output, image, **options):
     print(f"wrote {output} ({image.width}x{image.height})")
 
 
-def sheet(title, panels):
-    """The panels in a row under the title, each with its name."""
+def add_palettes(image, palettes):
+    """The image with a row per texture under it: the texture's name, the number of its visible colors and a swatch
+    per color from dark to light. palettes: (name, texture, tint), tint None for a texture shown as it is stored;
+    the colors are counted as stored, the swatches show them tinted as the render does."""
+    if not palettes:
+        return image
+    draw = ImageDraw.Draw(image)
+    rows = []
+    for name, texture, tint in palettes:
+        colors = sorted({pixel[:3] for pixel in texture.get_flattened_data() if pixel[3]},
+                        key=lambda c: 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2])
+        if tint:
+            colors = [tuple(c * t // 255 for c, t in zip(color, tint)) for color in colors]
+        rows.append((f"{name}: {len(colors)} colors", colors))
+    step = SWATCH + 2
+    left = GAP * 2 + max(math.ceil(draw.textlength(label)) for label, _ in rows)
+    per_line = max((image.width - left - GAP) // step, 16)
+    heights = [-(-max(len(colors), 1) // per_line) * step + 4 for _, colors in rows]
+    result = Image.new("RGB", (max(image.width, left + per_line * step + GAP), image.height + sum(heights) + GAP),
+                       BACKGROUND)
+    result.paste(image)
+    draw = ImageDraw.Draw(result)
+    y = image.height
+    for (label, colors), height in zip(rows, heights):
+        draw.text((GAP, y), label, fill=(170, 170, 170))
+        for i, color in enumerate(colors):
+            x, top = left + i % per_line * step, y + i // per_line * step
+            draw.rectangle((x, top, x + SWATCH - 1, top + SWATCH - 1), fill=color)
+        y += height
+    return result
+
+
+def sheet(title, panels, palettes=()):
+    """The panels in a row under the title, each with its name, and the palettes of the textures under them."""
     width = sum(image.width for _, image in panels) + GAP * (len(panels) + 1)
     width = max(width, math.ceil(ImageDraw.Draw(panels[0][1]).textlength(title)) + GAP * 2)
     height = max(image.height for _, image in panels) + LABEL_HEIGHT + GAP * 2 + 4
@@ -349,7 +398,7 @@ def sheet(title, panels):
         draw.text((x, LABEL_HEIGHT), name, fill=(170, 170, 170))
         result.paste(image, (x, LABEL_HEIGHT + GAP + 4))
         x += image.width + GAP
-    return result
+    return add_palettes(result, palettes)
 
 
 if __name__ == "__main__":

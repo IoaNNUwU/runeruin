@@ -92,4 +92,6 @@ Judge seams and repetition on a tiled 3×3 render, the way a wall of the block l
 python scripts/render_texture_tile.py exports/tile.png runeruin:block/moss_light minecraft:block/moss_block --grid 3 --scale 8
 ```
 
+Under the picture this script, `render_model.py` and `render_entity_model.py` draw a row per texture: its name, the number of its colors and a swatch per color from dark to light, so whoever looks at the picture sees the palette without running the checker.
+
 On a model, check the texture with `scripts/render_model.py` (the `minecraft-model-texture-analysis` skill). After `runData`, `python scripts/lint_assets.py` checks that every texture a model uses exists and that block and item textures are 16×16 (or animated 16-wide strips); a deliberate other size goes into its `OTHER_SIZES` with the reason.
