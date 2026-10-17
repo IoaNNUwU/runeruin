@@ -33,17 +33,7 @@ public class RRItems {
         REGISTRY.addAlias(RR.id("moss_berry"), RR.id("wispberry"));
     }
 
-    public static final DeferredItem<Item> RUNE_OF_SPACE = REGISTRY.registerItem(
-            "rune_of_space",
-            RuneOfSpaceItem::new,
-            p -> p.food(
-                    new FoodProperties.Builder()
-                            .alwaysEdible()
-                            .nutrition(1)
-                            .saturationModifier(2f)
-                            .build()
-            )
-    );
+    public static final DeferredItem<Item> RUNE_OF_SPACE = REGISTRY.registerItem("rune_of_space", RuneOfSpaceItem::new);
 
     public static final DeferredItem<Item> WISPBERRY = REGISTRY.registerItem(
             "wispberry",

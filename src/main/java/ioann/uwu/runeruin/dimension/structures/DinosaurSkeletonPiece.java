@@ -21,7 +21,8 @@ import java.util.Map;
 public final class DinosaurSkeletonPiece extends StructurePiece {
     private final BlockPos origin;
     private final long seed;
-    private Map<BlockPos, BlockState> bones;
+    // Chunks of one structure are decorated on several threads at once: volatile hands each of them the finished plan.
+    private volatile Map<BlockPos, BlockState> bones;
 
     public DinosaurSkeletonPiece(BlockPos origin, long seed, Map<BlockPos, BlockState> bones) {
         super(RRStructurePieceTypes.DINOSAUR_SKELETON_PIECE.get(), 0, BoundingBox.encapsulatingPositions(bones.keySet())
@@ -55,11 +56,12 @@ public final class DinosaurSkeletonPiece extends StructurePiece {
             ChunkPos chunkPos,
             BlockPos referencePos
     ) {
-        if (this.bones == null) {
-            this.bones = DinosaurSkeletonGenerator.generate(this.seed);
+        Map<BlockPos, BlockState> bones = this.bones;
+        if (bones == null) {
+            this.bones = bones = DinosaurSkeletonGenerator.generate(this.seed);
         }
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (Map.Entry<BlockPos, BlockState> bone : this.bones.entrySet()) {
+        for (Map.Entry<BlockPos, BlockState> bone : bones.entrySet()) {
             pos.setWithOffset(this.origin, bone.getKey());
             // Not under the Lost caves, and not into the ceiling of the Void where it rises into their floor.
             if (chunkBB.isInside(pos) && pos.getY() >= Const.LOST_CAVES_Y && !VoidGen.reaches(level, pos)) {

@@ -167,6 +167,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("world_seed_changes_generation", () -> RRGameTests::worldSeedChangesGeneration);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BIOME_REGISTRY_COMPLETE =
         TEST_FUNCTIONS.register("biome_registry_complete", () -> RRGameTests::biomeRegistryComplete);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOCKS_OWN_LOOT_AND_NAMES =
+        TEST_FUNCTIONS.register("blocks_own_loot_and_names", () -> RRGameTests::blocksOwnLootAndNames);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LAYER_FLOORS_DIFFER =
         TEST_FUNCTIONS.register("layer_floors_differ", () -> RRGameTests::layerFloorsDiffer);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FLOATING_ISLANDS_NOT_GENERATED =
@@ -493,6 +495,13 @@ public final class RRGameTests {
             RR.id("biome_registry_complete"),
             new FunctionGameTestInstance(
                 BIOME_REGISTRY_COMPLETE.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("blocks_own_loot_and_names"),
+            new FunctionGameTestInstance(
+                BLOCKS_OWN_LOOT_AND_NAMES.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -1116,6 +1125,25 @@ public final class RRGameTests {
                     problems.add(placed.key().identifier() + (parked ? " is parked but used by a biome" : " is not used by any biome; attach it to a biome or add it to PARKED_FEATURES"));
                 }
             });
+        helper.assertTrue(problems.isEmpty(), String.join("; ", problems));
+        helper.succeed();
+    }
+
+    /**
+     * Properties.ofFullCopy of a vanilla block also copies a loot table or a name that vanilla points at another
+     * block (wall signs, torches): our block would then drop the vanilla item, and datagen would overwrite the
+     * vanilla loot table.
+     */
+    private static void blocksOwnLootAndNames(GameTestHelper helper) {
+        List<String> problems = new ArrayList<>();
+        BuiltInRegistries.BLOCK.listElements().filter(block -> isModKey(block.key())).forEach(block -> {
+            block.value().getLootTable()
+                .filter(table -> !isModKey(table))
+                .ifPresent(table -> problems.add(block.key().identifier() + " uses the loot table " + table.identifier()));
+            if (!block.value().getDescriptionId().startsWith("block." + RR.MODID + ".")) {
+                problems.add(block.key().identifier() + " is named " + block.value().getDescriptionId());
+            }
+        });
         helper.assertTrue(problems.isEmpty(), String.join("; ", problems));
         helper.succeed();
     }
