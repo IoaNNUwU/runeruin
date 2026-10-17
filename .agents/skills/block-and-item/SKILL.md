@@ -3,8 +3,8 @@ name: block-and-item
 description: >-
   Checklist for adding, renaming or removing a RuneRuin block or item: registration, creative tab,
   blockstate datagen, the model as a file a person finishes in Blockbench, loot, tags, recipes, client
-  tints and renderers, translations and textures. Use whenever a block or item is created or its
-  registration, model or datagen changes.
+  tints and renderers, translations, textures, and the hand-off of models and textures to a person who
+  finishes them. Use whenever a block or item is created or its registration, model or datagen changes.
 ---
 
 # Block or item
@@ -27,6 +27,13 @@ A new block touches 8–10 files. Copy the closest existing block (same shape, r
 
 **Renaming or removing.** Search the id everywhere first: Java, lang keys, model and blockstate files, textures, tags, recipes, the creative tab and the structure templates (`.nbt`) that contain the block. A renamed or removed id disappears from existing worlds: keep the old id loading with `REGISTRY.addAlias(old, new)` (as `RRItems` does for the wispberry), and propose a removal as a design first.
 
-In the report, give every model file of step 4a as a link with its absolute path in the task worktree, one line per file: what it shows and "open it in Blockbench".
-
 Then run `compileJava`, `runData` and `python scripts/lint_assets.py`: the linter catches a missing model, texture or translation, a texture of the wrong size and a model file that Blockbench would save for another version of the game. Render the new model with `scripts/render_model.py`. Nothing catches a wrong render layer, drops or tool, so list those under "Check in game" in the final report.
+
+## Hand-off to a person
+
+Required when the task made or changed a model file of step 4a or a texture: the work of an agent on them is a draft, and a person finishes it ([AI_POLICY.md](../../../AI_POLICY.md)). It comes once everything else is done and the checks above have passed, before the final report.
+
+1. Stop and send the person, in the chat, a link with the absolute path into the task worktree for each such file, one line per file, with what it shows and what to do with it: "open it in Blockbench" for a model, "redraw it in Blockbench or any editor, at the same size" for a texture. Say which models are derived from a file (`ModelJson.lifted`) and so need `runData` after it is saved. Add the renders of the draft and the single-line `runData` and `runClient` commands for the task worktree.
+2. Wait. The pull request stays a draft until the person says that they have finished the files. Do not change those files meanwhile.
+3. Then run `runData`, the linter and the renders again on the files as the person saved them. Read a model in place; do not rewrite or reformat it.
+4. Only now write the final report, with the renders of the finished files. It names every file of step 1 again, as AGENTS.md asks.

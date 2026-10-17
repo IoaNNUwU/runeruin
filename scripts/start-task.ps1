@@ -28,7 +28,7 @@ catch {
     throw "Could not create $branch at $worktree. If the branch exists, choose another task name."
 }
 
-# The worktree's own copy: hooks path, shared .mc-sources link, .vanilla-textures, src/generated.
+# The worktree's own setup: hooks path, link to the shared .mc-sources, src/generated.
 & (Join-Path $worktree 'scripts/setup-worktree.ps1')
 
 & git -C $worktree status --short --branch

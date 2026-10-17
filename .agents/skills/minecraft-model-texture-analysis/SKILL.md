@@ -3,7 +3,7 @@ name: minecraft-model-texture-analysis
 description: >-
   Inspect Minecraft block, item, and mob model geometry and texture UVs. Use when a task asks
   which texture region a model element or face uses, or requests a visual check of Minecraft
-  textures or model parts.
+  textures, model parts or mob animations (rendered into a GIF).
 ---
 
 # Minecraft model and texture analysis
@@ -35,7 +35,7 @@ Inspect the resulting `build/libs/*.jar` as a zip to compare the shipped model o
 
 ## Extract JSON face UVs
 
-The bundled script supports Minecraft cuboid/block model JSON with `elements`, `faces`, texture variables, project parent models, common vanilla cube parents (`cube_all`, `cube`, `cube_bottom_top`, vertical/horizontal `cube_column`, and orientable variants), and omitted `uv` values. It writes one PNG per selected face and a `manifest.json` that maps the crop back to the element, direction, texture resource, UV coordinates, source pixels, and face rotation. Other vanilla parents resolve from `.vanilla-textures/assets/minecraft/models`, extracted by the setup script.
+The bundled script supports Minecraft cuboid/block model JSON with `elements`, `faces`, texture variables, project parent models, common vanilla cube parents (`cube_all`, `cube`, `cube_bottom_top`, vertical/horizontal `cube_column`, and orientable variants), and omitted `uv` values. It writes one PNG per selected face and a `manifest.json` that maps the crop back to the element, direction, texture resource, UV coordinates, source pixels, and face rotation. Other vanilla parents resolve from `.mc-sources/textures/assets/minecraft/models`, extracted by the setup script.
 
 ```powershell
 python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_faces.py src/main/resources/assets/runeruin/models/block/firefly_in_a_jar.json --element jar_glass_body --face north
@@ -82,9 +82,17 @@ python scripts/render_entity_model.py exports/cow_walk.png minecraft:cow entity/
 python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/snail/snail --view 45,30 0,0 --pose left_antenna.zRot+=-30 head.y+=-2
 ```
 
+`--layer` takes several layers drawn together, each `<layer>` or `<layer>=<texture>`; a layer without a texture takes the texture argument. `--animation` plays an animation over the pose, from the Java class the game loads, as `KeyframeAnimation.apply` does: rotation, position and scale keyframes, linear and Catmull-Rom. A bare name is a field of the class Blockbench exports for our project (`<model_identifier>Animation`), `<Class>.<FIELD>` any class in `src/main/java` or the Minecraft sources (vanilla ones in `net/minecraft/client/animation/definitions`). A `.gif` output plays it at `--fps` (20, the game's ticks) and rests a second on the last frame of an animation that does not loop; a `.png` output shows `--frames` still frames (5) from the first to the last, a row per view. Every frame of a view shares one frame on the screen, so the model does not jump. The default views are `iso front` and `side`, the scale 8. The animation plays at full strength: the game scales a walk by the speed of the mob, and the head that turns to a target is code. Use it for every new or changed animation and attach the GIF to the pull request:
+
+```powershell
+python scripts/render_entity_model.py exports/punch.gif mossy_warrior runeruin:entity/mossy_warrior/mossy_warrior --layer main moss=runeruin:entity/mossy_warrior/mossy_warrior_moss --animation punch
+python scripts/render_entity_model.py exports/somersault.png mossy_prophet runeruin:entity/mossy_prophet/mossy_prophet --animation somersault --frames 8 --view 90,0
+python scripts/render_entity_model.py exports/camel.gif minecraft:camel entity/camel/camel --animation CamelAnimation.CAMEL_WALK
+```
+
 ## Assess model changes
 
-The mobs of this mod keep their geometry and UVs in their Blockbench project (`assets/runeruin/models/entity/<name>.bbmodel`: the `uv_offset` and size of each cube, read by `client/model/BlockbenchModel`); look there first. For vanilla mobs in Java, trace the renderer/model registration to its atlas, then inspect `texOffs(...)`, box dimensions, texture scaling, and any per-face UV declarations in the model source. This project's Minecraft 26.2 source is `.mc-sources/net/minecraft/client/model/geom/ModelPart.java`; custom model code may define a different layout. For the standard `CubeListBuilder.texOffs(u, v).addBox(..., w, h, d)` layout, the source maps face rectangles as follows (coordinates are atlas pixels):
+The mobs of this mod keep their geometry and UVs in their Blockbench project (`assets/runeruin/models/entity/<name>.bbmodel`: the `uv_offset` and size of each cube, read by `client/model/BlockbenchModel`); look there first. For vanilla mobs in Java, trace the renderer/model registration to its atlas, then inspect `texOffs(...)`, box dimensions, texture scaling, and any per-face UV declarations in the model source. This project's Minecraft 26.2 source is `.mc-sources/code/net/minecraft/client/model/geom/ModelPart.java`; custom model code may define a different layout. For the standard `CubeListBuilder.texOffs(u, v).addBox(..., w, h, d)` layout, the source maps face rectangles as follows (coordinates are atlas pixels):
 
 | Face | Rectangle `[left, top, right, bottom]` |
 |------|-----------------------------------------|
