@@ -1,6 +1,7 @@
 package ioann.uwu.runeruin.preview.jobs;
 
 import com.mojang.datafixers.util.Pair;
+import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.structures.HangingPiece;
@@ -22,12 +23,16 @@ import java.util.TreeMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 
 public final class HangingTracksPreviewJob implements PreviewJob {
     @Override
@@ -39,9 +44,9 @@ public final class HangingTracksPreviewJob implements PreviewJob {
     public String description() {
         return "Hanging minecart tracks under a wavy ceiling. params: piece (network, straight, stairs, diagonal, corner, "
                 + "junction, platform), size, extent (1-2), links (junction sides, 1-15), wood (oak, inverted_tree), "
-                + "wear (intact, decayed, overgrown), shape (rectangle, round, l, t, plus) with width and depth, "
-                + "theme (moss_pond, huts, treasure_hut, camp, storage, spawner, workshop, depot, lookout), gap (3-20), "
-                + "rock=true (a rock through the middle of a single piece), terrain=real with x and z (the ceiling and the floor of the Deep caves for the seed, around that block)";
+                + "wear (intact, decayed, overgrown), template (of a platform: hanging_tracks/platform/camp, "
+                + "hanging_tracks/dungeon/huts, ...), gap (3-20), rock=true (a rock through the middle of a single piece), "
+                + "terrain=real with x and z (the ceiling and the floor of the Deep caves for the seed, around that block)";
     }
 
     /** A wavy ceiling at the height of the Deep caves one, and no floor. */
@@ -57,35 +62,34 @@ public final class HangingTracksPreviewJob implements PreviewJob {
         }
     };
 
+    /** The platforms are templates: only a run with the server has them. */
     @Override
-    public PreviewJobs.Result run(PreviewArgs args) throws IOException {
-        return run(args, WAVES);
+    public PreviewJobs.Result run(PreviewArgs args) {
+        throw new UnsupportedOperationException("The hanging tracks preview needs the server for the templates of the platforms");
     }
 
     @Override
     public PreviewJobs.Result run(PreviewArgs args, MinecraftServer server) throws IOException {
-        if (!args.get("terrain", "waves").equals("real")) {
-            return run(args, WAVES);
-        }
-        return run(args, HangingTracksStructure.terrain(HeadlessTerrainGenerator.randomState(server, args.seed())));
-    }
-
-    private PreviewJobs.Result run(PreviewArgs args, HangingTracksLayout.Terrain terrain) throws IOException {
+        HangingTracksLayout.Terrain terrain = args.get("terrain", "waves").equals("real")
+                ? HangingTracksStructure.terrain(HeadlessTerrainGenerator.randomState(server, args.seed()))
+                : WAVES;
         long seed = args.seed();
-        PreviewWorld world = PreviewWorld.create(seed);
+        // Placing a template reads the registries of the server.
+        PreviewWorld world = PreviewWorld.create(seed, server.overworld());
+        StructureTemplateManager templates = server.getStructureManager();
         String kind = args.get("piece", "network");
 
-        List<HangingPiece> pieces;
+        List<StructurePiece> pieces;
         if (kind.equals("network")) {
-            pieces = HangingTracksLayout.generate(args.getInt("x", 0), args.getInt("z", 0), world.random(), terrain);
+            pieces = HangingTracksLayout.generate(args.getInt("x", 0), args.getInt("z", 0), world.random(), terrain, templates);
             if (pieces.isEmpty()) {
                 throw new IllegalStateException("No network fits around the station with seed " + seed);
             }
         } else {
-            pieces = List.of(single(kind, args, seed, terrain));
+            pieces = List.of(single(kind, args, seed, terrain, templates));
         }
 
-        for (HangingPiece piece : pieces) {
+        for (StructurePiece piece : pieces) {
             BoundingBox box = piece.getBoundingBox();
             for (int x = box.minX(); x <= box.maxX(); x++) {
                 for (int z = box.minZ(); z <= box.maxZ(); z++) {
@@ -102,7 +106,7 @@ public final class HangingTracksPreviewJob implements PreviewJob {
             world.fillBox(new BoundingBox(x - 2, box.minY() + 1, z - 2, x + 2, terrain.ceilingY(x, z), z + 2), Blocks.STONE.defaultBlockState());
         }
         Map<String, Integer> kinds = new TreeMap<>();
-        for (HangingPiece piece : pieces) {
+        for (StructurePiece piece : pieces) {
             PreviewJobs.placePieceAcrossChunks(piece, world);
             kinds.merge(piece.getClass().getSimpleName(), 1, Integer::sum);
         }
@@ -144,7 +148,7 @@ public final class HangingTracksPreviewJob implements PreviewJob {
         }
     }
 
-    private static HangingPiece single(String kind, PreviewArgs args, long seed, HangingTracksLayout.Terrain terrain) {
+    private static StructurePiece single(String kind, PreviewArgs args, long seed, HangingTracksLayout.Terrain terrain, StructureTemplateManager templates) {
         int extent = Math.max(1, Math.min(2, args.getInt("extent", 2)));
         int size = args.getInt("size", 0);
         HangingPiece.Look look = new HangingPiece.Look(
@@ -156,16 +160,12 @@ public final class HangingTracksPreviewJob implements PreviewJob {
         HangingTracksLayout.Port port = new HangingTracksLayout.Port(0, terrain.ceilingY(0, 0) - 1 - gap, 0, Direction.NORTH);
 
         if (kind.equals("platform")) {
-            return new HangingPlatformPiece(
-                    port,
-                    HangingPlatformPiece.Shape.valueOf(args.get("shape", "rectangle").toUpperCase(Locale.ROOT)),
-                    args.getInt("width", 13),
-                    args.getInt("depth", 13),
-                    1,
-                    HangingPlatformPiece.Theme.valueOf(args.get("theme", "huts").toUpperCase(Locale.ROOT)),
-                    !Boolean.parseBoolean(args.get("detached", "false")),
-                    look
-            );
+            Identifier template = RR.id(args.get("template", HangingPlatformPiece.PLATFORMS + "/camp"));
+            HangingPlatformPiece platform = HangingPlatformPiece.create(templates, template, port, Mirror.NONE, look.wood());
+            if (platform == null) {
+                throw new IllegalArgumentException("The template " + template + " has no jigsaw block facing sideways");
+            }
+            return platform;
         }
         HangingTrackPiece track = switch (kind) {
             case "straight" -> new HangingTrackPiece.Straight(port, size == 0 ? 12 : size, extent, extent, look);
