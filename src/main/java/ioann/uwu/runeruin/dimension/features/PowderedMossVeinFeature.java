@@ -14,7 +14,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 public class PowderedMossVeinFeature extends Feature<NoneFeatureConfiguration> {
     private static final int SEARCH_RANGE = 16;
     /** The thickest floor that the moss goes through. */
-    public static final int SHAFT_DEPTH = 12;
+    public static final int SHAFT_DEPTH = 15;
 
     public PowderedMossVeinFeature() {
         super(NoneFeatureConfiguration.CODEC);
