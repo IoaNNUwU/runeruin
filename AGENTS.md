@@ -63,6 +63,7 @@ What an agent makes is a draft ([AI_POLICY.md](AI_POLICY.md)): a person reworks 
 - An exported animation class is never edited by hand: change the animation in the `.bbmodel` and export it with Blockbench again (an agent with a browser uses web.blockbench.net), or ask the person to.
 - An animation follows a movement whose progress the mob already counts: the game shows the frame of that progress, 0 the first frame and 1 the last (`MossyRamModel`). A one-off event without such progress, such as a roar or a dance, plays in seconds from an `AnimationState` that the mob starts, as the vanilla Warden does.
 - A draft of a build is a generator with a preview job: the person puts it into the world with `/rrpreview place <job>`, rebuilds it and saves it. Then the generator is deleted (`worldgen-structure` skill).
+- A task that made or changed a model, its animations or a texture hands them to the person before the final report, once everything else is done: it sends the links, waits until the person has finished the files and then runs the checks again (the `block-and-item` and `mob` skills).
 - A report on a task that made or changed such a file names it for the person: a link with the absolute path into the task worktree, what the file shows and what to do with it, such as "open it in Blockbench" for a model or the project of a mob and the `/place template runeruin:<folder>/<name>` command for a build. A block with several model files gets one line per file. If the model has derived variants, say that `runData` must run after it is saved.
 
 ## Commits and code
@@ -105,6 +106,7 @@ Step-by-step procedures live in skills; load the matching one before starting su
 | Skill | Use for |
 |-------|---------|
 | `block-and-item` | adding, renaming or removing a block or item, its model file included |
+| `mob` | adding or changing a mob: entity, spawns, Blockbench project, animations, renderer, textures, spawn egg, GameTest |
 | `worldgen-feature` | decoration features: plants, rocks, vines, mushrooms, spikes |
 | `worldgen-biome` | adding, reweighting, moving or changing biomes |
 | `worldgen-structure` | multi-piece structures such as Giant Goblet and Baobab, and builds from templates a person saved |
