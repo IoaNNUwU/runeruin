@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.client.model.MossyRamModel;
 import ioann.uwu.runeruin.entities.MossyRam;
+import java.util.function.Function;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -11,8 +12,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.resources.Identifier;
-
-import java.util.function.Function;
 
 public class MossyRamRenderer extends MobRenderer<MossyRam, MossyRamRenderState, MossyRamModel> {
     private final Identifier texture;

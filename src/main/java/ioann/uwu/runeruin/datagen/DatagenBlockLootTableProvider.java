@@ -2,8 +2,7 @@ package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.blocks.WispberryBushBlock;
-import ioann.uwu.runeruin.items.RRItems;
+import java.util.Set;
 import net.minecraft.advancements.predicates.StatePropertiesPredicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
@@ -29,8 +28,6 @@ import net.minecraft.world.level.storage.loot.providers.number.BinomialDistribut
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import org.jspecify.annotations.NonNull;
-
-import java.util.Set;
 
 public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
 
@@ -72,7 +69,11 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.GIANT_GOBLET_BUD.get());
         dropSelf(RRBlocks.DEEP_ROOTS.get());
 
-        dropSelf(RRBlocks.ELDEN_LEAVES.get());
+        add(RRBlocks.ELDEN_LEAVES.get(), block -> createLeavesDrops(
+                block,
+                RRBlocks.ELDEN_SAPLING.get(),
+                BlockLootSubProvider.NORMAL_LEAVES_SAPLING_CHANCES
+        ));
         add(RRBlocks.ELDEN_VINES.get(), noDrop());
         dropSelf(RRBlocks.BAOBAB_LOG.get());
         dropSelf(RRBlocks.BAOBAB_WOOD.get());
@@ -129,12 +130,6 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         add(RRBlocks.RUNE_RUIN_PORTAL.get(), noDrop());
 
         createWispberry();
-
-        add(RRBlocks.ELDEN_LEAVES.get(), block -> createLeavesDrops(
-                block,
-                RRBlocks.ELDEN_SAPLING.get(),
-                BlockLootSubProvider.NORMAL_LEAVES_SAPLING_CHANCES
-        ));
     }
 
     private LootTable.Builder createGlowingMushroomBlockDrop(Block original) {
@@ -177,33 +172,14 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         );
     }
 
+    /** The berries of the harvest table, more with Fortune. */
     private void createWispberry() {
-
-        HolderLookup.RegistryLookup<Enchantment> enchantments = this.registries.lookupOrThrow(Registries.ENCHANTMENT);
-
+        Holder<Enchantment> fortune = this.registries.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE);
         add(RRBlocks.WISPBERRY_BUSH.get(), block -> applyExplosionDecay(
                 block,
                 LootTable.lootTable()
-                        .withPool(LootPool.lootPool()
-                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.WISPBERRY_BUSH.get())
-                                        .setProperties(StatePropertiesPredicate.Builder.properties()
-                                                .hasProperty(WispberryBushBlock.AGE, 3)
-                                        )
-                                )
-                                .add(LootItem.lootTableItem(RRItems.WISPBERRY))
-                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(2f, 4f)))
-                                .apply(ApplyBonusCount.addUniformBonusCount(enchantments.getOrThrow(Enchantments.FORTUNE)))
-                        )
-                        .withPool(LootPool.lootPool()
-                                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(RRBlocks.WISPBERRY_BUSH.get())
-                                        .setProperties(StatePropertiesPredicate.Builder.properties()
-                                                .hasProperty(WispberryBushBlock.AGE, 2)
-                                        )
-                                )
-                                .add(LootItem.lootTableItem(RRItems.WISPBERRY))
-                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1f, 2f)))
-                                .apply(ApplyBonusCount.addUniformBonusCount(enchantments.getOrThrow(Enchantments.FORTUNE)))
-                        )
+                        .withPool(DatagenLootTableProvider.wispberryPool(3, 2f, 4f).apply(ApplyBonusCount.addUniformBonusCount(fortune)))
+                        .withPool(DatagenLootTableProvider.wispberryPool(2, 1f, 2f).apply(ApplyBonusCount.addUniformBonusCount(fortune)))
         ));
     }
 

@@ -3,13 +3,13 @@ package ioann.uwu.runeruin.dimension.features;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.dimension.GeometryUtils;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
@@ -288,7 +288,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                 if (blockEntity instanceof SpawnerBlockEntity spawner) {
                     spawner.setEntityId(EntityTypes.CAVE_SPIDER, random);
                 } else {
-                    RR.LOGGER.warn("SpawnerBlockEntity generated in CeilingBallFeature is unaccessible");
+                    RR.LOGGER.warn("SpawnerBlockEntity generated in CeilingBallFeature is inaccessible");
                 }
 
                 BlockState chain = Blocks.IRON_CHAIN.defaultBlockState();
@@ -329,7 +329,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
                     if (chestBlockEntity instanceof ChestBlockEntity chest) {
                         chest.setLootTable(BuiltInLootTables.ABANDONED_MINESHAFT, random.nextLong());
                     } else {
-                        RR.LOGGER.warn("ChestBlockEntity generated in CeilingBallFeature is unaccessible");
+                        RR.LOGGER.warn("ChestBlockEntity generated in CeilingBallFeature is inaccessible");
                     }
                 }
             }
@@ -365,7 +365,7 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
         for (long edge : edges) {
             UnitVector start = sites[(int) (edge >>> 32)];
             UnitVector end = sites[(int) edge];
-            double dot = clamp(start.dot(end), -1.0, 1.0);
+            double dot = Mth.clamp(start.dot(end), -1.0, 1.0);
             double angle = Math.acos(dot);
             if (angle < 1.0e-4) {
                 continue;
@@ -494,10 +494,6 @@ public class CeilingBallFeature extends Feature<CeilingBallFeature.Config> {
             return Direction.Axis.X;
         }
         return absY >= absZ ? Direction.Axis.Y : Direction.Axis.Z;
-    }
-
-    private static double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
     }
 
     private record UnitVector(double x, double y, double z) {

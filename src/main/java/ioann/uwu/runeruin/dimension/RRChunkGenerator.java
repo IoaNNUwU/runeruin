@@ -2,17 +2,31 @@ package ioann.uwu.runeruin.dimension;
 
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.dimension.chunkgenerator.*;
-import ioann.uwu.runeruin.dimension.noise.*;
+import ioann.uwu.runeruin.dimension.chunkgenerator.ArcaneStructureGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TerrainWriter;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
+import ioann.uwu.runeruin.dimension.noise.LazyNoise;
+import ioann.uwu.runeruin.dimension.noise.Noise;
+import ioann.uwu.runeruin.dimension.noise.SingleNoise;
+import ioann.uwu.runeruin.dimension.noise.SupportedIslandsNoise;
+import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.SharedConstants;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.Util;
-import net.minecraft.world.level.*;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.NoiseColumn;
+import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
@@ -23,7 +37,17 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.chunk.ProtoChunk;
-import net.minecraft.world.level.levelgen.*;
+import net.minecraft.world.level.levelgen.Aquifer;
+import net.minecraft.world.level.levelgen.Beardifier;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.LegacyRandomSource;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseChunk;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.RandomSupport;
+import net.minecraft.world.level.levelgen.SurfaceRules;
+import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.carver.CarvingContext;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
@@ -31,10 +55,11 @@ import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-import static ioann.uwu.runeruin.dimension.Const.*;
+import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_MAX_BASELINE_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_Y;
+import static ioann.uwu.runeruin.dimension.Const.WORLD_HEIGHT;
 
 public class RRChunkGenerator extends ChunkGenerator {
 
@@ -62,7 +87,7 @@ public class RRChunkGenerator extends ChunkGenerator {
     }
 
     @Override
-    public void applyCarvers(WorldGenRegion worldGenRegion, long l, RandomState randomState, BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunkAccess) {
+    public void applyCarvers(WorldGenRegion worldGenRegion, long seed, RandomState randomState, BiomeManager biomeManager, StructureManager structureManager, ChunkAccess chunkAccess) {
         if (SharedConstants.DEBUG_DISABLE_CARVERS) {
             return;
         }
@@ -111,7 +136,7 @@ public class RRChunkGenerator extends ChunkGenerator {
 
                 for (Holder<ConfiguredWorldCarver<?>> carverHolder : carvers) {
                     ConfiguredWorldCarver<?> carver = carverHolder.value();
-                    random.setLargeFeatureSeed(l + index, sourcePos.x(), sourcePos.z());
+                    random.setLargeFeatureSeed(seed + index, sourcePos.x(), sourcePos.z());
                     if (carver.isStartChunk(random)) {
                         carver.carve(context, chunkAccess, correctBiomeManager::getBiome, random, aquifer, sourcePos, mask);
                     }
@@ -132,8 +157,8 @@ public class RRChunkGenerator extends ChunkGenerator {
     }
 
     @Override
-    public int getGenDepth() { // MAX HEIGHT
-        return 512;
+    public int getGenDepth() {
+        return WORLD_HEIGHT;
     }
 
     @Override
@@ -224,7 +249,7 @@ public class RRChunkGenerator extends ChunkGenerator {
     }
 
     @Override
-    public NoiseColumn getBaseColumn(int i, int i1, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
+    public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
         return new NoiseColumn(0, new BlockState[]{});
     }
 

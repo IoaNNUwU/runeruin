@@ -8,8 +8,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 
-import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_Y;
-
 public final class BaobabStructure extends Structure {
     public static final MapCodec<BaobabStructure> CODEC = simpleCodec(BaobabStructure::new);
 

@@ -1,7 +1,7 @@
 package ioann.uwu.runeruin.dimension.features;
 
-import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.dimension.RRConfiguredFeatures;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,11 +16,12 @@ import net.minecraft.util.Util;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.SpeleothemUtils;
 import net.minecraft.world.level.levelgen.feature.VegetationPatchFeature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration;
 
 /**
@@ -108,7 +109,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
             level.setBlock(
                     bushPos,
                     RRBlocks.WISPBERRY_BUSH.get().defaultBlockState().setValue(WispberryBushBlock.AGE, age),
-                    2
+                    Block.UPDATE_CLIENTS
             );
         }
     }
@@ -286,7 +287,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
             if (!canHangFrom(level, pos, moss, replaceable)) {
                 break;
             }
-            level.setBlock(pos, moss, 2);
+            level.setBlock(pos, moss, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -311,7 +312,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                     if (!isPassable(level.getBlockState(pos), underwater) || !canHangFrom(level, pos, moss, replaceable)) {
                         continue;
                     }
-                    level.setBlock(pos, moss, 2);
+                    level.setBlock(pos, moss, Block.UPDATE_CLIENTS);
                 }
             }
         }
@@ -341,7 +342,7 @@ public class GobletMossPatchFeature extends VegetationPatchFeature {
                     if (!isPassable(level.getBlockState(pos), underwater) || !canHangFrom(level, pos, moss, replaceable)) {
                         continue;
                     }
-                    level.setBlock(pos, moss, 2);
+                    level.setBlock(pos, moss, Block.UPDATE_CLIENTS);
                 }
             }
         }

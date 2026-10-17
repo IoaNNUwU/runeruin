@@ -4,8 +4,6 @@ import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import ioann.uwu.runeruin.dimension.biomes.WaterDecorations;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
-import net.minecraft.data.worldgen.placement.CavePlacements;
-import net.minecraft.data.worldgen.placement.NetherPlacements;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
@@ -27,8 +25,6 @@ public class SparklingCavesCeiling {
         BiomeDefaultFeatures.addExtraGold(generation);
 
         WaterDecorations.add(generation);
-
-
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()
                 .waterColor(0x20AA80);

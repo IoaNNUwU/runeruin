@@ -17,6 +17,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -29,7 +30,6 @@ public class GiantGobletPiece extends StructurePiece {
     public static final int PILLAR_RADIUS = 8;
     public static final int STEM_PINCH = 2;
     public static final int FLOOR_STEPS = 3;
-    public static final int FLOOR_THICKNESS = 2;
     public static final int RIM_THICKNESS = 5;
 
     private static final int MINI_FLOOR_STEPS = 3;
@@ -432,7 +432,7 @@ public class GiantGobletPiece extends StructurePiece {
         if (existing.isAir()
                 || existing.is(stem.getBlock())
                 || (replaceBud && existing.is(RRBlocks.GIANT_GOBLET_BUD.get()))) {
-            level.setBlock(pos, stem, 2);
+            level.setBlock(pos, stem, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -754,7 +754,7 @@ public class GiantGobletPiece extends StructurePiece {
     private static void set(WorldGenLevel level, BlockPos pos, BlockState state, BoundingBox chunkBB) {
         // The stem ends on the ceiling of the Void where it rises into the floor of the Lost caves.
         if (chunkBB.isInside(pos) && !VoidGen.reaches(level, pos)) {
-            level.setBlock(pos, state, 2);
+            level.setBlock(pos, state, Block.UPDATE_CLIENTS);
             var fluid = state.getFluidState();
             if (!fluid.isEmpty()) {
                 level.scheduleTick(pos, fluid.getType(), 0);
@@ -764,7 +764,7 @@ public class GiantGobletPiece extends StructurePiece {
 
     private static void setWaterIfAir(WorldGenLevel level, BlockPos pos, BlockState water, BoundingBox chunkBB) {
         if (chunkBB.isInside(pos) && level.getBlockState(pos).isAir()) {
-            level.setBlock(pos, water, 2);
+            level.setBlock(pos, water, Block.UPDATE_CLIENTS);
             level.scheduleTick(pos, water.getFluidState().getType(), 0);
         }
     }

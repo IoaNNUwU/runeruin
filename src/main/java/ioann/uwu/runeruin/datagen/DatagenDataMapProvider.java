@@ -2,13 +2,12 @@ package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.DataMapProvider;
 import net.neoforged.neoforge.registries.datamaps.builtin.Compostable;
 import net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps;
-
-import java.util.concurrent.CompletableFuture;
 
 public class DatagenDataMapProvider extends DataMapProvider {
     public DatagenDataMapProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {

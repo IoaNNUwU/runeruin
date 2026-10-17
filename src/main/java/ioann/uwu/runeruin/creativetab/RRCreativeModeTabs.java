@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.creativetab;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
+import java.util.List;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -10,14 +11,12 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import java.util.List;
-
 public class RRCreativeModeTabs {
 
     public static final DeferredRegister<CreativeModeTab> REGISTRY = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, RR.MODID);
 
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = REGISTRY.register("example_tab", () -> CreativeModeTab.builder()
-            .title(Component.translatable("itemGroup.runeruin")) //The language key for the title of your CreativeModeTab
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = REGISTRY.register("runeruin", () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.runeruin"))
             .withTabsBefore(CreativeModeTabs.COMBAT)
             .icon(() -> RRItems.RUNE_OF_SPACE.get().getDefaultInstance())
             .displayItems((_, output) -> output.acceptAll(List.of(
@@ -31,7 +30,6 @@ public class RRCreativeModeTabs {
                     RRItems.SNAIL_SPAWN_EGG.toStack(),
                     RRItems.MOSSY_PROPHET_SPAWN_EGG.toStack(),
                     RRItems.MOSSY_WARRIOR_SPAWN_EGG.toStack(),
-                    RRBlocks.LAPIS_LIGHT.toStack(),
 
                     // --- Blocks ---
                     RRBlocks.ARCANE_STONE.toStack(),
@@ -43,6 +41,7 @@ public class RRCreativeModeTabs {
 
                     RRBlocks.DIAMOND_ARCANE_STONE.toStack(),
                     RRBlocks.RUNIC_RAIL.toStack(),
+                    RRBlocks.LAPIS_LIGHT.toStack(),
 
                     RRBlocks.MOSS_LIGHT.toStack(),
                     RRBlocks.FIREFLY_IN_A_JAR.toStack(),
@@ -56,6 +55,7 @@ public class RRCreativeModeTabs {
                     RRBlocks.GLOWING_MUSHROOM_CAP.toStack(),
                     RRBlocks.GLOWING_MUSHROOM_STEM.toStack(),
                     RRBlocks.GLOWING_MUSHROOM.toStack(),
+                    RRBlocks.ASHEN_MUSHROOM_BLOCK.toStack(),
                     RRBlocks.BIG_LILY_PAD.toStack(),
                     RRBlocks.WATER_LILY_ROOT.toStack(),
                     RRBlocks.WATER_LILY_LEAF.toStack(),

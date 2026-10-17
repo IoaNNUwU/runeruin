@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import ioann.uwu.runeruin.blocks.BigLilyPadBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -11,14 +13,13 @@ import net.minecraft.util.Util;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.util.valueproviders.IntProviders;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Water-aware vegetation patch for the connected big lily pad.
@@ -83,22 +84,14 @@ public class LilyPadPatchFeature extends Feature<LilyPadPatchFeature.Config> {
         return surfaces;
     }
 
-    private static BlockPos findWaterSurface(WorldGenLevel level, BlockPos origin, int verticalRange) {
-        BlockPos.MutableBlockPos cursor = origin.mutable();
-        for (int steps = 0; steps <= verticalRange; steps++) {
-            BlockState state = level.getBlockState(cursor);
-            if (state.is(Blocks.WATER)) {
-                BlockPos surface = cursor.above();
-                return level.isEmptyBlock(surface) && level.getFluidState(surface).isEmpty()
-                        ? surface
-                        : null;
-            }
-            if (!state.isAir()) {
-                return null;
-            }
-            cursor.move(Direction.DOWN);
+    /** The free block on the first water under the origin, if nothing but air lies between them. */
+    private static @Nullable BlockPos findWaterSurface(WorldGenLevel level, BlockPos origin, int verticalRange) {
+        BlockPos top = FeatureScans.findDown(origin, 0, -verticalRange, pos -> !level.getBlockState(pos).isAir());
+        if (top == null || !level.getBlockState(top).is(Blocks.WATER)) {
+            return null;
         }
-        return null;
+        BlockPos surface = top.above();
+        return level.isEmptyBlock(surface) && level.getFluidState(surface).isEmpty() ? surface : null;
     }
 
     private static int placePads(
@@ -149,7 +142,7 @@ public class LilyPadPatchFeature extends Feature<LilyPadPatchFeature.Config> {
                         baseState
                                 .setValue(BigLilyPadBlock.PART, BigLilyPadBlock.partAt(size, x, z))
                                 .setValue(BigLilyPadBlock.FACING, facing),
-                        2
+                        Block.UPDATE_CLIENTS
                 );
             }
         }

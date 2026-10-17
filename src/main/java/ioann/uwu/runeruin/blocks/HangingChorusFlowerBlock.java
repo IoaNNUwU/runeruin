@@ -113,17 +113,17 @@ public class HangingChorusFlowerBlock extends Block {
     }
 
     private void placeGrownFlower(Level level, BlockPos pos, int age) {
-        level.setBlock(pos, this.defaultBlockState().setValue(AGE, age), 2);
+        level.setBlock(pos, this.defaultBlockState().setValue(AGE, age), Block.UPDATE_CLIENTS);
         level.levelEvent(1033, pos, 0);
     }
 
     private void placeDeadFlower(Level level, BlockPos pos) {
-        level.setBlock(pos, this.defaultBlockState().setValue(AGE, DEAD_AGE), 2);
+        level.setBlock(pos, this.defaultBlockState().setValue(AGE, DEAD_AGE), Block.UPDATE_CLIENTS);
         level.levelEvent(1034, pos, 0);
     }
 
     private static void setPlant(LevelAccessor level, BlockPos pos) {
-        level.setBlock(pos, HangingChorusPlantBlock.stateWithConnections(level, pos), 2);
+        level.setBlock(pos, HangingChorusPlantBlock.stateWithConnections(level, pos), Block.UPDATE_CLIENTS);
     }
 
     private static boolean allNeighborsEmpty(LevelReader level, BlockPos pos, @Nullable Direction ignore) {
@@ -233,7 +233,7 @@ public class HangingChorusFlowerBlock extends Block {
         }
 
         if (!placedStem) {
-            level.setBlock(current.below(height), RRBlocks.HANGING_CHORUS_FLOWER.get().defaultBlockState().setValue(AGE, DEAD_AGE), 2);
+            level.setBlock(current.below(height), RRBlocks.HANGING_CHORUS_FLOWER.get().defaultBlockState().setValue(AGE, DEAD_AGE), Block.UPDATE_CLIENTS);
         }
     }
 

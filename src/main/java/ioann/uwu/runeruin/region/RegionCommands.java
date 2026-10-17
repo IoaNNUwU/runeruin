@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.IdentifierException;
 import net.minecraft.commands.CommandSourceStack;
@@ -67,41 +68,32 @@ public final class RegionCommands {
     @SubscribeEvent
     public static void registerCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        registerAliases(dispatcher, "rrpos1", "/rrpos1", RegionCommands::registerPos1);
-        registerAliases(dispatcher, "rrpos2", "/rrpos2", RegionCommands::registerPos2);
-        registerAliases(dispatcher, "rrexport", "/rrexport", RegionCommands::registerExport);
-        registerAliases(dispatcher, "rrsave", "/rrsave", RegionCommands::registerSave);
-        registerAliases(dispatcher, "rrgenerate", "/rrgenerate", RegionCommands::registerGenerate);
-        registerAliases(dispatcher, "rrclear", "/rrclear", RegionCommands::registerClear);
+        registerAliases(dispatcher, "rrpos1", cmd -> registerPos(cmd, 1));
+        registerAliases(dispatcher, "rrpos2", cmd -> registerPos(cmd, 2));
+        registerAliases(dispatcher, "rrexport", RegionCommands::registerExport);
+        registerAliases(dispatcher, "rrsave", RegionCommands::registerSave);
+        registerAliases(dispatcher, "rrgenerate", RegionCommands::registerGenerate);
+        registerAliases(dispatcher, "rrclear", RegionCommands::registerClear);
     }
 
-    private static void registerAliases(
+    /** Registers an operator command as {@code name} and as {@code /name}, so that {@code //name} works too. */
+    public static void registerAliases(
         CommandDispatcher<CommandSourceStack> dispatcher,
         String name,
-        String slashName,
-        java.util.function.Consumer<LiteralArgumentBuilder<CommandSourceStack>> builder
+        Consumer<LiteralArgumentBuilder<CommandSourceStack>> builder
     ) {
-        LiteralArgumentBuilder<CommandSourceStack> a = Commands.literal(name).requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
-        LiteralArgumentBuilder<CommandSourceStack> b = Commands.literal(slashName).requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
-        builder.accept(a);
-        builder.accept(b);
-        dispatcher.register(a);
-        dispatcher.register(b);
+        for (String alias : List.of(name, "/" + name)) {
+            LiteralArgumentBuilder<CommandSourceStack> cmd = Commands.literal(alias).requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
+            builder.accept(cmd);
+            dispatcher.register(cmd);
+        }
     }
 
-    private static void registerPos1(LiteralArgumentBuilder<CommandSourceStack> cmd) {
-        cmd.executes(c -> setPos(c.getSource(), 1, targetedOrFeet(c.getSource().getPlayerOrException())))
+    private static void registerPos(LiteralArgumentBuilder<CommandSourceStack> cmd, int which) {
+        cmd.executes(c -> setPos(c.getSource(), which, targetedOrFeet(c.getSource().getPlayerOrException())))
             .then(
                 Commands.argument("pos", BlockPosArgument.blockPos())
-                    .executes(c -> setPos(c.getSource(), 1, BlockPosArgument.getLoadedBlockPos(c, "pos")))
-            );
-    }
-
-    private static void registerPos2(LiteralArgumentBuilder<CommandSourceStack> cmd) {
-        cmd.executes(c -> setPos(c.getSource(), 2, targetedOrFeet(c.getSource().getPlayerOrException())))
-            .then(
-                Commands.argument("pos", BlockPosArgument.blockPos())
-                    .executes(c -> setPos(c.getSource(), 2, BlockPosArgument.getLoadedBlockPos(c, "pos")))
+                    .executes(c -> setPos(c.getSource(), which, BlockPosArgument.getLoadedBlockPos(c, "pos")))
             );
     }
 
@@ -321,11 +313,10 @@ public final class RegionCommands {
             clickablePath(result.jsonPath())
         );
         Path projection = result.txtPath();
+        message.append(Component.literal("\n"));
         if (projection != null) {
-            message.append(Component.literal("\n"));
             message.append(Component.translatable("commands.runeruin.region.export_projection", clickablePath(projection)));
         } else {
-            message.append(Component.literal("\n"));
             message.append(Component.translatable("commands.runeruin.region.export_3d_hint").withStyle(ChatFormatting.GRAY));
         }
         if (result.snapshot().trimmedBlocks() > 0) {
@@ -341,7 +332,8 @@ public final class RegionCommands {
         return message;
     }
 
-    private static MutableComponent clickablePath(Path path) {
+    /** The absolute path for chat; a click opens the file. */
+    public static MutableComponent clickablePath(Path path) {
         Path absolute = path.toAbsolutePath();
         return Component.literal(absolute.toString())
             .withStyle(
@@ -383,17 +375,17 @@ public final class RegionCommands {
     }
 
     private static void highlight(ServerLevel level, ServerPlayer player, RegionSelection selection) {
-        @Nullable BlockPos pos1 = selection.pos1();
-        @Nullable BlockPos pos2 = selection.pos2();
-        if (pos1 != null && pos2 != null) {
+        if (selection.isComplete()) {
             BoundingBox box = selection.box();
             drawBox(level, player, BOX_DUST, box.minX(), box.minY(), box.minZ(), box.maxX() + 1, box.maxY() + 1, box.maxZ() + 1);
-            drawBox(level, player, POS1_DUST, pos1.getX(), pos1.getY(), pos1.getZ(), pos1.getX() + 1, pos1.getY() + 1, pos1.getZ() + 1);
-            drawBox(level, player, POS2_DUST, pos2.getX(), pos2.getY(), pos2.getZ(), pos2.getX() + 1, pos2.getY() + 1, pos2.getZ() + 1);
-        } else if (pos1 != null) {
-            drawBox(level, player, POS1_DUST, pos1.getX(), pos1.getY(), pos1.getZ(), pos1.getX() + 1, pos1.getY() + 1, pos1.getZ() + 1);
-        } else if (pos2 != null) {
-            drawBox(level, player, POS2_DUST, pos2.getX(), pos2.getY(), pos2.getZ(), pos2.getX() + 1, pos2.getY() + 1, pos2.getZ() + 1);
+        }
+        drawBlock(level, player, POS1_DUST, selection.pos1());
+        drawBlock(level, player, POS2_DUST, selection.pos2());
+    }
+
+    private static void drawBlock(ServerLevel level, ServerPlayer player, DustParticleOptions particle, @Nullable BlockPos pos) {
+        if (pos != null) {
+            drawBox(level, player, particle, pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
         }
     }
 

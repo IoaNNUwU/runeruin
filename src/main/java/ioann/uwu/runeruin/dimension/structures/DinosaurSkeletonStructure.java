@@ -3,17 +3,16 @@ package ioann.uwu.runeruin.dimension.structures;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.dimension.RRStructureTypes;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.function.IntBinaryOperator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.function.IntBinaryOperator;
 
 public class DinosaurSkeletonStructure extends Structure {
 

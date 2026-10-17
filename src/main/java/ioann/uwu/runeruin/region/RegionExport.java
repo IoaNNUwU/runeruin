@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
@@ -57,7 +58,7 @@ public final class RegionExport {
         if (cleaned.length() > 64) {
             cleaned = cleaned.substring(0, 64);
         }
-        return cleaned.isEmpty() ? "region_" + FILE_TIME.format(LocalDateTime.now()) : cleaned;
+        return cleaned.isEmpty() ? defaultName() : cleaned;
     }
 
     public static String defaultName() {
@@ -72,7 +73,7 @@ public final class RegionExport {
      * Builds a snapshot from any block lookup. Missing positions become air.
      * Used by in-game {@code /rrexport} (via {@link #scan}) and headless previews.
      */
-    public static Snapshot capture(String dimension, BoundingBox box, java.util.function.Function<BlockPos, BlockState> blocks) {
+    public static Snapshot capture(String dimension, BoundingBox box, Function<BlockPos, BlockState> blocks) {
         return capture(dimension, box, null, blocks, null);
     }
 
@@ -81,7 +82,7 @@ public final class RegionExport {
         String dimension,
         BoundingBox box,
         @Nullable Long worldSeed,
-        java.util.function.Function<BlockPos, BlockState> blocks,
+        Function<BlockPos, BlockState> blocks,
         @Nullable Predicate<BlockPos> prepared
     ) {
         int sizeX = box.getXSpan();
@@ -370,11 +371,7 @@ public final class RegionExport {
         out.append('\n');
     }
 
-    public record Result(Path jsonPath, @org.jspecify.annotations.Nullable Path txtPath, Snapshot snapshot) {
-        public boolean hasProjection() {
-            return txtPath != null;
-        }
-    }
+    public record Result(Path jsonPath, @Nullable Path txtPath, Snapshot snapshot) {}
 
     public static final class Snapshot {
         final String dimension;
@@ -433,7 +430,7 @@ public final class RegionExport {
             return "xyz";
         }
 
-        public int countMatching(java.util.function.Predicate<String> stateId) {
+        public int countMatching(Predicate<String> stateId) {
             int total = 0;
             for (Map.Entry<Character, String> entry : palette.tokenToState.entrySet()) {
                 if (stateId.test(entry.getValue())) {

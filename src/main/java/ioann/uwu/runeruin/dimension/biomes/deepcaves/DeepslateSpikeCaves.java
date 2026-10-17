@@ -1,8 +1,8 @@
 package ioann.uwu.runeruin.dimension.biomes.deepcaves;
 
-import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import ioann.uwu.runeruin.dimension.biomes.WaterDecorations;
+import ioann.uwu.runeruin.dimension.features.CaveMushroomKind;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.placement.CavePlacements;
 import net.minecraft.world.attribute.EnvironmentAttributes;

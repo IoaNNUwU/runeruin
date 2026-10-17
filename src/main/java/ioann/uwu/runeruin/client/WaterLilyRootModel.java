@@ -1,6 +1,8 @@
 package ioann.uwu.runeruin.client;
 
 import ioann.uwu.runeruin.blocks.WaterLilyRootBlock;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
@@ -19,12 +21,18 @@ import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static ioann.uwu.runeruin.blocks.WaterLilyLeafBlock.MAX_HEIGHT;
 import static ioann.uwu.runeruin.blocks.WaterLilyLeafBlock.REACH;
-import static ioann.uwu.runeruin.client.WaterLilyStemTexture.*;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.BELOW;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.CELL_HEIGHT;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.CELL_WIDTH;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.HEIGHT;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.MARGIN;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.START_Y;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.VARIANTS;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.WIDTH;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.cellX;
+import static ioann.uwu.runeruin.client.WaterLilyStemTexture.cellY;
 
 /**
  * Root model plus one stem to every attached leaf.

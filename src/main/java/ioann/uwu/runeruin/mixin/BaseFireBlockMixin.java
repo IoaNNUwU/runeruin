@@ -14,6 +14,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * Fire lit in an arcane stone frame opens a RuneRuin portal. A mixin, because NeoForge has no event for fire being
+ * placed: {@code BlockEvent.PortalSpawnEvent} is posted only for a vanilla nether portal shape and only in the
+ * overworld and the nether, while fire comes from flint and steel, fire charges, dispensers and spreading flames.
+ */
 @Mixin(BaseFireBlock.class)
 public class BaseFireBlockMixin {
 

@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -79,7 +80,9 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
                 if (height == 0 && plant == null) {
                     continue;
                 }
-                BlockPos pos = findFloor(level, origin.offset(x, 0, z), moss);
+                // The highest free block near the origin level that moss can lie on; the bushes keep to the same ground.
+                BlockPos pos = FeatureScans.findDown(origin.offset(x, 0, z), FLOOR_SEARCH, -FLOOR_SEARCH,
+                        p -> level.isEmptyBlock(p) && moss.canSurvive(level, p));
                 if (pos == null) {
                     continue;
                 }
@@ -87,10 +90,10 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
                     // Most of a mound is bare moss; a plant in the rest stands in the moss of its column.
                     level.setBlock(pos, plant == null || height > MossLayerPlantBlock.MAX_MOSS
                             ? moss.setValue(DeepMossLayerBlock.LAYERS, height)
-                            : plant.setValue(MossLayerPlantBlock.MOSS, height), 2);
+                            : plant.setValue(MossLayerPlantBlock.MOSS, height), Block.UPDATE_CLIENTS);
                     placed = true;
                 } else if (plant.canSurvive(level, pos)) {
-                    level.setBlock(pos, plant, 2);
+                    level.setBlock(pos, plant, Block.UPDATE_CLIENTS);
                 }
             }
         }
@@ -126,16 +129,5 @@ public class MossHummockFeature extends Feature<NoneFeatureConfiguration> {
                 layers[x + REACH][z + REACH] = Math.max(layers[x + REACH][z + REACH], height);
             }
         }
-    }
-
-    /** The highest free block near the origin level that moss can lie on; the bushes keep to the same ground. */
-    private static @Nullable BlockPos findFloor(WorldGenLevel level, BlockPos column, BlockState moss) {
-        for (int dy = FLOOR_SEARCH; dy >= -FLOOR_SEARCH; dy--) {
-            BlockPos pos = column.above(dy);
-            if (level.isEmptyBlock(pos) && moss.canSurvive(level, pos)) {
-                return pos;
-            }
-        }
-        return null;
     }
 }

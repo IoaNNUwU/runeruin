@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceKey;
@@ -10,8 +11,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.data.ItemTagsProvider;
 import org.jspecify.annotations.NonNull;
-
-import java.util.concurrent.CompletableFuture;
 
 public class DatagenItemTagProvider extends ItemTagsProvider {
 

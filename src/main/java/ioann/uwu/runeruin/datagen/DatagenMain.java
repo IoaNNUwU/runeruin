@@ -1,7 +1,16 @@
 package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.dimension.*;
+import ioann.uwu.runeruin.dimension.RRBiomes;
+import ioann.uwu.runeruin.dimension.RRConfiguredCarvers;
+import ioann.uwu.runeruin.dimension.RRConfiguredFeatures;
+import ioann.uwu.runeruin.dimension.RRDimension;
+import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
+import ioann.uwu.runeruin.dimension.RRStructureSets;
+import ioann.uwu.runeruin.dimension.RRStructures;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
@@ -13,10 +22,6 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @EventBusSubscriber(modid = RR.MODID)
 public class DatagenMain {
@@ -48,7 +53,7 @@ public class DatagenMain {
                                     LootContextParamSets.BLOCK
                             ),
                             new LootTableProvider.SubProviderEntry(
-                                    DatagenLootTableProvider::new,
+                                    _ -> new DatagenLootTableProvider(),
                                     LootContextParamSets.BLOCK_INTERACT
                             ),
                             new LootTableProvider.SubProviderEntry(

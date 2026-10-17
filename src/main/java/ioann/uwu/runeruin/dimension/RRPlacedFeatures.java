@@ -3,11 +3,12 @@ package ioann.uwu.runeruin.dimension;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
-import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
-import ioann.uwu.runeruin.dimension.placements.ChunkCenterPlacement;
+import ioann.uwu.runeruin.dimension.features.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.placements.GobletUnderwaterPlacement;
 import ioann.uwu.runeruin.dimension.placements.WallPlacementFilter;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
@@ -17,7 +18,6 @@ import net.minecraft.data.worldgen.features.TreeFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.data.worldgen.placement.VegetationPlacements;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.random.WeightedList;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -28,12 +28,27 @@ import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.heightproviders.VeryBiasedToBottomHeight;
-import net.minecraft.world.level.levelgen.placement.*;
+import net.minecraft.world.level.levelgen.placement.BiomeFilter;
+import net.minecraft.world.level.levelgen.placement.BlockPredicateFilter;
+import net.minecraft.world.level.levelgen.placement.CountPlacement;
+import net.minecraft.world.level.levelgen.placement.EnvironmentScanPlacement;
+import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
+import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
+import net.minecraft.world.level.levelgen.placement.NoiseBasedCountPlacement;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.placement.PlacementModifier;
+import net.minecraft.world.level.levelgen.placement.RandomOffsetPlacement;
+import net.minecraft.world.level.levelgen.placement.RarityFilter;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static ioann.uwu.runeruin.dimension.Const.*;
+import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.BLOOMING_CAVES_Y;
+import static ioann.uwu.runeruin.dimension.Const.CEILING_TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.DEEP_CAVES_Y;
+import static ioann.uwu.runeruin.dimension.Const.LOST_CAVES_CEILING_Y;
+import static ioann.uwu.runeruin.dimension.Const.LOST_CAVES_Y;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_MAX_BASELINE_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_TERRAIN_HEIGHT;
 
 // https://misode.github.io/worldgen/placed-feature/
 // https://youtu.be/B4cyrSExjpc?si=8hDK_-61NfGq2K1D
@@ -88,7 +103,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch_underwater");
     public static final ResourceKey<PlacedFeature> FLOATING_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "floating_moss_patch");
-    public static final ResourceKey<PlacedFeature> GOBLET_SEAGRASS =RR.resourceKey(Registries.PLACED_FEATURE, "goblet_seagrass");
+    public static final ResourceKey<PlacedFeature> GOBLET_SEAGRASS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_seagrass");
     public static final ResourceKey<PlacedFeature> GOBLET_KELP = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_kelp");
     public static final ResourceKey<PlacedFeature> GOBLET_DEEP_ROOTS = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_deep_roots");
     public static final ResourceKey<PlacedFeature> DEEP_ROOTS_GRASS = RR.resourceKey(Registries.PLACED_FEATURE, "deep_roots_grass");
@@ -105,9 +120,9 @@ public class RRPlacedFeatures {
 
     // Height bands that decorations start their surface scan from.
     private static final int BLOOMING_FLOOR_TOP = BLOOMING_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
-    private static final int BLOOMING_CEILING_BOTTOM = TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 10;
+    private static final int BLOOMING_CEILING_BOTTOM = RRBiomeSource.BLOOMING_CEILING_BIOME_BOTTOM;
     private static final int BLOOMING_CEILING_TOP = BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
-    private static final int DEEP_CEILING_BOTTOM = DEEP_CAVES_CEILING_Y - CEILING_TERRAIN_HEIGHT - 10;
+    private static final int DEEP_CEILING_BOTTOM = DeepCavesGen.LOWEST_Y - 8;
     private static final int DEEP_CEILING_TOP = DEEP_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
     // Always in the air under the Void ceiling, and within reach of its highest terrace.
     private static final int VOID_AIR_TOP = VoidGen.LOWEST_Y - 1;
@@ -480,7 +495,6 @@ public class RRPlacedFeatures {
     /** One group of bushes per chunk around a point of the band, each bush on the ground under its own spot. */
     private static List<PlacementModifier> wispberryPatchPlacement(int minY, int maxY) {
         return List.of(
-                RarityFilter.onAverageOnceEvery(1),
                 InSquarePlacement.spread(),
                 HeightRangePlacement.uniform(VerticalAnchor.absolute(minY), VerticalAnchor.absolute(maxY)),
                 BiomeFilter.biome(),

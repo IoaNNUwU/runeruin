@@ -3,14 +3,13 @@ package ioann.uwu.runeruin.datagen;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.dimension.RRTags;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.references.BlockItemIds;
 import net.minecraft.tags.BlockTags;
 import net.neoforged.neoforge.common.data.BlockTagsProvider;
 import org.jspecify.annotations.NonNull;
-
-import java.util.concurrent.CompletableFuture;
 
 public class DatagenBlockTagProvider extends BlockTagsProvider {
 

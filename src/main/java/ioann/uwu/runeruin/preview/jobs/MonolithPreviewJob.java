@@ -34,11 +34,8 @@ public final class MonolithPreviewJob implements PreviewJob {
             feature,
             new MonolithFeature.Config(
                 BlockStateProvider.simple(Blocks.STONE),
-                BlockStateProvider.simple(Blocks.DEEPSLATE),
                 ConstantInt.of(radius),
-                ConstantInt.of(radius),
-                ConstantInt.of(0),
-                ConstantInt.of(0)
+                ConstantInt.of(radius)
             ),
             origin,
             world,

@@ -1,5 +1,7 @@
 package ioann.uwu.runeruin.dimension.structures;
 
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -8,9 +10,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /** The shape of a dinosaur skeleton: a bent spine with a rib cage, from the neck (start) to the tail tip. */
 public final class DinosaurSkeletonGenerator {

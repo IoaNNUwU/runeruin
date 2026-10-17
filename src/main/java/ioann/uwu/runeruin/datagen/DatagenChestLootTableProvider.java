@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.datagen;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
+import java.util.function.BiConsumer;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.resources.ResourceKey;
@@ -17,8 +18,6 @@ import net.minecraft.world.level.storage.loot.entries.NestedLootTable;
 import net.minecraft.world.level.storage.loot.functions.EnchantRandomlyFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
-
-import java.util.function.BiConsumer;
 
 public class DatagenChestLootTableProvider implements LootTableSubProvider {
 

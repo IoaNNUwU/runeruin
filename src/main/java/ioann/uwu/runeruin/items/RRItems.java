@@ -20,7 +20,6 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.Consumable;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
-import net.minecraft.world.item.consume_effects.ConsumeEffect;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -37,7 +36,7 @@ public class RRItems {
 
     public static final DeferredItem<Item> WISPBERRY = REGISTRY.registerItem(
             "wispberry",
-            p -> new BlockItem(RRBlocks.WISPBERRY_BUSH.get(), p.useItemDescriptionPrefix()),
+            p -> new BlockItem(RRBlocks.WISPBERRY_BUSH.get(), p),
             p -> p.food(new FoodProperties.Builder()
                     .nutrition(3)
                     .saturationModifier(0.3f)
@@ -51,12 +50,13 @@ public class RRItems {
                                     )
                             ))
                             .build())
+                    .useItemDescriptionPrefix()
     );
 
     public static final DeferredItem<Item> MOSSBERRY = REGISTRY.registerItem(
             "mossberry",
-            p -> new BlockItem(RRBlocks.MOSSBERRY_BUSH.get(), p.useItemDescriptionPrefix()),
-            p -> p.food(Foods.SWEET_BERRIES)
+            p -> new BlockItem(RRBlocks.MOSSBERRY_BUSH.get(), p),
+            p -> p.food(Foods.SWEET_BERRIES).useItemDescriptionPrefix()
     );
 
     public static final DeferredItem<Item> POWDERED_MOSS_BUCKET = REGISTRY.registerItem(

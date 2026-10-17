@@ -41,7 +41,7 @@ public class PowderedMossBlock extends PowderSnowBlock {
 
     @Override
     public ItemStack pickupBlock(@Nullable LivingEntity user, LevelAccessor level, BlockPos pos, BlockState state) {
-        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 11);
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL_IMMEDIATE);
         if (!level.isClientSide()) {
             level.levelEvent(2001, pos, Block.getId(state));
         }

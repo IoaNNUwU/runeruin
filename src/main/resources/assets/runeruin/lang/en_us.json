@@ -122,10 +122,8 @@
   "runeruin.configuration.title": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml": "RuneRuin Configs",
   "runeruin.configuration.section.runeruin.common.toml.title": "RuneRuin Configs",
-  "runeruin.configuration.items": "Item List",
-  "runeruin.configuration.logDirtBlock": "Log Dirt Block",
-  "runeruin.configuration.magicNumberIntroduction": "Magic Number Text",
-  "runeruin.configuration.magicNumber": "Magic Number",
+  "runeruin.configuration.section.runeruin.client.toml": "RuneRuin Client Configs",
+  "runeruin.configuration.section.runeruin.client.toml.title": "RuneRuin Client Configs",
   "runeruin.configuration.render_clouds_below_top_layer": "Render Clouds Below Top Layer",
   "runeruin.configuration.glowing_moss_dynamic_light": "Glowing Moss Dynamic Light",
 

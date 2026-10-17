@@ -1,51 +1,40 @@
 package ioann.uwu.runeruin.dimension.runes;
 
 import com.google.common.collect.Lists;
-
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Runes {
 
+    /** The patterns of {@code runes.txt}: a name line and 16 rows of 10 cells each, {@code #} where the rune is cut. */
     public static List<List<List<Boolean>>> list() {
-        try {
-            URL resource = Runes.class.getClassLoader().getResource("runes.txt");
+        List<String> content;
+        // Read as a stream: inside the mod jar the resource is no file.
+        try (InputStream in = Runes.class.getClassLoader().getResourceAsStream("runes.txt")) {
+            content = new String(in.readAllBytes(), StandardCharsets.UTF_8).lines().toList();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
-            Path path = Path.of(Paths.get(resource.toURI()).toFile().getAbsolutePath());
-
-            List<String> content = Files.readAllLines(path);
-
-            List<List<List<Boolean>>> finalList = new ArrayList<>();
-
-            for (List<String> record : Lists.partition(content, 17)) {
-                String name = record.getFirst();
-
-                List<List<Boolean>> recordDescription = new ArrayList<>();
-
-                for (int i = 1; i < record.size(); i++) {
-                    String line = record.get(i);
-
-                    List<Boolean> list = line.chars()
-                            .filter(ch -> !Character.isWhitespace(ch))
-                            .limit(10)
-                            .mapToObj(ch -> ch == '#')
-                            .toList();
-                    recordDescription.add(list);
-                }
-
+        List<List<List<Boolean>>> finalList = new ArrayList<>();
+        for (List<String> record : Lists.partition(content, 17)) {
+            List<List<Boolean>> recordDescription = new ArrayList<>();
+            for (String line : record.subList(1, record.size())) {
+                recordDescription.add(line.chars()
+                        .filter(ch -> !Character.isWhitespace(ch))
+                        .limit(10)
+                        .mapToObj(ch -> ch == '#')
+                        .toList());
+            }
+            // The empty "Template" record is there to copy, not a rune.
+            if (recordDescription.stream().anyMatch(row -> row.contains(true))) {
                 finalList.add(recordDescription);
             }
-
-            return finalList;
-
-        } catch (IOException | URISyntaxException e) {
-            throw new RuntimeException(e);
         }
+        return finalList;
     }
 }

@@ -12,6 +12,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * Redraws the root of a water lily whose leaf appears or disappears. A mixin, because the client has no event for a
+ * changed block, and NeoForge's {@code IBlockExtension.onBlockStateChange} is called only on the new block, so a
+ * removed leaf never learns that it is gone.
+ */
 @Mixin(ClientLevel.class)
 public class ClientLevelMixin {
 

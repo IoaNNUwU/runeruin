@@ -21,6 +21,8 @@ import org.jspecify.annotations.NonNull;
  * whole pad, so the cells form one seamless pad.
  */
 public final class LilyPadModels {
+    /** Items are tinted with the default foliage color, as {@code BlockTintSources.foliage()} tints a block out of the world. */
+    private static final int ITEM_TINT = -12012264;
 
     private LilyPadModels() {}
 
@@ -41,7 +43,7 @@ public final class LilyPadModels {
         blockModels.registerSimpleTintedItemModel(
                 RRBlocks.BIG_LILY_PAD.get(),
                 itemModel,
-                ItemModelUtils.constantTint(-12012264)
+                ItemModelUtils.constantTint(ITEM_TINT)
         );
     }
 
@@ -50,7 +52,7 @@ public final class LilyPadModels {
                 BlockModelGenerators.createSimpleBlock(RRBlocks.WATER_LILY_ROOT.get(), BlockModelGenerators.plainVariant(RR.id("block/water_lily_root")))
         );
         // The item shows a young plant: the rhizome, short roots and five small leaves on stems.
-        blockModels.registerSimpleTintedItemModel(RRBlocks.WATER_LILY_ROOT.get(), RR.id("item/water_lily_root"), ItemModelUtils.constantTint(-12012264));
+        blockModels.registerSimpleTintedItemModel(RRBlocks.WATER_LILY_ROOT.get(), RR.id("item/water_lily_root"), ItemModelUtils.constantTint(ITEM_TINT));
 
         blockModels.blockStateOutput.accept(
                 MultiVariantGenerator.dispatch(RRBlocks.WATER_LILY_LEAF.get())
@@ -60,7 +62,7 @@ public final class LilyPadModels {
         blockModels.registerSimpleTintedItemModel(
                 RRBlocks.WATER_LILY_LEAF.get(),
                 blockModels.createFlatItemModelWithBlockTexture(RRBlocks.WATER_LILY_LEAF.get().asItem(), Blocks.LILY_PAD),
-                ItemModelUtils.constantTint(-12012264)
+                ItemModelUtils.constantTint(ITEM_TINT)
         );
 
         // The flower lies flat just above its own pad.

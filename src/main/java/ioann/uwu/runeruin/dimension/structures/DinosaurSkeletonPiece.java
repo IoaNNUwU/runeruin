@@ -3,6 +3,7 @@ package ioann.uwu.runeruin.dimension.structures;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
@@ -15,8 +16,6 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
-
-import java.util.Map;
 
 public final class DinosaurSkeletonPiece extends StructurePiece {
     private final BlockPos origin;

@@ -1,9 +1,5 @@
 package ioann.uwu.runeruin.datagen.models;
 
-import static net.minecraft.client.data.models.BlockModelGenerators.condition;
-import static net.minecraft.client.data.models.BlockModelGenerators.plainModel;
-import static net.minecraft.client.data.models.BlockModelGenerators.plainVariant;
-
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.BeadVineBlock;
 import ioann.uwu.runeruin.blocks.HangingChorusFlowerBlock;
@@ -22,6 +18,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jspecify.annotations.NonNull;
+
+import static net.minecraft.client.data.models.BlockModelGenerators.condition;
+import static net.minecraft.client.data.models.BlockModelGenerators.plainModel;
+import static net.minecraft.client.data.models.BlockModelGenerators.plainVariant;
 
 /** Void stone and the plants that hang from it. The bead vine and the dust bloom are model files. */
 public final class VoidModels {

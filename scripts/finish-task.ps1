@@ -49,8 +49,10 @@ if ($branch) {
     # -d (not -D) keeps a branch with commits that are neither pushed to its upstream nor in main.
     # A squash merge leaves the branch's own commits out of main, so once GitHub deletes the remote branch
     # -d refuses as well: delete such a branch with -D after its pull request is merged.
-    & git -C $projectRoot branch -d $branch
-    if ($LASTEXITCODE -ne 0) {
+    try {
+        Invoke-Native git -C $projectRoot branch -d $branch
+    }
+    catch {
         Write-Warning "Kept branch ${branch}: its commits are neither in main nor in its upstream."
     }
 }

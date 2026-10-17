@@ -13,7 +13,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-public class GlowingRootsCeilingBiome {
+public class GlowingBalls {
 
     public static Biome bootstrap(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
 
@@ -28,7 +28,7 @@ public class GlowingRootsCeilingBiome {
 
         BiomeDefaultFeatures.addExtraEmeralds(generation);
 
-        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.LONG_CEILING_BLOCK_VINE);
+        generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_BALL);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.CEILING_VINE);
 
         BiomeSpecialEffects.Builder effects = new BiomeSpecialEffects.Builder()

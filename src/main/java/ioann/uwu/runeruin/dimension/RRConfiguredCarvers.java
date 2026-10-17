@@ -15,7 +15,10 @@ import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.carver.WorldCarver;
 import net.minecraft.world.level.levelgen.heightproviders.UniformHeight;
 
-import static ioann.uwu.runeruin.dimension.Const.*;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_MAX_BASELINE_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_OFFSET;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_TERRAIN_HEIGHT;
+import static ioann.uwu.runeruin.dimension.Const.TOP_LAYER_Y;
 
 public class RRConfiguredCarvers {
 
@@ -24,8 +27,10 @@ public class RRConfiguredCarvers {
     public static void bootstrap(BootstrapContext<ConfiguredWorldCarver<?>> ctx) {
         HolderGetter<Block> blocks = ctx.lookup(Registries.BLOCK);
         HolderSet<Block> replaceable = blocks.getOrThrow(BlockTags.OVERWORLD_CARVER_REPLACEABLES);
-        int minY = TOP_LAYER_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_OFFSET + 1;
-        int maxY = TOP_LAYER_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_OFFSET + TOP_LAYER_TERRAIN_HEIGHT - 8;
+        // From above the highest baseline of the islands.
+        int baseline = TOP_LAYER_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_OFFSET;
+        int minY = baseline + 1;
+        int maxY = baseline + TOP_LAYER_TERRAIN_HEIGHT - 8;
 
         ctx.register(TOP_LAYER_CAVES, WorldCarver.CAVE.configured(new CaveCarverConfiguration(
                 0.24f,

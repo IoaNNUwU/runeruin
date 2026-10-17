@@ -9,7 +9,6 @@ import ioann.uwu.runeruin.blocks.GlowingMushroomBlock;
 import ioann.uwu.runeruin.blocks.MossLayerPlantBlock;
 import ioann.uwu.runeruin.blocks.MossberryBushBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
-import ioann.uwu.runeruin.dimension.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.RRBiomes;
@@ -20,6 +19,7 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
+import ioann.uwu.runeruin.dimension.features.CaveMushroomKind;
 import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
@@ -48,6 +48,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntBinaryOperator;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -63,7 +64,6 @@ import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -216,10 +216,10 @@ public final class RRGameTests {
             new FeatureCase("red_arch_mushroom", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("pink_twist_mushroom", Surface.FLOOR, Blocks.STONE, 1),
             new FeatureCase("yellow_hat_mushroom", Surface.FLOOR, Blocks.STONE, 1),
-            new FeatureCase("small_red_mushroom", Surface.WALL, Blocks.STONE, 0),
-            new FeatureCase("big_red_mushroom", Surface.WALL, Blocks.STONE, 0),
-            new FeatureCase("small_brown_mushroom", Surface.WALL, Blocks.STONE, 0),
-            new FeatureCase("big_brown_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("small_red_wall_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("big_red_wall_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("small_brown_wall_mushroom", Surface.WALL, Blocks.STONE, 0),
+            new FeatureCase("big_brown_wall_mushroom", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("ashen_wall_mushroom", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("ashen_wall_mushroom_upper", Surface.WALL, Blocks.STONE, 0),
             new FeatureCase("ceiling_ball", Surface.CEILING, Blocks.STONE, 0),
@@ -1154,7 +1154,7 @@ public final class RRGameTests {
 
     private static void previewGiantGoblet(GameTestHelper helper) {
         try {
-            PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(helper.getLevel().getServer()), java.util.Map.of())
+            PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(helper.getLevel().getServer()), Map.of())
                 .with("seed", "1");
             PreviewJobs.Result result = PreviewCatalog.require("giant_goblet").run(args);
             helper.assertTrue(result.count("runeruin:giant_goblet_stem") > 100, "giant goblet placed too few stem blocks");
@@ -1208,7 +1208,7 @@ public final class RRGameTests {
             MinecraftServer server = helper.getLevel().getServer();
             int fitted = 0;
             for (int seed = 1; seed <= 8; seed++) {
-                PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(server), java.util.Map.of())
+                PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(server), Map.of())
                     .with("seed", Integer.toString(seed));
                 PreviewJobs.Result result = PreviewCatalog.require("hanging_tracks").run(args);
                 helper.assertTrue(result.count("minecraft:iron_chain") > 100, "hanging tracks " + seed + " hang on too few chains");

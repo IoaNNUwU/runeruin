@@ -23,6 +23,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * On a runic rail a minecart keeps the speed it came with; only its rider changes it. A runic minecart does
  * the same on any rail while someone rides it, and stops soon once it is empty. Powered rails, switched on
  * or off, treat it like any other minecart.
+ *
+ * <p>A mixin, because NeoForge has no hook into minecart movement ({@code IBaseRailBlockExtension} only gives the
+ * shape of a rail), and every minecart on a runic rail has to move this way, not only ours; besides, a minecart
+ * creates its behaviour itself and keeps it in a private final field.</p>
  */
 @Mixin(OldMinecartBehavior.class)
 public abstract class RunicRailMixin extends MinecartBehavior {

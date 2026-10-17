@@ -1,7 +1,6 @@
-package ioann.uwu.runeruin.dimension;
+package ioann.uwu.runeruin.dimension.features;
 
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.dimension.features.CaveMushroomFeature;
 import ioann.uwu.runeruin.dimension.features.CaveMushroomFeature.Shape;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -12,6 +11,7 @@ import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.stateproviders.WeightedStateProvider;
@@ -32,7 +32,7 @@ public enum CaveMushroomKind {
             UniformInt.of(12, 16), ConstantInt.of(2), UniformInt.of(5, 6), UniformInt.of(3, 5), 3),
     /** Stem arching over into a wide red umbrella with yellow speckles. */
     RED_ARCH("red_arch", Shape.UMBRELLA,
-            new WeightedStateProvider(WeightedList.<net.minecraft.world.level.block.state.BlockState>builder()
+            new WeightedStateProvider(WeightedList.<BlockState>builder()
                     .add(Blocks.RED_MUSHROOM_BLOCK.defaultBlockState(), 9)
                     .add(Blocks.DYED_TERRACOTTA.pick(DyeColor.YELLOW).defaultBlockState(), 1)),
             BlockStateProvider.simple(Blocks.BROWN_MUSHROOM_BLOCK),

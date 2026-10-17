@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -33,16 +34,12 @@ public class GlowingMushroomPatchFeature extends Feature<NoneFeatureConfiguratio
                     0,
                     random.nextInt(PATCH_RADIUS * 2 + 1) - PATCH_RADIUS
             );
-            for (int y = 2; y >= -2; y--) {
-                BlockPos pos = column.offset(0, y, 0);
-                BlockPos support = pos.below();
-                if (level.getBlockState(pos).isAir()
-                        && level.getBlockState(support).isFaceSturdy(level, support, Direction.UP)
-                        && mushroom.canSurvive(level, pos)) {
-                    level.setBlock(pos, mushroom, 2);
-                    placed = true;
-                    break;
-                }
+            BlockPos pos = FeatureScans.findDown(column, 2, -2, p -> level.getBlockState(p).isAir()
+                    && level.getBlockState(p.below()).isFaceSturdy(level, p.below(), Direction.UP)
+                    && mushroom.canSurvive(level, p));
+            if (pos != null) {
+                level.setBlock(pos, mushroom, Block.UPDATE_CLIENTS);
+                placed = true;
             }
         }
         return placed;

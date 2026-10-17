@@ -1,6 +1,8 @@
 package ioann.uwu.runeruin.blocks;
 
 import com.mojang.serialization.MapCodec;
+import java.util.Comparator;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -14,9 +16,6 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-
-import java.util.Comparator;
-import java.util.Optional;
 
 /**
  * A water lily leaf held above the water by a stem. The flower is the same

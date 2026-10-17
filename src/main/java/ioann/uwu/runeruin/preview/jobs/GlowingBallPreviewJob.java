@@ -9,9 +9,9 @@ import ioann.uwu.runeruin.preview.PreviewWorld;
 import java.io.IOException;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
-import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 public final class GlowingBallPreviewJob implements PreviewJob {
