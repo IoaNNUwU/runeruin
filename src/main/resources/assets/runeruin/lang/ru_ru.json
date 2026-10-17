@@ -2,6 +2,7 @@
   "itemGroup.runeruin": "Rune Ruin",
 
   "item.runeruin.rune_of_space": "Руна пространства",
+  "item.runeruin.stardust": "Звёздная пыль",
   "item.runeruin.wispberry": "Блуждающая ягода",
   "item.runeruin.mossberry": "Моховая ягода",
   "item.runeruin.blowpipe": "Духовая трубка",
@@ -55,6 +56,7 @@
   "block.runeruin.dust_bloom": "Пыльник",
   "block.runeruin.hanging_chorus_plant": "Висячий хорус",
   "block.runeruin.hanging_chorus_flower": "Цветок висячего хоруса",
+  "block.runeruin.star": "Звезда",
 
   "block.runeruin.elden_sapling": "Саженец элдена",
   "block.runeruin.potted_elden_sapling": "Саженец элдена в горшке",
@@ -146,6 +148,9 @@
   "commands.runeruin.region.open_file": "Нажми, чтобы открыть",
   "commands.runeruin.region.save": "Выделение %sx%sx%s сохранено шаблоном %s: %s",
   "commands.runeruin.region.save_world": "в этом мире, как сохраняет структурный блок",
+  "commands.runeruin.region.save_unnamed": "Назови шаблон: /rrsave <папка>/<имя>, или сначала загрузи его через /rrload",
+  "commands.runeruin.region.load": "Шаблон %s (%sx%sx%s) поставлен углом в %s %s %s и выделен: перестрой его, и /rrsave запишет его обратно",
+  "commands.runeruin.region.load_missing": "Шаблона %s нет",
   "commands.runeruin.region.clear": "Выделение снято",
   "commands.runeruin.region.generate": "Выделение %sx%sx%s перегенерировано headless-генератором: изменено %s блоков, сгенерировано %s",
   "commands.runeruin.region.generate_height": "Высота выделения должна быть в диапазоне %s..%s",
