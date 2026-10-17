@@ -66,8 +66,6 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.ELDEN_BUTTON.get());
         dropSelf(RRBlocks.ELDEN_SIGN.get());
         dropSelf(RRBlocks.ELDEN_HANGING_SIGN.get());
-        add(RRBlocks.ELDEN_WALL_SIGN.get(), block -> createSingleItemTable(RRBlocks.ELDEN_SIGN.get()));
-        add(RRBlocks.ELDEN_WALL_HANGING_SIGN.get(), block -> createSingleItemTable(RRBlocks.ELDEN_HANGING_SIGN.get()));
         add(RRBlocks.ELDEN_LEAF_LITTER.get(), block -> createSegmentedBlockDrops(block));
         add(RRBlocks.CLOVER.get(), block -> createSegmentedBlockDrops(block));
         dropSelf(RRBlocks.GIANT_GOBLET_STEM.get());
@@ -94,8 +92,6 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
         dropSelf(RRBlocks.INVERTED_TREE_BUTTON.get());
         dropSelf(RRBlocks.INVERTED_TREE_SIGN.get());
         dropSelf(RRBlocks.INVERTED_TREE_HANGING_SIGN.get());
-        add(RRBlocks.INVERTED_TREE_WALL_SIGN.get(), block -> createSingleItemTable(RRBlocks.INVERTED_TREE_SIGN.get()));
-        add(RRBlocks.INVERTED_TREE_WALL_HANGING_SIGN.get(), block -> createSingleItemTable(RRBlocks.INVERTED_TREE_HANGING_SIGN.get()));
 
         dropPottedContents(RRBlocks.POTTED_ELDEN_SAPLING.get());
 

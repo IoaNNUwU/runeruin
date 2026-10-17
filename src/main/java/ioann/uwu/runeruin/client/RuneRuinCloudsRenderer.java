@@ -2,7 +2,6 @@ package ioann.uwu.runeruin.client;
 
 import ioann.uwu.runeruin.Config;
 import net.minecraft.client.CloudStatus;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CloudRenderer;
 import net.minecraft.client.renderer.state.level.LevelRenderState;
@@ -16,7 +15,10 @@ public class RuneRuinCloudsRenderer implements CustomCloudsRenderer {
     public boolean renderClouds(LevelRenderState levelRenderState, Vec3 camPos, CloudStatus cloudStatus, int cloudColor, float cloudHeight, int cloudRange, Matrix4fc modelViewMatrix) {
 
         if (levelRenderState.customCloudsRenderer != null) {
-            CloudRenderer cloudRenderer = Minecraft.getInstance().levelRenderer.cloudRenderer();
+            Minecraft minecraft = Minecraft.getInstance();
+            CloudRenderer cloudRenderer = minecraft.levelRenderer.cloudRenderer();
+            // The clouds move by whole ticks of gameTime; the partial tick moves them smoothly between two ticks.
+            float partialTick = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
 
             cloudRenderer.render(
                     cloudColor,
@@ -25,7 +27,7 @@ public class RuneRuinCloudsRenderer implements CustomCloudsRenderer {
                     cloudRange,
                     camPos,
                     levelRenderState.gameTime * 2 + 40000,
-                    DeltaTracker.ZERO.getGameTimeDeltaPartialTick(true)
+                    partialTick * 2
             );
 
             cloudRenderer.endFrame();
@@ -37,7 +39,7 @@ public class RuneRuinCloudsRenderer implements CustomCloudsRenderer {
                     cloudRange,
                     camPos,
                     levelRenderState.gameTime + 2000,
-                    DeltaTracker.ONE.getGameTimeDeltaPartialTick(true)
+                    partialTick
             );
 
             if (Config.RENDER_CLOUDS_BELOW_TOP_LAYER.getAsBoolean()) {
@@ -51,7 +53,7 @@ public class RuneRuinCloudsRenderer implements CustomCloudsRenderer {
                         cloudRange,
                         camPos,
                         levelRenderState.gameTime,
-                        DeltaTracker.ZERO.getGameTimeDeltaPartialTick(true)
+                        partialTick
                 );
             }
         }

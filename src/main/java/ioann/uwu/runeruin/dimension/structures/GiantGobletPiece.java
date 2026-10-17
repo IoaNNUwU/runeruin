@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
@@ -49,9 +50,10 @@ public class GiantGobletPiece extends StructurePiece {
     private final int bowlRadius;
     private final long seed;
     /** Packed (dx, dz) vein cells; filled on first chunk so later chunks reuse them. */
-    private int[] mainVeins;
-    private int[][] miniVeins;
-    private Arms arms;
+    // Chunks of one structure are decorated on several threads at once: volatile hands each of them the finished plan.
+    private volatile int[] mainVeins;
+    private final AtomicReferenceArray<int[]> miniVeins = new AtomicReferenceArray<>(8);
+    private volatile Arms arms;
 
     public static int bowlTopY(int height) {
         return Const.LOST_CAVES_Y + height;
@@ -165,10 +167,11 @@ public class GiantGobletPiece extends StructurePiece {
     }
 
     private Arms arms() {
-        if (this.arms == null) {
-            this.arms = Arms.create(this.seed, this.bowlRadius, Const.LOST_CAVES_Y, bowlBottomY(this.height) - 1);
+        Arms arms = this.arms;
+        if (arms == null) {
+            this.arms = arms = Arms.create(this.seed, this.bowlRadius, Const.LOST_CAVES_Y, bowlBottomY(this.height) - 1);
         }
-        return this.arms;
+        return arms;
     }
 
     /**
@@ -281,27 +284,27 @@ public class GiantGobletPiece extends StructurePiece {
     }
 
     private int[] mainVeins() {
-        if (this.mainVeins == null) {
+        int[] veins = this.mainVeins;
+        if (veins == null) {
             float outer = this.bowlRadius * Mth.sqrt(19f / 20f);
-            this.mainVeins = WigglyDendrites.grow(
+            this.mainVeins = veins = WigglyDendrites.grow(
                     this.seed, WigglyDendrites.params(Math.max(6f, outer + 1.6f), PILLAR_RADIUS)
             );
         }
-        return this.mainVeins;
+        return veins;
     }
 
     private int[] miniVeins(int index, int miniRadius) {
-        if (this.miniVeins == null) {
-            this.miniVeins = new int[8][];
-        }
-        if (this.miniVeins[index] == null) {
+        int[] veins = this.miniVeins.get(index);
+        if (veins == null) {
             float outer = miniRadius * Mth.sqrt(19f / 20f);
-            this.miniVeins[index] = WigglyDendrites.grow(
+            veins = WigglyDendrites.grow(
                     this.seed + 17L * (index + 1),
                     WigglyDendrites.params(Math.max(5f, outer + 1.1f), MINI_NECK_RADIUS)
             );
+            this.miniVeins.set(index, veins);
         }
-        return this.miniVeins[index];
+        return veins;
     }
 
     /**

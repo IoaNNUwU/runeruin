@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.dimension.biomes.bloomingcaves;
 
 import ioann.uwu.runeruin.dimension.Const;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
+import ioann.uwu.runeruin.dimension.RRDimension;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import ioann.uwu.runeruin.entities.RREntityTypes;
 import net.minecraft.core.BlockPos;
@@ -18,7 +19,7 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.monster.cubemob.Slime;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
 import net.minecraft.world.level.biome.BiomeSpecialEffects;
@@ -26,6 +27,7 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 
 public class StoneForest {
 
@@ -77,9 +79,14 @@ public class StoneForest {
         return biomeBuilder.build();
     }
 
-    public static boolean checkSlimeSpawnRulesInRuneRuinDimension(EntityType<Slime> type, LevelAccessor level, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+    /** Slimes also spawn in the dark of the swampy Blooming caves, besides the vanilla swamps and slime chunks. */
+    public static void registerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        event.register(EntityTypes.SLIME, StoneForest::checkSlimeSpawnRules, RegisterSpawnPlacementsEvent.Operation.OR);
+    }
 
-        if (level.getDifficulty() != Difficulty.PEACEFUL) {
+    private static boolean checkSlimeSpawnRules(EntityType<Slime> type, ServerLevelAccessor level, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+
+        if (level.getLevel().dimension() == RRDimension.LEVEL && level.getDifficulty() != Difficulty.PEACEFUL) {
 
             if (EntitySpawnReason.isSpawner(spawnReason)) {
                 return Mob.checkMobSpawnRules(type, level, spawnReason, pos, random);
