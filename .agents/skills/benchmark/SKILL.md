@@ -18,7 +18,7 @@ Other programs on the computer (the game, other agents' Gradle runs, a browser) 
 
 `terrain_bench` times `RRChunkGenerator.fillFromNoise` on 289 chunks without the game (radius 8 around chunk 0 0, 40 rounds after 2 warm-up rounds); a run takes about a minute. It starts like a preview job, through `runPreview`. Every result is saved as `~/.runeruin/bench/<name>.properties`, outside the checkout, so a task folder can compare with a result measured in another one.
 
-- **Before**: code without the change, that is `main` or the task folder before its first edit.
+- **Before**: code without the change: the task folder before its first edit, or a second task folder from `start-task.ps1` (for example `<task>_before`) left unchanged and removed with `finish-task.ps1` afterwards. Never the main checkout: Gradle runs only in task folders.
 - **After**: the task branch.
 
 Same computer, same parameters, one run right after the other:

@@ -11,7 +11,7 @@ description: >-
 
 ## Built by a person or by code
 
-- A man-made build (a ship, a hut, a dungeon room, a ruin) is built by a person in the game and kept as templates in `data/runeruin/structure/<folder>/`. The structure adds a `TemplatePiece` and takes its template from `TemplatePiece.variants(templates, "<folder>")`, picked with the random of the structure; one more template in the folder is one more variant. Code decides where the build stands, how it is turned and what wear it gets on top (rotation, mirror and processors, as `StoneLilyFeature` does). Code does not shape the build.
+- A man-made build (a ship, a hut, a dungeon room, a ruin) is built by a person in the game and kept as templates in `data/runeruin/structure/<folder>/`. The structure adds a `TemplatePiece` and takes its template from `TemplatePiece.variants(templates, "<folder>")`, picked with the random of the structure; one more template in the folder is one more variant. Code decides where the build stands, how it is turned and what wear it gets on top (rotation, mirror and processors; `StoneLilyFeature` shows them for a single template that a feature places). Code does not shape the build. The piece type exists already (`RRStructurePieceTypes.TEMPLATE`); the structure still needs steps 1 and 3–5 of "In code" below: its structure class and type, the datapack entries and the biome tag.
 - A shape of nature that differs with every seed (a tree, a goblet, a skeleton) is code, below.
 - Not sure which of the two it is: ask the user before writing either.
 
@@ -25,6 +25,6 @@ Copy Giant Goblet (`GiantGobletStructure`, `GiantGobletPiece`) or Baobab (`Baoba
 2. Types: `RRStructureTypes` and `RRStructurePieceTypes`.
 3. Datapack: `RRStructures` (structure, biomes by tag) and `RRStructureSets` (spacing).
 4. Biome tag: `RRBiomeTags.HAS_FOO` + `DatagenBiomeTagProvider`.
-5. Preview job (`headless-preview` skill), then `compileJava` and `runData`.
+5. Preview job (`headless-preview` skill), then `compileJava`, `runData` and `runGameTestServer`.
 
 Changing the algorithm of an existing structure leaves seams in structures that existing worlds have only half generated; say so in the report.
