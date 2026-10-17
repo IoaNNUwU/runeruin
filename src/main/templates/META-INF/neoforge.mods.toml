@@ -7,7 +7,7 @@ modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
 displayURL="https://github.com/IoaNNUwU/runeruin"
-logoFile="assets/runeruin/icon.png"
+iconFile="runeruin:icon.png"
 authors="ioannuwu"
 description='''
 A work-in-progress dimension of stacked caves: the Void, the Lost caves, the Deep caves, the Blooming caves and the open top layer lie one above the other, each with biomes, plants, mobs and structures of its own.
