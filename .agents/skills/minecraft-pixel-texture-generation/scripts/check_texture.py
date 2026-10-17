@@ -15,9 +15,9 @@ def hex_color(color: tuple[int, ...]) -> str:
     return f"#{color[0]:02X}{color[1]:02X}{color[2]:02X}"
 
 
-def color_limit(size: int) -> int:
+def color_limit(size: int, rough: bool) -> int:
     """Colors allowed for a part whose largest element has `size` pixels."""
-    return 4 if size > 6 else 3 if size > 3 else 2
+    return (6 if rough else 4) if size > 6 else 3 if size > 3 else 2
 
 
 def largest_element(pixels: set[tuple[int, int]]) -> int:
@@ -36,7 +36,7 @@ def largest_element(pixels: set[tuple[int, int]]) -> int:
     return largest
 
 
-def check_parts(image: Image.Image, parts_path: Path, errors: list[str]) -> None:
+def check_parts(image: Image.Image, parts_path: Path, rough: set[str], errors: list[str]) -> None:
     """Each color of the parts map is one part; its elements share one set of colors."""
     with Image.open(parts_path) as source:
         parts = source.convert("RGBA")
@@ -62,13 +62,16 @@ def check_parts(image: Image.Image, parts_path: Path, errors: list[str]) -> None
     for part, pixels in sorted(by_part.items(), key=lambda item: -len(item[1])):
         colors = sorted({image.getpixel(pixel)[:3] for pixel in pixels})
         largest = largest_element(pixels)
-        limit = color_limit(largest)
+        name = hex_color(part) + (" (rough)" if hex_color(part) in rough else "")
+        limit = color_limit(largest, hex_color(part) in rough)
         budget += limit
-        print(f"  part {hex_color(part)}: {len(pixels)} px, largest element {largest} px, "
+        print(f"  part {name}: {len(pixels)} px, largest element {largest} px, "
               f"{len(colors)}/{limit} colors {' '.join(hex_color(color) for color in colors)}")
         if len(colors) > limit:
             errors.append(f"part {hex_color(part)} has {len(colors)} colors, its largest element of "
                           f"{largest} px allows {limit}")
+    for part in sorted(rough - {hex_color(part) for part in by_part}):
+        errors.append(f"--rough {part} is not a color of the parts map")
     print(f"Parts allow up to {budget} colors in total")
 
 
@@ -87,6 +90,8 @@ def main() -> int:
     parser.add_argument("image", type=Path)
     parser.add_argument("--size", type=parse_size, default=(16, 16), help="expected dimensions, default: 16x16")
     parser.add_argument("--parts", type=Path, help="parts map of the same size: one flat color per part")
+    parser.add_argument("--rough", nargs="+", default=[], metavar="RRGGBB",
+                        help="parts map colors of rough parts, which may take 6 colors instead of 4")
     parser.add_argument("--max-colors", type=int, help="maximum distinct visible RGB colors")
     parser.add_argument("--min-colors", type=int, help="minimum distinct visible RGB colors")
     parser.add_argument("--require-opaque", action="store_true", help="fail if any pixel is not fully opaque")
@@ -124,7 +129,7 @@ def main() -> int:
     for color, count in colors.most_common(args.histogram):
         print(f"{hex_color(color)}: {count} px")
     if args.parts is not None:
-        check_parts(image, args.parts, errors)
+        check_parts(image, args.parts, {"#" + part.lstrip("#").upper() for part in args.rough}, errors)
 
     if errors:
         for error in errors:
