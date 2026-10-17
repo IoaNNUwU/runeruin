@@ -9,6 +9,8 @@ displayName="${mod_name}"
 displayURL="https://github.com/IoaNNUwU/runeruin"
 iconFile="runeruin:icon.png"
 authors="ioannuwu"
+# Values added to vanilla enums: the arm pose of the blowpipe.
+enumExtensions="META-INF/enumextensions.json"
 description='''
 A work-in-progress dimension of stacked caves: the Void, the Lost caves, the Deep caves, the Blooming caves and the open top layer lie one above the other, each with biomes, plants, mobs and structures of its own.
 '''

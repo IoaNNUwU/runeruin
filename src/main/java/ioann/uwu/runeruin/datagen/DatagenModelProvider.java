@@ -14,6 +14,7 @@ import ioann.uwu.runeruin.datagen.models.TreeModels;
 import ioann.uwu.runeruin.datagen.models.VoidModels;
 import ioann.uwu.runeruin.datagen.models.WispberryBushModels;
 import ioann.uwu.runeruin.items.RRItems;
+import java.util.List;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
@@ -24,12 +25,15 @@ import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.data.models.model.TexturedModel;
+import net.minecraft.client.renderer.item.EmptyModel;
 import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.item.properties.select.DisplayContext;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
 import org.jspecify.annotations.NonNull;
 
 /**
@@ -119,13 +123,18 @@ public class DatagenModelProvider extends ModelProvider {
 
     /**
      * As the vanilla spyglass: a flat icon in the inventory, on the ground and in frames, the pipe of
-     * {@code item/blowpipe_in_hand} in the hands, and {@code item/blowpipe_blowing} at the mouth while the player blows.
+     * {@code item/blowpipe_in_hand} in the hands, and {@code item/blowpipe_blowing} while the player blows. Seen from
+     * outside, the blowing pipe is at the mouth ({@code BlowpipeLayer}), and the hand that reaches for it is empty.
      */
     private static void createBlowpipe(@NonNull ItemModelGenerators itemModels) {
         Item blowpipe = RRItems.BLOWPIPE.get();
         ItemModel.Unbaked flat = ItemModelUtils.plainModel(itemModels.createFlatItemModel(blowpipe, ModelTemplates.FLAT_ITEM));
         ItemModel.Unbaked inHand = ItemModelUtils.plainModel(ModelLocationUtils.getModelLocation(blowpipe, "_in_hand"));
-        ItemModel.Unbaked blowing = ItemModelUtils.plainModel(ModelLocationUtils.getModelLocation(blowpipe, "_blowing"));
+        ItemModel.Unbaked blowing = ItemModelUtils.select(
+                new DisplayContext(),
+                ItemModelUtils.plainModel(ModelLocationUtils.getModelLocation(blowpipe, "_blowing")),
+                ItemModelUtils.when(List.of(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
+                        new EmptyModel.Unbaked()));
         itemModels.itemModelOutput.accept(blowpipe, ItemModelGenerators.createFlatModelDispatch(
                 flat, ItemModelUtils.conditional(ItemModelUtils.isUsingItem(), blowing, inHand)));
     }

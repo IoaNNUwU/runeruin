@@ -2,10 +2,10 @@
 	"format_version": "1.21.11",
 	"parent": "runeruin:item/blowpipe_in_hand",
 	"display": {
-		"thirdperson_righthand": {
-			"rotation": [0, -120, 90],
-			"translation": [0, 3, -1.5],
-			"scale": [0.85, 0.85, 0.85]
+		"head": {
+			"rotation": [-90, 0, 0],
+			"translation": [0, -4, -16],
+			"scale": [1.4, 1.4, 1.4]
 		},
 		"firstperson_righthand": {
 			"rotation": [-90, 0, 0],
