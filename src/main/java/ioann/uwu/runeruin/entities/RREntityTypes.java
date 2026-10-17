@@ -39,6 +39,14 @@ public final class RREntityTypes {
             builder -> builder.noLootTable().sized(0.98F, 0.7F).passengerAttachments(0.1875F).clientTrackingRange(8)
     );
 
+    // Sized and synced like the fishing bobber: it comes back when its owner leaves, so it is never saved.
+    public static final DeferredHolder<EntityType<?>, EntityType<GrapplingAnchor>> GRAPPLING_ANCHOR = REGISTRY.registerEntityType(
+            "grappling_anchor",
+            GrapplingAnchor::new,
+            MobCategory.MISC,
+            builder -> builder.noLootTable().noSave().noSummon().sized(0.25F, 0.25F).clientTrackingRange(4).updateInterval(5)
+    );
+
     private RREntityTypes() {
     }
 }
