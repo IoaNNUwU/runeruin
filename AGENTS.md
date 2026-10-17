@@ -36,7 +36,7 @@ Work with GitHub, in this repository or in the user's fork (issues, pushing, pul
 **Done** means every applicable check passed in the task worktree:
 
 1. `gradlew.bat compileJava`
-2. `gradlew.bat runData` — after any change to datagen, blocks/items, models, tags, loot or worldgen bootstrap
+2. `gradlew.bat runData` — after any change to datagen, blocks/items, models, tags, loot, worldgen bootstrap or a structure template
 3. `gradlew.bat runGameTestServer` — mod and datapack load, GameTests in `preview/RRGameTests`
 4. a shape, model or texture: the renders its skill names, each looked at; models, textures, translations: `python scripts/lint_assets.py` after `runData`
 5. `gradlew.bat build`
@@ -93,7 +93,7 @@ Procedures for kinds of work (blocks and items, mobs, textures, terrain, biomes,
 | `datagen/` | blockstates, item definitions, models on vanilla parents and derived models, tags, loot, recipes, worldgen bootstrap (`DatagenMain`) |
 | `client/` | renderers, mob models and their loader `BlockbenchModel`, tints, clouds (`RuneRuinClient`) |
 | `portal/`, `loottables/`, `mixin/` | dimension portal and its `RRPoiTypes`, `RRLootTables`, vanilla tweaks |
-| `region/` | `/rrpos1` `/rrpos2` `/rrexport` `/rrsave` `/rrgenerate` `/rrclear` |
+| `region/` | `/rrpos1` `/rrpos2` `/rrexport` `/rrsave` `/rrload` `/rrgenerate` `/rrclear` |
 | `preview/` | headless previews, `/rrpreview` and GameTests |
 | `dimension/` | worldgen registries (`RRFeatures`, `RRConfiguredFeatures`, `RRPlacedFeatures`, `RRBiomes`, `RRBiomeSource`, `RRChunkGenerator`, `RRStructure*`, …), tags `RRTags`, `RRBiomeTags`, layer heights `Const`; below it `biomes/<layer>/`, `features/`, `placements/`, `chunkgenerator/`, `structures/`, `noise/`, `runes/` |
 
