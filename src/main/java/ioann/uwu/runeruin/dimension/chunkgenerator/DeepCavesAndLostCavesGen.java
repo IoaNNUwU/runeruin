@@ -62,17 +62,16 @@ public class DeepCavesAndLostCavesGen {
     }
 
     private static final LazyNoise lostCavesCeilingNoise = new LazyNoise(
-            "LostCavesCeilingNoise",
             seed -> Noise.multi(
                     new SingleNoise(Noise.hashString("LostCavesCeilingNoise1" + seed)),
                     Noise.constant(1f)
             )
     );
 
-    private static final LazyNoise bedrockNoise = new LazyNoise("deepBedrockNoise", PositionalRandomNoise::new);
+    private static final LazyNoise bedrockNoise = new LazyNoise(seed -> new PositionalRandomNoise("lostCavesCeilingRock", seed));
 
     private static final LazyNoise lostTopLevelNoise = RRChunkGenerator.lostTopLevelNoise;
-    private static final LazyNoise lostTopLevelBaselineNoise = RRChunkGenerator.lostTopLevelBaselineNoise;
+    private static final LazyNoise topLevelBaselineNoise = RRChunkGenerator.topLevelBaselineNoise;
     private static final LazyNoise flattenedBaseLostTopLevelNoise = RRChunkGenerator.flattenedLostBaseTopLevelNoise;
 
     public static void generateLostCavesCeiling(TerrainWriter terrain, RandomState randomState) {
@@ -95,18 +94,16 @@ public class DeepCavesAndLostCavesGen {
 
                 float ceilingHeight = (int) (CEILING_TERRAIN_HEIGHT * ceilingNoise);
 
-                float baselineNoise = lostTopLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
+                float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
                 float baseLine = LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET;
 
                 BlockState blockState = bedrockNoise.getOrCreateNoise(randomState).noise(xx, 1f, zz) > 0.5f
                         ? deepslate
                         : stone;
-                terrain.set(x, (int) baseLine, z, blockState);
-
-                for (int y = (int) (baseLine - ceilingHeight + 1); y < baseLine - 1; y++) {
+                for (int y = (int) (baseLine - ceilingHeight); y < (int) baseLine; y++) {
                     terrain.set(x, y, z, deepslate);
                 }
-                terrain.set(x, (int) (baseLine - ceilingHeight), z, deepslate);
+                terrain.set(x, (int) baseLine, z, blockState);
             }
         }
     }
@@ -129,7 +126,7 @@ public class DeepCavesAndLostCavesGen {
 
                 float biomeHeight = noise * (TOP_LAYER_TERRAIN_HEIGHT) - ARCANE_PLATE_HEIGHT;
 
-                float baselineNoise = lostTopLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
+                float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(xx, zz);
                 float baseLine = DEEP_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET - ARCANE_PLATE_HEIGHT;
                 int topY = (int) (baseLine + biomeHeight);
 
@@ -161,7 +158,7 @@ public class DeepCavesAndLostCavesGen {
             return new HangingTerrainGenerator.TerrainColumn(false, 0, 0);
         }
         float biomeHeight = noise * TOP_LAYER_TERRAIN_HEIGHT - ARCANE_PLATE_HEIGHT;
-        float baselineNoise = lostTopLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
+        float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
         float baseline = DEEP_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise
                 + TOP_LAYER_OFFSET - ARCANE_PLATE_HEIGHT;
         int topY = (int) (baseline + biomeHeight);
@@ -176,7 +173,7 @@ public class DeepCavesAndLostCavesGen {
      * True if lost-caves ceiling or deep-caves floor stone occupies any Y in {@code [minY, maxY]} at this column.
      */
     public static boolean interLayerTerrainOverlaps(int x, int z, int minY, int maxY, RandomState randomState) {
-        float baselineNoise = lostTopLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
+        float baselineNoise = topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z);
 
         float floorNoise = lostTopLevelNoise.getOrCreateNoise(randomState).noise(x, z);
         if (floorNoise >= 0.01f) {

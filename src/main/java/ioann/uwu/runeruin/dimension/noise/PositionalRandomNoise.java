@@ -3,14 +3,15 @@ package ioann.uwu.runeruin.dimension.noise;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
 
+/** A random value per block, seeded by its name and the world seed, so two such noises never repeat each other. */
 public class PositionalRandomNoise implements Noise {
 
     private final PositionalRandomFactory positionalRandom;
 
-    public PositionalRandomNoise(long seed) {
+    public PositionalRandomNoise(String name, long seed) {
         this.positionalRandom = new XoroshiroRandomSource.XoroshiroPositionalRandomFactory(
-                ("randomNoise1" + seed).hashCode(),
-                ("randomNoise2" + seed).hashCode()
+                Noise.hashString(name + "1" + seed),
+                Noise.hashString(name + "2" + seed)
         );
     }
 

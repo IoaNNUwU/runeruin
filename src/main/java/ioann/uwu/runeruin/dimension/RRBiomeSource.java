@@ -142,8 +142,7 @@ public class RRBiomeSource extends BiomeSource {
             baseLine += TopLayerAndBloomingCavesGen.CEILING_BIOME_RISE;
         }
 
-        float lostBaselineNoise = RRChunkGenerator.lostTopLevelBaselineNoise.getOrCreateNoise(sampler).noise(x, z);
-        int lostBaseLine = (int) (LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * lostBaselineNoise + TOP_LAYER_OFFSET);
+        int lostBaseLine = (int) (LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * baselineNoise + TOP_LAYER_OFFSET);
 
         // The ceiling of the Deep caves rises into the floor of the Blooming caves and keeps its biome there.
         int deepCeilingTop = y <= DEEP_CAVES_CEILING_Y || y > DeepCavesGen.HIGHEST_Y
