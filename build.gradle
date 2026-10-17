@@ -193,15 +193,19 @@ tasks.register('extractMcSources', Sync) {
         }
         !hasExpectedVersion
     }
-    from(minecraftSourcesJar.map { extractArchives.zipTree(it) }) {
-        include '**/*.java'
-        into 'code'
-    }
-    from(configurations.neoForgeAgentSources.elements.map { locations ->
-        locations.collect { extractArchives.zipTree(it.asFile) }
-    }) {
-        include '**/*.java'
-        into 'code'
+    // With CI=true ModDevGradle builds Minecraft without decompiling it, so there is no sources jar:
+    // CI extracts only the textures and models that the asset lint checks.
+    if (System.getenv('CI') != 'true') {
+        from(minecraftSourcesJar.map { extractArchives.zipTree(it) }) {
+            include '**/*.java'
+            into 'code'
+        }
+        from(configurations.neoForgeAgentSources.elements.map { locations ->
+            locations.collect { extractArchives.zipTree(it.asFile) }
+        }) {
+            include '**/*.java'
+            into 'code'
+        }
     }
     from(provider { extractArchives.zipTree(minecraftClientJar) }) {
         include 'assets/minecraft/textures/**', 'assets/minecraft/models/**'
