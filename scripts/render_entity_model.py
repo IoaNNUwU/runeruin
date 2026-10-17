@@ -40,7 +40,8 @@ The views are iso front and side unless --view says otherwise, the scale 8. The 
 the game scales a walk by the speed of the mob and turns the head to its target in code.
 
 Faces turned away from the camera are dropped by the game's own normals; shade is by direction as in
-render_model.py, not the game's entity lighting.
+render_model.py, not the game's entity lighting. Under the views every texture gets a row with its visible colors
+from dark to light.
 """
 import argparse
 import json
@@ -51,8 +52,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from render_model import BACKGROUND, NORMALS, ROOT, SHADE, apply, axis_rotation, bounds, cross, dot, draw_view
-from render_model import face_texels, mat_mul, normalize, project, save_image, sheet
+from render_model import BACKGROUND, NORMALS, ROOT, SHADE, add_palettes, apply, axis_rotation, bounds, cross, dot
+from render_model import draw_view, face_texels, mat_mul, normalize, project, save_image, sheet
 
 sys.path.insert(0, str(ROOT / ".agents/skills/minecraft-model-texture-analysis/scripts"))
 from extract_model_faces import ModelError, discover_assets_roots, resolve_texture_file  # noqa: E402
@@ -310,12 +311,13 @@ def main():
              for name, frames in projected.items()}
 
     # The textures would make the title of a small animated mob much wider than the mob.
-    textures = "  ".join(dict.fromkeys(texture_name for _, _, (texture_name, _) in layers))
+    palettes = [(name, texture, None) for name, texture in dict(texture for _, _, texture in layers).items()]
+    textures = "  ".join(name for name, _, _ in palettes)
     title = f"{identifier}#{'+'.join(layer.partition('=')[0] for layer in args.layer)}  {animation or textures}" \
             + (f"  pose: {' '.join(args.pose)}" if args.pose else "")
     if args.output.suffix.lower() == ".gif":
         sheets = [sheet(f"{title}  {seconds:.2f} / {length:g} s",
-                        [(name, draw_view(faces[i], boxes[name])) for name, faces in projected.items()])
+                        [(name, draw_view(faces[i], boxes[name])) for name, faces in projected.items()], palettes)
                   for i, seconds in enumerate(times)]
         # One size and one palette for all frames, so that nothing jumps or flickers between them.
         width, height = max(image.width for image in sheets), max(image.height for image in sheets)
@@ -334,10 +336,10 @@ def main():
         result = Image.new("RGB", (max(row.width for row in rows), sum(row.height for row in rows)), BACKGROUND)
         for i, row in enumerate(rows):
             result.paste(row, (0, sum(previous.height for previous in rows[:i])))
-        save_image(args.output, result)
+        save_image(args.output, add_palettes(result, palettes))
     else:
         save_image(args.output, sheet(title, [(name, draw_view(faces[0], boxes[name]))
-                                              for name, faces in projected.items()]))
+                                              for name, faces in projected.items()], palettes))
     return 0
 
 

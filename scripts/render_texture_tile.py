@@ -6,13 +6,16 @@
 
 A texture is a file path or a texture id (namespace:path, e.g. runeruin:block/moss_light), looked up in
 src/main/resources, src/generated/resources and .mc-sources/textures. Animated textures show frame 0.
-Each texture gets its own labeled panel, side by side.
+Each texture gets its own labeled panel, side by side, and under them a row with its visible colors from dark
+to light.
 """
 import argparse
 import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw
+
+from render_model import add_palettes
 
 ROOT = Path(__file__).resolve().parent.parent
 ASSET_ROOTS = [
@@ -63,16 +66,18 @@ def main():
     args = parser.parse_args()
 
     paths = [resolve(texture) for texture in args.textures]
+    names = [Path(name).stem if Path(name).is_file() else name for name in args.textures]
     panels = [panel(path, args.grid, args.scale) for path in paths]
     width = sum(image.width for image in panels) + GAP * (len(panels) + 1)
     height = max(image.height for image in panels) + LABEL_HEIGHT + GAP * 2
     sheet = Image.new("RGB", (width, height), BACKGROUND)
     draw = ImageDraw.Draw(sheet)
     x = GAP
-    for path, image, name in zip(paths, panels, args.textures):
-        draw.text((x, GAP // 2), Path(name).stem if Path(name).is_file() else name, fill=(230, 230, 230))
+    for image, name in zip(panels, names):
+        draw.text((x, GAP // 2), name, fill=(230, 230, 230))
         sheet.paste(image, (x, GAP + LABEL_HEIGHT), image)
         x += image.width + GAP
+    sheet = add_palettes(sheet, [(name, first_frame(path), None) for name, path in zip(names, paths)])
     args.output.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(args.output)
     for path in paths:
