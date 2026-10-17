@@ -1457,7 +1457,8 @@ public final class RRGameTests {
     // A full breath blows one berry at a snail ten blocks away: a mossberry from the bag poisons it, a glow berry
     // in the other hand, which goes first, makes it glow.
     private static void blowpipeShootsBerries(GameTestHelper helper) {
-        int y = 130;
+        // Far enough above the Prophet's fight that ending this one does not take its thrown warrior.
+        int y = 150;
         fightFloor(helper, y);
         Snail poisoned = fightTarget(helper, 14, y, 8);
         Snail glowing = fightTarget(helper, 14, y, 16);
