@@ -26,8 +26,8 @@ public class PowderedMossVeinFeature extends Feature<NoneFeatureConfiguration> {
         BlockPos origin = context.origin();
         RandomSource random = context.random();
         BlockState powderedMoss = RRBlocks.POWDERED_MOSS.get().defaultBlockState();
-        int radiusX = 5 + random.nextInt(3);
-        int radiusZ = 5 + random.nextInt(3);
+        int radiusX = 2 + random.nextInt(3);
+        int radiusZ = 2 + random.nextInt(3);
         boolean placed = false;
 
         for (int x = -radiusX; x <= radiusX; x++) {
