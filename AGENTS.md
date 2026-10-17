@@ -17,19 +17,11 @@ Several agents work in this repository at once. Every change, documentation incl
    ```
 
    It creates `..\RuneRuin-giant-goblet` on `feature/giant_goblet` from the local `main`, links the shared Minecraft sources and runs `runData`. If the name is taken, choose another; never take over another agent's branch or worktree. In Claude Code, then call `EnterWorktree` with `path` set to the new worktree (not `name`, not the built-in worktree option). In the Claude desktop app, also add the new worktree to the session's folders (the `request_directory` tool with its path): the file pane opens only files from those folders.
-4. Claim the issue at once, before any other work: other agents see that it is taken only by its draft pull request. A pull request needs a commit, so start with an empty one:
-
-   ```powershell
-   git commit --allow-empty -m "<issue title>"
-   git push -u origin HEAD
-   gh pr create --draft --title "<issue title>" --body "Fixes #<n>`n`nThe issue has been claimed, but there are no changes yet."
-   ```
-
-   Then repeat the check from step 2: if another open pull request links the issue too, the one with the higher number gives way, so close yours (`gh pr close`) and tell the user. If you cannot claim the issue, tell the user before going on.
+4. Claim the issue at once, before any other work, with a draft pull request on an empty commit, as [CONTRIBUTING.md](CONTRIBUTING.md#making-a-change) shows: other agents see that the issue is taken only by that pull request. Then repeat the check from step 2: if another open pull request links the issue too, the one with the higher number gives way, so close yours (`gh pr close`) and tell the user. If you cannot claim the issue, tell the user before going on.
 5. Work only inside the task worktree: edits, searches, Gradle. Links to files in replies are absolute paths into the task worktree: a relative link is resolved from the folder the session was started in, usually the main checkout, where the file is missing or is another version. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
-6. Follow-ups after a commit stay in the same branch and worktree. Start a new branch only for an unrelated feature or bug.
+6. Follow-ups after a commit stay in the same branch and worktree until its pull request is merged. Start a new branch for an unrelated feature or bug, and for any work after the merge.
 7. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
-8. Remove a worktree only when the user asks (a maintainer's agent also after its pull request is merged, see [MAINTAINING.md](MAINTAINING.md#pull-requests)), with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` and `gh pr merge --delete-branch` delete the shared sources cache through the junction, and it keeps the branch unless its commits are pushed or in `main`.
+8. Remove a worktree only when the user asks (a maintainer's agent also after its pull request is merged, see [MAINTAINING.md](MAINTAINING.md#pull-requests)), with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name-with-dashes>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` and `gh pr merge --delete-branch` delete the shared sources cache through the junction. It keeps the branch unless its commits are pushed or in `main`; after a squash merge it warns that it kept the branch, which `git branch -D` then deletes.
 
 `main` changes only through pull requests on GitHub: never commit on it, merge into it or push to it. Git hooks in `.githooks` (enabled by the setup script) reject commits on `main`, pushes to `main`, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
 
@@ -82,11 +74,9 @@ What an agent makes is a draft ([AI_POLICY.md](AI_POLICY.md)): a person reworks 
 
 ## Gradle, datagen and the game
 
-Gradle needs any installed JDK; the wrapper downloads Java 25.
-
 | Task | Purpose |
 |------|---------|
-| `runClient` | game with the mod; game dir `~/.runeruin/game`, shared by all checkouts |
+| `runClient` | game with the mod; game dir `~/.runeruin/game` (or `RUNERUIN_GAME_DIR`), shared by all checkouts |
 | `runServer` | dedicated server (`--nogui`) |
 | `runGameTestServer` | run GameTests, exit non-zero on failure |
 | `runPreview` | headless shape export into `exports/` (`headless-preview` skill) |
@@ -94,7 +84,7 @@ Gradle needs any installed JDK; the wrapper downloads Java 25.
 | `build` | mod jar |
 | `extractMcSources` | Minecraft + NeoForge sources into `.mc-sources/`, textures and models into `.vanilla-textures/` |
 
-- Never `clean`, `--rerun-tasks`, `--refresh-dependencies`, `--offline` or `--stop`; never kill Java or Gradle; never start, restart or wait for the game. A Claude Code hook blocks these.
+- Never `clean`, `--rerun-tasks`, `--refresh-dependencies`, `--offline` or `--stop`; never kill Java or Gradle; never start, restart or wait for the game. A Claude Code hook (`.claude/hooks/block-forbidden-commands.sh`) blocks these, `runClient` included.
 - `src/generated` is not in git. Never delete it or `src/generated/resources/.cache`, never hand-write `src/generated/**`: change the Java bootstrap and run `runData` yourself.
 - A running game locks `build/` of the checkout it was started from. If Gradle fails on a locked file, tell the user the game is locking `build/`, ask them to close it, and give the single-line absolute `runData` and `runClient` commands for the task worktree.
 - `build.gradle` pins NeoForm Runtime to `%USERPROFILE%\.gradle\caches\neoformruntime`. If `downloadAssets` starts downloading thousands of files, stop: the pin failed.
@@ -128,14 +118,15 @@ Step-by-step procedures live in skills; load the matching one before starting su
 
 | Path | Role |
 |------|------|
+| `RuneRuinMod`, `RR`, `Config` | registration, id helpers, mod config |
 | `blocks/`, `items/`, `entities/`, `particles/` | `RRBlocks` (also registers BlockItems), `RRItems`, `RREntityTypes`, `RRParticleTypes`; teleport item `RuneOfSpaceItem` |
 | `creativetab/` | creative tab; its item list is manual |
 | `datagen/` | blockstates, item definitions, models on vanilla parents and derived models, tags, loot, recipes, worldgen bootstrap (`DatagenMain`) |
 | `client/` | renderers, mob models and their loader `BlockbenchModel`, tints, clouds (`RuneRuinClient`) |
-| `portal/`, `loottables/`, `mixin/` | dimension portal, `RRLootTables`, vanilla tweaks |
-| `region/` | `/rrpos1` `/rrpos2` `/rrexport` `/rrsave` `/rrclear` |
-| `preview/` | headless previews and GameTests |
-| `dimension/` | worldgen registries: `RRFeatures`, `RRConfiguredFeatures`, `RRPlacedFeatures`, `RRBiomes`, `RRBiomeSource`, `RRChunkGenerator`, `RRDimension`, `RRStructure*`, `RRPlacementModifierTypes` |
+| `portal/`, `loottables/`, `mixin/` | dimension portal and its `RRPoiTypes`, `RRLootTables`, vanilla tweaks |
+| `region/` | `/rrpos1` `/rrpos2` `/rrexport` `/rrsave` `/rrgenerate` `/rrclear` |
+| `preview/` | headless previews, `/rrpreview` and GameTests |
+| `dimension/` | worldgen registries: `RRFeatures`, `RRConfiguredFeatures`, `RRPlacedFeatures`, `RRConfiguredCarvers`, `RRBiomes`, `RRBiomeSource`, `RRChunkGenerator`, `RRDimension`, `RRStructure*`, `RRPlacementModifierTypes`; tags `RRTags`, `RRBiomeTags`; layer heights `Const` |
 | `dimension/biomes/<layer>/` | one class per biome |
 | `dimension/features/` | `Feature<?>` implementations |
 | `dimension/placements/` | placement modifiers |
@@ -148,7 +139,7 @@ Translations are hand-written in both `assets/runeruin/lang/en_us.json` and `ru_
 
 ## Worldgen
 
-Layers bottom → top (`Const`): Void `0…50` → Lost caves `LOST_CAVES_Y` 56 … `LOST_CAVES_CEILING_Y` 131 → Deep caves 137 … 212 → Blooming caves 218 … 293 → Top layer from `TOP_LAYER_Y` 294 to the build limit 512. The 5 blocks under the Lost caves and under the Blooming caves are rock; the ceilings of the Void and of the Deep caves rise through it into the floor of the layer above, up to `VoidGen.roofY` and `DeepCavesGen.roofY`, and take their biomes along.
+Layers bottom → top (`Const`): Void `0…50` → Lost caves `LOST_CAVES_Y` 56 … `LOST_CAVES_CEILING_Y` 131 → Deep caves 137 … 212 → Blooming caves 218 … 293 → Top layer from `TOP_LAYER_Y` 294 to the build limit 512. The 5 blocks under the Lost caves (51…55) and under the Blooming caves (213…217) are rock; the ceilings of the Void and of the Deep caves rise through it into the floor of the layer above, up to `VoidGen.roofY` and `DeepCavesGen.roofY`, and take their biomes along. Between the Lost and the Deep caves (132…136) there is no rock: the Deep caves floor rests on the line from which the Lost caves ceiling hangs (`DeepCavesAndLostCavesGen`).
 
 Two independent systems:
 

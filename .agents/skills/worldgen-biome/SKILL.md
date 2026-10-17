@@ -11,8 +11,8 @@ Biomes do not shape the stacked caves (`RRChunkGenerator` does); they choose sur
 
 1. Class in `dimension/biomes/<layer>/` with `bootstrap(placedFeatures, carvers)` that builds the `Biome` (mobs, effects, `addFeature`). Layer folders: `toplayer`, `bloomingcaves` / `bloomingcavesceiling`, `deepcaves` / `deepcavesceiling`, `lostcaves` / `lostcavesceiling`, `voidlayer`. Copy the closest biome of the same layer.
 2. Key + `ctx.register` in `RRBiomes`.
-3. Entry in the layer list in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`), or it never generates. Weights are repeated entries.
-4. Surface blocks in `dimension/chunkgenerator/RRTerrainSurfaces`, or it silently gets the default surface.
+3. Entry in the layer list in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`), or it never generates and the GameTest `biome_registry_complete` fails. A biome registered on purpose without generating goes into `PARKED_BIOMES` in `RRGameTests`. Weights are repeated entries.
+4. Surface blocks in `dimension/chunkgenerator/RRTerrainSurfaces`, or `biome_registry_complete` fails ("has no RRTerrainSurfaces entry").
 5. Tags, e.g. for structures: `RRBiomeTags` + `DatagenBiomeTagProvider`.
 6. `compileJava`, `runData`, `runGameTestServer`.
 

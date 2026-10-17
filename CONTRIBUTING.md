@@ -32,7 +32,7 @@ Only the maintainer can change labels. A bug becomes `confirmed` once it is repr
 
 What happens after `confirmed` or `accepted` is shown by the pull request, not by a label: an open draft pull request means someone is working on it, a pull request ready for review means it waits for the maintainer, and the merge closes the issue.
 
-Labels live in [.github/labels.json](.github/labels.json), and a workflow applies them after every merge. If you need a new one, for example a `biome:` label, add it there in your pull request.
+Labels live in [.github/labels.json](.github/labels.json): when a merge changes that file, a workflow creates or updates the labels on GitHub. If you need a new one, for example a `biome:` label, add it there in your pull request (a maintainer creates it on GitHub right away, [MAINTAINING.md](MAINTAINING.md#issues-and-labels)).
 
 **Free to take** are issues labelled [`confirmed` or `accepted` without a linked pull request](https://github.com/IoaNNUwU/runeruin/issues?q=is%3Aissue+is%3Aopen+label%3Aconfirmed%2Caccepted+-linked%3Apr), unless a comment in the issue says that someone is working on it. An issue with an open pull request is taken. If that pull request has had no commits or comments for two weeks, ask in it whether the work is abandoned, and take it over once its author or the maintainer agrees.
 

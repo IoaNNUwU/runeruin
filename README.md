@@ -11,18 +11,18 @@
 ```
                                           + Y = 512
              /````\                       | 
- TOP LAYER   \_  _/  /````\        .__.   | - - - 217 blocks below the build limit
+ TOP LAYER   \_  _/  /````\        .__.   | - - - 218 blocks up to the build limit
                ||    \_  _/        |  |   |
            ..****...___||         _|__| --|-- ~25 blocks high - dripstone/deep/dark
        _..`             ``''~~''``        |                          caves biomes
-      `|| __                              | Y = 296
+      `|| __                              | Y = 294
        || ##`''***~'```''```''***~'```' --|-- ~10 blocks high - blooming caves ceiling
        || ##      BLOOMING CAVES          |                                     biomes
        || ##         LAYER   /````\       | - - - 75 blocks high
        || ##   /``\          \_  _/       |
-       || ##.****./.____       ||  _..* --|-- ~25 blocks high - blooming caves biomes
+       || ##.****./.____       ||  _..* --|-- 5-17 blocks high - blooming caves biomes
 ~~''``` ``##            ``''~~''``        |
-                                          | Y = 215
+                                          | Y = 213-217
 ```''~*~''```''***~'```''```''***~'```' --|-- ~10 blocks high - dripstone/deep/dark
         |     *| |       DEEP CAVES   |   |                       caves ceiling biomes
        *\        /         LAYER      /   |
@@ -30,15 +30,15 @@
                       /                   |
    /\      ..****..._/ \           _..* --|-- ~25 blocks high - dripstone/deep/dark
 ~~''``` ```             ``''.    |       |                          caves biomes
-                            ||    `|      | Y = 134
+                            ||    `|      | Y = 132-136
 ```''~*~''```''***~'```''```||     ``' --|-- ~10 blocks high - hot/ice/lost caves
  LOST CAVES    ||           ||            |                       ceiling biomes
    LAYER       ||     *     ||         *  |
         ___    ||     **    ||       ***  | - - - 75 blocks high
  / / / /0 0\   |**   **     ||**    **    |
- \ \ \ \___/.****.../\__   *|**    /\.* --|-- ~25 blocks high - hot/ice/lost caves
-~~''``` ^^^             ``''~~''``        |                          biomes
-                                          | Y = 53
+ \ \ \ \___/.****.../\__   *|**    /\.* --|-- 5-17 blocks high - hot/ice/lost caves
+~~''``` ^^^             ``''~~''``        |                           biomes
+                                          | Y = 51-55
 ```''~*~''```''***~'```''```''***~'```' --|-- ~10 blocks high - void ceiling biomes
                          <>               |
  <>    `         `                <>      | - - - 50 blocks high
