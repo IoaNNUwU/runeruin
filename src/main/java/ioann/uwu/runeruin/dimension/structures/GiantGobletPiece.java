@@ -937,8 +937,8 @@ public class GiantGobletPiece extends StructurePiece {
     }
 
     /**
-     * Runions space colonization matching {@code scripts/dla_ascii.py} {@code sc_v4_wiggly}
-     * / {@code wiggly_kwargs}. Occupied cells are packed (dx, dz) from the cluster center.
+     * Runions space colonization with jittered, wiggly growth. Occupied cells are packed (dx, dz)
+     * from the cluster center.
      */
     private static final class WigglyDendrites {
         static final float STEP = 1.0f;

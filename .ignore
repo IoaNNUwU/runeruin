@@ -1,23 +1,12 @@
-# Ripgrep (agent Grep / `rg`) reads this after .gitignore.
-# Ignore generated and cache trees so searches do not mix jars, world saves, or old builds.
-build/
-.gradle/
-run/
-# Generated models/blockstates stay searchable (the model analysis skill reads them); only the datagen cache is hidden.
+# Ripgrep (agent Grep, `rg`) reads this on top of .gitignore.
+
+# Generated models and blockstates stay searchable; only the datagen cache is hidden.
+!src/generated/
 src/generated/resources/.cache/
-exports/
-bin/
-out/
-repo/
 
-# Extracted Minecraft + NeoForge Java for THIS project version (see VERSION.txt).
-# Gitignores the folder so it is not committed; un-ignore here so rg searches it
-# instead of ~/.gradle (multiple game versions, mostly jars).
+# Extracted Minecraft and NeoForge Java and the vanilla textures and models of this project version
+# (see VERSION.txt): .gitignore keeps them out of git, this file keeps them searchable.
+# .mc-sources is a link to a shared cache, and ripgrep does not follow links found while walking:
+# search it as a path, `rg <pattern> .mc-sources`, or with `rg -L`.
 !.mc-sources/
-!.mc-sources/**
-
-# Vanilla Minecraft client textures for THIS project version (see VERSION.txt).
-# Gitignores the extracted copy while making it visible to agents when they inspect references.
-.vanilla-textures/
 !.vanilla-textures/
-!.vanilla-textures/**

@@ -33,7 +33,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-### Cursor / agent Minecraft sources (extractMcSources) ###
+### Minecraft and NeoForge sources (extractMcSources) ###
 .mc-sources/
 
 ### Vanilla Minecraft textures (extractVanillaTextures) ###
@@ -51,7 +51,7 @@ repo/
 
 src/generated
 
-### In-game region dumps for agents (//rrexport)
+### Region dumps and previews (/rrexport, runPreview) ###
 exports/
 
 ### Python ###
@@ -59,3 +59,4 @@ __pycache__/
 
 ### Claude Code personal settings ###
 .claude/settings.local.json
+.claude/worktrees/
