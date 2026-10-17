@@ -3,21 +3,40 @@ package ioann.uwu.runeruin.dimension.structures;
 import ioann.uwu.runeruin.dimension.structures.HangingPiece.Look;
 import ioann.uwu.runeruin.dimension.structures.HangingPiece.Wear;
 import ioann.uwu.runeruin.dimension.structures.HangingPiece.Wood;
-import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece.Shape;
-import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece.Theme;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Lays out one network of hanging minecart tracks the way a vanilla mineshaft grows: a station in the middle,
- * then piece after piece from every open end, each kept only if it fits.
+ * then piece after piece from every open end, each kept only if it fits. The tracks are drawn by code; the
+ * platforms are templates that a person built.
  */
 public final class HangingTracksLayout {
+
+    /** What the layout needs to know of a piece to keep it apart from the others and between the ceiling and the floor. */
+    public interface Part {
+        /** The deck seen from above, in world coordinates: what the layout keeps other pieces away from. */
+        BoundingBox footprint();
+
+        /** The lowest deck block: the chains that hold it are at most {@link #MAX_GAP} blocks long. */
+        int lowestDeck();
+
+        /** The highest block that must stay under the ceiling. */
+        int top();
+
+        /** The lowest block, which must stay clear of the floor. */
+        int bottom();
+    }
 
     /** Where a piece starts: the deck block under its first rail and the direction the rails run in. */
     public record Port(int x, int y, int z, Direction facing) {
@@ -56,28 +75,35 @@ public final class HangingTracksLayout {
     private static final int SPACING = 2;
     private static final int[] SIDES = {HangingTrackPiece.LEFT, HangingTrackPiece.RIGHT, HangingTrackPiece.FORWARD};
 
-    private final List<HangingPiece> pieces = new ArrayList<>();
-    private final Map<HangingPiece, HangingPiece> parents = new IdentityHashMap<>();
+    private final List<Part> pieces = new ArrayList<>();
+    private final Map<Part, Part> parents = new IdentityHashMap<>();
     private final int centerX;
     private final int centerZ;
     private final RandomSource random;
     private final Terrain terrain;
+    private final StructureTemplateManager templates;
+    /** The templates of the platforms where a track ends, and of those that hang beside the tracks. */
+    private final List<Identifier> platforms;
+    private final List<Identifier> dungeons;
     /** Deck blocks on each side of the rails, at most: 1 makes tracks 3 blocks wide, 2 makes them 3 to 5. */
     private final int extent;
     private final Wood wood;
 
-    private HangingTracksLayout(int centerX, int centerZ, RandomSource random, Terrain terrain) {
+    private HangingTracksLayout(int centerX, int centerZ, RandomSource random, Terrain terrain, StructureTemplateManager templates) {
         this.centerX = centerX;
         this.centerZ = centerZ;
         this.random = random;
         this.terrain = terrain;
+        this.templates = templates;
+        this.platforms = TemplatePiece.variants(templates, HangingPlatformPiece.PLATFORMS);
+        this.dungeons = TemplatePiece.variants(templates, HangingPlatformPiece.DUNGEONS);
         this.extent = random.nextInt(3) == 0 ? 1 : 2;
         this.wood = random.nextInt(10) < 7 ? Wood.OAK : Wood.INVERTED_TREE;
     }
 
     /** The pieces of a network around this block, or nothing when the cave leaves no room for one. */
-    public static List<HangingPiece> generate(int centerX, int centerZ, RandomSource random, Terrain terrain) {
-        HangingTracksLayout layout = new HangingTracksLayout(centerX, centerZ, random, terrain);
+    public static List<StructurePiece> generate(int centerX, int centerZ, RandomSource random, Terrain terrain, StructureTemplateManager templates) {
+        HangingTracksLayout layout = new HangingTracksLayout(centerX, centerZ, random, terrain, templates);
 
         int ceiling = Integer.MAX_VALUE;
         for (int dx = -STATION_EXTENT; dx <= STATION_EXTENT; dx += 2) {
@@ -102,7 +128,7 @@ public final class HangingTracksLayout {
             return List.of();
         }
         layout.addDetachedPlatforms();
-        return layout.pieces;
+        return layout.pieces.stream().map(StructurePiece.class::cast).toList();
     }
 
     /** The look of a piece that grows from this one. Moss spreads: an overgrown piece often has overgrown neighbours. */
@@ -115,7 +141,7 @@ public final class HangingTracksLayout {
         return new Look(this.wood, wear, this.random.nextLong());
     }
 
-    private void add(HangingPiece piece, HangingPiece parent) {
+    private void add(Part piece, Part parent) {
         this.pieces.add(piece);
         this.parents.put(piece, parent);
     }
@@ -134,8 +160,8 @@ public final class HangingTracksLayout {
         }
         // A track that cannot go on ends with a platform.
         for (int attempt = 0; attempt < 3; attempt++) {
-            HangingPlatformPiece platform = randomPlatform(parent, port, true, attempt);
-            if (fits(platform, parent)) {
+            HangingPlatformPiece platform = randomPlatform(this.platforms, port);
+            if (platform != null && fits(platform, parent)) {
                 add(platform, parent);
                 return true;
             }
@@ -187,51 +213,22 @@ public final class HangingTracksLayout {
         return new HangingTrackPiece.Junction(port, this.extent, HangingTrackPiece.BACK, look);
     }
 
-    /** A platform for this place; each further attempt makes a smaller one, down to 7 by 7 blocks. */
-    private HangingPlatformPiece randomPlatform(HangingPiece parent, Port port, boolean connected, int attempt) {
-        Shape shape = Shape.RECTANGLE;
-        int width = 7;
-        int depth = 7;
-        if (attempt == 0) {
-            int roll = this.random.nextInt(10);
-            shape = roll < 4 ? Shape.RECTANGLE : roll < 6 ? Shape.ROUND : roll < 7 ? Shape.L : roll < 9 ? Shape.T : Shape.PLUS;
-            width = 11 + 2 * this.random.nextInt(3);
-            depth = shape == Shape.ROUND || shape == Shape.PLUS ? width : 11 + this.random.nextInt(5);
-        } else if (attempt == 1) {
-            width = 9 + 2 * this.random.nextInt(2);
-            depth = 9 + this.random.nextInt(3);
+    /** A platform from one of the templates, turned or mirrored at random; null when there is none to take. */
+    private @Nullable HangingPlatformPiece randomPlatform(List<Identifier> variants, Port port) {
+        if (variants.isEmpty()) {
+            return null;
         }
-        Theme theme = randomTheme(shape, depth, connected, gap(port) >= HangingPlatformPiece.ROOF + 2);
-        return new HangingPlatformPiece(port, shape, width, depth, this.random.nextBoolean() ? 1 : -1, theme, connected, look(parent));
+        Identifier template = variants.get(this.random.nextInt(variants.size()));
+        Mirror mirror = this.random.nextBoolean() ? Mirror.NONE : Mirror.FRONT_BACK;
+        return HangingPlatformPiece.create(this.templates, template, port, mirror, this.wood);
     }
 
-    /** A theme that the platform has room for. */
-    private Theme randomTheme(Shape shape, int depth, boolean connected, boolean roofFits) {
-        for (int attempt = 0; attempt < 6; attempt++) {
-            int roll = this.random.nextInt(100);
-            Theme theme = roll < 20 ? Theme.MOSS_POND : roll < 42 ? Theme.HUTS : roll < 54 ? Theme.CAMP
-                    : roll < 66 ? Theme.STORAGE : roll < 76 ? Theme.SPAWNER : roll < 84 ? Theme.WORKSHOP
-                    : roll < 90 ? Theme.LOOKOUT : roll < 96 ? Theme.DEPOT : Theme.TREASURE_HUT;
-            boolean fits = switch (theme) {
-                case MOSS_POND -> depth >= 11 && shape != Shape.L && shape != Shape.T;
-                case HUTS, TREASURE_HUT -> roofFits && depth >= 11;
-                case STORAGE, WORKSHOP -> roofFits && depth >= 9;
-                case DEPOT -> connected && depth >= 9;
-                default -> true;
-            };
-            if (fits) {
-                return theme;
-            }
-        }
-        return Theme.CAMP;
-    }
-
-    /** A few platforms that hang near the tracks without touching them, up to 5 blocks higher or lower. */
+    /** A few dungeons that hang near the tracks without touching them, up to 5 blocks higher or lower. */
     private void addDetachedPlatforms() {
-        List<HangingPiece> tracks = List.copyOf(this.pieces);
+        List<Part> tracks = List.copyOf(this.pieces);
         int wanted = 1 + this.random.nextInt(3) + tracks.size() / 10;
         for (int attempt = 0; attempt < 8 * wanted && wanted > 0; attempt++) {
-            HangingPiece near = tracks.get(this.random.nextInt(tracks.size()));
+            Part near = tracks.get(this.random.nextInt(tracks.size()));
             BoundingBox area = near.footprint();
             // The platform turns its entrance to the track.
             Direction away = Direction.Plane.HORIZONTAL.getRandomDirection(this.random);
@@ -246,9 +243,9 @@ public final class HangingTracksLayout {
                 case NORTH -> area.minZ() - distance;
                 default -> this.random.nextIntBetweenInclusive(area.minZ(), area.maxZ());
             };
-            int y = near.origin.y() + this.random.nextIntBetweenInclusive(-5, 5);
-            HangingPlatformPiece platform = randomPlatform(near, new Port(x, y, z, away), false, this.random.nextInt(3));
-            if (fits(platform, null)) {
+            int y = near.lowestDeck() + this.random.nextIntBetweenInclusive(-5, 5);
+            HangingPlatformPiece platform = randomPlatform(this.dungeons, new Port(x, y, z, away));
+            if (platform != null && fits(platform, null)) {
                 add(platform, null);
                 wanted--;
             }
@@ -257,16 +254,16 @@ public final class HangingTracksLayout {
 
     /**
      * Whether a piece has room: inside the radius, clear of every other deck, and at every point
-     * between {@link #MIN_GAP} and {@link #MAX_GAP} blocks under the ceiling and above the floor.
+     * under the ceiling with its top, at most {@link #MAX_GAP} blocks below it and above the floor.
      */
-    private boolean fits(HangingPiece piece, HangingPiece parent) {
+    private boolean fits(Part piece, @Nullable Part parent) {
         BoundingBox area = piece.footprint();
         if (area.minX() < this.centerX - MAX_RADIUS || area.maxX() > this.centerX + MAX_RADIUS
                 || area.minZ() < this.centerZ - MAX_RADIUS || area.maxZ() > this.centerZ + MAX_RADIUS) {
             return false;
         }
         BoundingBox apart = area.inflatedBy(SPACING);
-        for (HangingPiece other : this.pieces) {
+        for (Part other : this.pieces) {
             // A piece touches the one it grows from. A track also comes close to that one's other neighbours;
             // a platform is too wide for that: their beams and chains would hang in its deck.
             boolean joined = parent != null && (other == parent || !(piece instanceof HangingPlatformPiece)
@@ -276,14 +273,11 @@ public final class HangingTracksLayout {
             }
         }
 
-        int[] levels = piece.deckLevels();
-        int lowest = piece.origin.y() + levels[0];
-        int highest = piece.origin.y() + levels[1];
         for (int x = area.minX(); x <= area.maxX(); x = x == area.maxX() ? x + 1 : Math.min(x + 2, area.maxX())) {
             for (int z = area.minZ(); z <= area.maxZ(); z = z == area.maxZ() ? z + 1 : Math.min(z + 2, area.maxZ())) {
                 int ceiling = this.terrain.ceilingY(x, z);
-                if (ceiling - highest - 1 < piece.headroom() || ceiling - lowest - 1 > MAX_GAP
-                        || this.terrain.floorReaches(x, z, lowest - HangingPiece.BELOW_DECK - 2)) {
+                if (ceiling <= piece.top() || ceiling - piece.lowestDeck() - 1 > MAX_GAP
+                        || this.terrain.floorReaches(x, z, piece.bottom() - 2)) {
                     return false;
                 }
             }
