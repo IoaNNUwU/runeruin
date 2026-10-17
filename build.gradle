@@ -165,6 +165,22 @@ def minecraftClientVersion = minecraft_version.replaceAll(/\.0$/, '')
 def vanillaTexturesVersionText = "minecraft=${minecraftClientVersion}\nsource=minecraft_${minecraftClientVersion}_client.jar\ncontent=textures,models\n"
 def minecraftClientJar = new File(persistentNfrtHome, "artifacts/minecraft_${minecraftClientVersion}_client.jar")
 
+// .mc-sources and .vanilla-textures are links to shared caches (scripts/ensure-mc-sources.ps1): extract only
+// when VERSION.txt is missing or another version, and never into a link, which would rewrite the cache of another version.
+def needsExtraction = { Directory dir, String versionText ->
+    def versionFile = dir.file('VERSION.txt').asFile
+    def hasExpectedVersion = versionFile.isFile() && versionFile.getText('UTF-8').trim() == versionText.trim()
+    if (versionFile.isFile() && !hasExpectedVersion) {
+        def path = dir.asFile.toPath()
+        if (!path.toRealPath().toString().equalsIgnoreCase(path.toAbsolutePath().normalize().toString())) {
+            throw new GradleException(
+                    "'${dir.asFile.name}' points to a cache for another version. Run scripts/setup-worktree.ps1 first."
+            )
+        }
+    }
+    !hasExpectedVersion
+}
+
 tasks.register('writeMcSourcesVersion') {
     def stamp = mcSourcesStamp
     def text = mcSourcesVersionText
@@ -193,6 +209,7 @@ tasks.register('extractVanillaTextures', Sync) {
     group = 'setup'
     description = 'Extract the pinned Minecraft client textures and models into .vanilla-textures.'
     dependsOn 'createMinecraftArtifacts', 'writeVanillaTexturesVersion'
+    onlyIf { needsExtraction(vanillaTexturesDir, vanillaTexturesVersionText) }
     from(provider { extractArchives.zipTree(minecraftClientJar) }) {
         include 'assets/minecraft/textures/**', 'assets/minecraft/models/**'
     }
@@ -208,21 +225,7 @@ tasks.register('extractMcSources', Sync) {
     group = 'setup'
     description = 'Extract Minecraft and NeoForge sources into .mc-sources.'
     dependsOn 'createMinecraftArtifacts', 'writeMcSourcesVersion', 'extractVanillaTextures'
-    onlyIf {
-        def versionFile = mcSourcesDir.file('VERSION.txt').asFile
-        def hasExpectedVersion = versionFile.isFile() && versionFile.getText('UTF-8').trim() == mcSourcesVersionText.trim()
-        if (versionFile.isFile() && !hasExpectedVersion) {
-            def sourcePath = mcSourcesDir.asFile.toPath()
-            def realPath = sourcePath.toRealPath().toString()
-            def absolutePath = sourcePath.toAbsolutePath().normalize().toString()
-            if (!realPath.equalsIgnoreCase(absolutePath)) {
-                throw new GradleException(
-                        "'.mc-sources' points to a cache for another version. Run scripts/setup-worktree.ps1 before extractMcSources."
-                )
-            }
-        }
-        !hasExpectedVersion
-    }
+    onlyIf { needsExtraction(mcSourcesDir, mcSourcesVersionText) }
     from(minecraftSourcesJar.map { extractArchives.zipTree(it) }) {
         include '**/*.java'
     }
