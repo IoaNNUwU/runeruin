@@ -5,6 +5,8 @@
   "item.runeruin.stardust": "Звёздная пыль",
   "item.runeruin.wispberry": "Блуждающая ягода",
   "item.runeruin.mossberry": "Моховая ягода",
+  "item.runeruin.blowpipe": "Духовая трубка",
+  "item.runeruin.blowpipe.tooltip": "Стреляет моховыми, светящимися и блуждающими ягодами",
   "item.runeruin.powdered_moss_bucket": "Ведро порошкового мха",
   "item.runeruin.snail_spawn_egg": "Яйцо призыва улитки",
   "item.runeruin.mossy_prophet_spawn_egg": "Яйцо призыва мшистого пророка",
@@ -15,6 +17,7 @@
   "entity.runeruin.mossy_prophet": "Мшистый пророк",
   "entity.runeruin.mossy_warrior": "Мшистый воин",
   "entity.runeruin.runic_minecart": "Руническая вагонетка",
+  "entity.runeruin.blowpipe_berry": "Ягода из духовой трубки",
 
   "block.runeruin.arcane_stone": "Мистический камень",
   "block.runeruin.arcane_stone_bricks": "Кирпичи из мистического камня",

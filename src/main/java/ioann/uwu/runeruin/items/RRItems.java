@@ -62,6 +62,15 @@ public class RRItems {
             p -> p.food(Foods.SWEET_BERRIES).useItemDescriptionPrefix()
     );
 
+    public static final DeferredItem<Item> BLOWPIPE = REGISTRY.registerItem(
+            "blowpipe",
+            BlowpipeItem::new,
+            p -> p.durability(250).component(DataComponents.LORE, new ItemLore(List.of(
+                    Component.translatable("item.runeruin.blowpipe.tooltip")
+                            .withStyle(style -> style.withColor(ChatFormatting.GRAY).withItalic(false))
+            )))
+    );
+
     public static final DeferredItem<Item> POWDERED_MOSS_BUCKET = REGISTRY.registerItem(
             "powdered_moss_bucket",
             p -> new SolidBucketItem(RRBlocks.POWDERED_MOSS.get(), SoundEvents.BUCKET_EMPTY_POWDER_SNOW, p),
