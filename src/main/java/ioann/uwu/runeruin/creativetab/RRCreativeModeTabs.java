@@ -22,6 +22,7 @@ public class RRCreativeModeTabs {
             .displayItems((_, output) -> output.acceptAll(List.of(
                     // --- Items ---
                     RRItems.RUNE_OF_SPACE.toStack(),
+                    RRItems.STARDUST.toStack(),
 
                     RRItems.WISPBERRY.toStack(),
                     RRItems.MOSSBERRY.toStack(),

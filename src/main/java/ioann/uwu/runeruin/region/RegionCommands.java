@@ -4,8 +4,12 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import ioann.uwu.runeruin.RR;
+import ioann.uwu.runeruin.dimension.structures.TemplatePiece;
 import ioann.uwu.runeruin.preview.HeadlessTerrainGenerator;
 import ioann.uwu.runeruin.preview.PreviewWorld;
 import java.io.IOException;
@@ -13,35 +17,45 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.IdentifierException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.data.CachedOutput;
+import net.minecraft.data.structures.NbtToSnbt;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.levelgen.structure.templatesystem.loader.TemplatePathFactory;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -59,8 +73,6 @@ public final class RegionCommands {
     private static final DustParticleOptions POS1_DUST = new DustParticleOptions(0x3DDCFF, 1.1F);
     private static final DustParticleOptions POS2_DUST = new DustParticleOptions(0xFF4D9A, 1.1F);
 
-    private static final FileToIdConverter STRUCTURE_FILES = new FileToIdConverter("structure", ".nbt");
-
     private static final Map<UUID, RegionSelection> SELECTIONS = new ConcurrentHashMap<>();
 
     private RegionCommands() {}
@@ -72,6 +84,7 @@ public final class RegionCommands {
         registerAliases(dispatcher, "rrpos2", cmd -> registerPos(cmd, 2));
         registerAliases(dispatcher, "rrexport", RegionCommands::registerExport);
         registerAliases(dispatcher, "rrsave", RegionCommands::registerSave);
+        registerAliases(dispatcher, "rrload", RegionCommands::registerLoad);
         registerAliases(dispatcher, "rrgenerate", RegionCommands::registerGenerate);
         registerAliases(dispatcher, "rrclear", RegionCommands::registerClear);
     }
@@ -106,11 +119,33 @@ public final class RegionCommands {
     }
 
     private static void registerSave(LiteralArgumentBuilder<CommandSourceStack> cmd) {
+        cmd.executes(c -> save(c.getSource(), null, false))
+            .then(
+                Commands.argument("name", IdentifierArgument.id())
+                    .suggests(RegionCommands::suggestTemplates)
+                    .executes(c -> save(c.getSource(), IdentifierArgument.getId(c, "name"), false))
+                    .then(Commands.literal("entities").executes(c -> save(c.getSource(), IdentifierArgument.getId(c, "name"), true)))
+            );
+    }
+
+    private static void registerLoad(LiteralArgumentBuilder<CommandSourceStack> cmd) {
         cmd.then(
             Commands.argument("name", IdentifierArgument.id())
-                .executes(c -> save(c.getSource(), IdentifierArgument.getId(c, "name"), false))
-                .then(Commands.literal("entities").executes(c -> save(c.getSource(), IdentifierArgument.getId(c, "name"), true)))
+                .suggests(RegionCommands::suggestTemplates)
+                .executes(c -> load(c.getSource(), IdentifierArgument.getId(c, "name"), c.getSource().getPlayerOrException().blockPosition().offset(2, 0, 2)))
+                .then(
+                    Commands.argument("pos", BlockPosArgument.blockPos())
+                        .executes(c -> load(c.getSource(), IdentifierArgument.getId(c, "name"), BlockPosArgument.getLoadedBlockPos(c, "pos")))
+                )
         );
+    }
+
+    /** The templates of the mod for Tab, by the bare names that the commands take. */
+    private static CompletableFuture<Suggestions> suggestTemplates(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(context.getSource().getLevel().getStructureManager().listTemplates()
+            .filter(template -> template.getNamespace().equals(RR.MODID))
+            .map(Identifier::getPath)
+            .sorted(), builder);
     }
 
     private static void registerClear(LiteralArgumentBuilder<CommandSourceStack> cmd) {
@@ -209,15 +244,25 @@ public final class RegionCommands {
 
     /**
      * Saves the selection as a structure template of the mod: what a person built becomes a piece of a
-     * structure ({@code TemplatePiece}), and {@code /place template} puts it back into a world. A structure void
-     * block in the selection is left out: there the world keeps its own block. The game directory is shared by
-     * all checkouts, so a game started with {@code runClient} writes into the resources of the checkout it was
-     * started from; any other game writes into its world, as a structure block does. A bare name is the mod's.
+     * structure ({@code TemplatePiece}), and {@code /rrload} puts it back into a world. A structure void block in
+     * the selection is left out: there the world keeps its own block. The game directory is shared by all
+     * checkouts, so a game started with {@code runClient} writes a text file into the resources of the checkout
+     * it was started from; any other game writes into its world, as a structure block does. A bare name is the
+     * mod's; without a name the selection is saved as the template it was loaded from or last saved as.
      */
-    private static int save(CommandSourceStack source, Identifier name, boolean entities) throws CommandSyntaxException {
+    private static int save(CommandSourceStack source, @Nullable Identifier name, boolean entities) throws CommandSyntaxException {
         BoundingBox box = checkedSelection(source);
         if (box == null) {
             return 0;
+        }
+        RegionSelection selection = SELECTIONS.get(source.getPlayerOrException().getUUID());
+        if (name == null) {
+            if (selection.template() == null) {
+                source.sendFailure(Component.translatable("commands.runeruin.region.save_unnamed"));
+                return 0;
+            }
+            name = selection.template();
+            entities = selection.entities();
         }
 
         ServerLevel level = source.getLevel();
@@ -232,14 +277,16 @@ public final class RegionCommands {
             if (checkout != null) {
                 // Refuses a path such as ../x that would leave the structure folder, as the game does for its own.
                 Path file = new TemplatePathFactory(Path.of(checkout, "src/main/resources"), PackType.SERVER_DATA)
-                    .createAndValidatePathToStructure(id, STRUCTURE_FILES);
-                StructureTemplateManager.save(file, template, false);
+                    .createAndValidatePathToStructure(id, StructureTemplateManager.RESOURCE_TEXT_STRUCTURE_LISTER);
+                writeText(file, template);
                 where = clickablePath(file);
             } else if (templates.save(id)) {
                 where = Component.translatable("commands.runeruin.region.save_world");
             } else {
                 throw new IOException(id.toString());
             }
+            selection.setTemplate(id, entities);
+            TemplatePiece.forgetVariants();
             source.sendSuccess(() -> Component.translatable("commands.runeruin.region.save", box.getXSpan(), box.getYSpan(), box.getZSpan(), id.toString(), where), false);
             return Command.SINGLE_SUCCESS;
         } catch (IOException | IdentifierException e) {
@@ -247,6 +294,59 @@ public final class RegionCommands {
             source.sendFailure(Component.translatable("commands.runeruin.region.io_error", String.valueOf(e.getMessage())));
             return 0;
         }
+    }
+
+    /**
+     * Writes a template as text ({@code .snbt}), the way the game keeps its own templates in its sources: one
+     * line per block, so that a change shows in a diff; {@code runData} turns it into the {@code .nbt} the game
+     * loads. The seed that placing gave the loot of a container is left out: it changes with every placing.
+     */
+    public static void writeText(Path file, StructureTemplate template) throws IOException {
+        CompoundTag tag = template.save(new CompoundTag());
+        ListTag blocks = tag.getListOrEmpty("blocks");
+        for (int i = 0; i < blocks.size(); i++) {
+            blocks.getCompoundOrEmpty(i).getCompoundOrEmpty("nbt").remove("LootTableSeed");
+        }
+        NbtToSnbt.writeSnbt(CachedOutput.NO_CACHE, file, NbtUtils.structureToSnbt(tag));
+    }
+
+    /**
+     * Puts a template of the mod into the world for a person to rebuild: unturned, with its lowest corner at
+     * {@code corner}, and selects it, so that {@code /rrsave} without a name writes it back. The box is cleared
+     * first, and where the template keeps the block of the world it gets a structure void block, which saving
+     * leaves out again.
+     */
+    private static int load(CommandSourceStack source, Identifier name, BlockPos corner) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ServerLevel level = source.getLevel();
+        Identifier id = RR.id(name.getPath());
+        StructureTemplate template = level.getStructureManager().get(id).orElse(null);
+        if (template == null) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.load_missing", id.toString()));
+            return 0;
+        }
+        StructurePlaceSettings asSaved = new StructurePlaceSettings().setKnownShape(true);
+        BoundingBox box = template.getBoundingBox(asSaved, corner);
+        if (box.minY() < level.getMinY() || box.maxY() > level.getMaxY()) {
+            source.sendFailure(Component.translatable("commands.runeruin.region.generate_height", level.getMinY(), level.getMaxY()));
+            return 0;
+        }
+
+        level.getEntitiesOfClass(Entity.class, AABB.of(box), entity -> !(entity instanceof Player)).forEach(Entity::discard);
+        BlockState structureVoid = Blocks.STRUCTURE_VOID.defaultBlockState();
+        for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+            level.setBlock(pos, structureVoid, Block.UPDATE_CLIENTS | Block.UPDATE_SKIP_ALL_SIDEEFFECTS);
+        }
+        template.placeInWorld(level, corner, corner, asSaved, level.getRandom(), Block.UPDATE_CLIENTS);
+
+        RegionSelection selection = new RegionSelection(level.dimension());
+        selection.setPos1(new BlockPos(box.minX(), box.minY(), box.minZ()));
+        selection.setPos2(new BlockPos(box.maxX(), box.maxY(), box.maxZ()));
+        selection.setTemplate(id, !template.save(new CompoundTag()).getListOrEmpty("entities").isEmpty());
+        SELECTIONS.put(player.getUUID(), selection);
+        source.sendSuccess(() -> Component.translatable("commands.runeruin.region.load", id.toString(),
+            box.getXSpan(), box.getYSpan(), box.getZSpan(), corner.getX(), corner.getY(), corner.getZ()), false);
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int generate(CommandSourceStack source) throws CommandSyntaxException {

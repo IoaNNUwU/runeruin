@@ -34,6 +34,9 @@ public class RRItems {
 
     public static final DeferredItem<Item> RUNE_OF_SPACE = REGISTRY.registerItem("rune_of_space", RuneOfSpaceItem::new);
 
+    /** What a star of the Void breaks into. */
+    public static final DeferredItem<Item> STARDUST = REGISTRY.registerSimpleItem("stardust");
+
     public static final DeferredItem<Item> WISPBERRY = REGISTRY.registerItem(
             "wispberry",
             p -> new BlockItem(RRBlocks.WISPBERRY_BUSH.get(), p),

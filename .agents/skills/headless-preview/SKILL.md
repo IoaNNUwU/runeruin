@@ -10,7 +10,7 @@ description: >-
 
 # Headless preview
 
-`runPreview` builds one named job in an in-memory world without the client and writes `exports/preview_<job>.json` (`preview_<feature path>` for the `feature` job, or the name given with `-PpreviewName`), the midplanes `_xy.txt` / `_xz.txt` / `_yz.txt` and `_info.txt` (seed, parameters, block counts). A failed job exits non-zero. Run it from the task worktree; it locks `build/` like any Gradle run.
+`runPreview` builds one named job in an in-memory world without the client and writes `exports/preview_<job>.json` (`preview_<feature path>` for the `feature` job, or the name given with `-PpreviewName`), the midplanes `_xy.txt` / `_xz.txt` / `_yz.txt` and `_info.txt` (seed, parameters, block counts). A failed job exits non-zero.
 
 ```powershell
 .\gradlew.bat runPreview -Ppreview=list
@@ -18,7 +18,7 @@ description: >-
 python scripts/render_preview.py exports/boulder.png exports/preview_boulder.json
 ```
 
-Jobs: `giant_goblet` (default; `'-Parg.moss=1'` adds goblet moss patches and floating moss, placed chunk by chunk as in the world), `baobab`, `dinosaur_skeleton`, `hanging_tracks` (a whole network, or one piece with `'-Parg.piece=stairs'`; `'-Parg.terrain=real'` puts it under the Deep caves ceiling of the seed), `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below) and `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill). `terrain_bench` is in the list too, but it measures speed, not shapes: follow the `benchmark` skill.
+Jobs: `giant_goblet` (default; `'-Parg.moss=1'` adds goblet moss patches and floating moss, placed chunk by chunk as in the world), `baobab`, `dinosaur_skeleton`, `hanging_tracks` (a whole network, or one piece with `'-Parg.piece=stairs'`, a platform template with `'-Parg.piece=platform' '-Parg.template=hanging_tracks/dungeon/huts'`; `'-Parg.terrain=real'` puts it under the Deep caves ceiling of the seed), `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below) and `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill). `terrain_bench` is in the list too, but it measures speed, not shapes: follow the `benchmark` skill.
 
 Parameters: `-Pseed`, `-Pseeds`, `-Pheight`, `-Pradius`, `-Pstage`, `-Pregion=<export.json>`, `-PpreviewName=<name>`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`). In PowerShell quote the `-Parg.` ones: `'-Parg.id=runeruin:stone_spike'`; unquoted, PowerShell splits them at the dot and Gradle looks for a task.
 
@@ -47,25 +47,17 @@ Pick the view by the question:
 | What a change did | both exports on one sheet (before and after side by side), or the new export with `--diff exports/<before>.json` |
 | Exact positions and counts | the text slices and `_info.txt`, not the picture |
 
-`--view` takes `<side>:<height>` pairs separated by commas. The side is where the camera stands: `n ne e se s sw w nw` or a compass bearing in degrees. The height is `above` (30° up), `level`, `below`, `top`, `bottom` or degrees. Coordinates on the box edges, in `--box` and in `--cut` are local, the same as in the text slices; the header of the sheet gives the origin, world = origin + local.
+The syntax of every option and how the picture is drawn: `python scripts/render_preview.py --help`. On the picture, faint blocks are the ground, ceiling or pool the preview prepared, blocks without collision are outlines and a cut face is pale; coordinates are local, as in the text slices, and world = origin + local.
 
-How to read the picture:
-
-- Faces are shaded by direction as in the game and darken with distance, so straight views keep depth.
-- Faint blocks are what the preview prepared: ground, ceiling, pool. The view is framed on the subject with four blocks around it; `--box all` shows the whole export, `--prepared hide` or `--prepared solid` changes how the prepared blocks are drawn.
-- Water is translucent. Blocks without collision (plants, vines, kelp) are outlines.
-- A cut face is pale and unshaded. The half nearer to the camera is removed.
-- Colours are the average of the block's texture. The script prints the blocks it found no texture for.
-
-For before and after, export the old shape first under another name (`-PpreviewName=preview_boulder_before`) in the task worktree before you change the code, then the new one. Never run Gradle in the main checkout. `--diff` draws added blocks green, removed ones red and replaced ones orange.
+For before and after, export the old shape first under another name (`-PpreviewName=preview_boulder_before`) before you change the code, then the new one. `--diff` draws added blocks green, removed ones red and replaced ones orange.
 
 Then:
 
 1. Write down what you see: the outline, proportions, what is hollow, what is attached to what, what looks wrong.
 2. Compare it with the request. Change the code only for a difference you can name.
-3. Show the final pictures in the chat, each with its job, seed and parameters; for a change to an existing shape, before and after. The pictures are in `exports/`, which git ignores: never commit them. With the approved report the same pictures go into the pull request description (`CONTRIBUTING.md`, "Pictures").
+3. Show the final pictures in the report, each with its job, seed and parameters.
 
-Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. Every block is drawn as a full cube in one colour. Lighting, textures, transparency and render layers still need the game: list them under "Check in game".
+Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. Every block is drawn as a full cube in one colour.
 
 ## Any feature by id
 

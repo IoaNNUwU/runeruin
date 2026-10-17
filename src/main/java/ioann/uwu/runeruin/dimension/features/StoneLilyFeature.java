@@ -2,15 +2,15 @@ package ioann.uwu.runeruin.dimension.features;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.RRTags;
+import ioann.uwu.runeruin.dimension.structures.TemplatePiece;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.EntityTypes;
@@ -36,11 +36,13 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.ProtectedBloc
 import net.minecraft.world.level.levelgen.structure.templatesystem.RuleProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.phys.Vec3;
 
 public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
 
-    private static final Identifier STONE_LILY_TEMPLATE = RR.id("stone_lily");
+    /** The lilies that a person built: a template of this folder, picked at random, is the flower on the trunk. */
+    private static final String STONE_LILY_FOLDER = "stone_lily";
     private static final Direction[] TRUNK_DIRECTIONS = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
 
     public StoneLilyFeature() {
@@ -94,29 +96,24 @@ public class StoneLilyFeature extends Feature<StoneLilyFeature.Config> {
             cursor.move(Direction.UP);
         }
 
-        // --- Lily ---
-        StructureTemplate template = level.getLevel().getStructureManager().get(STONE_LILY_TEMPLATE).orElseThrow();
-        Rotation rotation = Rotation.getRandom(random);
-        Mirror mirror = Util.getRandom(Mirror.values(), random);
-        template.placeInWorld(
-                level,
-                cursor,
-                cursor,
-                new StructurePlaceSettings()
-                        .setRotation(rotation)
-                        .setMirror(mirror)
-                        .addProcessor(new ProtectedBlockProcessor(
-                                level.registryAccess().lookupOrThrow(Registries.BLOCK).getOrThrow(RRTags.VEGETABLES_NON_REPLACEABLE)
-                        ))
-                        // The template is built with vanilla moss carpets.
-                        .addProcessor(new RuleProcessor(List.of(new ProcessorRule(
-                                new BlockMatchTest(Blocks.MOSS_CARPET),
-                                AlwaysTrueTest.INSTANCE,
-                                config.mossCarpet.getState(level, random, origin)
-                        )))),
-                random,
-                Block.UPDATE_CLIENTS
-        );
+        // --- Lily: a template of the folder, with its middle on the trunk ---
+        StructurePlaceSettings settings = new StructurePlaceSettings()
+                .setRotation(Rotation.getRandom(random))
+                .setMirror(Util.getRandom(Mirror.values(), random))
+                .addProcessor(new ProtectedBlockProcessor(
+                        level.registryAccess().lookupOrThrow(Registries.BLOCK).getOrThrow(RRTags.VEGETABLES_NON_REPLACEABLE)
+                ))
+                // The template is built with vanilla moss carpets.
+                .addProcessor(new RuleProcessor(List.of(new ProcessorRule(
+                        new BlockMatchTest(Blocks.MOSS_CARPET),
+                        AlwaysTrueTest.INSTANCE,
+                        config.mossCarpet.getState(level, random, origin)
+                ))));
+        StructureTemplateManager templates = level.getLevel().getStructureManager();
+        StructureTemplate template = templates.getOrCreate(Util.getRandom(TemplatePiece.variants(templates, STONE_LILY_FOLDER), random));
+        Vec3i size = template.getSize();
+        BlockPos corner = cursor.subtract(StructureTemplate.calculateRelativePosition(settings, new BlockPos((size.getX() - 1) / 2, 0, (size.getZ() - 1) / 2)));
+        template.placeInWorld(level, corner, corner, settings, random, Block.UPDATE_CLIENTS);
 
         // --- Frogs: one lily in ten has one, another one in ten has two ---
         cursor.move(Direction.UP);

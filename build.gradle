@@ -96,6 +96,9 @@ neoForge {
 
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
 
+            // The structure templates kept as text (.snbt), which data generation turns into .nbt.
+            systemProperty 'runeruin.templates', file('src/main/resources/').absolutePath
+
             // Entity models for scripts/render_entity_model.py: outside the resources, so not in the jar.
             systemProperty 'runeruin.entityModels', layout.buildDirectory.dir('entity_models').get().asFile.absolutePath
         }
@@ -253,6 +256,8 @@ neoForge.ideSyncTask generateModMetadata
 // scripts/lint_assets.py reports a file that data generation still writes.
 tasks.named('processResources', ProcessResources).configure {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // The game loads the .nbt that runData makes from a template kept as text; runClient reads the text itself.
+    exclude '**/*.snbt'
 }
 
 // The entity model export runs only with runData and nothing refers to it: keep it out of the mod jar.

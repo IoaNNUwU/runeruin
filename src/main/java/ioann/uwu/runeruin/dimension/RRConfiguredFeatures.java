@@ -113,6 +113,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> VOID_AMETHYST = RR.resourceKey(Registries.CONFIGURED_FEATURE, "void_amethyst");
     public static final ResourceKey<ConfiguredFeature<?, ?>> DUST_BLOOM = RR.resourceKey(Registries.CONFIGURED_FEATURE, "dust_bloom");
     public static final ResourceKey<ConfiguredFeature<?, ?>> BEAD_VINE = RR.resourceKey(Registries.CONFIGURED_FEATURE, "bead_vine");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> STAR = RR.resourceKey(Registries.CONFIGURED_FEATURE, "star");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> ctx) {
 
@@ -543,6 +544,11 @@ public class RRConfiguredFeatures {
                         BlockPredicate.ONLY_IN_AIR_PREDICATE,
                         false
                 )
+        ));
+
+        ctx.register(STAR, new ConfiguredFeature<>(
+                Feature.SIMPLE_BLOCK,
+                new SimpleBlockConfiguration(BlockStateProvider.simple(RRBlocks.STAR.get()))
         ));
     }
 

@@ -12,6 +12,7 @@ import java.util.List;
 import net.minecraft.client.Camera;
 import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.particle.EndRodParticle;
 import net.minecraft.client.particle.FallingLeavesParticle;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -92,6 +93,12 @@ public class RuneRuinClient {
                 new FallingLeavesParticle(level, x, y, z, sprites.get(random), 0.25F, 2.0F, false, true, 2.0F, 0.0F));
         event.registerSpriteSet(RRParticleTypes.VOID_DUST.get(), sprites -> (_, level, x, y, z, _, _, _, random) ->
                 new VoidDustParticle(level, x, y, z, sprites.get(random)));
+        // The end rod glitter, white to the end instead of fading to warm.
+        event.registerSpriteSet(RRParticleTypes.STAR.get(), sprites -> (_, level, x, y, z, xd, yd, zd, _) -> {
+            EndRodParticle star = new EndRodParticle(level, x, y, z, xd, yd, zd, sprites);
+            star.setFadeColor(0xFFFFFF);
+            return star;
+        });
     }
 
     @SubscribeEvent

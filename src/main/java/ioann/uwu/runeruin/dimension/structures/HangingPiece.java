@@ -1,17 +1,19 @@
 package ioann.uwu.runeruin.dimension.structures;
 
+import com.google.common.base.Suppliers;
 import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.blocks.WispberryBushBlock;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.structures.HangingTracksLayout.Port;
+import java.util.Map;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
@@ -22,7 +24,6 @@ import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -39,13 +40,28 @@ import net.minecraft.world.level.storage.loot.LootTable;
  * <p>Local coordinates: {@code f} forward along {@link #facing}, {@code r} to the right of it, {@code u} up.
  * The origin is the deck block under the first rail of the piece.
  */
-public abstract class HangingPiece extends StructurePiece {
+public abstract class HangingPiece extends StructurePiece implements HangingTracksLayout.Part {
 
     /** How far below its deck a piece may write: beams, lanterns and vines. */
     protected static final int BELOW_DECK = 4;
 
     public enum Wood {
         OAK, INVERTED_TREE;
+
+        /** The inverted tree block for each oak block that a template of the tracks may be built of. */
+        private static final Supplier<Map<Block, Block>> INVERTED = Suppliers.memoize(() -> Map.ofEntries(
+                Map.entry(Blocks.OAK_PLANKS, RRBlocks.INVERTED_TREE_PLANKS.get()),
+                Map.entry(Blocks.OAK_LOG, RRBlocks.INVERTED_TREE_WOOD.get()),
+                Map.entry(Blocks.OAK_WOOD, RRBlocks.INVERTED_TREE_WOOD.get()),
+                Map.entry(Blocks.OAK_STAIRS, RRBlocks.INVERTED_TREE_STAIRS.get()),
+                Map.entry(Blocks.OAK_SLAB, RRBlocks.INVERTED_TREE_SLAB.get()),
+                Map.entry(Blocks.OAK_FENCE, RRBlocks.INVERTED_TREE_FENCE.get()),
+                Map.entry(Blocks.OAK_FENCE_GATE, RRBlocks.INVERTED_TREE_FENCE_GATE.get()),
+                Map.entry(Blocks.OAK_DOOR, RRBlocks.INVERTED_TREE_DOOR.get()),
+                Map.entry(Blocks.OAK_TRAPDOOR, RRBlocks.INVERTED_TREE_TRAPDOOR.get()),
+                Map.entry(Blocks.OAK_PRESSURE_PLATE, RRBlocks.INVERTED_TREE_PRESSURE_PLATE.get()),
+                Map.entry(Blocks.OAK_BUTTON, RRBlocks.INVERTED_TREE_BUTTON.get())
+        ));
 
         BlockState planks() {
             return (this == OAK ? Blocks.OAK_PLANKS : RRBlocks.INVERTED_TREE_PLANKS.get()).defaultBlockState();
@@ -60,8 +76,10 @@ public abstract class HangingPiece extends StructurePiece {
             return (this == OAK ? Blocks.OAK_FENCE : RRBlocks.INVERTED_TREE_FENCE.get()).defaultBlockState();
         }
 
-        BlockState slab() {
-            return (this == OAK ? Blocks.OAK_SLAB : RRBlocks.INVERTED_TREE_SLAB.get()).defaultBlockState();
+        /** A block of a template, which is built of oak, in this wood: the same block and shape of inverted tree. */
+        BlockState of(BlockState oak) {
+            Block block = this == OAK ? null : INVERTED.get().get(oak.getBlock());
+            return block == null ? oak : block.withPropertiesOf(oak);
         }
     }
 
@@ -105,17 +123,25 @@ public abstract class HangingPiece extends StructurePiece {
         tag.putLong("Seed", this.seed);
     }
 
-    /** The deck seen from above, in world coordinates: what the layout keeps other pieces away from. */
-    public abstract BoundingBox footprint();
-
     /** The lowest and the highest deck level of the piece, relative to the origin. */
     public int[] deckLevels() {
         return new int[]{0, 0};
     }
 
-    /** Air the piece needs between its highest deck and the ceiling. */
-    public int headroom() {
-        return HangingTracksLayout.MIN_GAP;
+    @Override
+    public int lowestDeck() {
+        return this.origin.y() + deckLevels()[0];
+    }
+
+    /** A deck keeps {@link HangingTracksLayout#MIN_GAP} blocks of air over it. */
+    @Override
+    public int top() {
+        return this.origin.y() + deckLevels()[1] + HangingTracksLayout.MIN_GAP;
+    }
+
+    @Override
+    public int bottom() {
+        return lowestDeck() - BELOW_DECK;
     }
 
     protected abstract void paint(Canvas canvas);
@@ -198,18 +224,9 @@ public abstract class HangingPiece extends StructurePiece {
             this.bounds = bounds;
         }
 
-        WorldGenLevel level() {
-            return this.level;
-        }
-
         private boolean at(int f, int u, int r) {
             this.cursor.set(origin.x(f, r), origin.y() + u, origin.z(f, r));
             return this.bounds.isInside(this.cursor);
-        }
-
-        /** The block position, or null when it is in another chunk. */
-        BlockPos pos(int f, int u, int r) {
-            return at(f, u, r) ? this.cursor : null;
         }
 
         void put(int f, int u, int r, BlockState state) {
@@ -322,15 +339,6 @@ public abstract class HangingPiece extends StructurePiece {
             int length = 1 + (int) (chance(f, r, 7) * 3);
             for (int i = 0; i < length; i++) {
                 put(f, u - i, r, vine);
-            }
-        }
-
-        void spawner(int f, int u, int r, EntityType<?> mob) {
-            if (at(f, u, r)) {
-                this.level.setBlock(this.cursor, Blocks.SPAWNER.defaultBlockState(), Block.UPDATE_CLIENTS);
-                if (this.level.getBlockEntity(this.cursor) instanceof SpawnerBlockEntity spawner) {
-                    spawner.setEntityId(mob, RandomSource.create(seed));
-                }
             }
         }
 
