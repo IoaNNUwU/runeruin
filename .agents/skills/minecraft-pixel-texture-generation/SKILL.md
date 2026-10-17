@@ -16,8 +16,18 @@ A texture you make is a draft that a person finishes by hand ([AI_POLICY.md](../
 - Use pixel art with hard pixel edges. Default output size is 16x16 unless the model UV layout or user explicitly requires another size.
 - Do not blur, anti-alias, smooth, or dither textures.
 - Do not create semitransparent pixels unless the user explicitly asks. Alpha should be binary: pixels are either fully transparent (`A=0`) or fully opaque (`A=255`). For solid wood, bark, planks, and log ends, make every pixel fully opaque.
-- Choose the smallest logical palette that keeps the texture readable. Use about 3 colors for a simple texture (base, shadow, highlight). For a texture with several visual components, use up to 8 colors total; share colors across components where possible. Example: bark (3), heartwood (3), and end-grain marks (2) can share one 8-color palette.
-- Avoid near-duplicate colors that do not create a visible pixel-art distinction. Preserve a reference texture's palette when the user asks for visual consistency.
+## Colors of each part
+
+Colors are counted per part, not per texture. A part is everything in the texture that has one meaning: the bark of a log, the berries of a bush, the eyes of a mob. One berry is an element of the part "berries"; the size of the largest element sets the limit of the part.
+
+- A large part, whose largest element has more than 6 pixels, takes up to 4 colors: base, shadow, highlight and one more shade, such as a deep shadow in the cracks or a second highlight. Examples: the bark of a log, the cap of a mushroom, the face of a stone block, the boards of planks, a large leaf, a stem, the body or the fur of a mob.
+- A small detail of 4 to 6 pixels takes up to 3 colors: a berry, the flower head of a small plant, the eye of a mob, a knot in wood, a rune sign.
+- A tiny detail of up to 3 pixels takes up to 2 colors: a spot on a mushroom cap, a glint on a crystal, a seed, a crack, a pupil.
+- Elements with the same meaning belong to one part and take their colors from one set, wherever they are in the texture: every berry on a bush, every spot on a cap, both eyes and all legs of a mob, all boards of planks, the rings of a log end, every tuft of moss. A berry in one corner is never redder than a berry in the other; a smaller berry that shows only two shades takes them from the same set.
+- The whole texture has as many colors as its parts together, with no fixed total. Parts share colors where they can: the darkest bark is the shadow of the heartwood, the highlight of a leaf is the base of its stem. Example: a log end with bark (4), heartwood (4) and rings (2) has at most 10 colors, fewer where they share.
+- A color that the eye cannot tell from its neighbor in the part is not a new shade: drop it. Preserve a reference texture's palette when the user asks for visual consistency.
+
+The checker counts the colors of each part from a parts map: a PNG of the texture's size where every visible pixel of the texture is painted with one flat color of its part, all berries with one color, the bark with another. Draw it in the same script that draws the texture and keep it in `exports/`, next to the pictures; it is a working file of the check and is never committed.
 
 ## Vanilla alternatives
 
@@ -49,12 +59,14 @@ python .agents/skills/minecraft-pixel-texture-generation/scripts/quantize_textur
 python .agents/skills/minecraft-pixel-texture-generation/scripts/quantize_texture.py input.png output.png --palette '#684A2B' '#A47A35' '#D2A340' '#E1AE3A' '#F5CA62' '#F5E084' '#FAEDB4' '#FFF8E2' --palette-match luminance --size 32x32
 ```
 
-`check_texture.py` reports dimensions, unique visible RGB colors, alpha values, and the most common colors. It fails by default if dimensions are not 16x16 or any pixel is semitransparent. Use `--max-colors` to enforce a palette limit and `--require-opaque` for fully solid textures.
+`check_texture.py` reports dimensions, unique visible RGB colors, alpha values, and the most common colors. It fails by default if dimensions are not 16x16 or any pixel is semitransparent. `--parts` reads the parts map and fails when a part has more colors than its largest element allows or a visible pixel has no part; it lists every part with its colors and the total that the parts allow. Use `--require-opaque` for fully solid textures and `--max-colors` to keep the palette size of a vanilla texture you recolor.
 
 ```powershell
-python .agents/skills/minecraft-pixel-texture-generation/scripts/check_texture.py output.png --max-colors 3 --require-opaque --histogram 3
-python .agents/skills/minecraft-pixel-texture-generation/scripts/check_texture.py output.png --max-colors 8
+python .agents/skills/minecraft-pixel-texture-generation/scripts/check_texture.py output.png --parts exports/output_parts.png --require-opaque
+python .agents/skills/minecraft-pixel-texture-generation/scripts/check_texture.py output.png --max-colors 5 --histogram 5
 ```
+
+With `quantize_texture.py`, pass the colors chosen for the parts with `--palette`: `--colors` picks one k-means palette for the whole texture and can give two elements of one part different shades.
 
 `compare_texture_shape.py` compares a custom texture to its vanilla counterpart without changing either file. It fails on dimension or alpha-silhouette mismatches and reports the alpha histograms; `--exact-alpha` also requires every alpha value to match at each pixel.
 
@@ -63,7 +75,7 @@ python .agents/skills/minecraft-pixel-texture-generation/scripts/compare_texture
 python .agents/skills/minecraft-pixel-texture-generation/scripts/compare_texture_shape.py vanilla.png custom.png --exact-alpha
 ```
 
-Run the checker after conversion and the shape comparator for vanilla alternatives.
+Run the checker with the parts map after conversion and the shape comparator for vanilla alternatives.
 
 Judge seams and repetition on a tiled 3×3 render, the way a wall of the block looks, never on the single 16×16 file. Pass texture ids or paths; several textures go side by side, e.g. the new one next to its vanilla counterpart:
 
