@@ -51,6 +51,7 @@ public class DatagenModelProvider extends ModelProvider {
 
         // --- Items ---
         itemModels.generateFlatItem(RRItems.RUNE_OF_SPACE.get(), ModelTemplates.FLAT_ITEM);
+        itemModels.generateFlatItem(RRItems.STARDUST.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.SNAIL_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.MOSSY_PROPHET_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);
         itemModels.generateFlatItem(RRItems.MOSSY_WARRIOR_SPAWN_EGG.get(), ModelTemplates.FLAT_ITEM);

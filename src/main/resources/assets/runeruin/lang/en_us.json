@@ -2,6 +2,7 @@
   "itemGroup.runeruin": "Rune Ruin",
 
   "item.runeruin.rune_of_space": "Rune of Space",
+  "item.runeruin.stardust": "Stardust",
   "item.runeruin.wispberry": "Wispberry",
   "item.runeruin.mossberry": "Mossberry",
   "item.runeruin.powdered_moss_bucket": "Powdered Moss Bucket",
@@ -52,6 +53,7 @@
   "block.runeruin.dust_bloom": "Dust Bloom",
   "block.runeruin.hanging_chorus_plant": "Hanging Chorus Plant",
   "block.runeruin.hanging_chorus_flower": "Hanging Chorus Flower",
+  "block.runeruin.star": "Star",
 
   "block.runeruin.elden_sapling": "Elden Sapling",
   "block.runeruin.potted_elden_sapling": "Potted Elden Sapling",

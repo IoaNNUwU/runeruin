@@ -43,6 +43,7 @@ import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -455,6 +456,15 @@ public class RRBlocks {
     public static final DeferredBlock<Block> HANGING_CHORUS_FLOWER = register("hanging_chorus_flower",
             _ -> BlockBehaviour.Properties.ofFullCopy(Blocks.CHORUS_FLOWER),
             HangingChorusFlowerBlock::new);
+
+    /** No item: a star breaks into stardust and cannot be placed back. */
+    public static final DeferredBlock<Block> STAR = registerNoItem("star",
+            p -> p.instabreak()
+                    .noCollision()
+                    .noOcclusion()
+                    .sound(SoundType.AMETHYST_CLUSTER)
+                    .pushReaction(PushReaction.DESTROY),
+            StarBlock::new);
 
     /** Interior portal block; no BlockItem (like nether portal). */
     public static final DeferredBlock<Block> RUNE_RUIN_PORTAL = REGISTRY.registerBlock(

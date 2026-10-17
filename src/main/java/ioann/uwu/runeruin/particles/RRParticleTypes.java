@@ -22,6 +22,12 @@ public final class RRParticleTypes {
             () -> new SimpleParticleType(false)
     );
 
+    /** The white glitter of a star over the abyss, on the sprites of the end rod. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> STAR = REGISTRY.register(
+            "star",
+            () -> new SimpleParticleType(false)
+    );
+
     private RRParticleTypes() {
     }
 }

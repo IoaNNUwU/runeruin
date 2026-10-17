@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.BeadVineBlock;
 import ioann.uwu.runeruin.blocks.HangingChorusFlowerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.items.RRItems;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.data.models.BlockModelGenerators;
@@ -23,7 +24,7 @@ import static net.minecraft.client.data.models.BlockModelGenerators.condition;
 import static net.minecraft.client.data.models.BlockModelGenerators.plainModel;
 import static net.minecraft.client.data.models.BlockModelGenerators.plainVariant;
 
-/** Void stone and the plants that hang from it. The bead vine and the dust bloom are model files. */
+/** Void stone, the plants that hang from it and the stars over the abyss. The bead vine and the dust bloom are model files. */
 public final class VoidModels {
 
     private VoidModels() {}
@@ -33,6 +34,8 @@ public final class VoidModels {
         createBeadVine(blockModels);
         createDustBloom(blockModels);
         createHangingChorus(blockModels);
+        // An invisible star breaks into specks of stardust.
+        blockModels.createAirLikeBlock(RRBlocks.STAR.get(), RRItems.STARDUST.get());
     }
 
     private static void createBeadVine(BlockModelGenerators blockModels) {
