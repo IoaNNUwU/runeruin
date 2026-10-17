@@ -157,12 +157,9 @@ def extractArchives = objects.newInstance(ExtractMcSourcesServices).archiveOpera
 def minecraftSourcesJar = layout.buildDirectory.file("moddev/artifacts/minecraft-patched-${neo_version}-sources.jar")
 def mcSourcesDir = layout.projectDirectory.dir('.mc-sources')
 def mcSourcesStamp = layout.buildDirectory.file('tmp/mc-sources-VERSION.txt')
-def mcSourcesVersionText = "minecraft=${minecraft_version}\nneoforge=${neo_version}\nmappings=official\n"
-def vanillaTexturesDir = layout.projectDirectory.dir('.vanilla-textures')
-def vanillaTexturesStamp = layout.buildDirectory.file('tmp/vanilla-textures-VERSION.txt')
+def mcSourcesVersionText = "minecraft=${minecraft_version}\nneoforge=${neo_version}\nmappings=official\ncontent=code,textures\n"
 // NeoForm Runtime stores the 26.2.0 client archive under its release id, 26.2.
 def minecraftClientVersion = minecraft_version.replaceAll(/\.0$/, '')
-def vanillaTexturesVersionText = "minecraft=${minecraftClientVersion}\nsource=minecraft_${minecraftClientVersion}_client.jar\ncontent=textures,models\n"
 def minecraftClientJar = new File(persistentNfrtHome, "artifacts/minecraft_${minecraftClientVersion}_client.jar")
 
 tasks.register('writeMcSourcesVersion') {
@@ -177,37 +174,10 @@ tasks.register('writeMcSourcesVersion') {
     }
 }
 
-tasks.register('writeVanillaTexturesVersion') {
-    def stamp = vanillaTexturesStamp
-    def text = vanillaTexturesVersionText
-    inputs.property('contents', text)
-    outputs.file(stamp)
-    doLast {
-        def f = stamp.get().asFile
-        f.parentFile.mkdirs()
-        f.setText(text, 'UTF-8')
-    }
-}
-
-tasks.register('extractVanillaTextures', Sync) {
-    group = 'setup'
-    description = 'Extract the pinned Minecraft client textures and models into .vanilla-textures.'
-    dependsOn 'createMinecraftArtifacts', 'writeVanillaTexturesVersion'
-    from(provider { extractArchives.zipTree(minecraftClientJar) }) {
-        include 'assets/minecraft/textures/**', 'assets/minecraft/models/**'
-    }
-    from(vanillaTexturesStamp) {
-        rename { 'VERSION.txt' }
-    }
-    into vanillaTexturesDir
-    includeEmptyDirs = false
-    duplicatesStrategy = DuplicatesStrategy.FAIL
-}
-
 tasks.register('extractMcSources', Sync) {
     group = 'setup'
-    description = 'Extract Minecraft and NeoForge sources into .mc-sources.'
-    dependsOn 'createMinecraftArtifacts', 'writeMcSourcesVersion', 'extractVanillaTextures'
+    description = 'Extract Minecraft and NeoForge sources into .mc-sources/code, vanilla textures and models into .mc-sources/textures.'
+    dependsOn 'createMinecraftArtifacts', 'writeMcSourcesVersion'
     onlyIf {
         def versionFile = mcSourcesDir.file('VERSION.txt').asFile
         def hasExpectedVersion = versionFile.isFile() && versionFile.getText('UTF-8').trim() == mcSourcesVersionText.trim()
@@ -223,13 +193,23 @@ tasks.register('extractMcSources', Sync) {
         }
         !hasExpectedVersion
     }
-    from(minecraftSourcesJar.map { extractArchives.zipTree(it) }) {
-        include '**/*.java'
+    // With CI=true ModDevGradle builds Minecraft without decompiling it, so there is no sources jar:
+    // CI extracts only the textures and models that the asset lint checks.
+    if (System.getenv('CI') != 'true') {
+        from(minecraftSourcesJar.map { extractArchives.zipTree(it) }) {
+            include '**/*.java'
+            into 'code'
+        }
+        from(configurations.neoForgeAgentSources.elements.map { locations ->
+            locations.collect { extractArchives.zipTree(it.asFile) }
+        }) {
+            include '**/*.java'
+            into 'code'
+        }
     }
-    from(configurations.neoForgeAgentSources.elements.map { locations ->
-        locations.collect { extractArchives.zipTree(it.asFile) }
-    }) {
-        include '**/*.java'
+    from(provider { extractArchives.zipTree(minecraftClientJar) }) {
+        include 'assets/minecraft/textures/**', 'assets/minecraft/models/**'
+        into 'textures'
     }
     from(mcSourcesStamp) {
         rename { 'VERSION.txt' }

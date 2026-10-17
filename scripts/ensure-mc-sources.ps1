@@ -36,6 +36,24 @@ function Read-VersionText {
     return ((Get-Content -LiteralPath $versionFile -Raw -Encoding UTF8) -replace "`r`n", "`n").Trim()
 }
 
+# True for a complete extraction of this version: an interrupted one may have VERSION.txt without the files.
+function Test-Extraction {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Directory
+    )
+
+    if ((Read-VersionText -Directory $Directory) -ne $expectedVersion) {
+        return $false
+    }
+    foreach ($sentinel in 'code/net/minecraft/core/BlockPos.java', 'textures/assets/minecraft/models/block/cross.json') {
+        if (-not (Test-Path -LiteralPath (Join-Path $Directory $sentinel) -PathType Leaf)) {
+            return $false
+        }
+    }
+    return $true
+}
+
 function New-DirectoryLink {
     param(
         [Parameter(Mandatory = $true)]
@@ -53,59 +71,37 @@ function New-DirectoryLink {
     }
 }
 
+# Removes a link without its target, or a directory of this checkout with its contents.
+function Remove-LinkOrDirectory([System.IO.FileSystemInfo] $Item) {
+    if ($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+        # Remove-Item on a junction can delete the shared cache behind it.
+        [System.IO.Directory]::Delete($Item.FullName)
+    }
+    else {
+        Remove-Item -LiteralPath $Item.FullName -Recurse -Force
+    }
+}
+
 $projectRoot = Split-Path -Parent $PSScriptRoot
 # Paths below use '/', which works everywhere.
 $wrapper = Get-GradleWrapper $projectRoot
 $gradleProperties = Join-Path $projectRoot 'gradle.properties'
 $minecraftVersion = Get-GradleProperty -Path $gradleProperties -Name 'minecraft_version'
 $neoVersion = Get-GradleProperty -Path $gradleProperties -Name 'neo_version'
-$expectedVersion = "minecraft=$minecraftVersion`nneoforge=$neoVersion`nmappings=official"
+# As in build.gradle: code/ holds the Java sources, textures/ the vanilla textures and models.
+$expectedVersion = "minecraft=$minecraftVersion`nneoforge=$neoVersion`nmappings=official`ncontent=code,textures"
 
 $userHome = Get-UserHome
 $cacheRoot = Join-Path $userHome '.runeruin/mc-sources'
-$sharedSources = Join-Path $cacheRoot "minecraft-$minecraftVersion-neoforge-$neoVersion-official"
+# The minecraft-*-official caches hold the sources without code/ and textures/, for checkouts that have not switched yet.
+$sharedSources = Join-Path $cacheRoot "minecraft-$minecraftVersion-neoforge-$neoVersion"
 $worktreeSources = Join-Path $projectRoot '.mc-sources'
+# Checkouts set up before the textures moved into .mc-sources/textures have a copy of their own here.
+$oldVanillaTextures = Join-Path $projectRoot '.vanilla-textures'
 # The runClient game directory, as in build.gradle.
 $sharedGame = if ($env:RUNERUIN_GAME_DIR) { $env:RUNERUIN_GAME_DIR } else { Join-Path $userHome '.runeruin/game' }
 $lockPath = Join-Path $cacheRoot '.setup.lock'
 $gradleUserHome = Join-Path $userHome '.gradle'
-$vanillaTextureVersion = $minecraftVersion -replace '\.0$', ''
-$vanillaTextureVersionText = "minecraft=$vanillaTextureVersion`nsource=minecraft_${vanillaTextureVersion}_client.jar`ncontent=textures,models"
-$vanillaTextures = Join-Path $projectRoot '.vanilla-textures'
-$vanillaTextureSentinel = Join-Path $vanillaTextures 'assets/minecraft/models/block/cross.json'
-
-function Ensure-VanillaTextures {
-    if ((Read-VersionText -Directory $vanillaTextures) -eq $vanillaTextureVersionText -and
-        (Test-Path -LiteralPath $vanillaTextureSentinel -PathType Leaf)) {
-        return
-    }
-
-    Write-Host "Extracting Minecraft $vanillaTextureVersion textures and models into .vanilla-textures..."
-    Invoke-Native $wrapper -p $projectRoot '--gradle-user-home' $gradleUserHome 'extractVanillaTextures'
-
-    if ((Read-VersionText -Directory $vanillaTextures) -ne $vanillaTextureVersionText -or
-        -not (Test-Path -LiteralPath $vanillaTextureSentinel -PathType Leaf)) {
-        throw "extractVanillaTextures completed without producing the expected versioned texture set: $vanillaTextures"
-    }
-}
-
-# Moves the validated sources of this worktree into the shared cache and links them back.
-function Move-ToSharedCache {
-    New-Item -ItemType Directory -Force -Path $cacheRoot | Out-Null
-    try {
-        Move-Item -LiteralPath $worktreeSources -Destination $sharedSources -ErrorAction Stop
-    }
-    catch {
-        # Move-Item cannot move a directory between volumes. Copy only the
-        # validated extraction, then remove the temporary worktree copy.
-        Copy-Item -LiteralPath $worktreeSources -Destination $sharedSources -Recurse -Force
-        if ((Read-VersionText -Directory $sharedSources) -ne $expectedVersion) {
-            throw "The copied Minecraft sources cache failed validation: $sharedSources"
-        }
-        Remove-Item -LiteralPath $worktreeSources -Recurse -Force
-    }
-    New-DirectoryLink -Link $worktreeSources -Target $sharedSources
-}
 
 New-Item -ItemType Directory -Force -Path $cacheRoot | Out-Null
 
@@ -137,75 +133,74 @@ try {
     # runClient uses this shared directory; every other run keeps its own <checkout>/run.
     New-Item -ItemType Directory -Force -Path $sharedGame | Out-Null
 
-    $localSourcesReady = $false
+    $oldItem = Get-Item -LiteralPath $oldVanillaTextures -Force -ErrorAction SilentlyContinue
+    if ($null -ne $oldItem) {
+        Remove-LinkOrDirectory $oldItem
+        Write-Host "Removed the old .vanilla-textures, now in .mc-sources/textures: $oldVanillaTextures"
+    }
+
     $existingWorktreeItem = Get-Item -LiteralPath $worktreeSources -Force -ErrorAction SilentlyContinue
-    if ($null -ne $existingWorktreeItem) {
-        if ($existingWorktreeItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-            $linkedVersion = Read-VersionText -Directory $worktreeSources
-            if ($linkedVersion -eq $expectedVersion) {
-                Write-Host "Minecraft sources link already exists: $worktreeSources"
-                Ensure-VanillaTextures
-                return
-            }
-
-            Write-Host "Replacing the Minecraft sources link for the new project version."
-            # Removes only the link. Remove-Item on a junction can delete the shared cache behind it.
-            [System.IO.Directory]::Delete($worktreeSources)
-            $existingWorktreeItem = $null
+    if ($null -ne $existingWorktreeItem -and ($existingWorktreeItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+        if (Test-Extraction -Directory $worktreeSources) {
+            Write-Host "Minecraft sources link already exists: $worktreeSources"
+            return
         }
 
-        if ($null -ne $existingWorktreeItem) {
-            $localVersion = Read-VersionText -Directory $worktreeSources
-            if ($localVersion -eq $expectedVersion) {
-                $localSourcesReady = $true
-            }
-            else {
-                throw "The worktree already contains '.mc-sources' with a different or missing version. Move it aside before running setup: $worktreeSources"
-            }
-        }
+        Write-Host "Replacing the Minecraft sources link for the new project version."
+        Remove-LinkOrDirectory $existingWorktreeItem
+        $existingWorktreeItem = $null
     }
 
-    $sharedSourcesExists = Test-Path -LiteralPath $sharedSources
-    $sharedVersion = Read-VersionText -Directory $sharedSources
-    if ($sharedSourcesExists -and -not (Test-Path -LiteralPath $sharedSources -PathType Container)) {
-        throw "The shared Minecraft sources cache path is not a directory: $sharedSources"
+    $localSourcesReady = $null -ne $existingWorktreeItem
+    if ($localSourcesReady -and -not (Test-Extraction -Directory $worktreeSources)) {
+        throw "The worktree already contains '.mc-sources' with a different or missing version. Move it aside before running setup: $worktreeSources"
     }
-    if ($sharedSourcesExists -and $sharedVersion -ne $expectedVersion) {
-        $hasEntries = Get-ChildItem -LiteralPath $sharedSources -Force | Select-Object -First 1
-        if ($null -eq $sharedVersion -and $null -eq $hasEntries) {
-            # A prior interrupted setup can leave behind only the cache directory.
-            # Remove that empty placeholder so extraction can initialize it cleanly.
-            Remove-Item -LiteralPath $sharedSources -Force
-            Write-Host "Removed empty incomplete shared Minecraft sources cache directory: $sharedSources"
+
+    if (Test-Extraction -Directory $sharedSources) {
+        if ($localSourcesReady) {
+            Remove-LinkOrDirectory $existingWorktreeItem
+            Write-Host "Removed this worktree's own copy of the Minecraft sources in favour of the shared cache."
         }
-        else {
+        New-DirectoryLink -Link $worktreeSources -Target $sharedSources
+        Write-Host "Linked Minecraft sources: $worktreeSources -> $sharedSources"
+        return
+    }
+
+    if (Test-Path -LiteralPath $sharedSources) {
+        if (-not (Test-Path -LiteralPath $sharedSources -PathType Container)) {
+            throw "The shared Minecraft sources cache path is not a directory: $sharedSources"
+        }
+        if ($null -ne (Get-ChildItem -LiteralPath $sharedSources -Force | Select-Object -First 1)) {
             throw "The shared Minecraft sources cache exists with the wrong or missing version: $sharedSources"
         }
-    }
-
-    if ($sharedVersion -eq $expectedVersion) {
-        if ($localSourcesReady) {
-            Write-Host "Shared Minecraft sources cache already exists; keeping this worktree's existing copy: $worktreeSources"
-        }
-        else {
-            New-DirectoryLink -Link $worktreeSources -Target $sharedSources
-            Write-Host "Linked Minecraft sources: $worktreeSources -> $sharedSources"
-        }
-        Ensure-VanillaTextures
-        return
+        # A prior interrupted setup can leave behind only the cache directory.
+        # Remove that empty placeholder so extraction can initialize it cleanly.
+        Remove-Item -LiteralPath $sharedSources -Force
+        Write-Host "Removed empty incomplete shared Minecraft sources cache directory: $sharedSources"
     }
 
     if (-not $localSourcesReady) {
         Write-Host "Preparing the shared Minecraft sources cache for $minecraftVersion / $neoVersion..."
         Invoke-Native $wrapper -p $projectRoot '--gradle-user-home' $gradleUserHome 'extractMcSources'
-        if ((Read-VersionText -Directory $worktreeSources) -ne $expectedVersion) {
-            throw "extractMcSources completed without producing the expected VERSION.txt."
+        if (-not (Test-Extraction -Directory $worktreeSources)) {
+            throw "extractMcSources completed without producing the expected sources, textures and VERSION.txt: $worktreeSources"
         }
     }
 
-    Move-ToSharedCache
+    try {
+        Move-Item -LiteralPath $worktreeSources -Destination $sharedSources -ErrorAction Stop
+    }
+    catch {
+        # Move-Item cannot move a directory between volumes. Copy only the
+        # validated extraction, then remove the temporary worktree copy.
+        Copy-Item -LiteralPath $worktreeSources -Destination $sharedSources -Recurse -Force
+        if (-not (Test-Extraction -Directory $sharedSources)) {
+            throw "The copied Minecraft sources cache failed validation: $sharedSources"
+        }
+        Remove-Item -LiteralPath $worktreeSources -Recurse -Force
+    }
+    New-DirectoryLink -Link $worktreeSources -Target $sharedSources
     Write-Host "Moved this worktree's Minecraft sources to the shared cache and linked them: $worktreeSources -> $sharedSources"
-    Ensure-VanillaTextures
 }
 finally {
     if ($null -ne $lockStream) {

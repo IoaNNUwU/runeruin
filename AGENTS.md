@@ -83,7 +83,7 @@ What an agent makes is a draft ([AI_POLICY.md](AI_POLICY.md)): a person reworks 
 | `runPreview` | headless shape export into `exports/` (`headless-preview` skill) |
 | `runData` | datagen into `src/generated/resources` |
 | `build` | mod jar |
-| `extractMcSources` | Minecraft + NeoForge sources into `.mc-sources/`, textures and models into `.vanilla-textures/` |
+| `extractMcSources` | Minecraft + NeoForge sources into `.mc-sources/code/`, vanilla textures and models into `.mc-sources/textures/`; setup moves it to the shared cache and links it |
 
 - Never `clean`, `--rerun-tasks`, `--refresh-dependencies`, `--offline` or `--stop`; never kill Java or Gradle; never start, restart or wait for the game. A Claude Code hook (`.claude/hooks/block-forbidden-commands.sh`) blocks these, `runClient` included.
 - `src/generated` is not in git. Never delete it or `src/generated/resources/.cache`, never hand-write `src/generated/**`: change the Java bootstrap and run `runData` yourself.
@@ -93,11 +93,10 @@ What an agent makes is a draft ([AI_POLICY.md](AI_POLICY.md)): a person reworks 
 
 ## Minecraft and NeoForge sources
 
-Do not use Minecraft or NeoForge APIs from memory. Search `.mc-sources/` (`net/minecraft`, `com/mojang`, `net/neoforged`, `VERSION.txt`), a junction to the shared cache `~/.runeruin/mc-sources/<version>`. Never edit it or copy it into `src/`.
+Do not use Minecraft or NeoForge APIs from memory. Search `.mc-sources/`, a junction to the shared cache `~/.runeruin/mc-sources/<version>`: Java in `code/` (`net/minecraft`, `com/mojang`, `net/neoforged`), vanilla textures and models in `textures/assets/minecraft/{textures,models}/`, the version in `VERSION.txt`. Never edit it or copy it into `src/`.
 
 - No `.mc-sources/VERSION.txt`: run `.\scripts\setup-worktree.ps1`. If it fails or the file is still missing, find the cause in the script's output, report it to the user and stop the task.
-- `.mc-sources` is a link, and ripgrep does not follow links while it walks the checkout: a search from the root never reaches it. Pass it as the path (Grep with `path` `.mc-sources`, `rg <pattern> .mc-sources`) or use `rg -L`. `.ignore` keeps it, `.vanilla-textures` and `src/generated` searchable. Do not search `~/.gradle`.
-- Vanilla textures and models: `.vanilla-textures/assets/minecraft/{textures,models}/`.
+- `.mc-sources` is a link, and ripgrep does not follow links while it walks the checkout: a search from the root never reaches it. Pass it as the path (Grep with `path` `.mc-sources/code` or `.mc-sources/textures`, `rg <pattern> .mc-sources/code`) or use `rg -L`. `.ignore` keeps it and `src/generated` searchable. Do not search `~/.gradle`.
 
 ## Skills
 
@@ -114,7 +113,7 @@ Step-by-step procedures live in skills; load the matching one before starting su
 | `benchmark` | measuring generation speed before and after a change; only on the user's command |
 | `region-export-compare` | `/rrexport` dumps and terrain replay (`world_region`, was → expected) |
 | `minecraft-pixel-texture-generation` | creating, recoloring, quantizing and validating textures |
-| `minecraft-model-texture-analysis` | model geometry and texture UVs |
+| `minecraft-model-texture-analysis` | model geometry and texture UVs, renders of models and mob animations |
 
 ## Packages (`src/main/java/ioann/uwu/runeruin/`)
 

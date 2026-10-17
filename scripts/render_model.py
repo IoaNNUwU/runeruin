@@ -5,7 +5,7 @@
     python scripts/render_model.py out.png src/main/resources/assets/runeruin/models/block/x.json
 
 A bare name (stone_lily) tries block/ then item/. Parents and textures resolve through src/main,
-src/generated and .vanilla-textures (vanilla models included). Follows the game's baking: face vertex
+src/generated and .mc-sources/textures (vanilla models included). Follows the game's baking: face vertex
 order and UV rotation as in FaceBakery, element rotation with rescale, directional shade
 (up 1.0, north/south 0.8, east/west 0.6, down 0.5). Faces with a tintindex are multiplied by --tint.
 Item models built on item/generated show their layers as a flat sprite. Blockstate rotations, cullfaces,
@@ -184,21 +184,36 @@ def face_texels(texture, corners, uv, normal, light, tint):
 
 
 def render_view(quads, camera, scale, right=None):
+    projected = project(quads, camera, scale, right)
+    return draw_view(projected, bounds(projected, scale))
+
+
+def project(quads, camera, scale, right=None):
+    """The faces towards the camera as (screen points, color, depth)."""
     camera = normalize(camera)
     if right is None:
         right = normalize(cross((0, 1, 0), camera)) if abs(camera[1]) < 0.999 else (1, 0, 0)
     up = cross(camera, right)
     visible = [(quad, color) for quad, color, normal in quads if dot(normal, camera) > 1e-6]
-    projected = [([(dot(p, right) * scale, -dot(p, up) * scale) for p in quad], color,
-                  sum(dot(p, camera) for p in quad) / 4) for quad, color in visible]
+    return [([(dot(p, right) * scale, -dot(p, up) * scale) for p in quad], color,
+             sum(dot(p, camera) for p in quad) / 4) for quad, color in visible]
+
+
+def bounds(projected, scale):
+    """(left, top, right, bottom) of the projected faces on the screen."""
     # A view with no faces towards the camera (the top of a cross) keeps the size of one block face.
     xs = [x for points, _, _ in projected for x, _ in points] or [0, 16 * scale]
     ys = [y for points, _, _ in projected for _, y in points] or [0, 16 * scale]
-    size = (math.ceil(max(xs) - min(xs)) + 2 * GAP, math.ceil(max(ys) - min(ys)) + 2 * GAP)
-    image = Image.new("RGB", size, BACKGROUND)
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def draw_view(projected, box):
+    """The faces inside box, a frame that several views can share so that they line up."""
+    left, top, right, bottom = box
+    image = Image.new("RGB", (math.ceil(right - left) + 2 * GAP, math.ceil(bottom - top) + 2 * GAP), BACKGROUND)
     draw = ImageDraw.Draw(image, "RGBA")
     for points, color, _ in sorted(projected, key=lambda item: item[2]):
-        polygon = [(x - min(xs) + GAP, y - min(ys) + GAP) for x, y in points]
+        polygon = [(x - left + GAP, y - top + GAP) for x, y in points]
         draw.polygon(polygon, fill=color, outline=color if color[3] == 255 else None)
     return image
 
@@ -255,7 +270,7 @@ def main():
     try:
         _, file = model_ref_from_argument(args.model)
         roots = discover_assets_roots(file, [ROOT / "src/main/resources/assets", ROOT / "src/generated/resources/assets",
-                                             ROOT / ".vanilla-textures/assets"])
+                                             ROOT / ".mc-sources/textures/assets"])
         ref = resolve_ref(args.model, roots)
         layers = sprite_layers(ref, roots)
         if layers:
@@ -275,21 +290,29 @@ def main():
 
 
 def save_sheet(output, title, panels):
+    save_image(output, sheet(title, panels))
+
+
+def save_image(output, image, **options):
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, **options)
+    print(f"wrote {output} ({image.width}x{image.height})")
+
+
+def sheet(title, panels):
     """The panels in a row under the title, each with its name."""
     width = sum(image.width for _, image in panels) + GAP * (len(panels) + 1)
     width = max(width, math.ceil(ImageDraw.Draw(panels[0][1]).textlength(title)) + GAP * 2)
     height = max(image.height for _, image in panels) + LABEL_HEIGHT + GAP * 2 + 4
-    sheet = Image.new("RGB", (width, height), BACKGROUND)
-    draw = ImageDraw.Draw(sheet)
+    result = Image.new("RGB", (width, height), BACKGROUND)
+    draw = ImageDraw.Draw(result)
     draw.text((GAP, 2), title, fill=(230, 230, 230))
     x = GAP
     for name, image in panels:
         draw.text((x, LABEL_HEIGHT), name, fill=(170, 170, 170))
-        sheet.paste(image, (x, LABEL_HEIGHT + GAP + 4))
+        result.paste(image, (x, LABEL_HEIGHT + GAP + 4))
         x += image.width + GAP
-    output.parent.mkdir(parents=True, exist_ok=True)
-    sheet.save(output)
-    print(f"wrote {output} ({sheet.width}x{sheet.height})")
+    return result
 
 
 if __name__ == "__main__":
