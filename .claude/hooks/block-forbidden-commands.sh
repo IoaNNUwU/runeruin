@@ -21,6 +21,11 @@ matches '(^|[^[:alnum:]_-])(taskkill|stop-process|pkill|killall|kill)[^[:alnum:]
     && block "never kill Java or Gradle: the user's game may be running"
 matches '(^|[^[:alnum:]_-])(rm|rmdir|rd|del|remove-item)[^[:alnum:]_-][^|;&]*src[\\/]+generated' \
     && block "never delete src/generated or its .cache; run runData instead"
+matches 'gradlew[^|;&]*[[:space:]]runClient([^[:alnum:]_-]|$)' \
+    || matches 'run-client\.ps1' \
+    && block "never start the game: the user starts it with the runClient command from the final report"
+matches '(^|[^[:alnum:]_-])git(\.exe)?[^[:alnum:]_.][^|;&]*worktree[[:space:]]+remove[^|;&]*[[:space:]](--force|-f)([^[:alnum:]_-]|$)' \
+    && block "never git worktree remove --force: it follows the .mc-sources link and wipes the shared Minecraft sources; use scripts/finish-task.ps1"
 matches '(^|[^[:alnum:]_-])gh(\.exe)?[^[:alnum:]_.][^|;&]*pr[[:space:]]+merge[^|;&]*[[:space:]](--delete-branch|-d)([^[:alnum:]_-]|$)' \
     && block "never gh pr merge --delete-branch: GitHub deletes merged branches itself, and the flag force-removes the task worktree with the shared Minecraft sources behind .mc-sources"
 

@@ -2,6 +2,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'common.ps1')
 
 function Get-GradleProperty {
     param(
@@ -53,25 +54,19 @@ function New-DirectoryLink {
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-# Every checkout has both wrappers, so pick by OS. Paths below use '/', which works everywhere.
-$wrapper = Join-Path $projectRoot $(if ($env:OS -eq 'Windows_NT') { 'gradlew.bat' } else { 'gradlew' })
+# Paths below use '/', which works everywhere.
+$wrapper = Get-GradleWrapper $projectRoot
 $gradleProperties = Join-Path $projectRoot 'gradle.properties'
 $minecraftVersion = Get-GradleProperty -Path $gradleProperties -Name 'minecraft_version'
 $neoVersion = Get-GradleProperty -Path $gradleProperties -Name 'neo_version'
 $expectedVersion = "minecraft=$minecraftVersion`nneoforge=$neoVersion`nmappings=official"
 
-$userHome = [Environment]::GetFolderPath('UserProfile')
-if ([string]::IsNullOrWhiteSpace($userHome)) {
-    $userHome = $env:USERPROFILE
-}
-if ([string]::IsNullOrWhiteSpace($userHome)) {
-    throw 'Could not determine the current user profile directory.'
-}
-
+$userHome = Get-UserHome
 $cacheRoot = Join-Path $userHome '.runeruin/mc-sources'
 $sharedSources = Join-Path $cacheRoot "minecraft-$minecraftVersion-neoforge-$neoVersion-official"
 $worktreeSources = Join-Path $projectRoot '.mc-sources'
-$sharedGame = Join-Path $userHome '.runeruin/game'
+# The runClient game directory, as in build.gradle.
+$sharedGame = if ($env:RUNERUIN_GAME_DIR) { $env:RUNERUIN_GAME_DIR } else { Join-Path $userHome '.runeruin/game' }
 $lockPath = Join-Path $cacheRoot '.setup.lock'
 $gradleUserHome = Join-Path $userHome '.gradle'
 $vanillaTextureVersion = $minecraftVersion -replace '\.0$', ''
@@ -86,16 +81,7 @@ function Ensure-VanillaTextures {
     }
 
     Write-Host "Extracting Minecraft $vanillaTextureVersion textures and models into .vanilla-textures..."
-    Push-Location $projectRoot
-    try {
-        & $wrapper '--gradle-user-home' $gradleUserHome 'extractVanillaTextures'
-        if ($LASTEXITCODE -ne 0) {
-            throw "extractVanillaTextures failed with exit code $LASTEXITCODE."
-        }
-    }
-    finally {
-        Pop-Location
-    }
+    Invoke-Native $wrapper -p $projectRoot '--gradle-user-home' $gradleUserHome 'extractVanillaTextures'
 
     if ((Read-VersionText -Directory $vanillaTextures) -ne $vanillaTextureVersionText -or
         -not (Test-Path -LiteralPath $vanillaTextureSentinel -PathType Leaf)) {
@@ -103,11 +89,30 @@ function Ensure-VanillaTextures {
     }
 }
 
+# Moves the validated sources of this worktree into the shared cache and links them back.
+function Move-ToSharedCache {
+    New-Item -ItemType Directory -Force -Path $cacheRoot | Out-Null
+    try {
+        Move-Item -LiteralPath $worktreeSources -Destination $sharedSources -ErrorAction Stop
+    }
+    catch {
+        # Move-Item cannot move a directory between volumes. Copy only the
+        # validated extraction, then remove the temporary worktree copy.
+        Copy-Item -LiteralPath $worktreeSources -Destination $sharedSources -Recurse -Force
+        if ((Read-VersionText -Directory $sharedSources) -ne $expectedVersion) {
+            throw "The copied Minecraft sources cache failed validation: $sharedSources"
+        }
+        Remove-Item -LiteralPath $worktreeSources -Recurse -Force
+    }
+    New-DirectoryLink -Link $worktreeSources -Target $sharedSources
+}
+
 New-Item -ItemType Directory -Force -Path $cacheRoot | Out-Null
 
 $lockStream = $null
 try {
-    for ($attempt = 0; $attempt -lt 120; $attempt++) {
+    # A first extractMcSources decompiles Minecraft and can take several minutes in another worktree.
+    for ($attempt = 0; $attempt -lt 1800; $attempt++) {
         try {
             $lockStream = [System.IO.File]::Open(
                 $lockPath,
@@ -118,12 +123,15 @@ try {
             break
         }
         catch [System.IO.IOException] {
+            if ($attempt -eq 0) {
+                Write-Host "Waiting for another checkout to finish setting up the Minecraft sources cache..."
+            }
             Start-Sleep -Seconds 1
         }
     }
 
     if ($null -eq $lockStream) {
-        throw "Could not acquire the Minecraft sources cache lock: $lockPath"
+        throw "Could not acquire the Minecraft sources cache lock in 30 minutes: $lockPath"
     }
 
     # runClient uses this shared directory; every other run keeps its own <checkout>/run.
@@ -168,7 +176,6 @@ try {
             # A prior interrupted setup can leave behind only the cache directory.
             # Remove that empty placeholder so extraction can initialize it cleanly.
             Remove-Item -LiteralPath $sharedSources -Force
-            $sharedSourcesExists = $false
             Write-Host "Removed empty incomplete shared Minecraft sources cache directory: $sharedSources"
         }
         else {
@@ -188,56 +195,16 @@ try {
         return
     }
 
-    if ($localSourcesReady) {
-        try {
-            Move-Item -LiteralPath $worktreeSources -Destination $sharedSources -ErrorAction Stop
+    if (-not $localSourcesReady) {
+        Write-Host "Preparing the shared Minecraft sources cache for $minecraftVersion / $neoVersion..."
+        Invoke-Native $wrapper -p $projectRoot '--gradle-user-home' $gradleUserHome 'extractMcSources'
+        if ((Read-VersionText -Directory $worktreeSources) -ne $expectedVersion) {
+            throw "extractMcSources completed without producing the expected VERSION.txt."
         }
-        catch {
-            # Move-Item cannot move a directory between volumes. Copy only the
-            # validated extraction, then remove the temporary worktree copy.
-            Copy-Item -LiteralPath $worktreeSources -Destination $sharedSources -Recurse -Force
-            if ((Read-VersionText -Directory $sharedSources) -ne $expectedVersion) {
-                throw "The copied Minecraft sources cache failed validation: $sharedSources"
-            }
-            Remove-Item -LiteralPath $worktreeSources -Recurse -Force
-        }
-        New-DirectoryLink -Link $worktreeSources -Target $sharedSources
-        Write-Host "Moved existing Minecraft sources to the shared cache and linked this worktree."
-        Ensure-VanillaTextures
-        return
     }
 
-    Write-Host "Preparing the shared Minecraft sources cache for $minecraftVersion / $neoVersion..."
-    Push-Location $projectRoot
-    try {
-        & $wrapper '--gradle-user-home' $gradleUserHome 'extractMcSources'
-        if ($LASTEXITCODE -ne 0) {
-            throw "extractMcSources failed with exit code $LASTEXITCODE."
-        }
-    }
-    finally {
-        Pop-Location
-    }
-
-    if ((Read-VersionText -Directory $worktreeSources) -ne $expectedVersion) {
-        throw "extractMcSources completed without producing the expected VERSION.txt."
-    }
-
-    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $sharedSources) | Out-Null
-    try {
-        Move-Item -LiteralPath $worktreeSources -Destination $sharedSources -ErrorAction Stop
-    }
-    catch {
-        # Move-Item cannot move a directory between volumes. Copy only the
-        # validated extraction, then remove the temporary worktree copy.
-        Copy-Item -LiteralPath $worktreeSources -Destination $sharedSources -Recurse -Force
-        if ((Read-VersionText -Directory $sharedSources) -ne $expectedVersion) {
-            throw "The copied Minecraft sources cache failed validation: $sharedSources"
-        }
-        Remove-Item -LiteralPath $worktreeSources -Recurse -Force
-    }
-    New-DirectoryLink -Link $worktreeSources -Target $sharedSources
-    Write-Host "Created shared Minecraft sources cache and linked it into the worktree."
+    Move-ToSharedCache
+    Write-Host "Moved this worktree's Minecraft sources to the shared cache and linked them: $worktreeSources -> $sharedSources"
     Ensure-VanillaTextures
 }
 finally {

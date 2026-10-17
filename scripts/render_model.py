@@ -254,7 +254,7 @@ def main():
 
     try:
         _, file = model_ref_from_argument(args.model)
-        roots = discover_assets_roots(file, [ROOT / "src/generated/resources/assets", ROOT / "src/main/resources/assets",
+        roots = discover_assets_roots(file, [ROOT / "src/main/resources/assets", ROOT / "src/generated/resources/assets",
                                              ROOT / ".vanilla-textures/assets"])
         ref = resolve_ref(args.model, roots)
         layers = sprite_layers(ref, roots)

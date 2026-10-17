@@ -42,9 +42,10 @@ TEXTURE_DIRS = [
     ROOT / "src/main/resources/assets/runeruin/textures/block",
     ROOT / ".vanilla-textures/assets/minecraft/textures/block",
 ]
+# src/main first: the jar keeps the file a person keeps over a generated one.
 MODEL_DIRS = [
-    ROOT / "src/generated/resources/assets/runeruin/models/block",
     ROOT / "src/main/resources/assets/runeruin/models/block",
+    ROOT / "src/generated/resources/assets/runeruin/models/block",
     ROOT / ".vanilla-textures/assets/minecraft/models/block",
 ]
 AIR = {"air", "cave_air", "void_air"}

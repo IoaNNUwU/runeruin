@@ -6,13 +6,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-
-function Invoke-Git {
-    & git @args
-    if ($LASTEXITCODE -ne 0) {
-        throw "git $($args -join ' ') failed with exit code $LASTEXITCODE."
-    }
-}
+. (Join-Path $PSScriptRoot 'common.ps1')
 
 function Get-NormalizedPath([string] $Value) {
     # On Windows GetFullPath also turns git's C:/... into C:\...
@@ -48,10 +42,15 @@ Get-ChildItem -LiteralPath $worktree -Force |
     }
 
 # Without --force git refuses to drop uncommitted or untracked work.
-Invoke-Git -C $projectRoot worktree remove $worktree
+Invoke-Native git -C $projectRoot worktree remove $worktree
 Write-Host "Removed worktree $worktree"
 
 if ($branch) {
     # -d (not -D) keeps a branch with commits that are neither pushed to its upstream nor in main.
-    Invoke-Git -C $projectRoot branch -d $branch
+    # A squash merge leaves the branch's own commits out of main, so once GitHub deletes the remote branch
+    # -d refuses as well: delete such a branch with -D after its pull request is merged.
+    & git -C $projectRoot branch -d $branch
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Kept branch ${branch}: its commits are neither in main nor in its upstream."
+    }
 }
