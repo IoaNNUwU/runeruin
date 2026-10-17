@@ -1455,28 +1455,34 @@ public final class RRGameTests {
     }
 
     // A full breath blows one berry at a snail ten blocks away: a mossberry from the bag poisons it, a glow berry
-    // in the other hand, which goes first, makes it glow.
+    // or a wispberry in the other hand, which goes first, makes it glow.
     private static void blowpipeShootsBerries(GameTestHelper helper) {
         // Far enough above the Prophet's fight that ending this one does not take its thrown warrior.
         int y = 150;
         fightFloor(helper, y);
-        Snail poisoned = fightTarget(helper, 14, y, 8);
-        Snail glowing = fightTarget(helper, 14, y, 16);
+        Snail poisoned = fightTarget(helper, 14, y, 4);
+        Snail glowing = fightTarget(helper, 14, y, 12);
+        Snail wispLit = fightTarget(helper, 14, y, 20);
         Player mossShooter = blowpipeShooter(helper, poisoned);
         Player glowShooter = blowpipeShooter(helper, glowing);
         glowShooter.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.GLOW_BERRIES, 2));
-        for (Player shooter : List.of(mossShooter, glowShooter)) {
+        Player wispShooter = blowpipeShooter(helper, wispLit);
+        wispShooter.setItemInHand(InteractionHand.OFF_HAND, RRItems.WISPBERRY.toStack(2));
+        for (Player shooter : List.of(mossShooter, glowShooter, wispShooter)) {
             ItemStack blowpipe = shooter.getMainHandItem();
             blowpipe.releaseUsing(helper.getLevel(), shooter, blowpipe.getUseDuration(shooter) - 20);
             helper.assertTrue(blowpipe.getDamageValue() == 1, "a shot wore the blowpipe by " + blowpipe.getDamageValue());
         }
         helper.assertTrue(mossShooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 2, "a shot did not take one mossberry");
-        helper.assertTrue(glowShooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 3, "a shot took a mossberry past the glow berries");
-        helper.assertTrue(glowShooter.getOffhandItem().getCount() == 1, "a shot did not take one glow berry");
+        for (Player shooter : List.of(glowShooter, wispShooter)) {
+            helper.assertTrue(shooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 3, "a shot took a mossberry past the berries in hand");
+            helper.assertTrue(shooter.getOffhandItem().getCount() == 1, "a shot did not take one berry from the other hand");
+        }
 
         helper.succeedWhen(() -> {
             helper.assertTrue(poisoned.hasEffect(MobEffects.POISON), "the mossberry did not poison its snail");
             helper.assertTrue(glowing.hasEffect(MobEffects.GLOWING), "the glow berry did not make its snail glow");
+            helper.assertTrue(wispLit.hasEffect(MobEffects.GLOWING), "the wispberry did not make its snail glow");
             helper.assertTrue(!glowing.hasEffect(MobEffects.POISON), "the snail hit by a glow berry is poisoned");
             endFight(helper, y);
         });

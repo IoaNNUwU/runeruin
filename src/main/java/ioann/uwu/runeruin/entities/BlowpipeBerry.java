@@ -38,7 +38,7 @@ public class BlowpipeBerry extends ThrowableItemProjectile {
         if (berry.is(RRItems.MOSSBERRY)) {
             return new MobEffectInstance(MobEffects.POISON, 6 * 20);
         }
-        if (berry.is(Items.GLOW_BERRIES)) {
+        if (berry.is(Items.GLOW_BERRIES) || berry.is(RRItems.WISPBERRY)) {
             return new MobEffectInstance(MobEffects.GLOWING, 10 * 20);
         }
         return null;
