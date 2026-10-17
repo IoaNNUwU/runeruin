@@ -271,7 +271,7 @@ public class RRPlacedFeatures {
 
         ctx.register(POWDERED_MOSS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.POWDERED_MOSS),
-                floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 0)
+                floorPlacement(CountPlacement.of(3), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 0)
         ));
 
         // The count follows a slow noise: glades with several groups of mounds, and none between them.

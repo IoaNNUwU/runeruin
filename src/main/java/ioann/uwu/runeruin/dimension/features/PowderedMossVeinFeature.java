@@ -13,6 +13,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 
 public class PowderedMossVeinFeature extends Feature<NoneFeatureConfiguration> {
     private static final int SEARCH_RANGE = 16;
+    /** The thickest floor that the moss goes through. */
+    public static final int SHAFT_DEPTH = 12;
 
     public PowderedMossVeinFeature() {
         super(NoneFeatureConfiguration.CODEC);
@@ -24,8 +26,8 @@ public class PowderedMossVeinFeature extends Feature<NoneFeatureConfiguration> {
         BlockPos origin = context.origin();
         RandomSource random = context.random();
         BlockState powderedMoss = RRBlocks.POWDERED_MOSS.get().defaultBlockState();
-        int radiusX = 5 + random.nextInt(3);
-        int radiusZ = 5 + random.nextInt(3);
+        int radiusX = 2 + random.nextInt(3);
+        int radiusZ = 2 + random.nextInt(3);
         boolean placed = false;
 
         for (int x = -radiusX; x <= radiusX; x++) {
@@ -44,8 +46,12 @@ public class PowderedMossVeinFeature extends Feature<NoneFeatureConfiguration> {
                     return lower.is(Blocks.STONE) || lower.is(RRBlocks.DEEP_MOSS.get());
                 });
                 if (surface != null) {
-                    level.setBlock(surface, powderedMoss, Block.UPDATE_CLIENTS);
-                    level.setBlock(surface.below(), powderedMoss, Block.UPDATE_CLIENTS);
+                    // Through a thin floor the moss goes down to the open caves under it: whoever sinks into it falls.
+                    BlockPos open = FeatureScans.findDown(surface, -2, -SHAFT_DEPTH, pos -> level.getBlockState(pos).canBeReplaced());
+                    int depth = open == null ? 2 : surface.getY() - open.getY();
+                    for (int dy = 0; dy < depth; dy++) {
+                        level.setBlock(surface.below(dy), powderedMoss, Block.UPDATE_CLIENTS);
+                    }
                     placed = true;
                 }
             }

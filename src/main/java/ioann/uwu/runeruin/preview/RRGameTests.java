@@ -35,6 +35,7 @@ import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
+import ioann.uwu.runeruin.preview.jobs.PowderedMossShaftPreviewJob;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -190,6 +191,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_EXPORT_MARKS =
         TEST_FUNCTIONS.register("preview_export_marks", () -> RRGameTests::previewExportMarks);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> POWDERED_MOSS_SHAFT =
+        TEST_FUNCTIONS.register("powdered_moss_shaft", () -> RRGameTests::powderedMossShaft);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_REACH =
         TEST_FUNCTIONS.register("feature_reach", () -> RRGameTests::featureReach);
@@ -311,6 +314,29 @@ public final class RRGameTests {
         RR.LOGGER.info("Feature reach over {} seeds: {}", FEATURE_REACH_SEEDS, String.join(", ", measured));
         helper.assertTrue(problems.isEmpty(), "the limit is " + FEATURE_REACH_LIMIT + " blocks: " + String.join("; ", problems));
         helper.succeed();
+    }
+
+    // On the real terrain a patch goes through the thinnest floor of the Blooming caves into the caves under it,
+    // and stays two blocks deep on the thickest.
+    private static void powderedMossShaft(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            helper.assertTrue(mossOverOpenCaves(server, true) > 0, "the patch on the thinnest floor does not go through");
+            helper.assertTrue(mossOverOpenCaves(server, false) == 0, "the patch on the thickest floor goes through");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    private static int mossOverOpenCaves(MinecraftServer server, boolean thin) throws IOException {
+        PowderedMossShaftPreviewJob.Placement placement = PowderedMossShaftPreviewJob.place(server, 1, 0, 0, thin);
+        BlockPos origin = placement.origin();
+        int count = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-8, -40, -8), origin.offset(8, 0, 8))) {
+            count += placement.world().get(pos).is(RRBlocks.POWDERED_MOSS.get()) && placement.world().get(pos.below()).canBeReplaced() ? 1 : 0;
+        }
+        return count;
     }
 
     // scripts/render_preview.py fades what the preview prepared and outlines blocks without collision.
@@ -572,6 +598,13 @@ public final class RRGameTests {
             RR.id("preview_export_marks"),
             new FunctionGameTestInstance(
                 PREVIEW_EXPORT_MARKS.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("powdered_moss_shaft"),
+            new FunctionGameTestInstance(
+                POWDERED_MOSS_SHAFT.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
