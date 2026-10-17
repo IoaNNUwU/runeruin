@@ -1,0 +1,61 @@
+{
+	"format_version": "1.21.11",
+	"textures": {
+		"bark": "minecraft:block/acacia_log",
+		"cut": "minecraft:block/acacia_log_top",
+		"moss": "runeruin:block/deep_moss",
+		"particle": "minecraft:block/acacia_log"
+	},
+	"elements": [
+		{
+			"name": "mouthpiece",
+			"from": [6.5, 1, 6.5],
+			"to": [9.5, 4, 9.5],
+			"faces": {
+				"north": {"uv": [6.5, 1, 9.5, 4], "texture": "#cut"},
+				"east": {"uv": [6.5, 1, 9.5, 4], "texture": "#cut"},
+				"south": {"uv": [6.5, 1, 9.5, 4], "texture": "#cut"},
+				"west": {"uv": [6.5, 1, 9.5, 4], "texture": "#cut"},
+				"up": {"uv": [6.5, 6.5, 9.5, 9.5], "texture": "#cut"},
+				"down": {"uv": [6.5, 6.5, 9.5, 9.5], "texture": "#cut"}
+			}
+		},
+		{
+			"name": "pipe",
+			"from": [7, 4, 7],
+			"to": [9, 16, 9],
+			"faces": {
+				"north": {"uv": [3, 2, 5, 14], "texture": "#bark"},
+				"east": {"uv": [7, 2, 9, 14], "texture": "#bark"},
+				"south": {"uv": [11, 2, 13, 14], "texture": "#bark"},
+				"west": {"uv": [14, 2, 16, 14], "texture": "#bark"},
+				"up": {"uv": [7, 7, 9, 9], "texture": "#cut"}
+			}
+		},
+		{
+			"name": "moss_wrap",
+			"from": [6.75, 9, 6.75],
+			"to": [9.25, 11, 9.25],
+			"faces": {
+				"north": {"uv": [2, 4, 4.5, 6], "texture": "#moss"},
+				"east": {"uv": [6, 4, 8.5, 6], "texture": "#moss"},
+				"south": {"uv": [10, 4, 12.5, 6], "texture": "#moss"},
+				"west": {"uv": [12, 9, 14.5, 11], "texture": "#moss"},
+				"up": {"uv": [2, 10, 4.5, 12.5], "texture": "#moss"},
+				"down": {"uv": [6, 10, 8.5, 12.5], "texture": "#moss"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [-10, 0, 0],
+			"translation": [0, 4, 0.5],
+			"scale": [0.85, 0.85, 0.85]
+		},
+		"firstperson_righthand": {
+			"rotation": [20, 0, 0],
+			"translation": [1.13, 3.2, 1.13],
+			"scale": [0.68, 0.68, 0.68]
+		}
+	}
+}
