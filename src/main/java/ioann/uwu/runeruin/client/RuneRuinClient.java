@@ -19,7 +19,9 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.FlipFrameEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRendererEvent;
@@ -69,7 +71,17 @@ public class RuneRuinClient {
 
     @SubscribeEvent
     static void registerCustomEnvironmentEffectRenderer(RegisterCustomEnvironmentEffectRendererEvent event) {
-        event.registerCloudRenderer(RRDimension.CLOUDS_ID, new RuneRuinCloudsRenderer());
+        event.registerCloudRenderer(RRDimension.CLOUDS_ID, RuneRuinCloudsRenderer.INSTANCE);
+    }
+
+    @SubscribeEvent
+    static void addReloadListeners(AddClientReloadListenersEvent event) {
+        RuneRuinCloudsRenderer.INSTANCE.addReloadListeners(event);
+    }
+
+    @SubscribeEvent
+    static void endFrame(FlipFrameEvent event) {
+        RuneRuinCloudsRenderer.INSTANCE.endFrame();
     }
 
     @SubscribeEvent
