@@ -32,7 +32,7 @@ if ($worktree -eq (Get-NormalizedPath $projectRoot)) {
 $branch = (& git -C $worktree branch --show-current).Trim()
 
 # Git for Windows follows junctions while deleting ignored directories, so a linked
-# .mc-sources, .vanilla-textures or run would wipe a shared cache or the game directory. Unlink them first.
+# .mc-sources or run would wipe the shared cache or game directory. Unlink them first.
 Get-ChildItem -LiteralPath $worktree -Force |
     Where-Object { $_.Attributes -band [System.IO.FileAttributes]::ReparsePoint } |
     ForEach-Object {

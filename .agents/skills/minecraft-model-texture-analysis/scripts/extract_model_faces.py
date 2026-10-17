@@ -85,7 +85,7 @@ def discover_assets_roots(model_file: Path | None, requested: list[Path]) -> lis
             visited.add(parent)
             add(parent / "src" / "main" / "resources" / "assets")
             add(parent / "src" / "generated" / "resources" / "assets")
-            add(parent / ".vanilla-textures" / "assets")
+            add(parent / ".mc-sources" / "textures" / "assets")
     return roots
 
 

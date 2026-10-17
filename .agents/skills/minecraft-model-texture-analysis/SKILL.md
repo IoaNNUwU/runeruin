@@ -35,7 +35,7 @@ Inspect the resulting `build/libs/*.jar` as a zip to compare the shipped model o
 
 ## Extract JSON face UVs
 
-The bundled script supports Minecraft cuboid/block model JSON with `elements`, `faces`, texture variables, project parent models, common vanilla cube parents (`cube_all`, `cube`, `cube_bottom_top`, vertical/horizontal `cube_column`, and orientable variants), and omitted `uv` values. It writes one PNG per selected face and a `manifest.json` that maps the crop back to the element, direction, texture resource, UV coordinates, source pixels, and face rotation. Other vanilla parents resolve from `.vanilla-textures/assets/minecraft/models`, extracted by the setup script.
+The bundled script supports Minecraft cuboid/block model JSON with `elements`, `faces`, texture variables, project parent models, common vanilla cube parents (`cube_all`, `cube`, `cube_bottom_top`, vertical/horizontal `cube_column`, and orientable variants), and omitted `uv` values. It writes one PNG per selected face and a `manifest.json` that maps the crop back to the element, direction, texture resource, UV coordinates, source pixels, and face rotation. Other vanilla parents resolve from `.mc-sources/textures/assets/minecraft/models`, extracted by the setup script.
 
 ```powershell
 python .agents/skills/minecraft-model-texture-analysis/scripts/extract_model_faces.py src/main/resources/assets/runeruin/models/block/firefly_in_a_jar.json --element jar_glass_body --face north
@@ -84,7 +84,7 @@ python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/sn
 
 ## Assess model changes
 
-The mobs of this mod keep their geometry and UVs in their Blockbench project (`assets/runeruin/models/entity/<name>.bbmodel`: the `uv_offset` and size of each cube, read by `client/model/BlockbenchModel`); look there first. For vanilla mobs in Java, trace the renderer/model registration to its atlas, then inspect `texOffs(...)`, box dimensions, texture scaling, and any per-face UV declarations in the model source. This project's Minecraft 26.2 source is `.mc-sources/net/minecraft/client/model/geom/ModelPart.java`; custom model code may define a different layout. For the standard `CubeListBuilder.texOffs(u, v).addBox(..., w, h, d)` layout, the source maps face rectangles as follows (coordinates are atlas pixels):
+The mobs of this mod keep their geometry and UVs in their Blockbench project (`assets/runeruin/models/entity/<name>.bbmodel`: the `uv_offset` and size of each cube, read by `client/model/BlockbenchModel`); look there first. For vanilla mobs in Java, trace the renderer/model registration to its atlas, then inspect `texOffs(...)`, box dimensions, texture scaling, and any per-face UV declarations in the model source. This project's Minecraft 26.2 source is `.mc-sources/code/net/minecraft/client/model/geom/ModelPart.java`; custom model code may define a different layout. For the standard `CubeListBuilder.texOffs(u, v).addBox(..., w, h, d)` layout, the source maps face rectangles as follows (coordinates are atlas pixels):
 
 | Face | Rectangle `[left, top, right, bottom]` |
 |------|-----------------------------------------|

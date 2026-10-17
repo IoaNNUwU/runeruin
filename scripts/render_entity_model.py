@@ -12,7 +12,7 @@ assets/runeruin/models/entity, so the geometry comes from the game: `gradlew run
 to build/entity_models/<namespace>/<model>/<layer>.json (EntityModelExport), the parts with their initial poses
 and the faces of their boxes as ModelPart builds them. Run it again after a change to a model or its project.
 A bare model name tries runeruin: then minecraft:. The texture is an id resolved through src/main and
-.vanilla-textures, or a path to a PNG.
+.mc-sources/textures, or a path to a PNG.
 
 The model stands as the game draws it, turned over from the model space where Y points down; the front is -Z,
 where a mob faces. --view replaces the five views with cameras at yaw,pitch in degrees: yaw goes around the model
@@ -70,7 +70,7 @@ def find_model(name, layer):
 def load_texture(name):
     if Path(name).is_file():
         return name, Image.open(name).convert("RGBA")
-    roots = discover_assets_roots(None, [ROOT / "src/main/resources/assets", ROOT / ".vanilla-textures/assets"])
+    roots = discover_assets_roots(None, [ROOT / "src/main/resources/assets", ROOT / ".mc-sources/textures/assets"])
     path, identifier = resolve_texture_file(name, "minecraft", roots)
     return identifier, Image.open(path).convert("RGBA")
 

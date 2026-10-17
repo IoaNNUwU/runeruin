@@ -33,10 +33,9 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-### Minecraft and NeoForge sources (extractMcSources) ###
+### Minecraft and NeoForge sources, vanilla textures and models (extractMcSources) ###
 .mc-sources/
-
-### Vanilla Minecraft textures (extractVanillaTextures) ###
+# The textures of older checkouts, until scripts/setup-worktree.ps1 removes them.
 .vanilla-textures/
 
 ### Codex project environment ###

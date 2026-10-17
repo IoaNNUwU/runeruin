@@ -5,7 +5,7 @@
     python scripts/render_model.py out.png src/main/resources/assets/runeruin/models/block/x.json
 
 A bare name (stone_lily) tries block/ then item/. Parents and textures resolve through src/main,
-src/generated and .vanilla-textures (vanilla models included). Follows the game's baking: face vertex
+src/generated and .mc-sources/textures (vanilla models included). Follows the game's baking: face vertex
 order and UV rotation as in FaceBakery, element rotation with rescale, directional shade
 (up 1.0, north/south 0.8, east/west 0.6, down 0.5). Faces with a tintindex are multiplied by --tint.
 Item models built on item/generated show their layers as a flat sprite. Blockstate rotations, cullfaces,
@@ -255,7 +255,7 @@ def main():
     try:
         _, file = model_ref_from_argument(args.model)
         roots = discover_assets_roots(file, [ROOT / "src/main/resources/assets", ROOT / "src/generated/resources/assets",
-                                             ROOT / ".vanilla-textures/assets"])
+                                             ROOT / ".mc-sources/textures/assets"])
         ref = resolve_ref(args.model, roots)
         layers = sprite_layers(ref, roots)
         if layers:

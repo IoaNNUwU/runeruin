@@ -8,7 +8,7 @@ and the models that data generation derives live in src/generated.
 - a model a person keeps as a file says which Minecraft it is for, so that Blockbench saves it for that one,
   and data generation does not write the same file;
 - the Blockbench project of a mob finds its textures from any checkout;
-- every texture a model uses exists, vanilla ones in .vanilla-textures (gradlew extractVanillaTextures);
+- every texture a model uses exists, vanilla ones in .mc-sources/textures (scripts/setup-worktree.ps1);
 - en_us and ru_ru have the same keys, and every block and item has a name in both;
 - block and item textures are 16x16, or 16 wide with a .mcmeta animation of whole frames, or listed in OTHER_SIZES.
 
@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 NAMESPACE = "runeruin"
 ASSET_ROOTS = [ROOT / "src/main/resources/assets", ROOT / "src/generated/resources/assets"]
-VANILLA = ROOT / ".vanilla-textures/assets"
+VANILLA = ROOT / ".mc-sources/textures/assets"
 LANGS = ("en_us", "ru_ru")
 BUILTIN_PARENTS = {"builtin/generated", "builtin/entity"}
 # What Blockbench writes into a model of Minecraft 1.21.11 - 26.2. Without it Blockbench 5.2 takes the model for
@@ -133,9 +133,9 @@ def check_models(problems):
             if texture.get("path") or not relative or not (path.parent / relative).is_file():
                 problems.append(f"{rel(path)}: texture {texture.get('name')} needs a relative_path to its PNG and no path "
                                 "(in Blockbench: Settings > Export, asset paths: relative)")
-    # An old or missing .vanilla-textures must not turn unchecked references into "assets OK".
+    # An old or missing .mc-sources/textures must not turn unchecked references into "assets OK".
     for assets in sorted(missing):
-        problems.append(f"{assets} not checked: missing in .vanilla-textures, run gradlew extractVanillaTextures")
+        problems.append(f"{assets} not checked: missing in .mc-sources/textures, run scripts/setup-worktree.ps1")
 
 
 def check_langs(problems):

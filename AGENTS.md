@@ -21,7 +21,7 @@ Several agents work in this repository at once. Every change, documentation incl
 5. Work only inside the task worktree: edits, searches, Gradle. Links to files in replies are absolute paths into the task worktree: a relative link is resolved from the folder the session was started in, usually the main checkout, where the file is missing or is another version. Do not copy files or uncommitted changes between worktrees; never switch to a branch used by another worktree.
 6. Follow-ups after a commit stay in the same branch and worktree until its pull request is merged. Start a new branch for an unrelated feature or bug, and for any work after the merge.
 7. Before the final report, merge `main` into the task branch, resolve conflicts and repeat the checks.
-8. Remove a worktree only when the user asks (a maintainer's agent also after its pull request is merged, see [MAINTAINING.md](MAINTAINING.md#pull-requests)), with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name-with-dashes>`: it unlinks `.mc-sources` and `.vanilla-textures` first, whereas `git worktree remove --force` and `gh pr merge --delete-branch` delete the shared caches through the junctions. It keeps the branch unless its commits are pushed or in `main`; after a squash merge it warns that it kept the branch, which `git branch -D` then deletes.
+8. Remove a worktree only when the user asks (a maintainer's agent also after its pull request is merged, see [MAINTAINING.md](MAINTAINING.md#pull-requests)), with `.\scripts\finish-task.ps1 -Path ../RuneRuin-<name-with-dashes>`: it unlinks `.mc-sources` first, whereas `git worktree remove --force` and `gh pr merge --delete-branch` delete the shared sources cache through the junction. It keeps the branch unless its commits are pushed or in `main`; after a squash merge it warns that it kept the branch, which `git branch -D` then deletes.
 
 `main` changes only through pull requests on GitHub: never commit on it, merge into it or push to it. Git hooks in `.githooks` (enabled by the setup script) reject commits on `main`, pushes to `main`, branch names other than `feature/<snake_case>` / `bug/<snake_case>`, a detached `HEAD`, and attribution lines. Never use `--no-verify`.
 
@@ -83,7 +83,7 @@ What an agent makes is a draft ([AI_POLICY.md](AI_POLICY.md)): a person reworks 
 | `runPreview` | headless shape export into `exports/` (`headless-preview` skill) |
 | `runData` | datagen into `src/generated/resources` |
 | `build` | mod jar |
-| `extractMcSources` | Minecraft + NeoForge sources into `.mc-sources/`, textures and models into `.vanilla-textures/`; setup moves both to the shared caches and links them |
+| `extractMcSources` | Minecraft + NeoForge sources into `.mc-sources/code/`, vanilla textures and models into `.mc-sources/textures/`; setup moves it to the shared cache and links it |
 
 - Never `clean`, `--rerun-tasks`, `--refresh-dependencies`, `--offline` or `--stop`; never kill Java or Gradle; never start, restart or wait for the game. A Claude Code hook (`.claude/hooks/block-forbidden-commands.sh`) blocks these, `runClient` included.
 - `src/generated` is not in git. Never delete it or `src/generated/resources/.cache`, never hand-write `src/generated/**`: change the Java bootstrap and run `runData` yourself.
@@ -93,10 +93,10 @@ What an agent makes is a draft ([AI_POLICY.md](AI_POLICY.md)): a person reworks 
 
 ## Minecraft and NeoForge sources
 
-Do not use Minecraft or NeoForge APIs from memory. Search `.mc-sources/` (`net/minecraft`, `com/mojang`, `net/neoforged`, `VERSION.txt`), a junction to the shared cache `~/.runeruin/mc-sources/<version>`. Vanilla textures and models are in `.vanilla-textures/assets/minecraft/{textures,models}/`, a junction to `~/.runeruin/vanilla-textures/minecraft-<version>`. Never edit them or copy them into `src/`.
+Do not use Minecraft or NeoForge APIs from memory. Search `.mc-sources/`, a junction to the shared cache `~/.runeruin/mc-sources/<version>`: Java in `code/` (`net/minecraft`, `com/mojang`, `net/neoforged`), vanilla textures and models in `textures/assets/minecraft/{textures,models}/`, the version in `VERSION.txt`. Never edit it or copy it into `src/`.
 
-- No `.mc-sources/VERSION.txt` or `.vanilla-textures/VERSION.txt`: run `.\scripts\setup-worktree.ps1`. If it fails or the file is still missing, find the cause in the script's output, report it to the user and stop the task.
-- Both are links, and ripgrep does not follow links while it walks the checkout: a search from the root never reaches them. Pass the link as the path (Grep with `path` `.mc-sources` or `.vanilla-textures`, `rg <pattern> .vanilla-textures`) or use `rg -L`. `.ignore` keeps them and `src/generated` searchable. Do not search `~/.gradle`.
+- No `.mc-sources/VERSION.txt`: run `.\scripts\setup-worktree.ps1`. If it fails or the file is still missing, find the cause in the script's output, report it to the user and stop the task.
+- `.mc-sources` is a link, and ripgrep does not follow links while it walks the checkout: a search from the root never reaches it. Pass it as the path (Grep with `path` `.mc-sources/code` or `.mc-sources/textures`, `rg <pattern> .mc-sources/code`) or use `rg -L`. `.ignore` keeps it and `src/generated` searchable. Do not search `~/.gradle`.
 
 ## Skills
 
