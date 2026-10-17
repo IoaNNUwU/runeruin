@@ -114,7 +114,7 @@ Step-by-step procedures live in skills; load the matching one before starting su
 | `benchmark` | measuring generation speed before and after a change; only on the user's command |
 | `region-export-compare` | `/rrexport` dumps and terrain replay (`world_region`, was → expected) |
 | `minecraft-pixel-texture-generation` | creating, recoloring, quantizing and validating textures |
-| `minecraft-model-texture-analysis` | model geometry and texture UVs |
+| `minecraft-model-texture-analysis` | model geometry and texture UVs, renders of models and mob animations |
 
 ## Packages (`src/main/java/ioann/uwu/runeruin/`)
 
