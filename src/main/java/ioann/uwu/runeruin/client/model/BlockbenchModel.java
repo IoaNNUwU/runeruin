@@ -38,11 +38,10 @@ public final class BlockbenchModel {
     private BlockbenchModel() {}
 
     /**
-     * @param deformation added to every cube: a second layer such as fur is the same file a little larger
-     * @param animated    the model that will move the parts; it is built once here, so that a bone its
-     *                    animation needs and the file lacks is reported with the name of the file
+     * @param animated the model that will move the parts; it is built once here, so that a bone its
+     *                 animation needs and the file lacks is reported with the name of the file
      */
-    public static LayerDefinition layer(String name, CubeDeformation deformation, Function<ModelPart, ?> animated) {
+    public static LayerDefinition layer(String name, Function<ModelPart, ?> animated) {
         String file = "/assets/" + RR.MODID + "/models/entity/" + name + ".bbmodel";
         try {
             JsonObject project = read(file);
@@ -58,7 +57,7 @@ public final class BlockbenchModel {
             }
             MeshDefinition mesh = new MeshDefinition();
             // The game has the feet of a model at y 24, Blockbench at 0.
-            addBones(mesh.getRoot(), new double[]{0, 24, 0}, project.getAsJsonArray("outliner"), nodes, deformation);
+            addBones(mesh.getRoot(), new double[]{0, 24, 0}, project.getAsJsonArray("outliner"), nodes);
             JsonObject resolution = project.getAsJsonObject("resolution");
             LayerDefinition layer = LayerDefinition.create(mesh, GsonHelper.getAsInt(resolution, "width"), GsonHelper.getAsInt(resolution, "height"));
             animated.apply(layer.bakeRoot());
@@ -82,7 +81,7 @@ public final class BlockbenchModel {
     }
 
     /** The bones of a list of the outliner as parts of {@code parent}, whose pivot is {@code pivot}. */
-    private static void addBones(PartDefinition parent, double[] pivot, JsonArray list, Map<String, JsonObject> nodes, CubeDeformation deformation) {
+    private static void addBones(PartDefinition parent, double[] pivot, JsonArray list, Map<String, JsonObject> nodes) {
         for (JsonElement entry : list) {
             if (!entry.isJsonObject()) {
                 throw new JsonParseException("cube '" + GsonHelper.getAsString(nodes.get(entry.getAsString()), "name") + "' is in no bone");
@@ -108,7 +107,7 @@ public final class BlockbenchModel {
                 if (cube.has("rotation") && !isZero(vector(cube, "rotation"))) {
                     turned.add(cube);
                 } else {
-                    addCube(cubes, cube, bonePivot, deformation);
+                    addCube(cubes, cube, bonePivot);
                 }
             }
             PartDefinition part = parent.addOrReplaceChild(GsonHelper.getAsString(bone, "name"), cubes, pose(bonePivot, pivot, bone));
@@ -117,14 +116,14 @@ public final class BlockbenchModel {
                 JsonObject cube = turned.get(number).getAsJsonObject();
                 double[] cubePivot = vector(cube, "origin");
                 CubeListBuilder alone = CubeListBuilder.create();
-                addCube(alone, cube, cubePivot, deformation);
+                addCube(alone, cube, cubePivot);
                 part.addOrReplaceChild(GsonHelper.getAsString(cube, "name") + "_r" + (number + 1), alone, pose(cubePivot, bonePivot, cube));
             }
-            addBones(part, bonePivot, bones, nodes, deformation);
+            addBones(part, bonePivot, bones, nodes);
         }
     }
 
-    private static void addCube(CubeListBuilder cubes, JsonObject cube, double[] pivot, CubeDeformation deformation) {
+    private static void addCube(CubeListBuilder cubes, JsonObject cube, double[] pivot) {
         double[] from = vector(cube, "from");
         double[] to = vector(cube, "to");
         double[] uv = cube.has("uv_offset") ? vector(cube, "uv_offset") : new double[2];
@@ -132,7 +131,7 @@ public final class BlockbenchModel {
                 .mirror(GsonHelper.getAsBoolean(cube, "mirror_uv", false))
                 .addBox((float) (pivot[0] - to[0]), (float) (pivot[1] - to[1]), (float) (from[2] - pivot[2]),
                         (float) (to[0] - from[0]), (float) (to[1] - from[1]), (float) (to[2] - from[2]),
-                        deformation.extend(GsonHelper.getAsFloat(cube, "inflate", 0.0F)));
+                        new CubeDeformation(GsonHelper.getAsFloat(cube, "inflate", 0.0F)));
     }
 
     /** Where a bone or a turned cube with the pivot {@code pivot} stands and how it is turned, seen from its parent. */
