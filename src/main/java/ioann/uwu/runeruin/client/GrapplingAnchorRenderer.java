@@ -31,6 +31,7 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The anchor, its model {@code item/grappling_anchor} turned along its flight, and the chain from the hand of its
@@ -50,12 +51,12 @@ public class GrapplingAnchorRenderer extends EntityRenderer<GrapplingAnchor, Gra
     private static final Vector3f EYE = new Vector3f(8.0F, 10.0F, 9.0F);
 
     private final ItemModelResolver itemModelResolver;
-    private final ItemStack anchor = RRItems.GRAPPLING_HOOK.toStack();
+    /** Made on the first frame: the game makes renderers while it loads resources, before items have components. */
+    private @Nullable ItemStack anchor;
 
     public GrapplingAnchorRenderer(EntityRendererProvider.Context context) {
         super(context);
         this.itemModelResolver = context.getItemModelResolver();
-        this.anchor.set(DataComponents.ITEM_MODEL, RR.id("grappling_anchor"));
     }
 
     @Override
@@ -77,6 +78,10 @@ public class GrapplingAnchorRenderer extends EntityRenderer<GrapplingAnchor, Gra
     @Override
     public void extractRenderState(GrapplingAnchor entity, State state, float partialTicks) {
         super.extractRenderState(entity, state, partialTicks);
+        if (anchor == null) {
+            anchor = RRItems.GRAPPLING_HOOK.toStack();
+            anchor.set(DataComponents.ITEM_MODEL, RR.id("grappling_anchor"));
+        }
         itemModelResolver.updateForNonLiving(state.anchor, anchor, ItemDisplayContext.NONE, entity);
         // The model leads with -z; the turn brings it to +z, then along the flight.
         state.rotation = Axis.YP.rotationDegrees(entity.getYRot(partialTicks))
