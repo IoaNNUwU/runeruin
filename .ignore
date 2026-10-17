@@ -6,7 +6,7 @@ src/generated/resources/.cache/
 
 # Extracted Minecraft and NeoForge Java and the vanilla textures and models of this project version
 # (see VERSION.txt): .gitignore keeps them out of git, this file keeps them searchable.
-# .mc-sources is a link to a shared cache, and ripgrep does not follow links found while walking:
-# search it as a path, `rg <pattern> .mc-sources`, or with `rg -L`.
+# Both are links to shared caches, and ripgrep does not follow links found while walking:
+# search them as a path, `rg <pattern> .mc-sources`, or with `rg -L`.
 !.mc-sources/
 !.vanilla-textures/
