@@ -25,6 +25,7 @@ import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
 import ioann.uwu.runeruin.dimension.structures.TemplatePiece;
+import ioann.uwu.runeruin.entities.GrapplingAnchor;
 import ioann.uwu.runeruin.entities.MossyProphet;
 import ioann.uwu.runeruin.entities.MossyRam;
 import ioann.uwu.runeruin.entities.MossyWarrior;
@@ -72,6 +73,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -145,6 +147,10 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("mossy_prophet_throws_warrior", () -> RRGameTests::mossyProphetThrowsWarrior);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_WARRIOR_SPIN_JUMP =
         TEST_FUNCTIONS.register("mossy_warrior_spin_jump", () -> RRGameTests::mossyWarriorSpinJump);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_CLIMBS_WALL =
+        TEST_FUNCTIONS.register("grappling_hook_climbs_wall", () -> RRGameTests::grapplingHookClimbsWall);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_PULLS_CREATURE =
+        TEST_FUNCTIONS.register("grappling_hook_pulls_creature", () -> RRGameTests::grapplingHookPullsCreature);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
@@ -609,6 +615,20 @@ public final class RRGameTests {
             RR.id("mossy_warrior_spin_jump"),
             new FunctionGameTestInstance(
                 MOSSY_WARRIOR_SPIN_JUMP.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("grappling_hook_climbs_wall"),
+            new FunctionGameTestInstance(
+                GRAPPLING_HOOK_CLIMBS_WALL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("grappling_hook_pulls_creature"),
+            new FunctionGameTestInstance(
+                GRAPPLING_HOOK_PULLS_CREATURE.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
             )
         );
@@ -1437,6 +1457,56 @@ public final class RRGameTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(spun[0], "the warrior did not somersault");
             helper.assertTrue(target.getHealth() == 195.0F, "the target has health " + target.getHealth());
+            endFight(helper, y);
+        });
+    }
+
+    /** A creature that holds the grappling hook and shoots its anchor at the given point, as a player would. */
+    private static GrapplingAnchor shootAnchor(GameTestHelper helper, Mob owner, Vec3 at) {
+        owner.setItemSlot(EquipmentSlot.MAINHAND, RRItems.GRAPPLING_HOOK.toStack());
+        GrapplingAnchor anchor = new GrapplingAnchor(helper.getLevel(), owner);
+        Vec3 aim = helper.absoluteVec(at).subtract(anchor.position());
+        anchor.shoot(aim.x, aim.y, aim.z, 2.5F, 0.0F);
+        helper.getLevel().addFreshEntity(anchor);
+        return anchor;
+    }
+
+    // An anchor in the side of the top of a wall pulls its owner up onto the wall, then comes back.
+    private static void grapplingHookClimbsWall(GameTestHelper helper) {
+        // Thirty blocks over the fights and under the next test: endFight clears sixteen blocks around its floor.
+        int y = 150;
+        fightFloor(helper, y);
+        for (int z = 6; z <= 18; z++) {
+            for (int dy = 0; dy < 3; dy++) {
+                helper.getLevel().setBlockAndUpdate(helper.absolutePos(new BlockPos(12, y + dy, z)), Blocks.STONE.defaultBlockState());
+            }
+        }
+        Snail owner = fightTarget(helper, 4, y, 12);
+        GrapplingAnchor anchor = shootAnchor(helper, owner, new Vec3(12.0, y + 2.5, 12.5));
+
+        helper.succeedWhen(() -> {
+            helper.assertTrue(anchor.isRemoved(), "the anchor is still out");
+            Vec3 at = helper.relativeVec(owner.position());
+            helper.assertTrue(owner.onGround() && Math.abs(at.y - (y + 3)) < 0.01 && at.x > 12.0 && at.x < 13.0,
+                "the owner of the anchor stands at " + at + ", not on the wall");
+            endFight(helper, y);
+        });
+    }
+
+    // An anchor in a creature pulls it to the owner of the anchor, then comes back.
+    private static void grapplingHookPullsCreature(GameTestHelper helper) {
+        int y = 180;
+        fightFloor(helper, y);
+        Snail owner = fightTarget(helper, 4, y, 12);
+        Snail target = fightTarget(helper, 16, y, 12);
+        GrapplingAnchor anchor = shootAnchor(helper, owner, helper.relativeVec(target.getBoundingBox().getCenter()));
+
+        boolean[] hooked = {false};
+        helper.onEachTick(() -> hooked[0] |= anchor.getHookedEntity() == target);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(hooked[0], "the anchor did not hook the creature");
+            helper.assertTrue(anchor.isRemoved(), "the anchor is still out");
+            helper.assertTrue(target.distanceTo(owner) < 4.0, "the creature stays " + target.distanceTo(owner) + " from the owner");
             endFight(helper, y);
         });
     }

@@ -24,6 +24,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.FlipFrameEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterConditionalItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRendererEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
@@ -110,6 +111,12 @@ public class RuneRuinClient {
         event.registerEntityRenderer(RREntityTypes.MOSSY_WARRIOR.get(),
                 context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel.WARRIOR_MOSS, MossyRamModel::warrior, 0.4F));
         event.registerEntityRenderer(RREntityTypes.RUNIC_MINECART.get(), RunicMinecartRenderer::new);
+        event.registerEntityRenderer(RREntityTypes.GRAPPLING_ANCHOR.get(), GrapplingAnchorRenderer::new);
+    }
+
+    @SubscribeEvent
+    static void registerConditionalItemModelProperties(RegisterConditionalItemModelPropertyEvent event) {
+        event.register(RR.id("grappling_hook/anchor_out"), GrapplingAnchorOut.MAP_CODEC);
     }
 
     @SubscribeEvent

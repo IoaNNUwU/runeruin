@@ -41,6 +41,17 @@ public class DatagenRecipeProvider extends RecipeProvider {
                 .unlockedBy(getHasName(RRItems.MOSSBERRY), has(RRItems.MOSSBERRY))
                 .save(this.output);
 
+        // The anchor on top, the chain, and a bow that shoots it.
+        this.shaped(RecipeCategory.TOOLS, RRItems.GRAPPLING_HOOK)
+                .define('I', Items.IRON_INGOT)
+                .define('C', Items.IRON_CHAIN)
+                .define('B', Items.BOW)
+                .pattern("I I")
+                .pattern(" C ")
+                .pattern(" B ")
+                .unlockedBy(getHasName(Items.IRON_CHAIN), has(Items.IRON_CHAIN))
+                .save(this.output);
+
         // As snow: four layers pack into a block, three blocks make six layers.
         this.twoByTwoPacker(RecipeCategory.BUILDING_BLOCKS, RRBlocks.DEEP_MOSS, RRBlocks.DEEP_MOSS_LAYER);
         this.shaped(RecipeCategory.DECORATIONS, RRBlocks.DEEP_MOSS_LAYER, 6)

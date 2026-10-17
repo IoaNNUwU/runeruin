@@ -37,6 +37,10 @@ OTHER_SIZES = {
     "block/firefly_jar_glass": (32, 32),
     "block/water_lily_stems": (800, 1280),
 }
+# Item definitions that no item has: models the game draws for something else, which needs no name.
+ITEM_PARTS = {
+    "grappling_anchor",  # the anchor of the grappling hook in flight
+}
 
 
 def split_id(value, default_namespace="minecraft"):
@@ -152,7 +156,7 @@ def check_langs(problems):
             problems.append(f"{lang}.json: missing {key} (present in another language)")
     names = {f"block.{NAMESPACE}.{path.stem}" for path in asset_files("blockstates", "*.json")}
     for path in asset_files("items", "*.json"):
-        if f"block.{NAMESPACE}.{path.stem}" not in names:
+        if f"block.{NAMESPACE}.{path.stem}" not in names and path.stem not in ITEM_PARTS:
             names.add(f"item.{NAMESPACE}.{path.stem}")
     for key in sorted(names - keys):
         problems.append(f"{key} has no name in {' or '.join(LANGS)}")
