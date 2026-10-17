@@ -33,9 +33,9 @@ A new mob touches 12–15 files. Copy the closest existing mob instead of invent
 
 ## Checks
 
-Run `compileJava` and `runData`: data generation builds every layer from its project (`EntityModelExport` writes them to `build/entity_models`), so a broken project or a bone that an animation needs and the project lacks fails here with the name of the file. Then `python scripts/lint_assets.py`, which catches an absolute texture path in the project and a missing egg model, icon or name. Render the model with `scripts/render_entity_model.py` (bare name, e.g. `snail`, and the texture id `runeruin:entity/<name>/<name>`), a second layer with `--layer`, and the pose of an attack with `--pose`; look at every picture. Run `runGameTestServer` and `build`.
+Run `compileJava` and `runData`: data generation builds every layer from its project (`EntityModelExport` writes them to `build/entity_models`), so a broken project or a bone that an animation needs and the project lacks fails here with the name of the file. Then `python scripts/lint_assets.py`, which catches an absolute texture path in the project and a missing egg model, icon or name. Render the model with `scripts/render_entity_model.py` (bare name, e.g. `snail`, and the texture id `runeruin:entity/<name>/<name>`), a second layer with `--layer main moss=<texture>`, and every new or changed animation into a GIF with `--animation <name>` (a PNG with `--animation` gives its still frames for a closer look); look at every picture. Run `runGameTestServer` and `build`.
 
-Nothing catches a wrong shadow, lighting, spawning rate or the animation in motion: list them under "Check in game".
+Nothing catches a wrong shadow, lighting, spawning rate, or when an animation starts and how fast it plays: list them under "Check in game".
 
 ## Hand-off to a person
 

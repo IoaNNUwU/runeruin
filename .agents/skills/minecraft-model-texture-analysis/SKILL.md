@@ -3,7 +3,7 @@ name: minecraft-model-texture-analysis
 description: >-
   Inspect Minecraft block, item, and mob model geometry and texture UVs. Use when a task asks
   which texture region a model element or face uses, or requests a visual check of Minecraft
-  textures or model parts.
+  textures, model parts or mob animations (rendered into a GIF).
 ---
 
 # Minecraft model and texture analysis
@@ -80,6 +80,14 @@ Parts stand in their initial pose: the script does not run `setupAnim`. `--pose`
 ```powershell
 python scripts/render_entity_model.py exports/cow_walk.png minecraft:cow entity/cow/cow_temperate --pose head.xRot=25 right_front_leg.xRot=-35 left_front_leg.xRot=35
 python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/snail/snail --view 45,30 0,0 --pose left_antenna.zRot+=-30 head.y+=-2
+```
+
+`--layer` takes several layers drawn together, each `<layer>` or `<layer>=<texture>`; a layer without a texture takes the texture argument. `--animation` plays an animation over the pose, from the Java class the game loads, as `KeyframeAnimation.apply` does: rotation, position and scale keyframes, linear and Catmull-Rom. A bare name is a field of the class Blockbench exports for our project (`<model_identifier>Animation`), `<Class>.<FIELD>` any class in `src/main/java` or the Minecraft sources (vanilla ones in `net/minecraft/client/animation/definitions`). A `.gif` output plays it at `--fps` (20, the game's ticks) and rests a second on the last frame of an animation that does not loop; a `.png` output shows `--frames` still frames (5) from the first to the last, a row per view. Every frame of a view shares one frame on the screen, so the model does not jump. The default views are `iso front` and `side`, the scale 8. The animation plays at full strength: the game scales a walk by the speed of the mob, and the head that turns to a target is code. Use it for every new or changed animation and attach the GIF to the pull request:
+
+```powershell
+python scripts/render_entity_model.py exports/punch.gif mossy_warrior runeruin:entity/mossy_warrior/mossy_warrior --layer main moss=runeruin:entity/mossy_warrior/mossy_warrior_moss --animation punch
+python scripts/render_entity_model.py exports/somersault.png mossy_prophet runeruin:entity/mossy_prophet/mossy_prophet --animation somersault --frames 8 --view 90,0
+python scripts/render_entity_model.py exports/camel.gif minecraft:camel entity/camel/camel --animation CamelAnimation.CAMEL_WALK
 ```
 
 ## Assess model changes
