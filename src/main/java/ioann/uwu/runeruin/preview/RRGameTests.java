@@ -261,6 +261,7 @@ public final class RRGameTests {
             new FeatureCase("void_amethyst", Surface.CEILING, voidStone, -1),
             new FeatureCase("dust_bloom", Surface.CEILING, voidStone, -1),
             new FeatureCase("bead_vine", Surface.CEILING, voidStone, -1),
+            new FeatureCase("star", Surface.CAVE, Blocks.STONE, 0),
             new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("floating_moss_patch", Surface.UNDERWATER, Blocks.STONE, 1),
