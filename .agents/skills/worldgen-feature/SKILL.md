@@ -8,7 +8,7 @@ description: >-
 
 # Worldgen feature
 
-Decoration runs after terrain, through the vanilla feature pipeline of each biome; terrain shape is `RRChunkGenerator` (AGENTS.md, "Worldgen").
+Decoration runs after terrain, through the vanilla feature pipeline of each biome; terrain shape is `RRChunkGenerator` (`worldgen-terrain` skill).
 
 | Step | File | What |
 |------|------|------|

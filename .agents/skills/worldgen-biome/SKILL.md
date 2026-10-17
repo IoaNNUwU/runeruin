@@ -16,6 +16,6 @@ Biomes do not shape the stacked caves (`RRChunkGenerator` does); they choose sur
 5. Tags, e.g. for structures: `RRBiomeTags` + `DatagenBiomeTagProvider`.
 6. `compileJava`, `runData`, `runGameTestServer`.
 
-`RRBiomeSource.getNoiseBiome` picks `list[size * noise]`. Adding, removing or reordering any entry of a layer list, weights included, moves every biome border of that layer in existing worlds, and the terrain surface moves with it through `RRTerrainSurfaces`. Propose such a change as a design first.
+`RRBiomeSource.getNoiseBiome` picks `list[size * noise]`. Adding, removing or reordering any entry of a layer list, weights included, moves every biome border of that layer in existing worlds, and the terrain surface moves with it through `RRTerrainSurfaces`: design first (AGENTS.md).
 
 Features shared with other biomes must keep the same relative order: see the `worldgen-feature` skill.
