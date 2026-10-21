@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.Config;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.blocks.RRBlocks;
 import ioann.uwu.runeruin.client.model.MossyRamModel;
+import ioann.uwu.runeruin.client.model.RustyColossusModel;
 import ioann.uwu.runeruin.client.model.SnailModel;
 import ioann.uwu.runeruin.dimension.RRDimension;
 import ioann.uwu.runeruin.entities.RREntityTypes;
@@ -115,6 +116,8 @@ public class RuneRuinClient {
         event.registerLayerDefinition(MossyRamModel.PROPHET_MOSS, () -> MossyRamModel.createProphet(MossyRamModel.PROPHET_MOSS_DEPTH));
         event.registerLayerDefinition(MossyRamModel.WARRIOR, () -> MossyRamModel.createWarrior(CubeDeformation.NONE));
         event.registerLayerDefinition(MossyRamModel.WARRIOR_MOSS, () -> MossyRamModel.createWarrior(MossyRamModel.WARRIOR_MOSS_DEPTH));
+        event.registerLayerDefinition(RustyColossusModel.MAIN, () -> RustyColossusModel.create(CubeDeformation.NONE));
+        event.registerLayerDefinition(RustyColossusModel.MOSS, () -> RustyColossusModel.create(RustyColossusModel.MOSS_DEPTH));
     }
 
     @SubscribeEvent
@@ -124,6 +127,7 @@ public class RuneRuinClient {
                 context -> new MossyRamRenderer(context, MossyRamModel.PROPHET, MossyRamModel.PROPHET_MOSS, MossyRamModel::prophet, 1.3F));
         event.registerEntityRenderer(RREntityTypes.MOSSY_WARRIOR.get(),
                 context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel.WARRIOR_MOSS, MossyRamModel::warrior, 0.4F));
+        event.registerEntityRenderer(RREntityTypes.RUSTY_COLOSSUS.get(), RustyColossusRenderer::new);
         event.registerEntityRenderer(RREntityTypes.RUNIC_MINECART.get(), RunicMinecartRenderer::new);
         // The berry's own item at half the size of a snowball.
         event.registerEntityRenderer(RREntityTypes.BLOWPIPE_BERRY.get(), context -> new ThrownItemRenderer<>(context, 0.5F, false));

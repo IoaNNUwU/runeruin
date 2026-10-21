@@ -12,6 +12,7 @@ import ioann.uwu.runeruin.dimension.RRStructureTypes;
 import ioann.uwu.runeruin.dimension.biomes.bloomingcaves.StoneForest;
 import ioann.uwu.runeruin.entities.MossyRam;
 import ioann.uwu.runeruin.entities.RREntityTypes;
+import ioann.uwu.runeruin.entities.RustyColossus;
 import ioann.uwu.runeruin.entities.Snail;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.particles.RRParticleTypes;
@@ -37,6 +38,8 @@ public class RuneRuinMod {
         modEventBus.addListener(this::addBlockEntityTypes);
         modEventBus.addListener(this::addDispenserBehaviors);
         modEventBus.addListener(MossyRam::registerAttributes);
+        modEventBus.addListener(RustyColossus::registerAttributes);
+        modEventBus.addListener(RustyColossus::registerSpawnPlacements);
         modEventBus.addListener(Snail::registerAttributes);
         modEventBus.addListener(Snail::registerSpawnPlacements);
         modEventBus.addListener(StoneForest::registerSpawnPlacements);

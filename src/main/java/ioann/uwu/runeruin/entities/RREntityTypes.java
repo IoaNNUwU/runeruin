@@ -31,6 +31,14 @@ public final class RREntityTypes {
             builder -> builder.sized(0.7F, 1.0F).eyeHeight(0.8F).clientTrackingRange(8).noLootTable()
     );
 
+    // The box is only its feet, which walk on the ground; the solid parts around its bones are its body.
+    public static final DeferredHolder<EntityType<?>, EntityType<RustyColossus>> RUSTY_COLOSSUS = REGISTRY.registerEntityType(
+            "rusty_colossus",
+            RustyColossus::new,
+            MobCategory.MONSTER,
+            builder -> builder.sized(4.0F, 8.0F).eyeHeight(7.0F).fireImmune().clientTrackingRange(16).noLootTable()
+    );
+
     // Sized and tracked like a snowball.
     public static final DeferredHolder<EntityType<?>, EntityType<BlowpipeBerry>> BLOWPIPE_BERRY = REGISTRY.registerEntityType(
             "blowpipe_berry",

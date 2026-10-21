@@ -36,6 +36,8 @@ public class StoneForest {
 
         mobs.addSpawn(MobCategory.MONSTER, 10, new MobSpawnSettings.SpawnerData(EntityTypes.SLIME, 1, 1));
         mobs.addSpawn(MobCategory.MONSTER, 30, new MobSpawnSettings.SpawnerData(EntityTypes.BOGGED, 4, 4));
+        // Rare, and only under the open sky between the islands with no other colossus near.
+        mobs.addSpawn(MobCategory.MONSTER, 1, new MobSpawnSettings.SpawnerData(RREntityTypes.RUSTY_COLOSSUS.get(), 1, 1));
         mobs.addSpawn(MobCategory.CREATURE, 10, new MobSpawnSettings.SpawnerData(EntityTypes.FROG, 2, 5));
         mobs.addSpawn(MobCategory.CREATURE, 6, new MobSpawnSettings.SpawnerData(RREntityTypes.SNAIL.get(), 1, 3));
 
