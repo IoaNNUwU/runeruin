@@ -6,6 +6,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -39,9 +40,14 @@ public class ColossusPart extends PartEntity<Colossus> {
     protected void addAdditionalSaveData(ValueOutput output) {
     }
 
+    /**
+     * Solid for everything but players on the server: a player stands on the parts as the client sees them, which run
+     * a tick apart from the server's, and the server would take every step against its own parts for a collision and
+     * pull the player back. A moving happy ghast leaves its players to their clients in the same way.
+     */
     @Override
     public boolean canBeCollidedWith(@Nullable Entity other) {
-        return other == null || !this.is(other);
+        return other == null || !this.is(other) && (this.level().isClientSide() || !(other instanceof Player));
     }
 
     @Override

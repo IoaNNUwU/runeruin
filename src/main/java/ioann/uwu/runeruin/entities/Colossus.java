@@ -16,6 +16,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -328,7 +329,8 @@ public class Colossus extends Monster {
 
     /**
      * Moves whatever stood on a part with the bone of the part, and turns it as far as the body turned. Each side
-     * moves what it runs: the server its mobs, a client its own player.
+     * moves what it runs: the server its mobs, a client its own player. One that the part rose into, its feet less
+     * than a block under the top, it lifts onto the top: the parts move in steps of a tick and would let it through.
      */
     private void carry(ColossusRig.Posed from, ColossusRig.Posed to, Vec3 at) {
         float turn = Mth.wrapDegrees(this.yBodyRot - this.posedBodyRot);
@@ -337,10 +339,17 @@ public class Colossus extends Monster {
         Vector3f point = new Vector3f();
         for (ColossusPart part : this.parts) {
             AABB box = from.cubes()[part.cube].move(this.posedAt);
-            AABB top = new AABB(box.minX, box.maxY - 0.25, box.minZ, box.maxX, box.maxY + 0.5, box.maxZ);
+            AABB top = new AABB(box.minX, box.maxY - 1.0, box.minZ, box.maxX, box.maxY + 0.5, box.maxZ);
             for (Entity rider : this.level().getEntities(this, top, entity -> !(entity instanceof PartEntity<?>)
-                    && entity.isLocalInstanceAuthoritative() && !entity.isPassenger() && entity.getY() >= box.maxY - 0.25)) {
+                    && !entity.isPassenger() && entity.getY() >= box.maxY - 1.0)) {
                 if (!carried.add(rider)) {
+                    continue;
+                }
+                if (rider instanceof ServerPlayer player) {
+                    // Its client keeps it up on the colossus, where the server sees nothing under it.
+                    player.connection.resetFlyingTicks();
+                }
+                if (!rider.isLocalInstanceAuthoritative()) {
                     continue;
                 }
                 // Where the rider stood in the space of the bone, and where that place is now.
@@ -348,6 +357,11 @@ public class Colossus extends Monster {
                         (float) (rider.getX() - this.posedAt.x), (float) (rider.getY() - this.posedAt.y), (float) (rider.getZ() - this.posedAt.z), point);
                 to.bones()[part.bone].transformPosition(point);
                 rider.move(MoverType.SHULKER_BOX, new Vec3(at.x + point.x - rider.getX(), at.y + point.y - rider.getY(), at.z + point.z - rider.getZ()));
+                double surface = to.cubes()[part.cube].maxY + at.y;
+                if (rider.getY() < surface && rider.getY() > surface - 1.0) {
+                    rider.move(MoverType.SHULKER_BOX, new Vec3(0.0, surface - rider.getY(), 0.0));
+                    rider.setDeltaMovement(rider.getDeltaMovement().multiply(1.0, 0.0, 1.0));
+                }
                 rider.setYRot(rider.getYRot() + turn);
                 rider.setYHeadRot(rider.getYHeadRot() + turn);
             }
