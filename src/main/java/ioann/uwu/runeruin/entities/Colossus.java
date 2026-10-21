@@ -119,6 +119,8 @@ public class Colossus extends Monster {
     private ColossusRig.@Nullable Posed posed;
     private Vec3 posedAt = Vec3.ZERO;
     private float posedBodyRot;
+    private static @Nullable Colossus carryingLocalPlayer;
+    private int carriedLocalPlayerAt;
     private float stride;
     private float strideO;
     private float walkWeight;
@@ -362,10 +364,23 @@ public class Colossus extends Monster {
                     rider.move(MoverType.SHULKER_BOX, new Vec3(0.0, surface - rider.getY(), 0.0));
                     rider.setDeltaMovement(rider.getDeltaMovement().multiply(1.0, 0.0, 1.0));
                 }
-                rider.setYRot(rider.getYRot() + turn);
-                rider.setYHeadRot(rider.getYHeadRot() + turn);
+                if (rider instanceof Player && this.level().isClientSide()) {
+                    // The camera shows the player's turn as it is, without easing it between ticks: the client turns
+                    // its player every frame (ColossusRiderView).
+                    carryingLocalPlayer = this;
+                    this.carriedLocalPlayerAt = this.tickCount;
+                } else {
+                    rider.setYRot(rider.getYRot() + turn);
+                    rider.setYHeadRot(rider.getYHeadRot() + turn);
+                }
             }
         }
+    }
+
+    /** The colossus the player of this client stood on in its last tick, if any. */
+    public static @Nullable Colossus carryingLocalPlayer() {
+        Colossus colossus = carryingLocalPlayer;
+        return colossus != null && !colossus.isRemoved() && colossus.tickCount - colossus.carriedLocalPlayerAt <= 1 ? colossus : null;
     }
 
     /** Turns no faster than its body can: the way it walks and the place it looks at come round slowly. */
