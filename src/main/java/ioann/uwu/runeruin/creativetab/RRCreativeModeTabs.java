@@ -33,6 +33,7 @@ public class RRCreativeModeTabs {
                     RRItems.SNAIL_SPAWN_EGG.toStack(),
                     RRItems.MOSSY_PROPHET_SPAWN_EGG.toStack(),
                     RRItems.MOSSY_WARRIOR_SPAWN_EGG.toStack(),
+                    RRItems.COLOSSUS_SPAWN_EGG.toStack(),
 
                     // --- Blocks ---
                     RRBlocks.ARCANE_STONE.toStack(),
