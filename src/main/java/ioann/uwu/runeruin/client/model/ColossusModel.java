@@ -1,9 +1,9 @@
 package ioann.uwu.runeruin.client.model;
 
 import ioann.uwu.runeruin.RR;
-import ioann.uwu.runeruin.client.RustyColossusRenderState;
+import ioann.uwu.runeruin.client.ColossusRenderState;
 import ioann.uwu.runeruin.entities.ColossusRig;
-import ioann.uwu.runeruin.entities.RustyColossus;
+import ioann.uwu.runeruin.entities.Colossus;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -19,25 +19,25 @@ import net.minecraft.util.Mth;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Rusty Colossus: a machine of rusty plates, its arms and legs bending at the elbows and knees. Its shape and
- * animations are the Blockbench project {@code rusty_colossus.bbmodel}, the animations exported into
- * {@link RustyColossusAnimation}; a second layer, the same boxes a little larger, carries the moss of its shoulders,
+ * The Colossus: a machine of rusty plates, its arms and legs bending at the elbows and knees. Its shape and
+ * animations are the Blockbench project {@code colossus.bbmodel}, the animations exported into
+ * {@link ColossusAnimation}; a second layer, the same boxes a little larger, carries the moss of its shoulders,
  * head and chest.
  *
  * <p>The server moves the solid parts of the colossus with the animations of the project itself
  * ({@link ColossusRig}). So that both play the same movement, building the model compares the exported class with
  * the project and fails when the animations were changed in Blockbench but not exported.</p>
  */
-public class RustyColossusModel extends EntityModel<RustyColossusRenderState> {
-    public static final ModelLayerLocation MAIN = new ModelLayerLocation(RR.id("rusty_colossus"), "main");
-    public static final ModelLayerLocation MOSS = new ModelLayerLocation(RR.id("rusty_colossus"), "moss");
+public class ColossusModel extends EntityModel<ColossusRenderState> {
+    public static final ModelLayerLocation MAIN = new ModelLayerLocation(RR.id("colossus"), "main");
+    public static final ModelLayerLocation MOSS = new ModelLayerLocation(RR.id("colossus"), "moss");
     public static final CubeDeformation MOSS_DEPTH = new CubeDeformation(0.25F);
 
     private static final Map<String, AnimationDefinition> EXPORTED = Map.of(
-            "walk", RustyColossusAnimation.walk,
-            "idle", RustyColossusAnimation.idle,
-            "slam_high", RustyColossusAnimation.slam_high,
-            "slam_ground", RustyColossusAnimation.slam_ground);
+            "walk", ColossusAnimation.walk,
+            "idle", ColossusAnimation.idle,
+            "slam_high", ColossusAnimation.slam_high,
+            "slam_ground", ColossusAnimation.slam_ground);
 
     private final ModelPart head;
     private final KeyframeAnimation idle;
@@ -46,28 +46,28 @@ public class RustyColossusModel extends EntityModel<RustyColossusRenderState> {
     private final KeyframeAnimation slamHigh;
     private final KeyframeAnimation slamGround;
 
-    public RustyColossusModel(ModelPart root) {
+    public ColossusModel(ModelPart root) {
         super(root);
         this.head = root.getChild("whole").getChild("body").getChild("head");
-        this.idle = RustyColossusAnimation.idle.bake(root);
-        this.walk = RustyColossusAnimation.walk.bake(root);
-        this.walkLength = RustyColossusAnimation.walk.lengthInSeconds();
-        this.slamHigh = RustyColossusAnimation.slam_high.bake(root);
-        this.slamGround = RustyColossusAnimation.slam_ground.bake(root);
+        this.idle = ColossusAnimation.idle.bake(root);
+        this.walk = ColossusAnimation.walk.bake(root);
+        this.walkLength = ColossusAnimation.walk.lengthInSeconds();
+        this.slamHigh = ColossusAnimation.slam_high.bake(root);
+        this.slamGround = ColossusAnimation.slam_ground.bake(root);
     }
 
     public static LayerDefinition create(CubeDeformation deformation) {
-        return BlockbenchModel.layer("rusty_colossus", deformation, root -> {
+        return BlockbenchModel.layer("colossus", deformation, root -> {
             matchProject(root);
-            return new RustyColossusModel(root);
+            return new ColossusModel(root);
         });
     }
 
     @Override
-    public void setupAnim(RustyColossusRenderState state) {
+    public void setupAnim(ColossusRenderState state) {
         super.setupAnim(state);
         this.idle.apply((long) (state.ageInTicks * 50.0F), 1.0F);
-        this.walk.apply((long) (RustyColossus.walkSeconds(state.stride, this.walkLength) * 1000.0F), state.walkWeight);
+        this.walk.apply((long) (Colossus.walkSeconds(state.stride, this.walkLength) * 1000.0F), state.walkWeight);
         switch (state.action) {
             case SLAM_HIGH -> this.slamHigh.apply((long) (state.actionSeconds * 1000.0F), 1.0F);
             case SLAM_GROUND -> this.slamGround.apply((long) (state.actionSeconds * 1000.0F), 1.0F);
@@ -79,7 +79,7 @@ public class RustyColossusModel extends EntityModel<RustyColossusRenderState> {
 
     /** Fails unless every exported animation moves every bone as the animation of the same name in the project. */
     private static void matchProject(ModelPart root) {
-        ColossusRig rig = RustyColossus.rig();
+        ColossusRig rig = Colossus.rig();
         Function<String, @Nullable ModelPart> parts = root.createPartLookup();
         for (Map.Entry<String, AnimationDefinition> entry : EXPORTED.entrySet()) {
             ColossusRig.Animation project = rig.animation(entry.getKey());
@@ -100,7 +100,7 @@ public class RustyColossusModel extends EntityModel<RustyColossusRenderState> {
                     for (int i = 0; i < 6; i++) {
                         if (Math.abs(moved[i] - pose[bone][i]) > 1.0E-3F) {
                             throw new IllegalStateException("the animation '" + entry.getKey() + "' moves the bone '"
-                                    + rig.boneName(bone) + "' otherwise than RustyColossusAnimation does at " + seconds
+                                    + rig.boneName(bone) + "' otherwise than ColossusAnimation does at " + seconds
                                     + " s: export the animations again (File, Export, Export Modded Entity Animations)");
                         }
                     }

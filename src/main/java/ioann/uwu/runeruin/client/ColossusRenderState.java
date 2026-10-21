@@ -1,11 +1,11 @@
 package ioann.uwu.runeruin.client;
 
-import ioann.uwu.runeruin.entities.RustyColossus;
+import ioann.uwu.runeruin.entities.Colossus;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 
-public class RustyColossusRenderState extends LivingEntityRenderState {
+public class ColossusRenderState extends LivingEntityRenderState {
     public float stride;
     public float walkWeight;
-    public RustyColossus.Action action = RustyColossus.Action.NONE;
+    public Colossus.Action action = Colossus.Action.NONE;
     public float actionSeconds;
 }

@@ -34,7 +34,7 @@ import ioann.uwu.runeruin.entities.MossyRam;
 import ioann.uwu.runeruin.entities.MossyWarrior;
 import ioann.uwu.runeruin.entities.RREntityTypes;
 import ioann.uwu.runeruin.entities.RunicMinecart;
-import ioann.uwu.runeruin.entities.RustyColossus;
+import ioann.uwu.runeruin.entities.Colossus;
 import ioann.uwu.runeruin.entities.Snail;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
@@ -157,8 +157,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("mossy_prophet_throws_warrior", () -> RRGameTests::mossyProphetThrowsWarrior);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_WARRIOR_SPIN_JUMP =
         TEST_FUNCTIONS.register("mossy_warrior_spin_jump", () -> RRGameTests::mossyWarriorSpinJump);
-    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> RUSTY_COLOSSUS_SLAM =
-        TEST_FUNCTIONS.register("rusty_colossus_slam", () -> RRGameTests::rustyColossusSlam);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> COLOSSUS_SLAM =
+        TEST_FUNCTIONS.register("colossus_slam", () -> RRGameTests::colossusSlam);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOWPIPE_SHOOTS_BERRIES =
         TEST_FUNCTIONS.register("blowpipe_shoots_berries", () -> RRGameTests::blowpipeShootsBerries);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_CLIMBS_WALL =
@@ -673,9 +673,9 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
-            RR.id("rusty_colossus_slam"),
+            RR.id("colossus_slam"),
             new FunctionGameTestInstance(
-                RUSTY_COLOSSUS_SLAM.getKey(),
+                COLOSSUS_SLAM.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 400, 0, true)
             )
         );
@@ -1593,17 +1593,17 @@ public final class RRGameTests {
 
     // The colossus can be stood on: a snail dropped onto it stays up there while its head moves. Its slam brings both
     // fists down where the target stands, and the shockwave hurts what stands on the ground there, not what stands above.
-    private static void rustyColossusSlam(GameTestHelper helper) {
+    private static void colossusSlam(GameTestHelper helper) {
         // Higher than every other test: the colossus stands about 97 blocks tall and reaches 40 blocks to the sides.
         int y = 270;
         int size = 90;
         fightFloor(helper, y, size);
         ServerLevel level = helper.getLevel();
-        RustyColossus colossus = helper.spawn(RREntityTypes.RUSTY_COLOSSUS.get(), new BlockPos(45, y, 10));
+        Colossus colossus = helper.spawn(RREntityTypes.COLOSSUS.get(), new BlockPos(45, y, 10));
         colossus.setYRot(0.0F);
         colossus.setYBodyRot(0.0F);
         Snail rider = fightTarget(helper, 45, y + 110, 10);
-        int reach = (int) Math.round(RustyColossus.reach(RustyColossus.Action.SLAM_GROUND));
+        int reach = (int) Math.round(Colossus.reach(Colossus.Action.SLAM_GROUND));
         Snail target = fightTarget(helper, 45, y, 10 + reach);
         Snail bystander = fightTarget(helper, 37, y, 10 + reach);
         for (int dy = 0; dy < 3; dy++) {
@@ -1621,14 +1621,14 @@ public final class RRGameTests {
                 rider.discard();
                 colossus.setTarget(target);
             }
-            slammed[0] |= colossus.getAction() == RustyColossus.Action.SLAM_GROUND;
+            slammed[0] |= colossus.getAction() == Colossus.Action.SLAM_GROUND;
         });
         helper.succeedWhen(() -> {
             helper.assertTrue(riderHeight[0] > 80.0, "the snail dropped onto the colossus stands " + riderHeight[0] + " over its feet");
             helper.assertTrue(slammed[0], "the colossus did not slam");
             helper.assertTrue(target.getHealth() < 200.0F, "the shockwave missed the target");
             helper.assertTrue(bystander.getHealth() < 200.0F, "the shockwave missed the bystander on the ground");
-            helper.assertTrue(colossus.getAction() == RustyColossus.Action.NONE, "the slam is not over");
+            helper.assertTrue(colossus.getAction() == Colossus.Action.NONE, "the slam is not over");
             helper.assertTrue(above.getHealth() == 200.0F, "the bystander above the ground has health " + above.getHealth());
             AABB floor = AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, y, 0)), helper.absolutePos(new BlockPos(size - 1, y + 120, size - 1)));
             level.getEntitiesOfClass(Mob.class, floor.inflate(16)).forEach(Mob::discard);

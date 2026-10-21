@@ -26,7 +26,7 @@ import org.joml.Vector3f;
 /**
  * The bones of a mob as the server sees them: a Blockbench project read the way the client builds the model from it
  * ({@code BlockbenchModel}) and its animations sampled the way the game plays the exported ones
- * ({@code KeyframeAnimation}). The server has neither, but the parts of the Rusty Colossus that players stand on
+ * ({@code KeyframeAnimation}). The server has neither, but the parts of the Colossus that players stand on
  * have to follow the moving model, so they follow the same file.
  *
  * <p>A pose is the offset of every bone from its place in the project, as {@code ModelPart} offsets: position in
@@ -34,9 +34,12 @@ import org.joml.Vector3f;
  */
 public final class ColossusRig {
     private final List<Bone> bones = new ArrayList<>();
+    // Every cube as ModelPart builds it, in the space of its bone: min x, y, z, max x, y, z in pixels.
+    private final List<float[]> cubes = new ArrayList<>();
+    private final List<Integer> cubeBones = new ArrayList<>();
     private final Map<String, Animation> animations = new HashMap<>();
 
-    private record Bone(String name, int parent, Vector3f offset, Vector3f rotation, List<float[]> cubes) {}
+    private record Bone(String name, int parent, Vector3f offset, Vector3f rotation) {}
 
     private record Key(float time, Vector3f value, boolean catmullrom) {}
 
@@ -131,7 +134,7 @@ public final class ColossusRig {
             }
             float[] pivot = vector(bone, "origin");
             float[] degrees = bone.has("rotation") ? vector(bone, "rotation") : new float[3];
-            List<float[]> cubes = new ArrayList<>();
+            int index = this.bones.size();
             JsonArray children = new JsonArray();
             for (JsonElement child : entry.getAsJsonObject().getAsJsonArray("children")) {
                 if (child.isJsonObject()) {
@@ -146,15 +149,15 @@ public final class ColossusRig {
                 float[] to = vector(cube, "to");
                 float grow = GsonHelper.getAsFloat(cube, "inflate", 0.0F);
                 // Where ModelPart puts the box: addBox(pivot.x - to.x, pivot.y - to.y, from.z - pivot.z, size)
-                cubes.add(new float[]{
+                this.cubes.add(new float[]{
                         pivot[0] - to[0] - grow, pivot[1] - to[1] - grow, from[2] - pivot[2] - grow,
                         pivot[0] - from[0] + grow, pivot[1] - from[1] + grow, to[2] - pivot[2] + grow});
+                this.cubeBones.add(index);
             }
-            int index = this.bones.size();
             byUuid.put(uuid, index);
             this.bones.add(new Bone(GsonHelper.getAsString(bone, "name"), parent,
                     new Vector3f(parentPivot[0] - pivot[0], parentPivot[1] - pivot[1], pivot[2] - parentPivot[2]),
-                    new Vector3f(-degrees[0], -degrees[1], degrees[2]).mul(Mth.DEG_TO_RAD), cubes));
+                    new Vector3f(-degrees[0], -degrees[1], degrees[2]).mul(Mth.DEG_TO_RAD)));
             this.addBones(children, index, pivot, nodes, byUuid);
         }
     }
@@ -193,8 +196,12 @@ public final class ColossusRig {
         return this.bones.get(bone).name();
     }
 
-    public boolean hasCubes(int bone) {
-        return !this.bones.get(bone).cubes().isEmpty();
+    public int cubeCount() {
+        return this.cubes.size();
+    }
+
+    public int cubeBone(int cube) {
+        return this.cubeBones.get(cube);
     }
 
     /** A pose of no animation: every bone where the project puts it. */
@@ -233,44 +240,66 @@ public final class ColossusRig {
         }
     }
 
+    /** The bones and the cubes of a pose, relative to the feet of the mob: where they stand in the world. */
+    public record Posed(Matrix4f[] bones, AABB[] cubes) {}
+
     /**
-     * The box around the cubes of every bone in a pose, relative to the feet of the mob, as {@code LivingEntityRenderer}
-     * puts the model: turned by the body, turned over and scaled. A bone without cubes has none.
+     * Puts the bones as {@code LivingEntityRenderer} puts the model: turned by the body, turned over and scaled. Every
+     * cube gets the box around it, its top lowered to the middle of its upper face: on a turned cube that box would
+     * reach up to the highest corner, and one would stand in the air over the middle of the face.
      */
-    public AABB[] boxes(float[][] pose, float bodyRot, float scale) {
+    public Posed posed(float[][] pose, float bodyRot, float scale) {
         Matrix4f[] matrices = new Matrix4f[this.bones.size()];
         Matrix4f entity = new Matrix4f()
                 .rotateY((180.0F - bodyRot) * Mth.DEG_TO_RAD)
                 .scale(-scale, -scale, scale)
                 .translate(0.0F, -1.501F, 0.0F);
-        AABB[] boxes = new AABB[this.bones.size()];
-        Vector3f corner = new Vector3f();
+        AABB[] boxes = new AABB[this.cubes.size()];
+        Vector3f point = new Vector3f();
         for (int i = 0; i < this.bones.size(); i++) {
             Bone bone = this.bones.get(i);
             float[] offsets = pose[i];
-            Matrix4f matrix = new Matrix4f(bone.parent() < 0 ? entity : matrices[bone.parent()])
+            matrices[i] = new Matrix4f(bone.parent() < 0 ? entity : matrices[bone.parent()])
                     .translate((bone.offset().x + offsets[0]) / 16.0F, (bone.offset().y + offsets[1]) / 16.0F, (bone.offset().z + offsets[2]) / 16.0F)
                     .rotate(new Quaternionf().rotationZYX(bone.rotation().z + offsets[5], bone.rotation().y + offsets[4], bone.rotation().x + offsets[3]));
-            matrices[i] = matrix;
+        }
+        for (int c = 0; c < this.cubes.size(); c++) {
+            float[] cube = this.cubes.get(c);
+            Matrix4f matrix = matrices[this.cubeBones.get(c)];
             double[] bounds = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
-            for (float[] cube : bone.cubes()) {
-                for (int c = 0; c < 8; c++) {
-                    matrix.transformPosition(
-                            ((c & 1) == 0 ? cube[0] : cube[3]) / 16.0F,
-                            ((c & 2) == 0 ? cube[1] : cube[4]) / 16.0F,
-                            ((c & 4) == 0 ? cube[2] : cube[5]) / 16.0F, corner);
-                    bounds[0] = Math.min(bounds[0], corner.x);
-                    bounds[1] = Math.min(bounds[1], corner.y);
-                    bounds[2] = Math.min(bounds[2], corner.z);
-                    bounds[3] = Math.max(bounds[3], corner.x);
-                    bounds[4] = Math.max(bounds[4], corner.y);
-                    bounds[5] = Math.max(bounds[5], corner.z);
+            for (int corner = 0; corner < 8; corner++) {
+                matrix.transformPosition(
+                        ((corner & 1) == 0 ? cube[0] : cube[3]) / 16.0F,
+                        ((corner & 2) == 0 ? cube[1] : cube[4]) / 16.0F,
+                        ((corner & 4) == 0 ? cube[2] : cube[5]) / 16.0F, point);
+                for (int axis = 0; axis < 3; axis++) {
+                    bounds[axis] = Math.min(bounds[axis], point.get(axis));
+                    bounds[axis + 3] = Math.max(bounds[axis + 3], point.get(axis));
                 }
             }
-            if (!bone.cubes().isEmpty()) {
-                boxes[i] = new AABB(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]);
+            double top = -Double.MAX_VALUE;
+            for (int face = 0; face < 6; face++) {
+                float[] center = {(cube[0] + cube[3]) / 2.0F, (cube[1] + cube[4]) / 2.0F, (cube[2] + cube[5]) / 2.0F};
+                center[face % 3] = cube[face % 3 + (face < 3 ? 0 : 3)];
+                matrix.transformPosition(center[0] / 16.0F, center[1] / 16.0F, center[2] / 16.0F, point);
+                top = Math.max(top, point.y);
+            }
+            boxes[c] = new AABB(bounds[0], bounds[1], bounds[2], bounds[3], top, bounds[5]);
+        }
+        return new Posed(matrices, boxes);
+    }
+
+    /** The box around all cubes of a bone in a pose. */
+    public AABB boneBox(Posed posed, int bone) {
+        AABB box = null;
+        for (int c = 0; c < this.cubes.size(); c++) {
+            if (this.cubeBones.get(c) == bone) {
+                box = box == null ? posed.cubes()[c] : box.minmax(posed.cubes()[c]);
             }
         }
-        return boxes;
+        if (box == null) {
+            throw new IllegalArgumentException("the bone '" + this.boneName(bone) + "' has no cubes");
+        }
+        return box;
     }
 }

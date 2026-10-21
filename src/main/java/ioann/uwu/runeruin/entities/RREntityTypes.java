@@ -32,9 +32,9 @@ public final class RREntityTypes {
     );
 
     // The box is only its feet, which walk on the ground; the solid parts around its bones are its body.
-    public static final DeferredHolder<EntityType<?>, EntityType<RustyColossus>> RUSTY_COLOSSUS = REGISTRY.registerEntityType(
-            "rusty_colossus",
-            RustyColossus::new,
+    public static final DeferredHolder<EntityType<?>, EntityType<Colossus>> COLOSSUS = REGISTRY.registerEntityType(
+            "colossus",
+            Colossus::new,
             MobCategory.MONSTER,
             builder -> builder.sized(4.0F, 8.0F).eyeHeight(7.0F).fireImmune().clientTrackingRange(16).noLootTable()
     );

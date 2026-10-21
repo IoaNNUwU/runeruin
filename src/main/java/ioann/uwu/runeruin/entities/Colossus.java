@@ -32,6 +32,8 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.BodyRotationControl;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
@@ -55,6 +57,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.PartEntity;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -63,17 +67,23 @@ import org.jspecify.annotations.Nullable;
  * fists on the ground in front of it or, at a player up on the top layer, down onto the islands, and from where a
  * fist hits a shockwave runs over the ground.
  *
- * <p>Its shape and its animations are the Blockbench project {@code rusty_colossus.bbmodel}. Every bone with cubes
- * is a solid {@link ColossusPart} that follows the bone through the animations ({@link ColossusRig}), so players can
- * climb the colossus and ride on it. It walks only where nothing hangs over it.</p>
+ * <p>Its shape and its animations are the Blockbench project {@code colossus.bbmodel}. Every cube is a solid
+ * {@link ColossusPart} that follows its bone through the animations ({@link ColossusRig}), so players can climb the
+ * colossus and ride on it, turning with it. It walks only where nothing hangs over it, and it is slow to turn.</p>
  */
-public class RustyColossus extends Monster {
+public class Colossus extends Monster {
     /** A pixel of the model is this many sixteenths of a block: the colossus stands about 97 blocks tall. */
     public static final float SCALE = 12.0F;
     /** How far the colossus goes in one loop of its walk, two strides: the feet stay where they step. */
     public static final float WALK_CYCLE = 56.0F;
     // Its speed in blocks a tick at the full swing of the walk.
     private static final float WALK_SPEED = 0.3F;
+    // How far its body turns in a tick, in degrees: half a turn takes six seconds. Its head turns a little faster
+    // and only so far from the body; a way that turns more than the last of these it turns to standing.
+    private static final float TURN_SPEED = 1.5F;
+    private static final float HEAD_TURN_SPEED = 3.0F;
+    private static final int HEAD_TURN = 30;
+    private static final float TURN_IN_PLACE = 45.0F;
     // Nothing may hang over this circle around it: a wide one where it spawns, a narrower one on its way.
     private static final int SPAWN_RADIUS = 24;
     private static final int WALK_RADIUS = 12;
@@ -99,12 +109,15 @@ public class RustyColossus extends Monster {
         }
     }
 
-    private static final EntityDataAccessor<Byte> DATA_ACTION = SynchedEntityData.defineId(RustyColossus.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> DATA_ACTION = SynchedEntityData.defineId(Colossus.class, EntityDataSerializers.BYTE);
     private static @Nullable ColossusRig rig;
     private static final double[] REACH = {Double.NaN, Double.NaN, Double.NaN};
 
     private final ColossusPart[] parts;
-    private boolean partsPlaced;
+    // The bones as the parts were placed last, and where the colossus stood then: what stands on a part moves with it.
+    private ColossusRig.@Nullable Posed posed;
+    private Vec3 posedAt = Vec3.ZERO;
+    private float posedBodyRot;
     private float stride;
     private float strideO;
     private float walkWeight;
@@ -113,23 +126,21 @@ public class RustyColossus extends Monster {
     private int cooldown;
     private final List<Shockwave> shockwaves = new ArrayList<>();
 
-    public RustyColossus(EntityType<? extends RustyColossus> type, Level level) {
+    public Colossus(EntityType<? extends Colossus> type, Level level) {
         super(type, level);
         ColossusRig rig = rig();
-        List<ColossusPart> parts = new ArrayList<>();
-        for (int bone = 0; bone < rig.boneCount(); bone++) {
-            if (rig.hasCubes(bone)) {
-                parts.add(new ColossusPart(this, bone));
-            }
+        this.parts = new ColossusPart[rig.cubeCount()];
+        for (int cube = 0; cube < this.parts.length; cube++) {
+            this.parts[cube] = new ColossusPart(this, cube, rig.cubeBone(cube));
         }
-        this.parts = parts.toArray(ColossusPart[]::new);
+        this.moveControl = new SlowTurnControl();
         this.xpReward = 100;
     }
 
     /** The bones of the project, read once for the server and the client alike. */
     public static ColossusRig rig() {
         if (rig == null) {
-            rig = ColossusRig.load("rusty_colossus");
+            rig = ColossusRig.load("colossus");
         }
         return rig;
     }
@@ -147,28 +158,28 @@ public class RustyColossus extends Monster {
     }
 
     public static void registerAttributes(EntityAttributeCreationEvent event) {
-        event.put(RREntityTypes.RUSTY_COLOSSUS.get(), createAttributes().build());
+        event.put(RREntityTypes.COLOSSUS.get(), createAttributes().build());
     }
 
     public static void registerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
         event.register(
-                RREntityTypes.RUSTY_COLOSSUS.get(),
+                RREntityTypes.COLOSSUS.get(),
                 SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                RustyColossus::checkColossusSpawnRules,
+                Colossus::checkColossusSpawnRules,
                 RegisterSpawnPlacementsEvent.Operation.REPLACE
         );
     }
 
     /** On the floor of the Blooming caves, with the sky open around it and no other colossus near. */
-    private static boolean checkColossusSpawnRules(EntityType<RustyColossus> type, ServerLevelAccessor level, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+    private static boolean checkColossusSpawnRules(EntityType<Colossus> type, ServerLevelAccessor level, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
         if (level.getDifficulty() == Difficulty.PEACEFUL) {
             return false;
         }
         if (!EntitySpawnReason.isSpawner(spawnReason)
                 && (pos.getY() <= Const.BLOOMING_CAVES_Y || pos.getY() >= Const.BLOOMING_CAVES_CEILING_Y
                 || !isOpen(level, pos.getX(), pos.getY(), pos.getZ(), SPAWN_RADIUS)
-                || !level.getEntitiesOfClass(RustyColossus.class, new AABB(pos).inflate(SPAWN_SPACING)).isEmpty())) {
+                || !level.getEntitiesOfClass(Colossus.class, new AABB(pos).inflate(SPAWN_SPACING)).isEmpty())) {
             return false;
         }
         return Mob.checkMobSpawnRules(type, level, spawnReason, pos, random);
@@ -294,35 +305,93 @@ public class RustyColossus extends Monster {
         return stride / WALK_CYCLE * walkLength;
     }
 
-    private AABB[] boxes() {
-        return rig().boxes(pose(this.tickCount, this.stride, this.walkWeight, this.getAction(), this.actionTicks / 20.0F), this.yBodyRot, SCALE);
+    private ColossusRig.Posed posed() {
+        return rig().posed(pose(this.tickCount, this.stride, this.walkWeight, this.getAction(), this.actionTicks / 20.0F), this.yBodyRot, SCALE);
     }
 
-    /** Moves the parts to the bones and carries along what stands on them. */
+    /** Moves the parts to the cubes and carries along what stands on them. */
     private void updateParts() {
-        AABB[] boxes = this.boxes();
+        ColossusRig.Posed posed = this.posed();
+        Vec3 at = this.position();
         for (ColossusPart part : this.parts) {
-            AABB box = boxes[part.bone].move(this.getX(), this.getY(), this.getZ());
-            if (this.partsPlaced) {
-                this.carry(part.getBoundingBox(), box);
-            }
+            AABB box = posed.cubes()[part.cube].move(at);
             part.setPos(box.getCenter().x, box.minY, box.getCenter().z);
             part.setBoundingBox(box);
         }
-        this.partsPlaced = true;
+        if (this.posed != null) {
+            this.carry(this.posed, posed, at);
+        }
+        this.posed = posed;
+        this.posedAt = at;
+        this.posedBodyRot = this.yBodyRot;
     }
 
-    /** Moves whatever stands on a box with its top. Each side moves what it runs: the server mobs, a client its player. */
-    private void carry(AABB from, AABB to) {
-        Vec3 delta = new Vec3(to.getCenter().x - from.getCenter().x, to.maxY - from.maxY, to.getCenter().z - from.getCenter().z);
-        if (delta.lengthSqr() < 1.0E-6) {
-            return;
+    /**
+     * Moves whatever stood on a part with the bone of the part, and turns it as far as the body turned. Each side
+     * moves what it runs: the server its mobs, a client its own player.
+     */
+    private void carry(ColossusRig.Posed from, ColossusRig.Posed to, Vec3 at) {
+        float turn = Mth.wrapDegrees(this.yBodyRot - this.posedBodyRot);
+        Set<Entity> carried = new HashSet<>();
+        Matrix4f back = new Matrix4f();
+        Vector3f point = new Vector3f();
+        for (ColossusPart part : this.parts) {
+            AABB box = from.cubes()[part.cube].move(this.posedAt);
+            AABB top = new AABB(box.minX, box.maxY - 0.25, box.minZ, box.maxX, box.maxY + 0.5, box.maxZ);
+            for (Entity rider : this.level().getEntities(this, top, entity -> !(entity instanceof PartEntity<?>)
+                    && entity.isLocalInstanceAuthoritative() && !entity.isPassenger() && entity.getY() >= box.maxY - 0.25)) {
+                if (!carried.add(rider)) {
+                    continue;
+                }
+                // Where the rider stood in the space of the bone, and where that place is now.
+                from.bones()[part.bone].invert(back).transformPosition(
+                        (float) (rider.getX() - this.posedAt.x), (float) (rider.getY() - this.posedAt.y), (float) (rider.getZ() - this.posedAt.z), point);
+                to.bones()[part.bone].transformPosition(point);
+                rider.move(MoverType.SHULKER_BOX, new Vec3(at.x + point.x - rider.getX(), at.y + point.y - rider.getY(), at.z + point.z - rider.getZ()));
+                rider.setYRot(rider.getYRot() + turn);
+                rider.setYHeadRot(rider.getYHeadRot() + turn);
+            }
         }
-        AABB top = new AABB(from.minX, from.maxY - 0.25, from.minZ, from.maxX, from.maxY + 0.5, from.maxZ);
-        for (Entity rider : this.level().getEntities(this, top, entity -> !(entity instanceof PartEntity<?>)
-                && entity.isLocalInstanceAuthoritative() && !entity.isPassenger() && entity.getY() >= from.maxY - 0.25)) {
-            rider.move(MoverType.SHULKER_BOX, delta);
+    }
+
+    /** Turns no faster than its body can: the way it walks and the place it looks at come round slowly. */
+    private class SlowTurnControl extends MoveControl {
+        SlowTurnControl() {
+            super(Colossus.this);
         }
+
+        @Override
+        public void tick() {
+            float before = this.mob.getYRot();
+            super.tick();
+            float wanted = this.mob.getYRot();
+            this.mob.setYRot(Mth.approachDegrees(before, wanted, TURN_SPEED));
+            if (Math.abs(Mth.degreesDifference(before, wanted)) > TURN_IN_PLACE) {
+                this.mob.setSpeed(0.0F);
+            }
+        }
+    }
+
+    @Override
+    protected BodyRotationControl createBodyControl() {
+        return new BodyRotationControl(this) {
+            @Override
+            public void clientTick() {
+                Colossus colossus = Colossus.this;
+                colossus.yBodyRot = Mth.approachDegrees(colossus.yBodyRot, colossus.getYRot(), TURN_SPEED);
+                colossus.yHeadRot = colossus.yBodyRot + Mth.clamp(Mth.wrapDegrees(colossus.yHeadRot - colossus.yBodyRot), -HEAD_TURN, HEAD_TURN);
+            }
+        };
+    }
+
+    @Override
+    public int getMaxHeadYRot() {
+        return HEAD_TURN;
+    }
+
+    @Override
+    public int getHeadRotSpeed() {
+        return (int) HEAD_TURN_SPEED;
     }
 
     /** The box around the whole colossus, for drawing it whenever any of it is in view. */
@@ -365,16 +434,16 @@ public class RustyColossus extends Monster {
         float[][] pose = rig.restPose();
         ColossusRig.Animation animation = rig.animation(action.animation);
         rig.apply(animation, animation.impact(), 1.0F, pose);
-        AABB[] boxes = rig.boxes(pose, 0.0F, SCALE);
-        return (boxes[rig.bone("right_hand")].getCenter().z + boxes[rig.bone("left_hand")].getCenter().z) / 2.0;
+        ColossusRig.Posed posed = rig.posed(pose, 0.0F, SCALE);
+        return (rig.boneBox(posed, rig.bone("right_hand")).getCenter().z + rig.boneBox(posed, rig.bone("left_hand")).getCenter().z) / 2.0;
     }
 
     /** Each fist hits the ground under it, or the top layer, and starts a shockwave there. */
     private void impact() {
         ServerLevel level = (ServerLevel) this.level();
-        AABB[] boxes = this.boxes();
+        ColossusRig.Posed posed = this.posed();
         for (String hand : new String[]{"right_hand", "left_hand"}) {
-            AABB fist = boxes[rig().bone(hand)].move(this.getX(), this.getY(), this.getZ());
+            AABB fist = rig().boneBox(posed, rig().bone(hand)).move(this.position());
             Vec3 center = fist.getCenter();
             double surface = this.surfaceUnder(center.x, fist.minY, center.z);
             level.playSound(null, center.x, surface, center.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 6.0F, 0.5F);
@@ -413,7 +482,7 @@ public class RustyColossus extends Monster {
         }
 
         /** Runs the ring on by a tick; true once it has run out. */
-        boolean tick(ServerLevel level, RustyColossus colossus) {
+        boolean tick(ServerLevel level, Colossus colossus) {
             this.radius += SHOCKWAVE_SPEED;
             AABB area = new AABB(this.x - this.radius - 1, this.y - 1.5, this.z - this.radius - 1, this.x + this.radius + 1, this.y + 2.5, this.z + this.radius + 1);
             for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area, entity -> entity != colossus && entity.isAlive())) {
@@ -455,13 +524,13 @@ public class RustyColossus extends Monster {
 
         @Override
         public boolean canUse() {
-            LivingEntity target = RustyColossus.this.getTarget();
+            LivingEntity target = Colossus.this.getTarget();
             return target != null && target.isAlive();
         }
 
         @Override
         public boolean canContinueToUse() {
-            return this.canUse() || RustyColossus.this.getAction() != Action.NONE;
+            return this.canUse() || Colossus.this.getAction() != Action.NONE;
         }
 
         @Override
@@ -471,7 +540,7 @@ public class RustyColossus extends Monster {
 
         @Override
         public void stop() {
-            RustyColossus.this.getNavigation().stop();
+            Colossus.this.getNavigation().stop();
         }
 
         @Override
@@ -481,12 +550,12 @@ public class RustyColossus extends Monster {
 
         @Override
         public void tick() {
-            RustyColossus colossus = RustyColossus.this;
+            Colossus colossus = Colossus.this;
             LivingEntity target = colossus.getTarget();
             if (colossus.getAction() != Action.NONE || target == null) {
                 return;
             }
-            colossus.getLookControl().setLookAt(target, 10.0F, 30.0F);
+            colossus.getLookControl().setLookAt(target, HEAD_TURN_SPEED, 30.0F);
             Action slam = target.getY() > colossus.getY() + HIGH_TARGET ? Action.SLAM_HIGH : Action.SLAM_GROUND;
             double reach = reach(slam);
             double dx = target.getX() - colossus.getX();
@@ -495,9 +564,8 @@ public class RustyColossus extends Monster {
             if (Math.abs(distance - reach) < SLAM_TOLERANCE) {
                 colossus.getNavigation().stop();
                 float yaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
-                colossus.setYRot(Mth.approachDegrees(colossus.getYRot(), yaw, 3.0F));
-                colossus.yBodyRot = colossus.getYRot();
-                if (colossus.cooldown == 0 && Math.abs(Mth.degreesDifference(colossus.getYRot(), yaw)) < 15.0F) {
+                colossus.setYRot(Mth.approachDegrees(colossus.getYRot(), yaw, TURN_SPEED));
+                if (colossus.cooldown == 0 && Math.abs(Mth.degreesDifference(colossus.yBodyRot, yaw)) < 15.0F) {
                     colossus.setAction(slam);
                 }
             } else if (--this.repath <= 0) {

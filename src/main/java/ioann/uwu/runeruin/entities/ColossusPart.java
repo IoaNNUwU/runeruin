@@ -13,14 +13,16 @@ import net.neoforged.neoforge.entity.PartEntity;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The box around one bone of the Rusty Colossus. It moves with the bone and is solid, like the top of a happy ghast,
- * so that players can climb the colossus and stand on its shoulders; a hit on it hurts the colossus.
+ * The box around one cube of the Colossus. It moves with the bone of the cube and is solid, like the top of a happy
+ * ghast, so that players can climb the colossus and stand on its shoulders; a hit on it hurts the colossus.
  */
-public class ColossusPart extends PartEntity<RustyColossus> {
+public class ColossusPart extends PartEntity<Colossus> {
+    public final int cube;
     public final int bone;
 
-    public ColossusPart(RustyColossus parent, int bone) {
+    public ColossusPart(Colossus parent, int cube, int bone) {
         super(parent);
+        this.cube = cube;
         this.bone = bone;
         this.noPhysics = true;
     }

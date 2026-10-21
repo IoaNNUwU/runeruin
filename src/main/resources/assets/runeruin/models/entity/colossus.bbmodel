@@ -4,8 +4,8 @@
 		"model_format": "modded_entity",
 		"box_uv": true
 	},
-	"name": "rusty_colossus",
-	"model_identifier": "RustyColossus",
+	"name": "colossus",
+	"model_identifier": "Colossus",
 	"modded_entity_version": "1.17",
 	"modded_entity_flip_y": true,
 	"resolution": {
@@ -1752,18 +1752,18 @@
 	],
 	"textures": [
 		{
-			"name": "rusty_colossus.png",
-			"relative_path": "../../textures/entity/rusty_colossus/rusty_colossus.png",
+			"name": "colossus.png",
+			"relative_path": "../../textures/entity/colossus/colossus.png",
 			"uuid": "1788af31-2147-5ecd-b327-c28aad0de709"
 		},
 		{
-			"name": "rusty_colossus_moss.png",
-			"relative_path": "../../textures/entity/rusty_colossus/rusty_colossus_moss.png",
+			"name": "colossus_moss.png",
+			"relative_path": "../../textures/entity/colossus/colossus_moss.png",
 			"uuid": "2486079f-f2bf-5e93-926d-7a3bc6836295"
 		},
 		{
-			"name": "rusty_colossus_eyes.png",
-			"relative_path": "../../textures/entity/rusty_colossus/rusty_colossus_eyes.png",
+			"name": "colossus_eyes.png",
+			"relative_path": "../../textures/entity/colossus/colossus_eyes.png",
 			"uuid": "18b86248-87d9-59fc-99e1-b79662273349"
 		}
 	],
