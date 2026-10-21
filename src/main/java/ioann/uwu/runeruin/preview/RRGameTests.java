@@ -1591,8 +1591,10 @@ public final class RRGameTests {
         });
     }
 
-    // The colossus can be stood on: a snail dropped onto it stays up there while its head moves. Its slam brings both
-    // fists down where the target stands, and the shockwave hurts what stands on the ground there, not what stands above.
+    // The colossus stands turned by 45 degrees. Its turned cubes are solid, not the boxes square to the blocks around
+    // them: a snail dropped beside the chest, inside such a box, falls to the ground, and one dropped onto a shoulder
+    // stays up there while the colossus turns to its target. Its slam brings both fists down where the target stands,
+    // and the shockwave hurts what stands on the ground there, not what stands above.
     private static void colossusSlam(GameTestHelper helper) {
         // Higher than every other test: the colossus stands about 97 blocks tall and reaches 40 blocks to the sides.
         int y = 270;
@@ -1600,9 +1602,11 @@ public final class RRGameTests {
         fightFloor(helper, y, size);
         ServerLevel level = helper.getLevel();
         Colossus colossus = helper.spawn(RREntityTypes.COLOSSUS.get(), new BlockPos(45, y, 10));
-        colossus.setYRot(0.0F);
-        colossus.setYBodyRot(0.0F);
-        Snail rider = fightTarget(helper, 45, y + 110, 10);
+        colossus.setYRot(45.0F);
+        colossus.setYBodyRot(45.0F);
+        // 35 blocks ahead of it, past the chest; 31 blocks to its side, on a shoulder.
+        Snail beside = fightTarget(helper, 20, y + 100, 35);
+        Snail rider = fightTarget(helper, 67, y + 100, 32);
         int reach = (int) Math.round(Colossus.reach(Colossus.Action.SLAM_GROUND));
         Snail target = fightTarget(helper, 45, y, 10 + reach);
         Snail bystander = fightTarget(helper, 37, y, 10 + reach);
@@ -1611,20 +1615,27 @@ public final class RRGameTests {
         }
         Snail above = fightTarget(helper, 51, y + 3, 10 + reach);
 
-        // First the snail lands on the colossus, then the colossus gets its target.
+        // First the snails land, then the colossus gets its target and turns to it with the rider on its shoulder.
         int[] ticks = {0};
-        double[] riderHeight = {Double.NaN};
+        double[] heights = {Double.NaN, Double.NaN, Double.NaN};
         boolean[] slammed = {false};
         helper.onEachTick(() -> {
             if (++ticks[0] == 80) {
-                riderHeight[0] = rider.onGround() ? rider.getY() - colossus.getY() : -1.0;
-                rider.discard();
+                heights[0] = beside.getY() - colossus.getY();
+                heights[1] = rider.onGround() ? rider.getY() - colossus.getY() : -1.0;
+                beside.discard();
                 colossus.setTarget(target);
+            } else if (ticks[0] == 95) {
+                // Turned by 22.5 degrees, before it faces the target closely enough to raise its arms.
+                heights[2] = rider.getY() - colossus.getY();
+                rider.discard();
             }
             slammed[0] |= colossus.getAction() == Colossus.Action.SLAM_GROUND;
         });
         helper.succeedWhen(() -> {
-            helper.assertTrue(riderHeight[0] > 80.0, "the snail dropped onto the colossus stands " + riderHeight[0] + " over its feet");
+            helper.assertTrue(heights[0] < 2.0, "the snail dropped beside the chest stopped " + heights[0] + " over the feet");
+            helper.assertTrue(heights[1] > 75.0, "the snail dropped onto the shoulder stands " + heights[1] + " over the feet");
+            helper.assertTrue(heights[2] > 75.0, "the snail on the shoulder stands " + heights[2] + " over the feet after the turn");
             helper.assertTrue(slammed[0], "the colossus did not slam");
             helper.assertTrue(target.getHealth() < 200.0F, "the shockwave missed the target");
             helper.assertTrue(bystander.getHealth() < 200.0F, "the shockwave missed the bystander on the ground");

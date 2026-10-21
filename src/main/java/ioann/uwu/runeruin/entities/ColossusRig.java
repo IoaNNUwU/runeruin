@@ -204,6 +204,11 @@ public final class ColossusRig {
         return this.cubeBones.get(cube);
     }
 
+    /** A cube in the space of its bone, in pixels as ModelPart builds it: min x, y, z, max x, y, z. */
+    public float[] cube(int cube) {
+        return this.cubes.get(cube).clone();
+    }
+
     /** A pose of no animation: every bone where the project puts it. */
     public float[][] restPose() {
         return new float[this.bones.size()][6];

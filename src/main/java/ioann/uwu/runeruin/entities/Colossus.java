@@ -55,10 +55,10 @@ import net.minecraft.world.level.pathfinder.PathfindingContext;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.entity.PartEntity;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
@@ -115,10 +115,9 @@ public class Colossus extends Monster {
     private static final double[] REACH = {Double.NaN, Double.NaN, Double.NaN};
 
     private final ColossusPart[] parts;
-    // The bones as the parts were placed last, and where the colossus stood then: what stands on a part moves with it.
-    private ColossusRig.@Nullable Posed posed;
-    private Vec3 posedAt = Vec3.ZERO;
-    private float posedBodyRot;
+    private boolean partsPlaced;
+    // How the body was turned when the cubes were placed last: what stands on them turns as far.
+    private float placedBodyRot;
     private static @Nullable Colossus carryingLocalPlayer;
     private int carriedLocalPlayerAt;
     private float stride;
@@ -134,7 +133,7 @@ public class Colossus extends Monster {
         ColossusRig rig = rig();
         this.parts = new ColossusPart[rig.cubeCount()];
         for (int cube = 0; cube < this.parts.length; cube++) {
-            this.parts[cube] = new ColossusPart(this, cube, rig.cubeBone(cube));
+            this.parts[cube] = new ColossusPart(this, rig.cubeBone(cube), rig.cube(cube));
         }
         this.moveControl = new SlowTurnControl();
         this.xpReward = 100;
@@ -312,69 +311,79 @@ public class Colossus extends Monster {
         return rig().posed(pose(this.tickCount, this.stride, this.walkWeight, this.getAction(), this.actionTicks / 20.0F), this.yBodyRot, SCALE);
     }
 
-    /** Moves the parts to the cubes and carries along what stands on them. */
+    /**
+     * Moves the cubes to their bones and carries along what stands on them: to where its place on the cube is now,
+     * turned as far as the body turned.
+     */
     private void updateParts() {
         ColossusRig.Posed posed = this.posed();
         Vec3 at = this.position();
-        for (ColossusPart part : this.parts) {
-            AABB box = posed.cubes()[part.cube].move(at);
-            part.setPos(box.getCenter().x, box.minY, box.getCenter().z);
-            part.setBoundingBox(box);
+        float turn = Mth.wrapDegrees(this.yBodyRot - this.placedBodyRot);
+        Set<Entity> found = new HashSet<>();
+        for (int cube = 0; cube < this.parts.length; cube++) {
+            ColossusPart part = this.parts[cube];
+            List<Entity> riders = this.partsPlaced ? this.ridersOf(part, found) : List.of();
+            List<Vector3f> places = riders.stream().map(rider -> part.toCube(rider.position())).toList();
+            part.place(posed.bones()[part.bone], at, posed.cubes()[cube].move(at));
+            for (int i = 0; i < riders.size(); i++) {
+                this.carry(riders.get(i), part.toWorld(places.get(i)), turn);
+            }
         }
-        if (this.posed != null) {
-            this.carry(this.posed, posed, at);
+        this.partsPlaced = true;
+        this.placedBodyRot = this.yBodyRot;
+    }
+
+    /** What stands on a cube and no other cube yet, of what this side moves: the server its mobs, a client its player. */
+    private List<Entity> ridersOf(ColossusPart part, Set<Entity> found) {
+        List<Entity> riders = new ArrayList<>();
+        for (Entity entity : this.level().getEntities(this, part.getBoundingBox().inflate(0.5),
+                entity -> !(entity instanceof PartEntity<?>) && !entity.isPassenger() && part.carries(entity.position()))) {
+            if (!found.add(entity)) {
+                continue;
+            }
+            if (entity instanceof ServerPlayer player) {
+                // Its client keeps it up on the colossus, where the server sees nothing under it.
+                player.connection.resetFlyingTicks();
+            }
+            if (entity.isLocalInstanceAuthoritative()) {
+                riders.add(entity);
+            }
         }
-        this.posed = posed;
-        this.posedAt = at;
-        this.posedBodyRot = this.yBodyRot;
+        return riders;
+    }
+
+    private void carry(Entity rider, Vec3 to, float turn) {
+        // A move along the cube is no landing, but the rider still stands: it can jump from there.
+        boolean onGround = rider.onGround();
+        rider.move(MoverType.SHULKER_BOX, to.subtract(rider.position()));
+        rider.setOnGround(onGround);
+        if (rider instanceof Player && this.level().isClientSide()) {
+            // The camera shows the player's turn as it is, without easing it between ticks: the client turns its
+            // player every frame (ColossusRiderView).
+            carryingLocalPlayer = this;
+            this.carriedLocalPlayerAt = this.tickCount;
+        } else {
+            rider.setYRot(rider.getYRot() + turn);
+            rider.setYHeadRot(rider.getYHeadRot() + turn);
+        }
     }
 
     /**
-     * Moves whatever stood on a part with the bone of the part, and turns it as far as the body turned. Each side
-     * moves what it runs: the server its mobs, a client its own player. One that the part rose into, its feet less
-     * than a block under the top, it lifts onto the top: the parts move in steps of a tick and would let it through.
+     * What an entity collides with in an area, with the cubes of every colossus there added; the area grows by the
+     * height the entity steps up, which the game tries with the same shapes.
      */
-    private void carry(ColossusRig.Posed from, ColossusRig.Posed to, Vec3 at) {
-        float turn = Mth.wrapDegrees(this.yBodyRot - this.posedBodyRot);
-        Set<Entity> carried = new HashSet<>();
-        Matrix4f back = new Matrix4f();
-        Vector3f point = new Vector3f();
-        for (ColossusPart part : this.parts) {
-            AABB box = from.cubes()[part.cube].move(this.posedAt);
-            AABB top = new AABB(box.minX, box.maxY - 1.0, box.minZ, box.maxX, box.maxY + 0.5, box.maxZ);
-            for (Entity rider : this.level().getEntities(this, top, entity -> !(entity instanceof PartEntity<?>)
-                    && !entity.isPassenger() && entity.getY() >= box.maxY - 1.0)) {
-                if (!carried.add(rider)) {
-                    continue;
+    public static List<VoxelShape> withCubes(Level level, Entity entity, AABB area, List<VoxelShape> shapes) {
+        AABB reach = area.expandTowards(0.0, entity.maxUpStep(), 0.0);
+        List<VoxelShape> all = shapes;
+        for (PartEntity<?> part : level.dragonParts()) {
+            if (part instanceof ColossusPart cube && cube.getBoundingBox().intersects(reach) && cube.blocks(entity)) {
+                if (all == shapes) {
+                    all = new ArrayList<>(shapes);
                 }
-                if (rider instanceof ServerPlayer player) {
-                    // Its client keeps it up on the colossus, where the server sees nothing under it.
-                    player.connection.resetFlyingTicks();
-                }
-                if (!rider.isLocalInstanceAuthoritative()) {
-                    continue;
-                }
-                // Where the rider stood in the space of the bone, and where that place is now.
-                from.bones()[part.bone].invert(back).transformPosition(
-                        (float) (rider.getX() - this.posedAt.x), (float) (rider.getY() - this.posedAt.y), (float) (rider.getZ() - this.posedAt.z), point);
-                to.bones()[part.bone].transformPosition(point);
-                rider.move(MoverType.SHULKER_BOX, new Vec3(at.x + point.x - rider.getX(), at.y + point.y - rider.getY(), at.z + point.z - rider.getZ()));
-                double surface = to.cubes()[part.cube].maxY + at.y;
-                if (rider.getY() < surface && rider.getY() > surface - 1.0) {
-                    rider.move(MoverType.SHULKER_BOX, new Vec3(0.0, surface - rider.getY(), 0.0));
-                    rider.setDeltaMovement(rider.getDeltaMovement().multiply(1.0, 0.0, 1.0));
-                }
-                if (rider instanceof Player && this.level().isClientSide()) {
-                    // The camera shows the player's turn as it is, without easing it between ticks: the client turns
-                    // its player every frame (ColossusRiderView).
-                    carryingLocalPlayer = this;
-                    this.carriedLocalPlayerAt = this.tickCount;
-                } else {
-                    rider.setYRot(rider.getYRot() + turn);
-                    rider.setYHeadRot(rider.getYHeadRot() + turn);
-                }
+                cube.addCollisions(reach, all);
             }
         }
+        return all;
     }
 
     /** The colossus the player of this client stood on in its last tick, if any. */
