@@ -24,7 +24,11 @@ import ioann.uwu.runeruin.dimension.features.WallMushroomFeature;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonGenerator;
 import ioann.uwu.runeruin.dimension.structures.DinosaurSkeletonStructure;
 import ioann.uwu.runeruin.dimension.structures.GiantGobletPiece;
+import ioann.uwu.runeruin.dimension.structures.HangingPiece;
+import ioann.uwu.runeruin.dimension.structures.HangingPlatformPiece;
+import ioann.uwu.runeruin.dimension.structures.HangingTracksLayout;
 import ioann.uwu.runeruin.dimension.structures.TemplatePiece;
+import ioann.uwu.runeruin.entities.GrapplingAnchor;
 import ioann.uwu.runeruin.entities.MossyProphet;
 import ioann.uwu.runeruin.entities.MossyRam;
 import ioann.uwu.runeruin.entities.MossyWarrior;
@@ -35,6 +39,7 @@ import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
+import ioann.uwu.runeruin.preview.jobs.PowderedMossShaftPreviewJob;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,6 +54,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntBinaryOperator;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -62,6 +68,7 @@ import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -71,15 +78,19 @@ import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
@@ -91,6 +102,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
@@ -145,6 +157,12 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("mossy_prophet_throws_warrior", () -> RRGameTests::mossyProphetThrowsWarrior);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MOSSY_WARRIOR_SPIN_JUMP =
         TEST_FUNCTIONS.register("mossy_warrior_spin_jump", () -> RRGameTests::mossyWarriorSpinJump);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOWPIPE_SHOOTS_BERRIES =
+        TEST_FUNCTIONS.register("blowpipe_shoots_berries", () -> RRGameTests::blowpipeShootsBerries);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_CLIMBS_WALL =
+        TEST_FUNCTIONS.register("grappling_hook_climbs_wall", () -> RRGameTests::grapplingHookClimbsWall);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_PULLS_CREATURE =
+        TEST_FUNCTIONS.register("grappling_hook_pulls_creature", () -> RRGameTests::grapplingHookPullsCreature);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
         TEST_FUNCTIONS.register("ashen_mushroom_small_radii", () -> RRGameTests::ashenMushroomSmallRadii);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_LARGE_RADII =
@@ -185,11 +203,17 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("template_piece", () -> RRGameTests::templatePiece);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> SAVE_COMMAND =
         TEST_FUNCTIONS.register("save_command", () -> RRGameTests::saveCommand);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> HANGING_PLATFORM_TEMPLATES =
+        TEST_FUNCTIONS.register("hanging_platform_templates", () -> RRGameTests::hangingPlatformTemplates);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> STONE_LILY_ON_TRUNK =
+        TEST_FUNCTIONS.register("stone_lily_on_trunk", () -> RRGameTests::stoneLilyOnTrunk);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_PLACEMENT =
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_EXPORT_MARKS =
         TEST_FUNCTIONS.register("preview_export_marks", () -> RRGameTests::previewExportMarks);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> POWDERED_MOSS_SHAFT =
+        TEST_FUNCTIONS.register("powdered_moss_shaft", () -> RRGameTests::powderedMossShaft);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_REACH =
         TEST_FUNCTIONS.register("feature_reach", () -> RRGameTests::featureReach);
@@ -252,6 +276,7 @@ public final class RRGameTests {
             new FeatureCase("void_amethyst", Surface.CEILING, voidStone, -1),
             new FeatureCase("dust_bloom", Surface.CEILING, voidStone, -1),
             new FeatureCase("bead_vine", Surface.CEILING, voidStone, -1),
+            new FeatureCase("star", Surface.CAVE, Blocks.STONE, 0),
             new FeatureCase("small_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("big_lily_pad_patch", Surface.WATER, Blocks.STONE, 1),
             new FeatureCase("floating_moss_patch", Surface.UNDERWATER, Blocks.STONE, 1),
@@ -311,6 +336,29 @@ public final class RRGameTests {
         RR.LOGGER.info("Feature reach over {} seeds: {}", FEATURE_REACH_SEEDS, String.join(", ", measured));
         helper.assertTrue(problems.isEmpty(), "the limit is " + FEATURE_REACH_LIMIT + " blocks: " + String.join("; ", problems));
         helper.succeed();
+    }
+
+    // On the real terrain a patch goes through the thinnest floor of the Blooming caves into the caves under it,
+    // and stays two blocks deep on the thickest.
+    private static void powderedMossShaft(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            helper.assertTrue(mossOverOpenCaves(server, true) > 0, "the patch on the thinnest floor does not go through");
+            helper.assertTrue(mossOverOpenCaves(server, false) == 0, "the patch on the thickest floor goes through");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    private static int mossOverOpenCaves(MinecraftServer server, boolean thin) throws IOException {
+        PowderedMossShaftPreviewJob.Placement placement = PowderedMossShaftPreviewJob.place(server, 1, 0, 0, thin);
+        BlockPos origin = placement.origin();
+        int count = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-8, -40, -8), origin.offset(8, 0, 8))) {
+            count += placement.world().get(pos).is(RRBlocks.POWDERED_MOSS.get()) && placement.world().get(pos.below()).canBeReplaced() ? 1 : 0;
+        }
+        return count;
     }
 
     // scripts/render_preview.py fades what the preview prepared and outlines blocks without collision.
@@ -562,6 +610,20 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("hanging_platform_templates"),
+            new FunctionGameTestInstance(
+                HANGING_PLATFORM_TEMPLATES.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("stone_lily_on_trunk"),
+            new FunctionGameTestInstance(
+                STONE_LILY_ON_TRUNK.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("feature_placement"),
             new FunctionGameTestInstance(
                 FEATURE_PLACEMENT.getKey(),
@@ -572,6 +634,13 @@ public final class RRGameTests {
             RR.id("preview_export_marks"),
             new FunctionGameTestInstance(
                 PREVIEW_EXPORT_MARKS.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("powdered_moss_shaft"),
+            new FunctionGameTestInstance(
+                POWDERED_MOSS_SHAFT.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -609,6 +678,27 @@ public final class RRGameTests {
             RR.id("mossy_warrior_spin_jump"),
             new FunctionGameTestInstance(
                 MOSSY_WARRIOR_SPIN_JUMP.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("blowpipe_shoots_berries"),
+            new FunctionGameTestInstance(
+                BLOWPIPE_SHOOTS_BERRIES.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("grappling_hook_climbs_wall"),
+            new FunctionGameTestInstance(
+                GRAPPLING_HOOK_CLIMBS_WALL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("grappling_hook_pulls_creature"),
+            new FunctionGameTestInstance(
+                GRAPPLING_HOOK_PULLS_CREATURE.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
             )
         );
@@ -733,31 +823,109 @@ public final class RRGameTests {
         helper.succeed();
     }
 
-    // The command a person saves a build with: the selection becomes a template file in the resources of the
-    // checkout the game was started from, without its structure void block.
+    // Every platform of the hanging tracks has its entrance, a jigsaw block facing sideways. Turned, plain or mirrored,
+    // to a track that runs east in an inverted tree network, the platform lies beyond the end of the track with the
+    // entrance on it, is built of inverted tree, keeps no jigsaw, and its chains go on up to the ceiling.
+    private static void hangingPlatformTemplates(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        StructureTemplateManager templates = level.getStructureManager();
+        List<Identifier> variants = new ArrayList<>(TemplatePiece.variants(templates, HangingPlatformPiece.PLATFORMS));
+        variants.addAll(TemplatePiece.variants(templates, HangingPlatformPiece.DUNGEONS));
+        helper.assertTrue(variants.size() >= 2, "the hanging tracks have only " + variants + " to build platforms of");
+        HangingTracksLayout.Port port = new HangingTracksLayout.Port(0, 100, 0, Direction.EAST);
+        for (Identifier template : variants) {
+            for (Mirror mirror : List.of(Mirror.NONE, Mirror.FRONT_BACK)) {
+                HangingPlatformPiece piece = HangingPlatformPiece.create(templates, template, port, mirror, HangingPiece.Wood.INVERTED_TREE);
+                helper.assertTrue(piece != null, template + " has no jigsaw block facing sideways");
+                BoundingBox footprint = piece.footprint();
+                helper.assertTrue(footprint.minX() == port.x() && piece.lowestDeck() == port.y(),
+                    template + " " + mirror + " does not start at the end of the track: " + footprint);
+                PreviewWorld world = PreviewWorld.create(1, level);
+                int ceiling = piece.top() + 5;
+                world.fillBox(new BoundingBox(footprint.minX(), ceiling, footprint.minZ(), footprint.maxX(), ceiling, footprint.maxZ()),
+                    Blocks.STONE.defaultBlockState());
+                PreviewJobs.placePieceAcrossChunks(piece, world);
+                helper.assertTrue(world.get(new BlockPos(port.x(), port.y(), port.z())).is(RRBlocks.INVERTED_TREE_PLANKS),
+                    template + " has no inverted tree planks at its entrance");
+                boolean chained = false;
+                for (BlockPos pos : BlockPos.betweenClosed(footprint.minX(), piece.bottom(), footprint.minZ(), footprint.maxX(), ceiling, footprint.maxZ())) {
+                    BlockState state = world.get(pos);
+                    helper.assertTrue(!state.is(Blocks.JIGSAW) && !state.is(Blocks.OAK_PLANKS) && !state.is(Blocks.OAK_LOG)
+                        && !state.is(Blocks.OAK_FENCE) && !state.is(Blocks.OAK_SLAB), template + " keeps " + state + " at " + pos);
+                    chained |= pos.getY() == ceiling - 1 && state.is(Blocks.IRON_CHAIN);
+                }
+                helper.assertTrue(chained, template + " has no chain up to the ceiling");
+            }
+        }
+
+        // An empty chest or barrel gets supplies; one that names its loot keeps it.
+        HangingPlatformPiece.NetworkProcessor network = new HangingPlatformPiece.NetworkProcessor(HangingPiece.Wood.OAK);
+        CompoundTag treasure = new CompoundTag();
+        treasure.putString("LootTable", RRLootTables.HANGING_TRACKS_TREASURE.identifier().toString());
+        for (StructureTemplate.StructureBlockInfo info : List.of(
+                new StructureTemplate.StructureBlockInfo(BlockPos.ZERO, Blocks.BARREL.defaultBlockState(), null),
+                new StructureTemplate.StructureBlockInfo(BlockPos.ZERO, Blocks.CHEST.defaultBlockState(), treasure))) {
+            CompoundTag nbt = network.processBlock(level, BlockPos.ZERO, BlockPos.ZERO, BlockPos.ZERO, info, new StructurePlaceSettings()).nbt();
+            String expected = (info.nbt() == null ? RRLootTables.HANGING_TRACKS_SUPPLY : RRLootTables.HANGING_TRACKS_TREASURE).identifier().toString();
+            helper.assertTrue(nbt != null && nbt.getStringOr("LootTable", "").equals(expected), info.state() + " got the loot " + nbt);
+        }
+        helper.succeed();
+    }
+
+    // The lily is a template of its folder that the feature puts with its middle, the moss light, on the trunk.
+    private static void stoneLilyOnTrunk(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        for (int seed = 1; seed <= 8; seed++) {
+            FeaturePreviewJob.Placement placement = FeaturePreviewJob.place(server, RR.id("stone_lily"), Surface.FLOOR,
+                Blocks.STONE.defaultBlockState(), 1, seed, 16, 0, 0);
+            BoundingBox written = placement.world().writtenBox();
+            BlockPos light = BlockPos.betweenClosedStream(written).filter(pos -> placement.world().get(pos).is(RRBlocks.MOSS_LIGHT))
+                .findFirst().map(BlockPos::immutable).orElse(null);
+            helper.assertTrue(light != null && placement.world().get(light.below()).getBlock() instanceof WallBlock,
+                "the stone lily of seed " + seed + " does not sit on its trunk");
+        }
+        helper.succeed();
+    }
+
+    // The commands a person saves a build with and loads it back with: the selection becomes a text template in the
+    // resources of the checkout the game was started from, without its structure void block; loading it puts the
+    // void back and selects the build, so that saving without a name writes the same file again.
     private static void saveCommand(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos build = helper.absolutePos(new BlockPos(0, 2, 0));
+        BlockPos copy = build.above(2);
         level.setBlockAndUpdate(build, Blocks.GOLD_BLOCK.defaultBlockState());
         level.setBlockAndUpdate(build.east(), Blocks.STRUCTURE_VOID.defaultBlockState());
+        level.setBlockAndUpdate(copy.east(), Blocks.STONE.defaultBlockState());
         String startedFrom = System.getProperty("runeruin.checkout");
         try {
             Path checkout = Files.createTempDirectory("runeruin_checkout");
             System.setProperty("runeruin.checkout", checkout.toString());
             CommandSourceStack player = ((ServerPlayer) helper.makeMockServerPlayer(GameType.CREATIVE)).createCommandSourceStack()
                 .withPermission(PermissionSet.ALL_PERMISSIONS).withSuppressedOutput();
+            Path file = checkout.resolve("src/main/resources/data/runeruin/structure/test_save_command/build.snbt");
             for (String command : List.of("rrpos1 " + build.toShortString().replace(",", ""),
                 "rrpos2 " + build.east().toShortString().replace(",", ""), "rrsave test_save_command/build")) {
                 level.getServer().getCommands().performPrefixedCommand(player, command);
             }
-            Path file = checkout.resolve("src/main/resources/data/runeruin/structure/test_save_command/build.nbt");
-            helper.assertTrue(Files.isRegularFile(file) && Files.size(file) > 0, "/rrsave wrote no " + file);
+            helper.assertTrue(Files.isRegularFile(file) && Files.readString(file).contains("minecraft:gold_block"),
+                "/rrsave wrote no text template " + file);
             StructureTemplate template = level.getStructureManager().get(RR.id("test_save_command/build")).orElseThrow();
             helper.assertTrue(template.getSize().equals(new Vec3i(2, 1, 1)), "the template is " + template.getSize());
             StructurePlaceSettings asBuilt = new StructurePlaceSettings();
             helper.assertTrue(template.filterBlocks(BlockPos.ZERO, asBuilt, Blocks.GOLD_BLOCK).size() == 1
                 && template.filterBlocks(BlockPos.ZERO, asBuilt, Blocks.STRUCTURE_VOID).isEmpty(),
                 "the template must hold the gold block and no structure void");
+
+            Files.delete(file);
+            for (String command : List.of("rrload test_save_command/build " + copy.toShortString().replace(",", ""), "rrsave")) {
+                level.getServer().getCommands().performPrefixedCommand(player, command);
+            }
+            helper.assertTrue(level.getBlockState(copy).is(Blocks.GOLD_BLOCK) && level.getBlockState(copy.east()).is(Blocks.STRUCTURE_VOID),
+                "/rrload must put the gold block back and a structure void where the template keeps the world");
+            helper.assertTrue(Files.isRegularFile(file), "/rrsave without a name did not write the loaded template back");
+            helper.assertTrue(template.getSize().equals(new Vec3i(2, 1, 1))
+                && template.filterBlocks(BlockPos.ZERO, asBuilt, Blocks.STONE).isEmpty(), "the template saved back is " + template.getSize());
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());
@@ -1210,8 +1378,9 @@ public final class RRGameTests {
             for (int seed = 1; seed <= 8; seed++) {
                 PreviewArgs args = new PreviewArgs(RegionExport.resolveExportDir(server), Map.of())
                     .with("seed", Integer.toString(seed));
-                PreviewJobs.Result result = PreviewCatalog.require("hanging_tracks").run(args);
+                PreviewJobs.Result result = PreviewCatalog.require("hanging_tracks").run(args, server);
                 helper.assertTrue(result.count("minecraft:iron_chain") > 100, "hanging tracks " + seed + " hang on too few chains");
+                helper.assertTrue(result.count("minecraft:jigsaw") == 0, "a platform of hanging tracks " + seed + " kept its jigsaw block");
                 // Under the ceiling and above the floor that the Deep caves have with this seed.
                 // Between the steps of the ceiling a station sometimes has no room.
                 try {
@@ -1437,6 +1606,100 @@ public final class RRGameTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(spun[0], "the warrior did not somersault");
             helper.assertTrue(target.getHealth() == 195.0F, "the target has health " + target.getHealth());
+            endFight(helper, y);
+        });
+    }
+
+    // A full breath blows one berry at a snail ten blocks away: a mossberry from the bag poisons it, a glow berry
+    // or a wispberry in the other hand, which goes first, makes it glow.
+    private static void blowpipeShootsBerries(GameTestHelper helper) {
+        // Far enough above the Prophet's fight that ending this one does not take its thrown warrior.
+        int y = 150;
+        fightFloor(helper, y);
+        Snail poisoned = fightTarget(helper, 14, y, 4);
+        Snail glowing = fightTarget(helper, 14, y, 12);
+        Snail wispLit = fightTarget(helper, 14, y, 20);
+        Player mossShooter = blowpipeShooter(helper, poisoned);
+        Player glowShooter = blowpipeShooter(helper, glowing);
+        glowShooter.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.GLOW_BERRIES, 2));
+        Player wispShooter = blowpipeShooter(helper, wispLit);
+        wispShooter.setItemInHand(InteractionHand.OFF_HAND, RRItems.WISPBERRY.toStack(2));
+        for (Player shooter : List.of(mossShooter, glowShooter, wispShooter)) {
+            ItemStack blowpipe = shooter.getMainHandItem();
+            blowpipe.releaseUsing(helper.getLevel(), shooter, blowpipe.getUseDuration(shooter) - 20);
+            helper.assertTrue(blowpipe.getDamageValue() == 1, "a shot wore the blowpipe by " + blowpipe.getDamageValue());
+        }
+        helper.assertTrue(mossShooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 2, "a shot did not take one mossberry");
+        for (Player shooter : List.of(glowShooter, wispShooter)) {
+            helper.assertTrue(shooter.getInventory().countItem(RRItems.MOSSBERRY.get()) == 3, "a shot took a mossberry past the berries in hand");
+            helper.assertTrue(shooter.getOffhandItem().getCount() == 1, "a shot did not take one berry from the other hand");
+        }
+
+        helper.succeedWhen(() -> {
+            helper.assertTrue(poisoned.hasEffect(MobEffects.POISON), "the mossberry did not poison its snail");
+            helper.assertTrue(glowing.hasEffect(MobEffects.GLOWING), "the glow berry did not make its snail glow");
+            helper.assertTrue(wispLit.hasEffect(MobEffects.GLOWING), "the wispberry did not make its snail glow");
+            helper.assertTrue(!glowing.hasEffect(MobEffects.POISON), "the snail hit by a glow berry is poisoned");
+            endFight(helper, y);
+        });
+    }
+
+    /** A player ten blocks west of the target, aiming at it with a blowpipe and three mossberries in the bag. */
+    private static Player blowpipeShooter(GameTestHelper helper, Snail target) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setPos(target.position().add(-10, 0, 0));
+        player.lookAt(EntityAnchorArgument.Anchor.EYES, target.getBoundingBox().getCenter());
+        player.setItemInHand(InteractionHand.MAIN_HAND, RRItems.BLOWPIPE.toStack());
+        player.getInventory().add(RRItems.MOSSBERRY.toStack(3));
+        return player;
+    }
+
+    /** A creature that holds the grappling hook and shoots its anchor at the given point, as a player would. */
+    private static GrapplingAnchor shootAnchor(GameTestHelper helper, Mob owner, Vec3 at) {
+        owner.setItemSlot(EquipmentSlot.MAINHAND, RRItems.GRAPPLING_HOOK.toStack());
+        GrapplingAnchor anchor = new GrapplingAnchor(helper.getLevel(), owner);
+        Vec3 aim = helper.absoluteVec(at).subtract(anchor.position());
+        anchor.shoot(aim.x, aim.y, aim.z, 2.5F, 0.0F);
+        helper.getLevel().addFreshEntity(anchor);
+        return anchor;
+    }
+
+    // An anchor in the side of the top of a wall pulls its owner up onto the wall, then comes back.
+    private static void grapplingHookClimbsWall(GameTestHelper helper) {
+        // Thirty blocks over the blowpipe test and under the next one: endFight clears sixteen blocks around its floor.
+        int y = 210;
+        fightFloor(helper, y);
+        for (int z = 6; z <= 18; z++) {
+            for (int dy = 0; dy < 3; dy++) {
+                helper.getLevel().setBlockAndUpdate(helper.absolutePos(new BlockPos(12, y + dy, z)), Blocks.STONE.defaultBlockState());
+            }
+        }
+        Snail owner = fightTarget(helper, 4, y, 12);
+        GrapplingAnchor anchor = shootAnchor(helper, owner, new Vec3(12.0, y + 2.5, 12.5));
+
+        helper.succeedWhen(() -> {
+            helper.assertTrue(anchor.isRemoved(), "the anchor is still out");
+            Vec3 at = helper.relativeVec(owner.position());
+            helper.assertTrue(owner.onGround() && Math.abs(at.y - (y + 3)) < 0.01 && at.x > 12.0 && at.x < 13.0,
+                "the owner of the anchor stands at " + at + ", not on the wall");
+            endFight(helper, y);
+        });
+    }
+
+    // An anchor in a creature pulls it to the owner of the anchor, then comes back.
+    private static void grapplingHookPullsCreature(GameTestHelper helper) {
+        int y = 240;
+        fightFloor(helper, y);
+        Snail owner = fightTarget(helper, 4, y, 12);
+        Snail target = fightTarget(helper, 16, y, 12);
+        GrapplingAnchor anchor = shootAnchor(helper, owner, helper.relativeVec(target.getBoundingBox().getCenter()));
+
+        boolean[] hooked = {false};
+        helper.onEachTick(() -> hooked[0] |= anchor.getHookedEntity() == target);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(hooked[0], "the anchor did not hook the creature");
+            helper.assertTrue(anchor.isRemoved(), "the anchor is still out");
+            helper.assertTrue(target.distanceTo(owner) < 4.0, "the creature stays " + target.distanceTo(owner) + " from the owner");
             endFight(helper, y);
         });
     }

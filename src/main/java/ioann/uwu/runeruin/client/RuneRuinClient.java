@@ -7,11 +7,17 @@ import ioann.uwu.runeruin.client.model.MossyRamModel;
 import ioann.uwu.runeruin.client.model.SnailModel;
 import ioann.uwu.runeruin.dimension.RRDimension;
 import ioann.uwu.runeruin.entities.RREntityTypes;
+import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.particles.RRParticleTypes;
 import java.util.List;
 import net.minecraft.client.Camera;
 import net.minecraft.client.color.block.BlockTintSources;
+import net.minecraft.client.particle.EndRodParticle;
 import net.minecraft.client.particle.FallingLeavesParticle;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.world.entity.player.PlayerModelType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -23,11 +29,14 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.FlipFrameEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterConditionalItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.RegisterCustomEnvironmentEffectRendererEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
 
 @Mod(value = RR.MODID, dist = Dist.CLIENT)
 @EventBusSubscriber(modid = RR.MODID, value = Dist.CLIENT)
@@ -90,6 +99,12 @@ public class RuneRuinClient {
                 new FallingLeavesParticle(level, x, y, z, sprites.get(random), 0.25F, 2.0F, false, true, 2.0F, 0.0F));
         event.registerSpriteSet(RRParticleTypes.VOID_DUST.get(), sprites -> (_, level, x, y, z, _, _, _, random) ->
                 new VoidDustParticle(level, x, y, z, sprites.get(random)));
+        // The end rod glitter, white to the end instead of fading to warm.
+        event.registerSpriteSet(RRParticleTypes.STAR.get(), sprites -> (_, level, x, y, z, xd, yd, zd, _) -> {
+            EndRodParticle star = new EndRodParticle(level, x, y, z, xd, yd, zd, sprites);
+            star.setFadeColor(0xFFFFFF);
+            return star;
+        });
     }
 
     @SubscribeEvent
@@ -107,6 +122,32 @@ public class RuneRuinClient {
         event.registerEntityRenderer(RREntityTypes.MOSSY_WARRIOR.get(),
                 context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel::warrior, 0.4F));
         event.registerEntityRenderer(RREntityTypes.RUNIC_MINECART.get(), RunicMinecartRenderer::new);
+        // The berry's own item at half the size of a snowball.
+        event.registerEntityRenderer(RREntityTypes.BLOWPIPE_BERRY.get(), context -> new ThrownItemRenderer<>(context, 0.5F, false));
+        event.registerEntityRenderer(RREntityTypes.GRAPPLING_ANCHOR.get(), GrapplingAnchorRenderer::new);
+    }
+
+    @SubscribeEvent
+    static void registerConditionalItemModelProperties(RegisterConditionalItemModelPropertyEvent event) {
+        event.register(RR.id("grappling_hook/anchor_out"), GrapplingAnchorOut.MAP_CODEC);
+    }
+
+    @SubscribeEvent
+    static void addEntityLayers(EntityRenderersEvent.AddLayers event) {
+        for (PlayerModelType skin : event.getSkins()) {
+            AvatarRenderer<AbstractClientPlayer> renderer = event.getPlayerRenderer(skin);
+            renderer.addLayer(new BlowpipeLayer(renderer));
+        }
+    }
+
+    @SubscribeEvent
+    static void registerRenderStateModifiers(RegisterRenderStateModifiersEvent event) {
+        event.registerAvatarEntityModifier(BlowpipeLayer.STATE_MODIFIER);
+    }
+
+    @SubscribeEvent
+    static void registerClientExtensions(RegisterClientExtensionsEvent event) {
+        event.registerItem(BlowpipeLayer.ITEM_EXTENSIONS, RRItems.BLOWPIPE.get());
     }
 
     @SubscribeEvent

@@ -50,7 +50,7 @@ NORMALS = {"up": (0, 1, 0), "down": (0, -1, 0), "north": (0, 0, -1), "south": (0
            "west": (-1, 0, 0), "east": (1, 0, 0)}
 # FaceInfo: per face, the corners of vertices 0..3 as (x, y, z) picks from (from, to).
 VERTICES = {
-    "down": ("ftt", "fff", "tff", "tft"),
+    "down": ("fft", "fff", "tff", "tft"),
     "up": ("ftf", "ftt", "ttt", "ttf"),
     "north": ("ttf", "tff", "fff", "ftf"),
     "south": ("ftt", "fft", "tft", "ttt"),

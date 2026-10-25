@@ -117,6 +117,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> VOID_AMETHYST = RR.resourceKey(Registries.PLACED_FEATURE, "void_amethyst");
     public static final ResourceKey<PlacedFeature> DUST_BLOOM = RR.resourceKey(Registries.PLACED_FEATURE, "dust_bloom");
     public static final ResourceKey<PlacedFeature> BEAD_VINE = RR.resourceKey(Registries.PLACED_FEATURE, "bead_vine");
+    public static final ResourceKey<PlacedFeature> STAR = RR.resourceKey(Registries.PLACED_FEATURE, "star");
 
     // Height bands that decorations start their surface scan from.
     private static final int BLOOMING_FLOOR_TOP = BLOOMING_CAVES_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_TERRAIN_HEIGHT;
@@ -271,7 +272,7 @@ public class RRPlacedFeatures {
 
         ctx.register(POWDERED_MOSS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.POWDERED_MOSS),
-                floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 0)
+                floorPlacement(CountPlacement.of(3), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 0)
         ));
 
         // The count follows a slow noise: glades with several groups of mounds, and none between them.
@@ -432,6 +433,19 @@ public class RRPlacedFeatures {
         ctx.register(BEAD_VINE, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.BEAD_VINE),
                 voidCeilingPlacement(CountPlacement.of(40))
+        ));
+        // A cluster of stars once in about four chunks, right above the abyss: Y 0-5 with the spread.
+        ctx.register(STAR, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.STAR),
+                List.of(
+                        RarityFilter.onAverageOnceEvery(4),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(1), VerticalAnchor.aboveBottom(4)),
+                        CountPlacement.of(UniformInt.of(3, 6)),
+                        RandomOffsetPlacement.of(UniformInt.of(-3, 3), UniformInt.of(-1, 1)),
+                        BlockPredicateFilter.forPredicate(BlockPredicate.ONLY_IN_AIR_PREDICATE),
+                        BiomeFilter.biome()
+                )
         ));
     }
 

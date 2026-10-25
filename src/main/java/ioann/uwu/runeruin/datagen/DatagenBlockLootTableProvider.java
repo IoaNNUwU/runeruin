@@ -2,6 +2,7 @@ package ioann.uwu.runeruin.datagen;
 
 import ioann.uwu.runeruin.blocks.DeepMossLayerBlock;
 import ioann.uwu.runeruin.blocks.RRBlocks;
+import ioann.uwu.runeruin.items.RRItems;
 import java.util.Set;
 import net.minecraft.advancements.predicates.StatePropertiesPredicate;
 import net.minecraft.core.Holder;
@@ -126,6 +127,7 @@ public class DatagenBlockLootTableProvider extends BlockLootSubProvider {
                 .when(LootItemEntityPropertyCondition.entityPresent(LootContext.EntityTarget.THIS))
                 .add(LootItem.lootTableItem(block).when(ExplosionCondition.survivesExplosion()))
         ));
+        dropOther(RRBlocks.STAR.get(), RRItems.STARDUST.get());
 
         add(RRBlocks.RUNE_RUIN_PORTAL.get(), noDrop());
 
