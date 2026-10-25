@@ -7,6 +7,7 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TerrainWriter;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerRelief;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
@@ -83,6 +84,7 @@ public class RRChunkGenerator extends ChunkGenerator {
         // ChunkMap calls this right after creating the level's RandomState, and it is the only place the
         // world seed reaches the generator. Bind it before super: structure placement already asks for biomes.
         LazyNoise.bindSeed(randomState, legacyLevelSeed);
+        TopLayerRelief.bind(randomState, getBiomeSource());
         return super.createState(structureSets, randomState, legacyLevelSeed);
     }
 

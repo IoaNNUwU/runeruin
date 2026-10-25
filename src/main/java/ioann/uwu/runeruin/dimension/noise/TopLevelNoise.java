@@ -33,4 +33,9 @@ public class TopLevelNoise implements Noise {
 
         return base * 0.45f + detail * 0.5f;
     }
+
+    /** The fine detail alone, from 0 to 1, without the shape of the islands. */
+    public float detail(float x, float z) {
+        return this.detailNoise.noise(x, z);
+    }
 }
