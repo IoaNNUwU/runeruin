@@ -34,6 +34,7 @@ public final class RRTerrainSurfaces {
     private static final SurfaceResolver MOSS = random -> RRBlocks.DEEP_MOSS.get().defaultBlockState();
     private static final SurfaceResolver PALE_MOSS = fixed(Blocks.PALE_MOSS_BLOCK);
     private static final SurfaceResolver GRASS = fixed(Blocks.GRASS_BLOCK);
+    private static final SurfaceResolver SAND = fixed(Blocks.SAND);
     private static final SurfaceResolver GLOWING_MOSS = random ->
             GlowingMossBlock.stateForPlacement(RRBlocks.GLOWING_MOSS.get().defaultBlockState(), random);
     private static final SurfaceResolver VOID_STONE = random -> RRBlocks.VOID_STONE.get().defaultBlockState();
@@ -46,6 +47,11 @@ public final class RRTerrainSurfaces {
     static {
         register(RRBiomes.ELDEN_GARDEN, GRASS, MOSS);
         register(RRBiomes.SIMILAR_FOREST, GRASS, MOSS);
+        register(RRBiomes.PLAINS, GRASS, MOSS);
+        register(RRBiomes.HILLS, GRASS, MOSS);
+        register(RRBiomes.SWAMP, GRASS, MOSS);
+        register(RRBiomes.PLATEAU, GRASS, MOSS);
+        register(RRBiomes.DESERT, SAND, MOSS);
 
         register(RRBiomes.GLOWING_ROOTS, MOSS, MOSS);
         register(RRBiomes.GLOWING_BALLS, MOSS, MOSS);
@@ -101,6 +107,10 @@ public final class RRTerrainSurfaces {
         );
     }
 
+    public static BlockState floorFor(Holder<Biome> biome, int x, int y, int z, RandomState randomState) {
+        return floor(biome, surfaceRandom(randomState, x, y, z));
+    }
+
     public static BlockState ceilingFor(Holder<Biome> biome, int x, int y, int z, RandomState randomState) {
         return ceiling(biome, surfaceRandom(randomState, x, y, z));
     }
@@ -124,9 +134,10 @@ public final class RRTerrainSurfaces {
         return PROFILES.containsKey(biome);
     }
 
-    /** Dirt lies under a grass floor. */
-    public static boolean usesGrassySubfloor(Holder<Biome> biome) {
-        return profile(biome).floor == GRASS;
+    /** What lies under the floor: dirt under grass, sandstone under sand, stone under the rest. */
+    public static BlockState subfloorFor(Holder<Biome> biome) {
+        SurfaceResolver floor = profile(biome).floor;
+        return (floor == GRASS ? Blocks.DIRT : floor == SAND ? Blocks.SANDSTONE : Blocks.STONE).defaultBlockState();
     }
 
     private static Profile profile(Holder<Biome> biome) {

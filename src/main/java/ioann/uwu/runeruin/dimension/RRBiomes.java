@@ -14,8 +14,13 @@ import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.DeepRoots;
 import ioann.uwu.runeruin.dimension.biomes.deepcavesceiling.InvertedForest;
 import ioann.uwu.runeruin.dimension.biomes.lostcaves.SparklingCaves;
 import ioann.uwu.runeruin.dimension.biomes.lostcavesceiling.SparklingCavesCeiling;
+import ioann.uwu.runeruin.dimension.biomes.toplayer.Desert;
 import ioann.uwu.runeruin.dimension.biomes.toplayer.EldenGarden;
+import ioann.uwu.runeruin.dimension.biomes.toplayer.Hills;
+import ioann.uwu.runeruin.dimension.biomes.toplayer.Plains;
+import ioann.uwu.runeruin.dimension.biomes.toplayer.Plateau;
 import ioann.uwu.runeruin.dimension.biomes.toplayer.SimilarForest;
+import ioann.uwu.runeruin.dimension.biomes.toplayer.Swamp;
 import ioann.uwu.runeruin.dimension.biomes.voidlayer.VoidBiome;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
@@ -27,6 +32,11 @@ public class RRBiomes {
     // Top Layer
     public static final ResourceKey<Biome> ELDEN_GARDEN = RR.resourceKey(Registries.BIOME, "elden_garden");
     public static final ResourceKey<Biome> SIMILAR_FOREST = RR.resourceKey(Registries.BIOME, "similar_forest");
+    public static final ResourceKey<Biome> PLAINS = RR.resourceKey(Registries.BIOME, "plains");
+    public static final ResourceKey<Biome> HILLS = RR.resourceKey(Registries.BIOME, "hills");
+    public static final ResourceKey<Biome> SWAMP = RR.resourceKey(Registries.BIOME, "swamp");
+    public static final ResourceKey<Biome> PLATEAU = RR.resourceKey(Registries.BIOME, "plateau");
+    public static final ResourceKey<Biome> DESERT = RR.resourceKey(Registries.BIOME, "desert");
 
     // Blooming caves ceiling
     public static final ResourceKey<Biome> GLOWING_ROOTS = RR.resourceKey(Registries.BIOME, "glowing_roots");
@@ -64,6 +74,11 @@ public class RRBiomes {
         // Top Layer
         ctx.register(ELDEN_GARDEN, EldenGarden.bootstrap(placedFeatures, carvers));
         ctx.register(SIMILAR_FOREST, SimilarForest.bootstrap(placedFeatures, carvers));
+        ctx.register(PLAINS, Plains.bootstrap(placedFeatures, carvers));
+        ctx.register(HILLS, Hills.bootstrap(placedFeatures, carvers));
+        ctx.register(SWAMP, Swamp.bootstrap(placedFeatures, carvers));
+        ctx.register(PLATEAU, Plateau.bootstrap(placedFeatures, carvers));
+        ctx.register(DESERT, Desert.bootstrap(placedFeatures, carvers));
 
         // Blooming caves ceiling
         ctx.register(GLOWING_ROOTS, GlowingRoots.bootstrap(placedFeatures, carvers));

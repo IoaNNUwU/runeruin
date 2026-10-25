@@ -14,7 +14,7 @@ Bottom → top (`Const`): Void `0…50` → Lost caves `LOST_CAVES_Y` 56 … `LO
 
 ## Two independent systems
 
-1. **Terrain**: `RRChunkGenerator.fillFromNoise` → `TopLayerAndBloomingCavesGen`, `DeepCavesGen` (deep caves ceiling), `DeepCavesAndLostCavesGen`, `VoidGen`, all in `dimension/chunkgenerator/` with `HangingTerrainGenerator`; `TerracedCeiling` shapes the ceilings of the Void, the Deep and the Blooming caves; pillars and runes in `ArcaneStructureGen`, the rune patterns in `dimension/runes/`; surface blocks per biome in `RRTerrainSurfaces`. Biomes do not carve the caves.
+1. **Terrain**: `RRChunkGenerator.fillFromNoise` → `TopLayerAndBloomingCavesGen`, `DeepCavesGen` (deep caves ceiling), `DeepCavesAndLostCavesGen`, `VoidGen`, all in `dimension/chunkgenerator/` with `HangingTerrainGenerator`; `TerracedCeiling` shapes the ceilings of the Void, the Deep and the Blooming caves; pillars and runes in `ArcaneStructureGen`, the rune patterns in `dimension/runes/`; surface blocks per biome in `RRTerrainSurfaces`. Biomes do not carve the caves; only on the top layer do they shape the land inside the islands, through their `TerrainProfile` (`TopLayerRelief` blends them, `TopLayerAndBloomingCavesGen.topLayerGroundAt` builds the column and its water).
 2. **Decoration**: the vanilla feature pipeline per biome (`worldgen-feature` and `worldgen-biome` skills). `RRBiomeSource.getNoiseBiome` picks a biome by Y and noise from the lists in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`); weights are repeated entries.
 
 ## Noise

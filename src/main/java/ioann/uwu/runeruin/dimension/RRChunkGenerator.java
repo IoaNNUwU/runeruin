@@ -7,6 +7,7 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TerrainWriter;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerRelief;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
@@ -83,6 +84,7 @@ public class RRChunkGenerator extends ChunkGenerator {
         // ChunkMap calls this right after creating the level's RandomState, and it is the only place the
         // world seed reaches the generator. Bind it before super: structure placement already asks for biomes.
         LazyNoise.bindSeed(randomState, legacyLevelSeed);
+        TopLayerRelief.bind(randomState, getBiomeSource());
         return super.createState(structureSets, randomState, legacyLevelSeed);
     }
 
@@ -207,7 +209,8 @@ public class RRChunkGenerator extends ChunkGenerator {
         return new SupportedIslandsNoise(base, ArcaneStructureGen::doGenerateColumn);
     }
 
-    private static final LazyNoise baseTopLevelNoise = new LazyNoise(seed -> withoutSmallIslands(Noise.multi(
+    /** The islands of the top layer: land above {@link SupportedIslandsNoise#LAND}, rising evenly inland from the edge. */
+    public static final LazyNoise baseTopLevelNoise = new LazyNoise(seed -> withoutSmallIslands(Noise.multi(
             new SingleNoise(Noise.hashString("bigNoise1" + seed), 0.5f),
             new SingleNoise(Noise.hashString("bigNoise2" + seed), 0.4f),
             new SingleNoise(Noise.hashString("bigNoise3" + seed), 0.3f)
