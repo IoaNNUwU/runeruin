@@ -14,7 +14,7 @@ What an agent makes is a draft; a person finishes it ([AI_POLICY.md](../../../AI
 | model of a block or an item with a geometry of its own | `assets/runeruin/models/{block,item}/*.json` with `"format_version": "1.21.11"` | Blockbench opens the JSON and saves it with Ctrl+S |
 | model of a mob | `assets/runeruin/models/entity/<name>.bbmodel`: `BlockbenchModel` builds the model of the game from it, the Java model only plays its animations | Blockbench |
 | animations of a mob | the animations of its `.bbmodel`, exported into `client/model/<Model Identifier>Animation.java` | Blockbench, Animate mode, then File → Export → Export Modded Entity Animations (`mob` skill) |
-| texture | PNG in `assets/runeruin/textures/` | Blockbench or any editor |
+| texture | PNG in `assets/runeruin/textures/` | Blockbench or any editor; a mob's project only links to the PNG and never keeps a copy of it (`mob` skill), so the texture opened with the project is always the one the game draws |
 | man-made build: a ship, a hut, a dungeon room | text templates `data/runeruin/structure/<folder>/<name>.snbt` | loads it with `/rrload`, rebuilds it in the game and saves it back with `/rrsave` (`worldgen-structure` skill) |
 
 Data generation builds no geometry. It writes blockstates, item definitions, models on vanilla parents (cube, cross, stairs) and the models derived from a file, such as a plant lifted onto moss (`datagen/models/ModelJson`).

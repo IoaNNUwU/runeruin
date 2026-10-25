@@ -7,7 +7,6 @@ import net.minecraft.client.animation.KeyframeAnimation;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.util.Mth;
 
@@ -15,20 +14,15 @@ import net.minecraft.util.Mth;
  * The Mossy Prophet and the Mossy Warrior: a boxy body on short legs with a small ram's head on top of its front.
  * Their shapes and animations are the Blockbench projects {@code mossy_prophet.bbmodel} and
  * {@code mossy_warrior.bbmodel}; the animations are exported from Blockbench into {@link MossyProphetAnimation}
- * and {@link MossyWarriorAnimation}. Each has a second layer for the moss, the same boxes a little larger: the moss
- * lies on the body like wool on a sheep, and the texture decides how far it hangs down the sides.
+ * and {@link MossyWarriorAnimation}. The moss is boxes of the project too, in the bones it grows on: a coat over the
+ * back, lumps, a tuft on the head, a beard and moss on the shoulders; the texture decides how far it hangs down.
  *
  * <p>An animation follows the progress of a movement that the mob counts: its first frame is the start of the
  * movement, its last frame the full pose. The walk loops with the distance walked.</p>
  */
 public class MossyRamModel extends EntityModel<MossyRamRenderState> {
     public static final ModelLayerLocation PROPHET = new ModelLayerLocation(RR.id("mossy_prophet"), "main");
-    public static final ModelLayerLocation PROPHET_MOSS = new ModelLayerLocation(RR.id("mossy_prophet"), "moss");
     public static final ModelLayerLocation WARRIOR = new ModelLayerLocation(RR.id("mossy_warrior"), "main");
-    public static final ModelLayerLocation WARRIOR_MOSS = new ModelLayerLocation(RR.id("mossy_warrior"), "moss");
-
-    public static final CubeDeformation PROPHET_MOSS_DEPTH = new CubeDeformation(1.0F);
-    public static final CubeDeformation WARRIOR_MOSS_DEPTH = new CubeDeformation(0.5F);
 
     /** A second of the walk is one stride, the swing of the vanilla mobs' legs: {@code cos(0.6662 * distance)}. */
     private static final float STRIDES = 1000.0F * 0.6662F / (50.0F * Mth.TWO_PI);
@@ -58,18 +52,18 @@ public class MossyRamModel extends EntityModel<MossyRamRenderState> {
                 MossyProphetAnimation.hold, MossyProphetAnimation.crouch, MossyProphetAnimation.somersault);
     }
 
-    /** The Prophet at a third of its size, with fewer boxes: horns of three bars and no tips. */
+    /** The Prophet at a third of its size, with fewer boxes. */
     public static MossyRamModel warrior(ModelPart root) {
         return new MossyRamModel(root, MossyWarriorAnimation.walk, MossyWarriorAnimation.punch, MossyWarriorAnimation.raise,
                 MossyWarriorAnimation.hold, MossyWarriorAnimation.crouch, MossyWarriorAnimation.somersault);
     }
 
-    public static LayerDefinition createProphet(CubeDeformation deformation) {
-        return BlockbenchModel.layer("mossy_prophet", deformation, MossyRamModel::prophet);
+    public static LayerDefinition createProphet() {
+        return BlockbenchModel.layer("mossy_prophet", MossyRamModel::prophet);
     }
 
-    public static LayerDefinition createWarrior(CubeDeformation deformation) {
-        return BlockbenchModel.layer("mossy_warrior", deformation, MossyRamModel::warrior);
+    public static LayerDefinition createWarrior() {
+        return BlockbenchModel.layer("mossy_warrior", MossyRamModel::warrior);
     }
 
     @Override

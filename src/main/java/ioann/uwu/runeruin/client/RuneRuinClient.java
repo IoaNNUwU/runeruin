@@ -12,7 +12,6 @@ import ioann.uwu.runeruin.particles.RRParticleTypes;
 import java.util.List;
 import net.minecraft.client.Camera;
 import net.minecraft.client.color.block.BlockTintSources;
-import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.particle.EndRodParticle;
 import net.minecraft.client.particle.FallingLeavesParticle;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -111,19 +110,17 @@ public class RuneRuinClient {
     @SubscribeEvent
     static void registerEntityLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(SnailModel.LAYER_LOCATION, SnailModel::createBodyLayer);
-        event.registerLayerDefinition(MossyRamModel.PROPHET, () -> MossyRamModel.createProphet(CubeDeformation.NONE));
-        event.registerLayerDefinition(MossyRamModel.PROPHET_MOSS, () -> MossyRamModel.createProphet(MossyRamModel.PROPHET_MOSS_DEPTH));
-        event.registerLayerDefinition(MossyRamModel.WARRIOR, () -> MossyRamModel.createWarrior(CubeDeformation.NONE));
-        event.registerLayerDefinition(MossyRamModel.WARRIOR_MOSS, () -> MossyRamModel.createWarrior(MossyRamModel.WARRIOR_MOSS_DEPTH));
+        event.registerLayerDefinition(MossyRamModel.PROPHET, MossyRamModel::createProphet);
+        event.registerLayerDefinition(MossyRamModel.WARRIOR, MossyRamModel::createWarrior);
     }
 
     @SubscribeEvent
     static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(RREntityTypes.SNAIL.get(), SnailRenderer::new);
         event.registerEntityRenderer(RREntityTypes.MOSSY_PROPHET.get(),
-                context -> new MossyRamRenderer(context, MossyRamModel.PROPHET, MossyRamModel.PROPHET_MOSS, MossyRamModel::prophet, 1.3F));
+                context -> new MossyRamRenderer(context, MossyRamModel.PROPHET, MossyRamModel::prophet, 1.3F));
         event.registerEntityRenderer(RREntityTypes.MOSSY_WARRIOR.get(),
-                context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel.WARRIOR_MOSS, MossyRamModel::warrior, 0.4F));
+                context -> new MossyRamRenderer(context, MossyRamModel.WARRIOR, MossyRamModel::warrior, 0.4F));
         event.registerEntityRenderer(RREntityTypes.RUNIC_MINECART.get(), RunicMinecartRenderer::new);
         // The berry's own item at half the size of a snowball.
         event.registerEntityRenderer(RREntityTypes.BLOWPIPE_BERRY.get(), context -> new ThrownItemRenderer<>(context, 0.5F, false));
