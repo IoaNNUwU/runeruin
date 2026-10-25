@@ -108,6 +108,7 @@ public final class TopLayerRelief {
         float plateau = 0;
         float water = 0;
         float wet = 0;
+        float islandDetail = 0;
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
                 TerrainProfile profile = profiles[(centerX + dx) * BIOMES + centerZ + dz];
@@ -117,20 +118,21 @@ public final class TopLayerRelief {
                 hills += weight * profile.hills();
                 bumps += weight * profile.bumps();
                 plateau += weight * profile.plateau();
+                islandDetail += weight * profile.islandDetail();
                 if (profile.water() > 0) {
                     water += weight * profile.water();
                     wet += weight;
                 }
             }
         }
-        return new Land(height / total, hills / total, bumps / total, plateau / total, wet > 0 ? water / wet : 0, wet / total);
+        return new Land(height / total, hills / total, bumps / total, plateau / total, wet > 0 ? water / wet : 0, wet / total, islandDetail / total);
     }
 
     /**
      * A blended {@link TerrainProfile}: {@code water} is the height of the water of the biomes around that have
      * it, and {@code wet} the share of those biomes, 1 where every biome around has water.
      */
-    record Land(float height, float hills, float bumps, float plateau, float water, float wet) {
+    record Land(float height, float hills, float bumps, float plateau, float water, float wet, float islandDetail) {
 
         static Land lerp(float x, float z, Land x0z0, Land x1z0, Land x0z1, Land x1z1) {
             return new Land(
@@ -139,7 +141,8 @@ public final class TopLayerRelief {
                     lerp(x, z, x0z0.bumps, x1z0.bumps, x0z1.bumps, x1z1.bumps),
                     lerp(x, z, x0z0.plateau, x1z0.plateau, x0z1.plateau, x1z1.plateau),
                     lerp(x, z, x0z0.water, x1z0.water, x0z1.water, x1z1.water),
-                    lerp(x, z, x0z0.wet, x1z0.wet, x0z1.wet, x1z1.wet)
+                    lerp(x, z, x0z0.wet, x1z0.wet, x0z1.wet, x1z1.wet),
+                    lerp(x, z, x0z0.islandDetail, x1z0.islandDetail, x0z1.islandDetail, x1z1.islandDetail)
             );
         }
 

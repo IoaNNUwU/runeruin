@@ -295,6 +295,7 @@ public class TopLayerAndBloomingCavesGen {
     }
 
     private static final LazyNoise hillsNoise = LazyNoise.single("topLayerHills", 0.6f);
+    private static final LazyNoise bumpsNoise = LazyNoise.single("topLayerBumps", 2f);
     // How far inland a column lies is measured by the island noise above its edge, which rises evenly from the edge.
     // Up to the first value the island keeps its own shape and the hanging soil on its edge. From there the ground
     // turns into the height of the biomes, whole at the second value, and their hills and bumps rise with it, to
@@ -364,8 +365,11 @@ public class TopLayerAndBloomingCavesGen {
         float hills = hillsNoise.getOrCreateNoise(randomState).noise(x, z);
         // A plateau squeezes the slopes of its hills into a band: flat tops and bottoms, steep sides.
         hills = Mth.lerp(land.plateau(), hills, smooth(hills, 0.4f, 0.6f));
-        float bumps = ((TopLevelNoise) topLevelNoise.getOrCreateNoise(randomState)).detail(x, z);
-        return land.hills() * hills + land.bumps() * bumps;
+        float relief = land.hills() * hills + land.bumps() * bumpsNoise.getOrCreateNoise(randomState).noise(x, z);
+        if (land.islandDetail() > 0) {
+            relief += land.islandDetail() * ((TopLevelNoise) topLevelNoise.getOrCreateNoise(randomState)).detail(x, z);
+        }
+        return relief;
     }
 
     /** 0 up to {@code from}, 1 from {@code to}, smooth between. */

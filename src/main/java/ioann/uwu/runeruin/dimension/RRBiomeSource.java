@@ -7,6 +7,8 @@ import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
+import ioann.uwu.runeruin.dimension.noise.Noise;
+import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -15,6 +17,7 @@ import net.minecraft.core.HolderGetter;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
@@ -55,6 +58,14 @@ public class RRBiomeSource extends BiomeSource {
     // the edge of the island (continentalness), which every biome takes whole for now.
     private static final LazyNoise TOP_HUMIDITY = LazyNoise.single("topLevelHumidityNoise", 0.2f);
     private static final LazyNoise TOP_LANDFORM = LazyNoise.single("topLevelLandformNoise", 0.25f);
+    // The top layer is cut into cells around scattered points, their borders bent by a noise, and each cell takes
+    // the biome of the climate at its point. A biome is never narrower than a cell: picked straight from the
+    // climate, it ran in thin strips where the climate passed through its range on the way between two others.
+    private static final int CELL = 80;
+    private static final float CELL_BEND = 24;
+    private static final LazyNoise CELL_POINTS = new LazyNoise(seed -> new PositionalRandomNoise("topLevelBiomeCells", seed));
+    private static final LazyNoise CELL_BEND_X = LazyNoise.single("topLevelBiomeBendX", 1f);
+    private static final LazyNoise CELL_BEND_Z = LazyNoise.single("topLevelBiomeBendZ", 1f);
     private static final Climate.Parameter ANY = Climate.Parameter.span(-1, 1);
     private static final Climate.Parameter UNUSED = Climate.Parameter.point(0);
 
@@ -162,11 +173,31 @@ public class RRBiomeSource extends BiomeSource {
 
     /** The biome of the top layer in this column. The land of the column follows its {@link TerrainProfile}. */
     public Holder<Biome> topLayerBiome(int x, int z, Climate.Sampler sampler) {
+        float bentX = x + (CELL_BEND_X.getOrCreateNoise(sampler).noise(x, z) * 2 - 1) * CELL_BEND;
+        float bentZ = z + (CELL_BEND_Z.getOrCreateNoise(sampler).noise(x, z) * 2 - 1) * CELL_BEND;
+        Noise points = CELL_POINTS.getOrCreateNoise(sampler);
+        int cellX = Mth.floor(bentX / CELL);
+        int cellZ = Mth.floor(bentZ / CELL);
+        float nearest = Float.MAX_VALUE;
+        int pointX = 0;
+        int pointZ = 0;
+        for (int i = cellX - 1; i <= cellX + 1; i++) {
+            for (int j = cellZ - 1; j <= cellZ + 1; j++) {
+                float candidateX = (i + points.noise(i, 0, j)) * CELL;
+                float candidateZ = (j + points.noise(i, 1, j)) * CELL;
+                float distance = Mth.square(candidateX - bentX) + Mth.square(candidateZ - bentZ);
+                if (distance < nearest) {
+                    nearest = distance;
+                    pointX = (int) candidateX;
+                    pointZ = (int) candidateZ;
+                }
+            }
+        }
         return layers.getFirst().findValue(Climate.target(
-                climate(LAYER_NOISES.getFirst(), x, z, sampler),
-                climate(TOP_HUMIDITY, x, z, sampler),
-                climate(RRChunkGenerator.flattenedBaseTopLevelNoise, x, z, sampler),
-                climate(TOP_LANDFORM, x, z, sampler),
+                climate(LAYER_NOISES.getFirst(), pointX, pointZ, sampler),
+                climate(TOP_HUMIDITY, pointX, pointZ, sampler),
+                climate(RRChunkGenerator.flattenedBaseTopLevelNoise, pointX, pointZ, sampler),
+                climate(TOP_LANDFORM, pointX, pointZ, sampler),
                 0,
                 0
         ));

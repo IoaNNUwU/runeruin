@@ -19,18 +19,21 @@ import net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent;
  * @param bumps   how high the fine relief rises above it
  * @param plateau 0 for round hills, 1 for hills with flat tops and steep sides
  * @param water   the height up to which water fills the hollows, 0 for none
+ * @param islandDetail how high the fine relief of the islands as they were before the biomes rises: ledges with
+ *                flat tops, kept to bring that look back
  */
-public record TerrainProfile(float height, float hills, float bumps, float plateau, float water) {
+public record TerrainProfile(float height, float hills, float bumps, float plateau, float water, float islandDetail) {
 
     /** The land of a biome without a profile: the top layer as it was before its biomes shaped it. */
-    public static final TerrainProfile DEFAULT = new TerrainProfile(14, 0, 20, 0, 0);
+    public static final TerrainProfile DEFAULT = new TerrainProfile(14, 0, 0, 0, 0, 20);
 
     public static final Codec<TerrainProfile> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.FLOAT.fieldOf("height").forGetter(TerrainProfile::height),
             Codec.FLOAT.optionalFieldOf("hills", 0f).forGetter(TerrainProfile::hills),
             Codec.FLOAT.optionalFieldOf("bumps", 0f).forGetter(TerrainProfile::bumps),
             Codec.floatRange(0, 1).optionalFieldOf("plateau", 0f).forGetter(TerrainProfile::plateau),
-            Codec.FLOAT.optionalFieldOf("water", 0f).forGetter(TerrainProfile::water)
+            Codec.FLOAT.optionalFieldOf("water", 0f).forGetter(TerrainProfile::water),
+            Codec.FLOAT.optionalFieldOf("island_detail", 0f).forGetter(TerrainProfile::islandDetail)
     ).apply(instance, TerrainProfile::new));
 
     public static final DataMapType<Biome, TerrainProfile> DATA_MAP =
