@@ -30,10 +30,10 @@ public class DatagenDataMapProvider extends DataMapProvider {
         builder(TerrainProfile.DATA_MAP)
                 .add(RRBiomes.ELDEN_GARDEN, TerrainProfile.DEFAULT, false)
                 .add(RRBiomes.SIMILAR_FOREST, TerrainProfile.DEFAULT, false)
-                .add(RRBiomes.PLAINS, new TerrainProfile(13, 4, 5, 0, 0), false)
-                .add(RRBiomes.HILLS, new TerrainProfile(12, 30, 8, 0, 0), false)
+                .add(RRBiomes.PLAINS, new TerrainProfile(9, 3, 4, 0, 0), false)
+                .add(RRBiomes.HILLS, new TerrainProfile(9, 32, 6, 0, 0), false)
                 .add(RRBiomes.SWAMP, new TerrainProfile(11, 0, 4, 0, 13), false)
-                .add(RRBiomes.PLATEAU, new TerrainProfile(10, 26, 3, 1, 0), false)
-                .add(RRBiomes.DESERT, new TerrainProfile(12, 7, 4, 0, 0), false);
+                .add(RRBiomes.PLATEAU, new TerrainProfile(8, 28, 3, 1, 0), false)
+                .add(RRBiomes.DESERT, new TerrainProfile(10, 7, 4, 0, 0), false);
     }
 }

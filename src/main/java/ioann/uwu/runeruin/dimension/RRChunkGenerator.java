@@ -209,7 +209,8 @@ public class RRChunkGenerator extends ChunkGenerator {
         return new SupportedIslandsNoise(base, ArcaneStructureGen::doGenerateColumn);
     }
 
-    private static final LazyNoise baseTopLevelNoise = new LazyNoise(seed -> withoutSmallIslands(Noise.multi(
+    /** The islands of the top layer: land above {@link SupportedIslandsNoise#LAND}, rising evenly inland from the edge. */
+    public static final LazyNoise baseTopLevelNoise = new LazyNoise(seed -> withoutSmallIslands(Noise.multi(
             new SingleNoise(Noise.hashString("bigNoise1" + seed), 0.5f),
             new SingleNoise(Noise.hashString("bigNoise2" + seed), 0.4f),
             new SingleNoise(Noise.hashString("bigNoise3" + seed), 0.3f)

@@ -95,6 +95,7 @@ public class TopLayerAndBloomingCavesGen {
     private static final LazyNoise topLevelNoise = RRChunkGenerator.topLevelNoise;
     private static final LazyNoise topLevelBaselineNoise = RRChunkGenerator.topLevelBaselineNoise;
     private static final LazyNoise flattenedBaseTopLevelNoise = RRChunkGenerator.flattenedBaseTopLevelNoise;
+    private static final LazyNoise baseTopLevelNoise = RRChunkGenerator.baseTopLevelNoise;
 
     private static final LazyNoise ceilingReliefNoise = LazyNoise.single("bloomingCavesCeilingRelief", 9f);
 
@@ -254,7 +255,7 @@ public class TopLayerAndBloomingCavesGen {
 
                 float baseLine = column.baseline();
                 int topY = column.topY();
-                Holder<Biome> biome = chunk.getNoiseBiome(QuartPos.fromBlock(xx), QuartPos.fromBlock(topY), QuartPos.fromBlock(zz));
+                Holder<Biome> biome = TopLayerRelief.floorBiome(xx, zz, randomState);
                 BlockState subfloor = RRTerrainSurfaces.subfloorFor(biome);
                 int bottomY = (int) baseLine;
                 int subfloorStartY = Math.max(bottomY, topY - 2);
@@ -265,7 +266,7 @@ public class TopLayerAndBloomingCavesGen {
                     terrain.set(x, y, z, subfloor);
                 }
                 // Grass does not grow under water: there the floor is what lies under it.
-                terrain.set(x, topY, z, ground.waterY() > topY ? subfloor : RRTerrainSurfaces.floorAt(chunk, xx, topY, zz, randomState));
+                terrain.set(x, topY, z, ground.waterY() > topY ? subfloor : RRTerrainSurfaces.floorFor(biome, xx, topY, zz, randomState));
                 for (int y = topY + 1; y <= ground.waterY(); y++) {
                     terrain.set(x, y, z, water);
                 }
@@ -294,10 +295,13 @@ public class TopLayerAndBloomingCavesGen {
     }
 
     private static final LazyNoise hillsNoise = LazyNoise.single("topLayerHills", 0.6f);
-    // The land that the biomes ask for takes over from the shape of an island between these values of its noise,
-    // so every biome keeps the edge of the island and the hanging soil on it as they were.
-    private static final float BIOME_LAND_BEGINS = 0.6f;
-    private static final float BIOME_LAND_WHOLE = 0.72f;
+    // How far inland a column lies is measured by the island noise above its edge, which rises evenly from the edge.
+    // Up to the first value the island keeps its own shape and the hanging soil on its edge. From there the ground
+    // turns into the height of the biomes, whole at the second value, and their hills and bumps rise with it, to
+    // their full height only at the third: the edge never ends in a wall, and the big hills stand inland.
+    private static final float EDGE_KEPT = 0.01f;
+    private static final float BIOME_HEIGHT_WHOLE = 0.12f;
+    private static final float BIOME_RELIEF_WHOLE = 0.45f;
     // Water stays only where every biome around has it and the island is whole. Around it the ground rises above
     // the water, wholly from the second of these values of that share, so that the water never runs off.
     private static final float SHORE_BEGINS = 0.5f;
@@ -315,14 +319,16 @@ public class TopLayerAndBloomingCavesGen {
         if (island.topY() - (int) island.baseline() <= 2) {
             return NO_GROUND;
         }
-        float strength = smooth(flattenedBaseTopLevelNoise.getOrCreateNoise(randomState).noise(x, z), BIOME_LAND_BEGINS, BIOME_LAND_WHOLE);
-        if (strength == 0) {
+        float inland = 2 * baseTopLevelNoise.getOrCreateNoise(randomState).noise(x, z) - 1;
+        if (inland <= EDGE_KEPT) {
             return new TopLayerGround(island, NO_WATER);
         }
         TopLayerRelief.Land land = TopLayerRelief.at(x, z, randomState.sampler());
         float islandHeight = island.topY() - island.baseline();
-        float height = Mth.lerp(strength, islandHeight, biomeLandHeight(x, z, land, randomState));
-        float wet = land.wet() * strength;
+        float biomeHeight = smooth(inland, EDGE_KEPT, BIOME_HEIGHT_WHOLE);
+        float height = Mth.lerp(biomeHeight, islandHeight, land.height())
+                + smooth(inland, EDGE_KEPT, BIOME_RELIEF_WHOLE) * biomeRelief(x, z, land, randomState);
+        float wet = land.wet() * biomeHeight;
         boolean pool = wet > 0.999f;
         if (!pool && land.water() > 0) {
             height = Math.max(height, (land.water() + 1) * smooth(wet, SHORE_BEGINS, SHORE_WHOLE));
@@ -353,13 +359,13 @@ public class TopLayerAndBloomingCavesGen {
         return Math.floorDiv((int) (baseline + water), WATER_STEP) * WATER_STEP;
     }
 
-    /** The height of the land that the biomes around ask for, above the underside of the island. */
-    private static float biomeLandHeight(int x, int z, TopLayerRelief.Land land, RandomState randomState) {
+    /** The hills and bumps that the biomes around raise above their height. */
+    private static float biomeRelief(int x, int z, TopLayerRelief.Land land, RandomState randomState) {
         float hills = hillsNoise.getOrCreateNoise(randomState).noise(x, z);
-        // A plateau squeezes the slopes of its hills into a narrow band: flat tops and bottoms, steep sides.
-        hills = Mth.lerp(land.plateau(), hills, smooth(hills, 0.46f, 0.54f));
+        // A plateau squeezes the slopes of its hills into a band: flat tops and bottoms, steep sides.
+        hills = Mth.lerp(land.plateau(), hills, smooth(hills, 0.4f, 0.6f));
         float bumps = ((TopLevelNoise) topLevelNoise.getOrCreateNoise(randomState)).detail(x, z);
-        return land.height() + land.hills() * hills + land.bumps() * bumps;
+        return land.hills() * hills + land.bumps() * bumps;
     }
 
     /** 0 up to {@code from}, 1 from {@code to}, smooth between. */
@@ -370,14 +376,13 @@ public class TopLayerAndBloomingCavesGen {
 
     // The hanging soil is of the floor of the island beside it: no sand, which would fall, but what lies under it.
     private static BlockState hangingSoilCap(ChunkAccess chunk, BlockPos start, RandomState randomState) {
-        BlockState floor = RRTerrainSurfaces.floorAt(chunk, start.getX(), start.getY() + 1, start.getZ(), randomState);
-        return floor.getBlock() instanceof FallingBlock ? hangingSoilBody(chunk, start, randomState) : floor;
+        Holder<Biome> biome = TopLayerRelief.floorBiome(start.getX(), start.getZ(), randomState);
+        BlockState floor = RRTerrainSurfaces.floorFor(biome, start.getX(), start.getY() + 1, start.getZ(), randomState);
+        return floor.getBlock() instanceof FallingBlock ? RRTerrainSurfaces.subfloorFor(biome) : floor;
     }
 
     private static BlockState hangingSoilBody(ChunkAccess chunk, BlockPos start, RandomState randomState) {
-        return RRTerrainSurfaces.subfloorFor(chunk.getNoiseBiome(
-                QuartPos.fromBlock(start.getX()), QuartPos.fromBlock(start.getY() + 1), QuartPos.fromBlock(start.getZ())
-        ));
+        return RRTerrainSurfaces.subfloorFor(TopLayerRelief.floorBiome(start.getX(), start.getZ(), randomState));
     }
 
     /** An island of the top layer or of the Deep caves floor: the relief noise stands on a baseline from {@code baseY}. */

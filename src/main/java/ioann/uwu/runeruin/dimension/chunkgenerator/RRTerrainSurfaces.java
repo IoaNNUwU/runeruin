@@ -107,6 +107,10 @@ public final class RRTerrainSurfaces {
         );
     }
 
+    public static BlockState floorFor(Holder<Biome> biome, int x, int y, int z, RandomState randomState) {
+        return floor(biome, surfaceRandom(randomState, x, y, z));
+    }
+
     public static BlockState ceilingFor(Holder<Biome> biome, int x, int y, int z, RandomState randomState) {
         return ceiling(biome, surfaceRandom(randomState, x, y, z));
     }

@@ -1,11 +1,16 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
 import com.google.common.collect.MapMaker;
+import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.TerrainProfile;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -23,6 +28,7 @@ public final class TopLayerRelief {
     // The land of a chunk is kept at the corners of its quarts, 5 x 5 of them, blended from the biomes around them.
     private static final int CORNERS = 5;
     private static final int BIOMES = CORNERS + 2 * RADIUS;
+    private static final Identifier FLOOR_SCATTER = RR.id("top_layer_floor_scatter");
 
     private final RRBiomeSource biomes;
     // The last chunks asked about, in the slot of their low coordinates, as in SupportedIslandsNoise.
@@ -39,11 +45,24 @@ public final class TopLayerRelief {
     }
 
     static Land at(int x, int z, Climate.Sampler sampler) {
+        return of(sampler).land(x, z, sampler);
+    }
+
+    /**
+     * The biome whose floor lies on this column: the biome of the block itself with its border scattered by up to
+     * 2 blocks, not the 4 x 4 squares in which a chunk keeps its biomes.
+     */
+    static Holder<Biome> floorBiome(int x, int z, RandomState randomState) {
+        RandomSource random = randomState.getOrCreateRandomFactory(FLOOR_SCATTER).at(x, 0, z);
+        return of(randomState.sampler()).biomes.topLayerBiome(x + random.nextInt(5) - 2, z + random.nextInt(5) - 2, randomState.sampler());
+    }
+
+    private static TopLayerRelief of(Climate.Sampler sampler) {
         TopLayerRelief relief = LEVELS.get(sampler);
         if (relief == null) {
             throw new IllegalStateException("No biome source is bound to this RandomState; call TopLayerRelief.bind first");
         }
-        return relief.land(x, z, sampler);
+        return relief;
     }
 
     private Land land(int x, int z, Climate.Sampler sampler) {
