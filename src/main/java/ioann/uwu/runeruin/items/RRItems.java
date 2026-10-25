@@ -104,6 +104,12 @@ public class RRItems {
             properties -> properties.spawnEgg(RREntityTypes.MOSSY_WARRIOR.get())
     );
 
+    public static final DeferredItem<Item> COLOSSUS_SPAWN_EGG = REGISTRY.registerItem(
+            "colossus_spawn_egg",
+            SpawnEggItem::new,
+            properties -> properties.spawnEgg(RREntityTypes.COLOSSUS.get())
+    );
+
     public static final DeferredItem<Item> SNAIL_SPAWN_EGG = REGISTRY.registerItem(
             "snail_spawn_egg",
             SpawnEggItem::new,
