@@ -39,7 +39,7 @@ public final class HangingTracksStructure extends Structure {
         int centerX = chunkPos.getMiddleBlockX();
         int centerZ = chunkPos.getMiddleBlockZ();
 
-        List<HangingPiece> pieces = HangingTracksLayout.generate(centerX, centerZ, ctx.random(), terrain(ctx.randomState()));
+        List<StructurePiece> pieces = HangingTracksLayout.generate(centerX, centerZ, ctx.random(), terrain(ctx.randomState()), ctx.structureTemplateManager());
         if (pieces.isEmpty()) {
             return Optional.empty();
         }

@@ -1,0 +1,16 @@
+{
+	"format_version": "1.21.11",
+	"parent": "runeruin:item/blowpipe_in_hand",
+	"display": {
+		"head": {
+			"rotation": [-90, 0, 0],
+			"translation": [0, -4, -16],
+			"scale": [1.4, 1.4, 1.4]
+		},
+		"firstperson_righthand": {
+			"rotation": [-90, 0, 0],
+			"translation": [-9, 3, 0],
+			"scale": [0.68, 0.68, 0.68]
+		}
+	}
+}

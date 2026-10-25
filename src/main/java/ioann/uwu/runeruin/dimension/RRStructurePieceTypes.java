@@ -20,6 +20,6 @@ public class RRStructurePieceTypes {
     public static final DeferredHolder<StructurePieceType, StructurePieceType> BAOBAB_PIECE = REGISTRY.register("baobab_piece", () -> (StructurePieceType.ContextlessType) BaobabPiece::new);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> DINOSAUR_SKELETON_PIECE = REGISTRY.register("dinosaur_skeleton_piece", () -> (StructurePieceType.ContextlessType) DinosaurSkeletonPiece::new);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> HANGING_TRACK = REGISTRY.register("hanging_track", () -> (StructurePieceType.ContextlessType) HangingTrackPiece::load);
-    public static final DeferredHolder<StructurePieceType, StructurePieceType> HANGING_PLATFORM = REGISTRY.register("hanging_platform", () -> (StructurePieceType.ContextlessType) HangingPlatformPiece::new);
+    public static final DeferredHolder<StructurePieceType, StructurePieceType> HANGING_PLATFORM = REGISTRY.register("hanging_platform", () -> (StructurePieceType.StructureTemplateType) HangingPlatformPiece::new);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> TEMPLATE = REGISTRY.register("template", () -> (StructurePieceType.StructureTemplateType) TemplatePiece::new);
 }

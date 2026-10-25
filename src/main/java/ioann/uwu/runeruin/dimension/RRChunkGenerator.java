@@ -215,8 +215,8 @@ public class RRChunkGenerator extends ChunkGenerator {
 
     public static final LazyNoise flattenedBaseTopLevelNoise = LazyNoise.chain(baseTopLevelNoise, noise -> Noise.flatten(0.152f, noise));
 
-    public static final LazyNoise topLevelNoise = new LazyNoise(seed -> new TopLevelNoise(
-            "topLevelDetail", seed, baseTopLevelNoise.forSeed(seed), flattenedBaseTopLevelNoise.forSeed(seed)
+    public static final LazyNoise topLevelNoise = LazyNoise.ofLevel(level -> new TopLevelNoise(
+            "topLevelDetail", level.seed(), baseTopLevelNoise.forLevel(level), flattenedBaseTopLevelNoise.forLevel(level)
     ));
 
     // The baseline of the top layer islands, of the Blooming caves ceiling, the Lost caves ceiling and the Deep
@@ -237,8 +237,8 @@ public class RRChunkGenerator extends ChunkGenerator {
 
     public static final LazyNoise flattenedLostBaseTopLevelNoise = LazyNoise.chain(baseLostTopLevelNoise, noise -> Noise.flatten(0.152f, noise));
 
-    public static final LazyNoise lostTopLevelNoise = new LazyNoise(seed -> new TopLevelNoise(
-            "lostTopLevelDetail", seed, baseLostTopLevelNoise.forSeed(seed), flattenedLostBaseTopLevelNoise.forSeed(seed)
+    public static final LazyNoise lostTopLevelNoise = LazyNoise.ofLevel(level -> new TopLevelNoise(
+            "lostTopLevelDetail", level.seed(), baseLostTopLevelNoise.forLevel(level), flattenedLostBaseTopLevelNoise.forLevel(level)
     ));
 
     /** The first free block above an island of the top layer, or else above the Blooming caves floor, open to the sky there. */

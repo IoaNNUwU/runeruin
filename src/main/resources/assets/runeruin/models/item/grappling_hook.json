@@ -1,0 +1,613 @@
+{
+	"format_version": "1.21.11",
+	"textures": {
+		"chain": "minecraft:block/iron_chain",
+		"copper": "minecraft:block/copper_block",
+		"iron": "minecraft:block/anvil",
+		"particle": "minecraft:block/copper_block",
+		"rune": "runeruin:block/arcane_stone_portal_runes",
+		"wood": "runeruin:block/elden_log"
+	},
+	"elements": [
+		{
+			"name": "muzzle_band",
+			"from": [
+				6.5,
+				8.5,
+				10
+			],
+			"to": [
+				9.5,
+				11.5,
+				11
+			],
+			"faces": {
+				"north": {
+					"texture": "#copper"
+				},
+				"east": {
+					"texture": "#copper"
+				},
+				"south": {
+					"texture": "#copper"
+				},
+				"west": {
+					"texture": "#copper"
+				},
+				"up": {
+					"texture": "#copper"
+				},
+				"down": {
+					"texture": "#copper"
+				}
+			}
+		},
+		{
+			"name": "barrel",
+			"from": [
+				6.75,
+				8.75,
+				11
+			],
+			"to": [
+				9.25,
+				11.25,
+				15.25
+			],
+			"faces": {
+				"north": {
+					"texture": "#wood"
+				},
+				"east": {
+					"texture": "#wood"
+				},
+				"south": {
+					"texture": "#wood"
+				},
+				"west": {
+					"texture": "#wood"
+				},
+				"up": {
+					"texture": "#wood"
+				},
+				"down": {
+					"texture": "#wood"
+				}
+			}
+		},
+		{
+			"name": "rear_band",
+			"from": [
+				6.5,
+				8.5,
+				14.5
+			],
+			"to": [
+				9.5,
+				11.5,
+				15.5
+			],
+			"faces": {
+				"north": {
+					"texture": "#copper"
+				},
+				"east": {
+					"texture": "#copper"
+				},
+				"south": {
+					"texture": "#copper"
+				},
+				"west": {
+					"texture": "#copper"
+				},
+				"up": {
+					"texture": "#copper"
+				},
+				"down": {
+					"texture": "#copper"
+				}
+			}
+		},
+		{
+			"name": "rune_east",
+			"from": [
+				9.25,
+				9.25,
+				12
+			],
+			"to": [
+				9.5,
+				10.75,
+				13.5
+			],
+			"light_emission": 15,
+			"faces": {
+				"east": {
+					"uv": [
+						5,
+						5,
+						11,
+						11
+					],
+					"texture": "#rune"
+				},
+				"up": {
+					"uv": [
+						5,
+						5,
+						6,
+						11
+					],
+					"texture": "#rune"
+				},
+				"north": {
+					"uv": [
+						5,
+						5,
+						6,
+						11
+					],
+					"texture": "#rune"
+				},
+				"south": {
+					"uv": [
+						5,
+						5,
+						6,
+						11
+					],
+					"texture": "#rune"
+				}
+			}
+		},
+		{
+			"name": "rune_west",
+			"from": [
+				6.5,
+				9.25,
+				12
+			],
+			"to": [
+				6.75,
+				10.75,
+				13.5
+			],
+			"light_emission": 15,
+			"faces": {
+				"west": {
+					"uv": [
+						5,
+						5,
+						11,
+						11
+					],
+					"texture": "#rune"
+				},
+				"up": {
+					"uv": [
+						5,
+						5,
+						6,
+						11
+					],
+					"texture": "#rune"
+				},
+				"north": {
+					"uv": [
+						5,
+						5,
+						6,
+						11
+					],
+					"texture": "#rune"
+				},
+				"south": {
+					"uv": [
+						5,
+						5,
+						6,
+						11
+					],
+					"texture": "#rune"
+				}
+			}
+		},
+		{
+			"name": "rear_sight",
+			"from": [
+				7.5,
+				11.5,
+				14.75
+			],
+			"to": [
+				8.5,
+				12.25,
+				15.25
+			],
+			"faces": {
+				"north": {
+					"texture": "#copper"
+				},
+				"east": {
+					"texture": "#copper"
+				},
+				"south": {
+					"texture": "#copper"
+				},
+				"west": {
+					"texture": "#copper"
+				},
+				"up": {
+					"texture": "#copper"
+				},
+				"down": {
+					"texture": "#copper"
+				}
+			}
+		},
+		{
+			"name": "body",
+			"from": [
+				7,
+				7,
+				12.5
+			],
+			"to": [
+				9,
+				8.75,
+				16
+			],
+			"faces": {
+				"north": {
+					"texture": "#wood"
+				},
+				"east": {
+					"texture": "#wood"
+				},
+				"south": {
+					"texture": "#wood"
+				},
+				"west": {
+					"texture": "#wood"
+				},
+				"up": {
+					"texture": "#wood"
+				},
+				"down": {
+					"texture": "#wood"
+				}
+			}
+		},
+		{
+			"name": "grip",
+			"from": [
+				7.25,
+				2.5,
+				13.75
+			],
+			"to": [
+				8.75,
+				7.5,
+				15.75
+			],
+			"rotation": {
+				"angle": -22.5,
+				"axis": "x",
+				"origin": [
+					8,
+					7.5,
+					14.75
+				]
+			},
+			"faces": {
+				"north": {
+					"texture": "#wood"
+				},
+				"east": {
+					"texture": "#wood"
+				},
+				"south": {
+					"texture": "#wood"
+				},
+				"west": {
+					"texture": "#wood"
+				},
+				"up": {
+					"texture": "#wood"
+				},
+				"down": {
+					"texture": "#wood"
+				}
+			}
+		},
+		{
+			"name": "trigger",
+			"from": [
+				7.75,
+				6,
+				12.75
+			],
+			"to": [
+				8.25,
+				7,
+				13.25
+			],
+			"faces": {
+				"north": {
+					"texture": "#copper"
+				},
+				"east": {
+					"texture": "#copper"
+				},
+				"south": {
+					"texture": "#copper"
+				},
+				"west": {
+					"texture": "#copper"
+				},
+				"up": {
+					"texture": "#copper"
+				},
+				"down": {
+					"texture": "#copper"
+				}
+			}
+		},
+		{
+			"name": "reel_chain",
+			"from": [
+				6.5,
+				5.75,
+				10
+			],
+			"to": [
+				9.5,
+				8.5,
+				12.5
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						3,
+						3
+					],
+					"texture": "#chain"
+				},
+				"south": {
+					"uv": [
+						0,
+						3,
+						3,
+						6
+					],
+					"texture": "#chain"
+				},
+				"up": {
+					"uv": [
+						0,
+						6,
+						3,
+						8.5
+					],
+					"texture": "#chain"
+				},
+				"down": {
+					"uv": [
+						0,
+						8.5,
+						3,
+						11
+					],
+					"texture": "#chain"
+				}
+			}
+		},
+		{
+			"name": "reel_left",
+			"from": [
+				6,
+				5.25,
+				9.75
+			],
+			"to": [
+				6.5,
+				9,
+				12.75
+			],
+			"faces": {
+				"north": {
+					"texture": "#copper"
+				},
+				"east": {
+					"texture": "#copper"
+				},
+				"south": {
+					"texture": "#copper"
+				},
+				"west": {
+					"texture": "#copper"
+				},
+				"up": {
+					"texture": "#copper"
+				},
+				"down": {
+					"texture": "#copper"
+				}
+			}
+		},
+		{
+			"name": "reel_right",
+			"from": [
+				9.5,
+				5.25,
+				9.75
+			],
+			"to": [
+				10,
+				9,
+				12.75
+			],
+			"faces": {
+				"north": {
+					"texture": "#copper"
+				},
+				"east": {
+					"texture": "#copper"
+				},
+				"south": {
+					"texture": "#copper"
+				},
+				"west": {
+					"texture": "#copper"
+				},
+				"up": {
+					"texture": "#copper"
+				},
+				"down": {
+					"texture": "#copper"
+				}
+			}
+		}
+	],
+	"gui_light": "front",
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"translation": [
+				0,
+				2.5,
+				-5
+			],
+			"scale": [
+				0.8,
+				0.8,
+				0.8
+			]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"translation": [
+				0,
+				2.5,
+				-5
+			],
+			"scale": [
+				0.8,
+				0.8,
+				0.8
+			]
+		},
+		"firstperson_righthand": {
+			"rotation": [
+				0,
+				5,
+				0
+			],
+			"translation": [
+				-1,
+				3,
+				0
+			],
+			"scale": [
+				0.5,
+				0.5,
+				0.5
+			]
+		},
+		"firstperson_lefthand": {
+			"rotation": [
+				0,
+				-5,
+				0
+			],
+			"translation": [
+				-1,
+				3,
+				0
+			],
+			"scale": [
+				0.5,
+				0.5,
+				0.5
+			]
+		},
+		"ground": {
+			"rotation": [
+				0,
+				0,
+				0
+			],
+			"translation": [
+				0,
+				2,
+				0
+			],
+			"scale": [
+				0.5,
+				0.5,
+				0.5
+			]
+		},
+		"gui": {
+			"rotation": [
+				90,
+				-45,
+				90
+			],
+			"translation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				1,
+				1,
+				1
+			]
+		},
+		"head": {
+			"rotation": [
+				0,
+				180,
+				0
+			],
+			"translation": [
+				0,
+				8,
+				0
+			],
+			"scale": [
+				1,
+				1,
+				1
+			]
+		},
+		"fixed": {
+			"rotation": [
+				90,
+				-45,
+				90
+			],
+			"translation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				1,
+				1,
+				1
+			]
+		}
+	}
+}

@@ -31,12 +31,28 @@ public final class RREntityTypes {
             builder -> builder.sized(0.7F, 1.0F).eyeHeight(0.8F).clientTrackingRange(8).noLootTable()
     );
 
+    // Sized and tracked like a snowball.
+    public static final DeferredHolder<EntityType<?>, EntityType<BlowpipeBerry>> BLOWPIPE_BERRY = REGISTRY.registerEntityType(
+            "blowpipe_berry",
+            BlowpipeBerry::new,
+            MobCategory.MISC,
+            builder -> builder.noLootTable().sized(0.25F, 0.25F).clientTrackingRange(4).updateInterval(10)
+    );
+
     // Sized like the vanilla minecart.
     public static final DeferredHolder<EntityType<?>, EntityType<RunicMinecart>> RUNIC_MINECART = REGISTRY.registerEntityType(
             "runic_minecart",
             RunicMinecart::new,
             MobCategory.MISC,
             builder -> builder.noLootTable().sized(0.98F, 0.7F).passengerAttachments(0.1875F).clientTrackingRange(8)
+    );
+
+    // Sized and synced like the fishing bobber: it comes back when its owner leaves, so it is never saved.
+    public static final DeferredHolder<EntityType<?>, EntityType<GrapplingAnchor>> GRAPPLING_ANCHOR = REGISTRY.registerEntityType(
+            "grappling_anchor",
+            GrapplingAnchor::new,
+            MobCategory.MISC,
+            builder -> builder.noLootTable().noSave().noSummon().sized(0.25F, 0.25F).clientTrackingRange(4).updateInterval(5)
     );
 
     private RREntityTypes() {

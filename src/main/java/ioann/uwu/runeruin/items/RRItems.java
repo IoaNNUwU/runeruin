@@ -34,6 +34,9 @@ public class RRItems {
 
     public static final DeferredItem<Item> RUNE_OF_SPACE = REGISTRY.registerItem("rune_of_space", RuneOfSpaceItem::new);
 
+    /** What a star of the Void breaks into. */
+    public static final DeferredItem<Item> STARDUST = REGISTRY.registerSimpleItem("stardust");
+
     public static final DeferredItem<Item> WISPBERRY = REGISTRY.registerItem(
             "wispberry",
             p -> new BlockItem(RRBlocks.WISPBERRY_BUSH.get(), p),
@@ -59,6 +62,15 @@ public class RRItems {
             p -> p.food(Foods.SWEET_BERRIES).useItemDescriptionPrefix()
     );
 
+    public static final DeferredItem<Item> BLOWPIPE = REGISTRY.registerItem(
+            "blowpipe",
+            BlowpipeItem::new,
+            p -> p.durability(250).component(DataComponents.LORE, new ItemLore(List.of(
+                    Component.translatable("item.runeruin.blowpipe.tooltip")
+                            .withStyle(style -> style.withColor(ChatFormatting.GRAY).withItalic(false))
+            )))
+    );
+
     public static final DeferredItem<Item> POWDERED_MOSS_BUCKET = REGISTRY.registerItem(
             "powdered_moss_bucket",
             p -> new SolidBucketItem(RRBlocks.POWDERED_MOSS.get(), SoundEvents.BUCKET_EMPTY_POWDER_SNOW, p),
@@ -72,6 +84,12 @@ public class RRItems {
                     Component.translatable("item.runeruin.runic_minecart.tooltip")
                             .withStyle(style -> style.withColor(ChatFormatting.GRAY).withItalic(false))
             )))
+    );
+
+    public static final DeferredItem<Item> GRAPPLING_HOOK = REGISTRY.registerItem(
+            "grappling_hook",
+            GrapplingHookItem::new,
+            p -> p.durability(256)
     );
 
     public static final DeferredItem<Item> MOSSY_PROPHET_SPAWN_EGG = REGISTRY.registerItem(

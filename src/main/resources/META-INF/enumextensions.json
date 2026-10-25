@@ -1,0 +1,13 @@
+{
+	"entries": [
+		{
+			"enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+			"name": "RUNERUIN_BLOWPIPE",
+			"constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+			"parameters": {
+				"class": "ioann/uwu/runeruin/client/BlowpipeLayer",
+				"field": "ARM_POSE"
+			}
+		}
+	]
+}
