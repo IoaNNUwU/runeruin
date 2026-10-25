@@ -133,6 +133,11 @@ def check_models(problems):
             if texture.get("path") or not relative or not (path.parent / relative).is_file():
                 problems.append(f"{rel(path)}: texture {texture.get('name')} needs a relative_path to its PNG and no path "
                                 "(in Blockbench: Settings > Export, asset paths: relative)")
+            # The game draws the PNG; a copy kept inside the project goes stale and Blockbench shows it instead.
+            if texture.get("internal") or str(texture.get("source", "")).startswith("data:") or any(
+                    str(layer.get("data_url", "")).startswith("data:") for layer in texture.get("layers", [])):
+                problems.append(f"{rel(path)}: texture {texture.get('name')} is kept inside the project; link it to its PNG "
+                                "(in Blockbench: right-click the texture > Save As, over the PNG in textures/entity)")
     # An old or missing .mc-sources/textures must not turn unchecked references into "assets OK".
     for assets in sorted(missing):
         problems.append(f"{assets} not checked: missing in .mc-sources/textures, run scripts/setup-worktree.ps1")
