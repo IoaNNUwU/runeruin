@@ -47,7 +47,7 @@ Pick the view by the question:
 | What a change did | both exports on one sheet (before and after side by side), or the new export with `--diff exports/<before>.json` |
 | Exact positions and counts | the text slices and `_info.txt`, not the picture |
 
-The syntax of every option and how the picture is drawn: `python scripts/render_preview.py --help`. On the picture, faint blocks are the ground, ceiling or pool the preview prepared, blocks without collision are outlines and a cut face is pale; coordinates are local, as in the text slices, and world = origin + local.
+The syntax of every option and how the picture is drawn: `python scripts/render_preview.py --help`. `--flat` draws one colour per block, a full cube each, faster and with a clearer silhouette when the textures are dark or alike; `--diff` is always flat. On the picture, faint blocks are the ground, ceiling or pool the preview prepared and a cut face is pale (with `--flat`, blocks without collision are outlines); coordinates are local, as in the text slices, and world = origin + local.
 
 For before and after, export the old shape first under another name (`-PpreviewName=preview_boulder_before`) before you change the code, then the new one. `--diff` draws added blocks green, removed ones red and replaced ones orange.
 
@@ -57,7 +57,7 @@ Then:
 2. Compare it with the request. Change the code only for a difference you can name.
 3. Show the final pictures in the report, each with its job, seed and parameters.
 
-Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. Every block is drawn as a full cube in one colour.
+Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. The picture draws every block from its model with its textures (slabs, stairs, plants and vines keep their shape), without lighting; a vanilla block with a state-dependent model (a stair, a double slab) shows the model of its bare name, and a block with no model found is a cube of the average colour of its texture, which the script lists. Tints are the plains colours for vanilla blocks and none for ours.
 
 ## Any feature by id
 
