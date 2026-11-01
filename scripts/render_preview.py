@@ -50,6 +50,7 @@ from extract_model_faces import (  # noqa: E402
     load_model,
     numbers,
     parse_identifier,
+    resolve_model_file,
     resolve_texture_file,
     resolve_texture_token,
 )
@@ -76,6 +77,8 @@ FOLIAGE = (119, 171, 47)
 GRASS = (145, 189, 89)
 WATER_RGB = (63, 118, 228)
 TINTS = {"water": WATER_RGB, "vine": FOLIAGE, "lily_pad": (32, 128, 48)}
+# The blocks of ours that RuneRuinClient.registerBlockTintSources gives the biome foliage colour.
+TINTS.update({name: FOLIAGE for name in ("baobab_leaves", "big_lily_pad", "water_lily_root", "water_lily_leaf", "water_lily_flower")})
 TINTS.update({name: GRASS for name in ("grass_block", "short_grass", "tall_grass", "fern", "large_fern")})
 
 # How a block is drawn. Faces between two blocks of one group are not drawn: a pool is one volume.
@@ -174,6 +177,7 @@ class Baked:
 
 
 _textures = {}
+_mipmaps = {}
 _models = {}
 
 
@@ -199,7 +203,12 @@ def state_models(namespace, name, props):
         if path.is_file():
             break
     else:
-        return [(parse_identifier(f"{namespace}:block/{name}"), 0, 0)]
+        # No blockstate file (vanilla): the model of the bare name, else its first or top variant.
+        for suffix in ("", "_1", "_top"):
+            ref = parse_identifier(f"{namespace}:block/{name}{suffix}")
+            if resolve_model_file(ref, ASSET_ROOTS):
+                break
+        return [(ref, 0, 0)]
     data = json.loads(path.read_text(encoding="utf-8-sig"))
     found = []
 
@@ -288,6 +297,15 @@ def bake(state):
     return baked
 
 
+def mipmap(texture, level):
+    """The texture halved level times, averaged with its alpha premultiplied: transparent texels add no colour."""
+    key = (id(texture), level)
+    if key not in _mipmaps:
+        flat = texture.convert("RGBa")
+        _mipmaps[key] = flat if not level else flat.resize((max(1, texture.width >> level), max(1, texture.height >> level)), Image.BOX)
+    return _mipmaps[key]
+
+
 def block_tint(name, state):
     """The colour the game multiplies a tinted face by: the plains colours for vanilla blocks, none for ours."""
     if not state.partition("[")[0].startswith("minecraft:"):
@@ -309,12 +327,17 @@ def paint(image, corners, uv, texture, u, v, scale, view, color, opacity, pale):
     if abs(det) < 1e-6:  # seen edge-on
         return
     (t0u, t0v), (t1u, t1v), _, (t3u, t3v) = uv
+    # A far face covers fewer pixels than the texture has texels: sample a mipmap, the texture halved until a
+    # texel is about a pixel, and blend there, or the picture is noise. A near face keeps its crisp texels.
+    ratio = math.sqrt(math.hypot(t3u - t0u, t3v - t0v) / math.hypot(ea, fa) * math.hypot(t1u - t0u, t1v - t0v) / math.hypot(eb, fb))
+    level = min(int(math.log2(ratio)) if ratio >= 1 else 0, int(math.log2(min(texture.size))))
     coefficients = []
     for t0, t1, t3 in ((t0u, t1u, t3u), (t0v, t1v, t3v)):
         da, db = t3 - t0, t1 - t0
         cx, cy = (da * fb - db * fa) / det, (db * ea - da * eb) / det
-        coefficients += [cx, cy, t0 - cx * x0 - cy * y0]
-    tile = texture.transform((width, height), Image.AFFINE, coefficients, Image.NEAREST)
+        coefficients += [(cx / 2 ** level), (cy / 2 ** level), (t0 - cx * x0 - cy * y0) / 2 ** level]
+    tile = mipmap(texture, level).transform((width, height), Image.AFFINE, coefficients,
+                                            Image.BILINEAR if ratio > 1.5 else Image.NEAREST).convert("RGBA")
     mask = Image.new("L", (width, height), 0)
     ImageDraw.Draw(mask).polygon(local, fill=255, outline=255)  # the outline overlaps neighbours: no seams
     alpha = ImageChops.multiply(tile.getchannel("A"), mask)
@@ -667,14 +690,30 @@ def clip(scene, view, box, cut):
 
 
 def legend(scenes):
-    """The most frequent looks over all scenes: colour, text."""
-    totals = {}
+    """The most frequent looks over all scenes: colour, text and, on a textured sheet, a swatch of the texture."""
+    totals, icons = {}, {}
     for scene in scenes:
         for look, count in scene.counts.items():
-            kind, rgb, label, _ = scene.looks[look]
+            kind, rgb, label, state = scene.looks[look]
             key = (label + ({FAINT: SUFFIX[FAINT]} if scene.textured else SUFFIX).get(kind, ""), rgb)
             totals[key] = totals.get(key, 0) + count
-    return [(rgb, f"{label} {count}") for (label, rgb), count in sorted(totals.items(), key=lambda item: -item[1])[:14]]
+            if key not in icons:
+                icons[key] = swatch(scene.model(look), block_tint(label, state)) if scene.textured and state else None
+    return [(rgb, f"{label} {count}", icons[(label, rgb)])
+            for (label, rgb), count in sorted(totals.items(), key=lambda item: -item[1])[:14]]
+
+
+def swatch(model, tint):
+    """The texture of the top face of a model (else its first face), as a legend square."""
+    if model is None:
+        return None
+    corners, uv, texture, normal, _, tinted, _, _ = max(model.faces, key=lambda face: face[3][1])
+    us, vs = [u for u, _ in uv], [v for _, v in uv]
+    box = (math.floor(min(us)), math.floor(min(vs)), max(math.ceil(max(us)), math.floor(min(us)) + 1),
+           max(math.ceil(max(vs)), math.floor(min(vs)) + 1))
+    square = Image.new("RGBA", (13, 13), (*SHEET, 255))
+    square.alpha_composite(texture.crop(box).convert("RGBa").resize((13, 13), Image.BOX).convert("RGBA"))
+    return ImageChops.multiply(square.convert("RGB"), Image.new("RGB", (13, 13), tint if tinted else (255, 255, 255)))
 
 
 def sheet(panels, columns, header, captions, entries):
@@ -686,7 +725,7 @@ def sheet(panels, columns, header, captions, entries):
     width = max(columns * (cell_w + GAP) + GAP, int(measure.textlength(header, font=FONT)) + 2 * GAP)
     # Legend entries wrap to the width of the sheet.
     placed, x, y = [], GAP, 0
-    for rgb, text in entries:
+    for rgb, text, _ in entries:
         entry_width = 18 + int(measure.textlength(text, font=FONT)) + 14
         if x + entry_width > width and x > GAP:
             x, y = GAP, y + LINE
@@ -702,8 +741,10 @@ def sheet(panels, columns, header, captions, entries):
         if captions:
             draw.text((x + 6, y + panel.height + 2), captions[i], fill=TEXT, font=FONT)
     top = LINE + GAP + rows * (cell_h + GAP)
-    for x, y, rgb, text in placed:
+    for (x, y, rgb, text), (_, _, icon) in zip(placed, entries):
         draw.rectangle([x, top + y + 2, x + 12, top + y + 14], fill=rgb, outline=EDGE)
+        if icon:
+            image.paste(icon, (x, top + y + 2))
         draw.text((x + 18, top + y), text, fill=DIM, font=FONT)
     return image
 
