@@ -16,10 +16,7 @@ public final class HangingTerrainGenerator {
 
     private static final int MAX_HANGING_LENGTH = 6;
     private static final int MAX_CLIFF_RUN_SCAN = 32;
-    private static final int MAX_JOIN_CLEAR_LENGTH = 3;
-    private static final int MAX_BRIDGE_LENGTH = 2;
-    private static final int MAX_BRIDGE_CLEAR_LENGTH = 6;
-    private static final int MAX_CLEAR_LENGTH = 7;
+    private static final int MAX_CLEAR_LENGTH = MAX_HANGING_LENGTH + 2;
     private static final int[] WIDE_HANGING_TEMPLATE = {1, 3, 2, 1, 2};
     private static final int[] NATURAL_FALLBACK_PATTERN = {
             2, 3, 3, 2, 1, 2, 2, 1, 1, 2, 3, 2
@@ -53,7 +50,7 @@ public final class HangingTerrainGenerator {
                         boolean validSupport = !isInsideChunk(supportX, supportZ, chunkMinX, chunkMinZ)
                                 || profile.supports().core().test(chunk.getBlockState(new BlockPos(supportX, startY, supportZ)));
                         if (validSupport && (!target.present() || startY > target.topY())) {
-                            addCandidate(chunk, profile, new BlockPos(worldX, startY, worldZ), coreCandidates);
+                            addCandidate(chunk, new BlockPos(worldX, startY, worldZ), coreCandidates);
                         }
                     }
 
@@ -71,10 +68,10 @@ public final class HangingTerrainGenerator {
                     }
                     BlockPos start = new BlockPos(worldX, startY, worldZ);
                     if (exposedBottom && (!target.present() || startY > target.topY())) {
-                        addCandidate(chunk, profile, start, coreCandidates);
+                        addCandidate(chunk, start, coreCandidates);
                     }
                     if (exposedSlope) {
-                        addCandidate(chunk, profile, start, slopeCandidates);
+                        addCandidate(chunk, start, slopeCandidates);
                     }
                 }
             }
@@ -103,11 +100,11 @@ public final class HangingTerrainGenerator {
         for (Candidate candidate : candidates.values()) {
             BlockPos start = candidate.start();
             int shapeLength = shapeLengths.get(new Column(start.getX(), start.getZ()));
-            Plan plan = planHanging(candidate, shapeLength);
-            int hangingLength = plan.length();
+            // Leave air under the tip, including when only the cap fits beside its supporting wall.
+            int hangingLength = Math.min(shapeLength, Math.min(MAX_HANGING_LENGTH, candidate.clearLength() - 2));
 
             boolean clear = true;
-            for (int i = 0; i <= hangingLength; i++) {
+            for (int i = 0; i <= hangingLength + 1; i++) {
                 if (!chunk.getBlockState(start.below(i)).isAir()) {
                     clear = false;
                     break;
@@ -122,20 +119,11 @@ public final class HangingTerrainGenerator {
             for (int i = 0; i <= hangingLength; i++) {
                 terrain.set(start.getX() - chunkMinX, start.getY() - i, start.getZ() - chunkMinZ, i == 0 ? cap : body);
             }
-            if (plan.joinsNearbyTerrain()) {
-                terrain.set(start.getX() - chunkMinX, start.getY() - candidate.clearLength(), start.getZ() - chunkMinZ, body);
-            }
-            if (candidate.bridge()) {
-                for (int i = hangingLength + 1; i < candidate.clearLength(); i++) {
-                    terrain.set(start.getX() - chunkMinX, start.getY() - i, start.getZ() - chunkMinZ, profile.materials().bridge());
-                }
-            }
         }
     }
 
     private static void addCandidate(
             ChunkAccess chunk,
-            Profile profile,
             BlockPos start,
             Map<Column, Candidate> candidates
     ) {
@@ -143,18 +131,12 @@ public final class HangingTerrainGenerator {
         while (clearLength < MAX_CLEAR_LENGTH && chunk.getBlockState(start.below(clearLength)).isAir()) {
             clearLength++;
         }
-        if (clearLength == 0) {
+        if (clearLength < 2) {
             return;
         }
 
         Column column = new Column(start.getX(), start.getZ());
-        BlockState below = chunk.getBlockState(start.below(clearLength));
-        Candidate candidate = new Candidate(
-                start,
-                clearLength,
-                profile.supports().join().test(below),
-                clearLength <= MAX_BRIDGE_CLEAR_LENGTH && profile.supports().bridge().test(below)
-        );
+        Candidate candidate = new Candidate(start, clearLength);
         candidates.merge(column, candidate, (existing, added) -> {
             if (added.start().getY() > existing.start().getY()) {
                 return added;
@@ -183,37 +165,7 @@ public final class HangingTerrainGenerator {
                 return candidate;
             }
         }
-        if (cardinalNeighbors != 1 || candidate.clearLength() != 2 || !candidate.joinsTerrain()) {
-            return null;
-        }
-
-        int diagonalNeighbors = 0;
-        for (int dx : new int[]{-1, 1}) {
-            for (int dz : new int[]{-1, 1}) {
-                if (coreCandidates.containsKey(new Column(column.x() + dx, column.z() + dz))) {
-                    diagonalNeighbors++;
-                }
-            }
-        }
-        return diagonalNeighbors >= 2
-                ? new Candidate(candidate.start().below(), 1, true, false)
-                : null;
-    }
-
-    private static Plan planHanging(Candidate candidate, int desiredLength) {
-        int clearBelow = candidate.clearLength() - 1;
-        boolean joinsNearbyTerrain = candidate.joinsTerrain()
-                && candidate.clearLength() <= MAX_JOIN_CLEAR_LENGTH;
-        int maxLength = joinsNearbyTerrain ? clearBelow : Math.min(MAX_HANGING_LENGTH, clearBelow);
-        int minLength = joinsNearbyTerrain ? maxLength : 0;
-        if (candidate.bridge()) {
-            int maxBridgeLength = MAX_BRIDGE_LENGTH;
-            if (candidate.clearLength() == MAX_BRIDGE_CLEAR_LENGTH) {
-                maxBridgeLength = desiredLength >= 4 ? 0 : 1;
-            }
-            minLength = Math.max(minLength, candidate.clearLength() - maxBridgeLength - 1);
-        }
-        return new Plan(Math.max(minLength, Math.min(maxLength, desiredLength)), joinsNearbyTerrain);
+        return null;
     }
 
     // A hanging profile follows a whole exposed wall and is oriented by its corner geometry.
@@ -394,16 +346,10 @@ public final class HangingTerrainGenerator {
 
     public record Supports(
             Predicate<BlockState> core,
-            Predicate<BlockState> surface,
-            Predicate<BlockState> join,
-            Predicate<BlockState> bridge
+            Predicate<BlockState> surface
     ) {}
 
-    public record Materials(MaterialProvider cap, MaterialProvider body, BlockState bridge) {
-        public static Materials fixed(BlockState cap, BlockState body, BlockState bridge) {
-            return new Materials((chunk, start, randomState) -> cap, (chunk, start, randomState) -> body, bridge);
-        }
-    }
+    public record Materials(MaterialProvider cap, MaterialProvider body) {}
 
     public record Profile(
             ColumnProvider columns,
@@ -415,9 +361,7 @@ public final class HangingTerrainGenerator {
 
     private record Column(int x, int z) {}
 
-    private record Candidate(BlockPos start, int clearLength, boolean joinsTerrain, boolean bridge) {}
-
-    private record Plan(int length, boolean joinsNearbyTerrain) {}
+    private record Candidate(BlockPos start, int clearLength) {}
 
     private record CliffFace(Direction supportDirection, int startY) {}
 
