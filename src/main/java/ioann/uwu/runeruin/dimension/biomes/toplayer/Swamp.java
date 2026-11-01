@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.dimension.biomes.toplayer;
 
+import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
 import net.minecraft.data.worldgen.placement.AquaticPlacements;
@@ -15,7 +16,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-/** Low wet ground with pools in its hollows, after the vanilla swamp. */
+/** Low wet ground with pools that fill its ground up to their rims, after the vanilla swamp. */
 public class Swamp {
 
     public static Biome bootstrap(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
@@ -24,6 +25,8 @@ public class Swamp {
         BiomeDefaultFeatures.swampSpawns(mobs, 70);
 
         BiomeGenerationSettings.Builder generation = TopLayerBiomes.generation(placedFeatures, carvers);
+        // Before the plants of the water, which need it.
+        generation.addFeature(GenerationStep.Decoration.LAKES, RRPlacedFeatures.SWAMP_POOL);
         BiomeDefaultFeatures.addDefaultOres(generation);
         BiomeDefaultFeatures.addSwampClayDisk(generation);
         BiomeDefaultFeatures.addSwampVegetation(generation);

@@ -28,7 +28,7 @@ import net.minecraft.world.level.levelgen.RandomState;
 
 /**
  * A map of the top layer from above, without building chunks: each island coloured by its biome and shaded by
- * the height of its ground, water in blue. Shows where the biomes lie and the land they shape.
+ * the height of its ground. Shows where the biomes lie and the land they shape.
  */
 public final class TopLayerMapPreviewJob implements PreviewJob {
 
@@ -42,7 +42,6 @@ public final class TopLayerMapPreviewJob implements PreviewJob {
             RRBiomes.DESERT, 0xE8D9A0
     );
     private static final int VOID = 0x101820;
-    private static final int WATER = 0x3F76E4;
 
     @Override
     public String id() {
@@ -51,7 +50,7 @@ public final class TopLayerMapPreviewJob implements PreviewJob {
 
     @Override
     public String description() {
-        return "Map of the top layer from above: biomes, height, water. params: x, z (centre), radius, step";
+        return "Map of the top layer from above: biomes, height. params: x, z (centre), radius, step";
     }
 
     @Override
@@ -99,9 +98,8 @@ public final class TopLayerMapPreviewJob implements PreviewJob {
                 int x = centerX - radius + px * step;
                 int z = centerZ - radius + pz * step;
                 Holder<Biome> biome = biomes.topLayerBiome(x, z, randomState.sampler());
-                boolean water = TopLayerAndBloomingCavesGen.topLayerWaterY(x, z, randomState).isPresent();
-                counts.merge(water ? "water" : biome.getRegisteredName(), 1, Integer::sum);
-                int color = water ? WATER : biome.unwrapKey().map(COLORS::get).orElse(0x808080);
+                counts.merge(biome.getRegisteredName(), 1, Integer::sum);
+                int color = biome.unwrapKey().map(COLORS::get).orElse(0x808080);
                 // Lit from the north-west, brighter the higher the ground.
                 int northWest = px > 0 && pz > 0 && heights[(px - 1) * size + pz - 1] != Integer.MIN_VALUE ? heights[(px - 1) * size + pz - 1] : y;
                 float light = 0.45f + 0.85f * (y - minY) / Math.max(1, maxY - minY) + 0.15f * (y - northWest) / step;
@@ -122,7 +120,7 @@ public final class TopLayerMapPreviewJob implements PreviewJob {
                 "# colours:"
         ));
         COLORS.forEach((biome, color) -> lines.add(String.format("#   %06X %s", color, biome.identifier())));
-        lines.add(String.format("#   %06X water, %06X no island", WATER, VOID));
+        lines.add(String.format("#   %06X no island", VOID));
         int land = counts.values().stream().mapToInt(Integer::intValue).sum();
         lines.add("# share of the islands:");
         counts.forEach((what, count) -> lines.add(String.format(Locale.ROOT, "#   %5.1f%% %s", 100f * count / land, what)));

@@ -13,7 +13,7 @@ Biomes do not shape the stacked caves (`RRChunkGenerator` does); they choose sur
 2. Key + `ctx.register` in `RRBiomes`.
 3. Entry in the layer list in `RRBiomeSource.newDefault` (also used by `RRDimension.bootstrapStem`), or it never generates and the GameTest `biome_registry_complete` fails. A biome registered on purpose without generating goes into `PARKED_BIOMES` in `RRGameTests`. Top layer: a range of each climate parameter (`topLayerBiome`); other layers: `evenly`, where weights are repeated entries.
 4. Surface blocks in `dimension/chunkgenerator/RRTerrainSurfaces`, or `biome_registry_complete` fails ("has no RRTerrainSurfaces entry").
-5. Top layer: the land of the biome, a `TerrainProfile` in `DatagenDataMapProvider` (data map `runeruin:terrain_profile`); without one it gets `TerrainProfile.DEFAULT`. Look at it with the `top_layer_map` preview job and the `world_region` job (`headless-preview` skill).
+5. Top layer: the land of the biome, a `TerrainProfile` in `DatagenDataMapProvider` (data map `runeruin:terrain_profile`): its ground, hills, steps, its `Cliffs` (how high, how winding, how rare) and the share of it that is calm, nearly flat land without cliffs; without one it gets `TerrainProfile.DEFAULT`. Water is a feature, not land: a pool replaces the ground up to its rims, as `RRConfiguredFeatures.SWAMP_POOL`. Look at it with the `top_layer_map` preview job and the `world_region` job (`headless-preview` skill).
 6. Tags, e.g. for structures: `RRBiomeTags` + `DatagenBiomeTagProvider`.
 7. `compileJava`, `runData`, `runGameTestServer`.
 

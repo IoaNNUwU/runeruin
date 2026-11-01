@@ -4,6 +4,8 @@ import com.google.common.collect.MapMaker;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.RRBiomeSource;
 import ioann.uwu.runeruin.dimension.TerrainProfile;
+import ioann.uwu.runeruin.dimension.noise.LazyNoise;
+import ioann.uwu.runeruin.dimension.noise.Noise;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import net.minecraft.core.Holder;
@@ -29,6 +31,9 @@ public final class TopLayerRelief {
     private static final int CORNERS = 5;
     private static final int BIOMES = CORNERS + 2 * RADIUS;
     private static final Identifier FLOOR_SCATTER = RR.id("top_layer_floor_scatter");
+    // Which part of a biome is calm and which is wild; a wave of about 100 blocks fits both into most biomes.
+    private static final LazyNoise WILD_LAND = LazyNoise.single("topLayerWildLand", 1f);
+    private static final float WILD_BORDER = 0.1f;
 
     private final RRBiomeSource biomes;
     // The last chunks asked about, in the slot of their low coordinates, as in SupportedIslandsNoise.
@@ -106,9 +111,10 @@ public final class TopLayerRelief {
         float hills = 0;
         float bumps = 0;
         float plateau = 0;
-        float water = 0;
-        float wet = 0;
-        float islandDetail = 0;
+        float calm = 0;
+        float cliffHeight = 0;
+        float cliffWinding = 0;
+        float cliffThreshold = 0;
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
                 TerrainProfile profile = profiles[(centerX + dx) * BIOMES + centerZ + dz];
@@ -118,21 +124,25 @@ public final class TopLayerRelief {
                 hills += weight * profile.hills();
                 bumps += weight * profile.bumps();
                 plateau += weight * profile.plateau();
-                islandDetail += weight * profile.islandDetail();
-                if (profile.water() > 0) {
-                    water += weight * profile.water();
-                    wet += weight;
-                }
+                calm += weight * profile.calm();
+                cliffHeight += weight * profile.cliffs().height();
+                cliffWinding += weight * profile.cliffs().winding();
+                cliffThreshold += weight * profile.cliffs().threshold();
             }
         }
-        return new Land(height / total, hills / total, bumps / total, plateau / total, wet > 0 ? water / wet : 0, wet / total, islandDetail / total);
+        return new Land(height / total, hills / total, bumps / total, plateau / total, calm / total, cliffHeight / total, cliffWinding / total, cliffThreshold / total);
     }
 
-    /**
-     * A blended {@link TerrainProfile}: {@code water} is the height of the water of the biomes around that have
-     * it, and {@code wet} the share of those biomes, 1 where every biome around has water.
-     */
-    record Land(float height, float hills, float bumps, float plateau, float water, float wet, float islandDetail) {
+    /** A blended {@link TerrainProfile}. */
+    record Land(float height, float hills, float bumps, float plateau, float calm, float cliffHeight, float cliffWinding, float cliffThreshold) {
+
+        /** 1 on the wild land of the biomes around, 0 on their calm land, smooth between. */
+        float wild(int x, int z, RandomState randomState) {
+            if (this.calm <= 0) {
+                return 1;
+            }
+            return Noise.smooth(WILD_LAND.getOrCreateNoise(randomState).noise(x, z), this.calm - WILD_BORDER, this.calm + WILD_BORDER);
+        }
 
         static Land lerp(float x, float z, Land x0z0, Land x1z0, Land x0z1, Land x1z1) {
             return new Land(
@@ -140,9 +150,10 @@ public final class TopLayerRelief {
                     lerp(x, z, x0z0.hills, x1z0.hills, x0z1.hills, x1z1.hills),
                     lerp(x, z, x0z0.bumps, x1z0.bumps, x0z1.bumps, x1z1.bumps),
                     lerp(x, z, x0z0.plateau, x1z0.plateau, x0z1.plateau, x1z1.plateau),
-                    lerp(x, z, x0z0.water, x1z0.water, x0z1.water, x1z1.water),
-                    lerp(x, z, x0z0.wet, x1z0.wet, x0z1.wet, x1z1.wet),
-                    lerp(x, z, x0z0.islandDetail, x1z0.islandDetail, x0z1.islandDetail, x1z1.islandDetail)
+                    lerp(x, z, x0z0.calm, x1z0.calm, x0z1.calm, x1z1.calm),
+                    lerp(x, z, x0z0.cliffHeight, x1z0.cliffHeight, x0z1.cliffHeight, x1z1.cliffHeight),
+                    lerp(x, z, x0z0.cliffWinding, x1z0.cliffWinding, x0z1.cliffWinding, x1z1.cliffWinding),
+                    lerp(x, z, x0z0.cliffThreshold, x1z0.cliffThreshold, x0z1.cliffThreshold, x1z1.cliffThreshold)
             );
         }
 

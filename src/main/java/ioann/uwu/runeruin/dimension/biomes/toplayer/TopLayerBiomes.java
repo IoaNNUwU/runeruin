@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.dimension.biomes.toplayer;
 
-import ioann.uwu.runeruin.dimension.RRConfiguredCarvers;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
 import net.minecraft.data.worldgen.biome.OverworldBiomes;
@@ -20,7 +19,6 @@ final class TopLayerBiomes {
 
     static BiomeGenerationSettings.Builder generation(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
         BiomeGenerationSettings.Builder generation = new BiomeGenerationSettings.Builder(placedFeatures, carvers);
-        generation.addCarver(RRConfiguredCarvers.TOP_LAYER_CAVES);
         generation.addFeature(GenerationStep.Decoration.LAKES, MiscOverworldPlacements.LAKE_LAVA_UNDERGROUND);
         generation.addFeature(GenerationStep.Decoration.LAKES, MiscOverworldPlacements.LAKE_LAVA_SURFACE);
         BiomeDefaultFeatures.addDefaultCrystalFormations(generation);

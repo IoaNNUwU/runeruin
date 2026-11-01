@@ -5,6 +5,7 @@ public class TopLevelNoise implements Noise {
 
     private final Noise moreFlattenedBaseTopLevelNoise;
     private final Noise flattenedBaseTopLevelNoise;
+    private final Noise rawDetailNoise;
     private final Noise detailNoise;
 
     /** The detail is seeded by its name and the world seed, so every layer and every world gets its own. */
@@ -15,12 +16,13 @@ public class TopLevelNoise implements Noise {
 
         this.flattenedBaseTopLevelNoise = flattenedBaseTopLevelNoise;
 
-        this.detailNoise = Noise.flatten(0.22f, Noise.multi(
+        this.rawDetailNoise = Noise.multi(
                 new SingleNoise(Noise.hashString(detailName + "1" + seed), 0.9f),
                 new SingleNoise(Noise.hashString(detailName + "2" + seed), 1.4f),
                 new SingleNoise(Noise.hashString(detailName + "3" + seed), 1.4f),
                 new SingleNoise(Noise.hashString(detailName + "4" + seed), 0.3f)
-        ));
+        );
+        this.detailNoise = Noise.flatten(0.22f, this.rawDetailNoise);
     }
 
     @Override
@@ -34,8 +36,8 @@ public class TopLevelNoise implements Noise {
         return base * 0.45f + detail * 0.5f;
     }
 
-    /** The fine detail alone, from 0 to 1, without the shape of the islands. */
+    /** The fine detail alone before it is cut into ledges, which stand where it passes 0.5, without the shape of the islands. */
     public float detail(float x, float z) {
-        return this.detailNoise.noise(x, z);
+        return this.rawDetailNoise.noise(x, z);
     }
 }

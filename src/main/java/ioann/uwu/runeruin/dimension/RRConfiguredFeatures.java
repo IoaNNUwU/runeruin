@@ -23,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.features.AquaticFeatures;
 import net.minecraft.data.worldgen.features.CaveFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.data.worldgen.placement.TreePlacements;
@@ -78,6 +79,7 @@ public class RRConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> MONOLITH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "monolith");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> MOSS_POOL_WITH_DRIPLEAVES = RR.resourceKey(Registries.CONFIGURED_FEATURE, "moss_pool_with_dripleaves");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> SWAMP_POOL = RR.resourceKey(Registries.CONFIGURED_FEATURE, "swamp_pool");
     public static final ResourceKey<ConfiguredFeature<?, ?>> STONE_LILY = RR.resourceKey(Registries.CONFIGURED_FEATURE, "stone_lily");
 
     public static final ResourceKey<ConfiguredFeature<?, ?>> WISPBERRY_BUSH_PATCH = RR.resourceKey(Registries.CONFIGURED_FEATURE, "wispberry_bush_patch");
@@ -278,6 +280,22 @@ public class RRConfiguredFeatures {
                         5,
                         0.2F,
                         UniformInt.of(4, 7),
+                        0.7F
+                )
+        ));
+
+        ctx.register(SWAMP_POOL, new ConfiguredFeature<>(
+                Feature.WATERLOGGED_VEGETATION_PATCH,
+                new VegetationPatchConfiguration(
+                        blocks.getOrThrow(BlockTags.LUSH_GROUND_REPLACEABLE),
+                        BlockStateProvider.simple(Blocks.MUD),
+                        PlacementUtils.inlinePlaced(otherConfiguredFeatures.getOrThrow(AquaticFeatures.SEAGRASS_SHORT)),
+                        CaveSurface.FLOOR,
+                        ConstantInt.of(2),
+                        0.3F,
+                        5,
+                        0.1F,
+                        UniformInt.of(4, 8),
                         0.7F
                 )
         ));

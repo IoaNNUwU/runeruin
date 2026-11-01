@@ -6,10 +6,8 @@ import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
-import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
 import java.util.OptionalInt;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.tags.BlockTags;
@@ -241,7 +239,6 @@ public class TopLayerAndBloomingCavesGen {
     public static void generateTopLayerFloor(TerrainWriter terrain, RandomState randomState) {
         ChunkAccess chunk = terrain.chunk();
         BlockState stone = Blocks.STONE.defaultBlockState();
-        BlockState water = Blocks.WATER.defaultBlockState();
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -265,12 +262,11 @@ public class TopLayerAndBloomingCavesGen {
                 for (int y = subfloorStartY; y < topY; y++) {
                     terrain.set(x, y, z, subfloor);
                 }
-                // Grass does not grow under water: there the floor is what lies under it.
-                terrain.set(x, topY, z, ground.waterY() > topY ? subfloor : RRTerrainSurfaces.floorFor(biome, xx, topY, zz, randomState));
-                for (int y = topY + 1; y <= ground.waterY(); y++) {
-                    terrain.set(x, y, z, water);
-                }
+                terrain.set(x, topY, z, RRTerrainSurfaces.floorFor(biome, xx, topY, zz, randomState));
             }
+        }
+        for (TopLayerArches.Arch arch : TopLayerArches.around(chunk.getPos(), randomState)) {
+            arch.place(terrain, randomState);
         }
     }
 
@@ -284,18 +280,15 @@ public class TopLayerAndBloomingCavesGen {
         return column.present() ? OptionalInt.of(column.topY()) : OptionalInt.empty();
     }
 
-    /** The highest block of water on the top layer in this column, if its biomes keep water there. */
-    public static OptionalInt topLayerWaterY(int x, int z, RandomState randomState) {
-        int waterY = topLayerGroundAt(x, z, randomState).waterY();
-        return waterY == NO_WATER ? OptionalInt.empty() : OptionalInt.of(waterY);
-    }
-
     private static HangingTerrainGenerator.TerrainColumn topLayerColumnAt(int x, int z, RandomState randomState) {
         return topLayerGroundAt(x, z, randomState).column();
     }
 
     private static final LazyNoise hillsNoise = LazyNoise.single("topLayerHills", 0.6f);
     private static final LazyNoise bumpsNoise = LazyNoise.single("topLayerBumps", 2f);
+    private static final LazyNoise stepEdgesNoise = LazyNoise.single("topLayerStepEdges", 5f);
+    private static final int PLATEAU_STEPS = 4;
+    private static final float PLATEAU_RISE_WHOLE = 0.25f;
     // How far inland a column lies is measured by the island noise above its edge, which rises evenly from the edge.
     // Up to the first value the island keeps its own shape and the hanging soil on its edge. From there the ground
     // turns into the height of the biomes, whole at the second value, and their hills and bumps rise with it, to
@@ -303,18 +296,15 @@ public class TopLayerAndBloomingCavesGen {
     private static final float EDGE_KEPT = 0.01f;
     private static final float BIOME_HEIGHT_WHOLE = 0.12f;
     private static final float BIOME_RELIEF_WHOLE = 0.45f;
-    // Water stays only where every biome around has it and the island is whole. Around it the ground rises above
-    // the water, wholly from the second of these values of that share, so that the water never runs off.
-    private static final float SHORE_BEGINS = 0.5f;
-    private static final float SHORE_WHOLE = 0.9f;
-    private static final int WATER_STEP = 4;
-    private static final int NO_WATER = Integer.MIN_VALUE;
-    private static final TopLayerGround NO_GROUND = new TopLayerGround(HangingTerrainGenerator.TerrainColumn.NONE, NO_WATER);
+    private static final float CLIFFS_WHOLE = 0.2f;
+    // On the calm land of a biome its hills and bumps keep this share of their height.
+    private static final float CALM_RELIEF = 0.3f;
+    private static final TopLayerGround NO_GROUND = new TopLayerGround(HangingTerrainGenerator.TerrainColumn.NONE, false);
 
-    /** A column of the top layer and the highest block of water on it, if its biomes keep water there. */
-    private record TopLayerGround(HangingTerrainGenerator.TerrainColumn column, int waterY) {}
+    /** A column of the top layer and whether a cliff stands on it. */
+    record TopLayerGround(HangingTerrainGenerator.TerrainColumn column, boolean onCliff) {}
 
-    private static TopLayerGround topLayerGroundAt(int x, int z, RandomState randomState) {
+    static TopLayerGround topLayerGroundAt(int x, int z, RandomState randomState) {
         HangingTerrainGenerator.TerrainColumn island = islandColumnAt(x, z, topLevelNoise, TOP_LAYER_Y, randomState);
         // Columns of 2 blocks or less are left out; the Deep caves floor keeps them.
         if (island.topY() - (int) island.baseline() <= 2) {
@@ -322,60 +312,40 @@ public class TopLayerAndBloomingCavesGen {
         }
         float inland = 2 * baseTopLevelNoise.getOrCreateNoise(randomState).noise(x, z) - 1;
         if (inland <= EDGE_KEPT) {
-            return new TopLayerGround(island, NO_WATER);
+            return new TopLayerGround(island, false);
         }
         TopLayerRelief.Land land = TopLayerRelief.at(x, z, randomState.sampler());
         float islandHeight = island.topY() - island.baseline();
-        float biomeHeight = smooth(inland, EDGE_KEPT, BIOME_HEIGHT_WHOLE);
-        float height = Mth.lerp(biomeHeight, islandHeight, land.height())
-                + smooth(inland, EDGE_KEPT, BIOME_RELIEF_WHOLE) * biomeRelief(x, z, land, randomState);
-        float wet = land.wet() * biomeHeight;
-        boolean pool = wet > 0.999f;
-        if (!pool && land.water() > 0) {
-            height = Math.max(height, (land.water() + 1) * smooth(wet, SHORE_BEGINS, SHORE_WHOLE));
-        }
+        float wild = land.wild(x, z, randomState);
+        float ground = Mth.lerp(Noise.smooth(inland, EDGE_KEPT, BIOME_HEIGHT_WHOLE), islandHeight, land.height())
+                + Mth.lerp(wild, CALM_RELIEF, 1) * biomeRelief(x, z, inland, land, randomState);
         // No biome makes an island thinner than its edge, so none opens holes in it.
-        height = Math.max(height, Math.min(islandHeight, 3));
-        int topY = (int) (island.baseline() + height);
-        int waterY = NO_WATER;
-        if (pool) {
-            int level = waterLevelY(x, z, land.water(), randomState);
-            int dam = level;
-            for (Direction direction : Direction.Plane.HORIZONTAL) {
-                dam = Math.max(dam, waterLevelY(x + direction.getStepX(), z + direction.getStepZ(), land.water(), randomState));
-            }
-            // Where the water steps up, the ground on its lower side rises to the higher water, so it never runs over.
-            if (dam > level) {
-                topY = Math.max(topY, dam);
-            } else if (level > topY) {
-                waterY = level;
-            }
-        }
-        return new TopLayerGround(new HangingTerrainGenerator.TerrainColumn(true, island.baseline(), topY), waterY);
-    }
-
-    /** The highest block of water: it lies flat, a step of {@link #WATER_STEP} higher where the island rises. */
-    private static int waterLevelY(int x, int z, float water, RandomState randomState) {
-        float baseline = TOP_LAYER_Y + TOP_LAYER_MAX_BASELINE_HEIGHT * topLevelBaselineNoise.getOrCreateNoise(randomState).noise(x, z) + TOP_LAYER_OFFSET;
-        return Math.floorDiv((int) (baseline + water), WATER_STEP) * WATER_STEP;
+        ground = Math.max(ground, Math.min(islandHeight, 3));
+        float cliff = TopLayerCliffs.heightAt(x, z, wild, land, randomState) * Noise.smooth(inland, EDGE_KEPT, CLIFFS_WHOLE);
+        int topY = (int) (island.baseline() + ground + cliff);
+        return new TopLayerGround(new HangingTerrainGenerator.TerrainColumn(true, island.baseline(), topY), topY > (int) (island.baseline() + ground));
     }
 
     /** The hills and bumps that the biomes around raise above their height. */
-    private static float biomeRelief(int x, int z, TopLayerRelief.Land land, RandomState randomState) {
+    private static float biomeRelief(int x, int z, float inland, TopLayerRelief.Land land, RandomState randomState) {
+        float rise = Noise.smooth(inland, EDGE_KEPT, BIOME_RELIEF_WHOLE);
         float hills = hillsNoise.getOrCreateNoise(randomState).noise(x, z);
-        // A plateau squeezes the slopes of its hills into a band: flat tops and bottoms, steep sides.
-        hills = Mth.lerp(land.plateau(), hills, smooth(hills, 0.4f, 0.6f));
-        float relief = land.hills() * hills + land.bumps() * bumpsNoise.getOrCreateNoise(randomState).noise(x, z);
-        if (land.islandDetail() > 0) {
-            relief += land.islandDetail() * ((TopLevelNoise) topLevelNoise.getOrCreateNoise(randomState)).detail(x, z);
+        float round = rise * hills;
+        if (land.plateau() > 0) {
+            // The edge lowers the hills before they are cut, so that the steps follow the land and not the edge.
+            float wobble = 0.05f * (stepEdgesNoise.getOrCreateNoise(randomState).noise(x, z) - 0.5f);
+            float stepped = Noise.smooth(inland, EDGE_KEPT, PLATEAU_RISE_WHOLE) * Noise.smooth(hills + wobble, 0.25f, 0.75f);
+            round = Mth.lerp(land.plateau(), round, steps(stepped));
         }
-        return relief;
+        return land.hills() * round + rise * land.bumps() * bumpsNoise.getOrCreateNoise(randomState).noise(x, z);
     }
 
-    /** 0 up to {@code from}, 1 from {@code to}, smooth between. */
-    private static float smooth(float value, float from, float to) {
-        float t = Mth.clamp((value - from) / (to - from), 0f, 1f);
-        return t * t * (3 - 2 * t);
+    /** Cut into steps with steep sides; each tread still rises towards the next step, so that none is a flat shelf. */
+    private static float steps(float value) {
+        float stepped = value * PLATEAU_STEPS;
+        int step = Mth.floor(stepped);
+        float rest = stepped - step;
+        return (step + 0.3f * rest + 0.7f * Noise.smooth(rest, 0.74f, 0.84f)) / PLATEAU_STEPS;
     }
 
     // The hanging soil is of the floor of the island beside it: no sand, which would fall, but what lies under it.

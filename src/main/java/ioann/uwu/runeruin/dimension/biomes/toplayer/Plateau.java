@@ -10,7 +10,7 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-/** Flat-topped heights with steep sides and acacias on them, after the vanilla savanna plateau. */
+/** Heights in several steps with steep sides and acacias on them, after the vanilla savanna plateau. */
 public class Plateau {
 
     public static Biome bootstrap(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
