@@ -57,7 +57,7 @@ Then:
 2. Compare it with the request. Change the code only for a difference you can name.
 3. Show the final pictures in the report, each with its job, seed and parameters.
 
-Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. The picture draws every block from its model with its textures (slabs, stairs, plants and vines keep their shape), without lighting; a vanilla block with a state-dependent model (a stair, a double slab) shows the model of its bare name, and a block with no model found is a cube of the average colour of its texture, which the script lists. Tints are the plains colours for vanilla blocks and none for ours.
+Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. The picture draws every block from its model with its textures (slabs, stairs, plants and vines keep their shape), without lighting; vanilla blockstates are read from the client jar of NeoForm Runtime (`.mc-sources` does not hold them), so stairs, slabs and mushrooms turn as in the game, and a block with no model found is a cube of the average colour of its texture, which the script lists. Tints are the plains colours for vanilla blocks and none for ours.
 
 ## Any feature by id
 

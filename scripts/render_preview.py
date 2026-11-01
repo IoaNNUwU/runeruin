@@ -37,6 +37,7 @@ import json
 import math
 import re
 import sys
+import zipfile
 from array import array
 from pathlib import Path
 
@@ -195,26 +196,47 @@ def resource_path(resource, namespace):
     return resolve_texture_file(resource, namespace, [root for root in ASSET_ROOTS if root.is_dir()])[0]
 
 
-def state_models(namespace, name, props):
-    """(model, x, y) of a state: the variant of its blockstate file and every multipart that applies, or the
-    model of the block's own name when there is no file (vanilla blocks)."""
+def blockstate(namespace, name):
+    """The blockstate file of a block: ours from src, vanilla ones from the client jar that extractMcSources
+    reads (.mc-sources does not hold them), or None."""
     for root in ASSET_ROOTS:
         path = root / namespace / "blockstates" / (name + ".json")
         if path.is_file():
-            break
-    else:
-        # No blockstate file (vanilla): the model of the bare name, else its first or top variant.
+            return json.loads(path.read_text(encoding="utf-8-sig"))
+    if namespace == "minecraft" and client_jar() is not None:
+        try:
+            return json.loads(client_jar().read(f"assets/minecraft/blockstates/{name}.json"))
+        except KeyError:
+            pass
+    return None
+
+
+def client_jar():
+    """The Minecraft client archive of NeoForm Runtime, as build.gradle names it, or None."""
+    if "jar" not in _models:
+        version = re.search(r"^minecraft_version=(\S+)", (ROOT / "gradle.properties").read_text(encoding="utf-8"), re.M)
+        path = Path.home() / ".gradle/caches/neoformruntime/artifacts" / f"minecraft_{re.sub(r'[.]0$', '', version[1])}_client.jar"
+        _models["jar"] = zipfile.ZipFile(path) if version and path.is_file() else None
+    return _models["jar"]
+
+
+def state_models(namespace, name, props):
+    """(model, x, y, uvlock) of a state: the variant of its blockstate file and every multipart that applies, or
+    the model of the block's own name when there is no file."""
+    data = blockstate(namespace, name)
+    if data is None:
+        # No blockstate file: the model of the bare name, else its first or top variant.
         for suffix in ("", "_1", "_top"):
             ref = parse_identifier(f"{namespace}:block/{name}{suffix}")
             if resolve_model_file(ref, ASSET_ROOTS):
                 break
-        return [(ref, 0, 0)]
-    data = json.loads(path.read_text(encoding="utf-8-sig"))
+        return [(ref, 0, 0, False)]
     found = []
 
     def pick(entry):
         entry = entry[0] if isinstance(entry, list) else entry
-        found.append((parse_identifier(entry["model"]), int(entry.get("x", 0)), int(entry.get("y", 0))))
+        found.append((parse_identifier(entry["model"]), int(entry.get("x", 0)), int(entry.get("y", 0)),
+                      bool(entry.get("uvlock"))))
 
     def matches(when):
         if "OR" in when:
@@ -243,7 +265,7 @@ def bake(state):
     baked = Baked()
     try:
         roots = [root for root in ASSET_ROOTS if root.is_dir()]
-        for ref, rx, ry in state_models(namespace or "minecraft", name, props):
+        for ref, rx, ry, uvlock in state_models(namespace or "minecraft", name, props):
             model = load_model(ref, roots)
             if not isinstance(model.get("elements"), list):
                 raise ModelError("no elements")
@@ -284,6 +306,12 @@ def bake(state):
                     uv = [(((u1, u2)[(k + shift) % 4 in (2, 3)]) * sx, ((v1, v2)[(k + shift) % 4 in (1, 2)]) * sy)
                           for k in range(4)]
                     closest = max(NORMALS, key=lambda side: sum(a * b for a, b in zip(NORMALS[side], normal)))
+                    if uvlock and (rx or ry) and max(abs(c) for c in normal) > 0.999:
+                        # The texture stays as it was before the turn: its u and v follow the world axes.
+                        lock = {"down": lambda x, y, z: (x, 16 - z), "up": lambda x, y, z: (x, z),
+                                "north": lambda x, y, z: (16 - x, 16 - y), "south": lambda x, y, z: (x, 16 - y),
+                                "west": lambda x, y, z: (z, 16 - y), "east": lambda x, y, z: (16 - z, 16 - y)}[closest]
+                        uv = [(lock(*(c * 16 for c in p))[0] * sx, lock(*(c * 16 for c in p))[1] * sy) for p in corners]
                     cull = face.get("cullface")
                     cull = tuple(round(c) for c in spin(NORMALS[cull])) if cull in NORMALS else None
                     centre = tuple(sum(p[i] for p in corners) / 4 for i in range(3))
