@@ -9,6 +9,7 @@ import ioann.uwu.runeruin.dimension.RRPlacementModifierTypes;
 import ioann.uwu.runeruin.dimension.RRStructurePieceTypes;
 import ioann.uwu.runeruin.dimension.RRStructureProcessors;
 import ioann.uwu.runeruin.dimension.RRStructureTypes;
+import ioann.uwu.runeruin.dimension.TerrainProfile;
 import ioann.uwu.runeruin.dimension.biomes.bloomingcaves.StoneForest;
 import ioann.uwu.runeruin.entities.MossyRam;
 import ioann.uwu.runeruin.entities.RREntityTypes;
@@ -50,6 +51,7 @@ public class RuneRuinMod {
 
         RRBiomeSource.REGISTRY.register(modEventBus);
         RRChunkGenerator.REGISTRY.register(modEventBus);
+        modEventBus.addListener(TerrainProfile::registerDataMap);
 
         RRPlacementModifierTypes.REGISTRY.register(modEventBus);
         RRFeatures.REGISTRY.register(modEventBus);

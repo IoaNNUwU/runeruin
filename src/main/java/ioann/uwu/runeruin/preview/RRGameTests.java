@@ -266,6 +266,7 @@ public final class RRGameTests {
             new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("wispberry_bush_patch", Surface.FLOOR, deepMoss, 1),
             new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, deepMoss, 1),
+            new FeatureCase("swamp_pool", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
             new FeatureCase("small_glowing_mushroom", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("elden_giant_tree", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
             new FeatureCase("swamp_jungle_trees", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),

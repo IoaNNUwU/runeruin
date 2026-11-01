@@ -16,6 +16,7 @@ import ioann.uwu.runeruin.preview.jobs.MonolithPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.PowderedMossShaftPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.TerrainBenchmarkPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.TerrainRegionPreviewJob;
+import ioann.uwu.runeruin.preview.jobs.TopLayerMapPreviewJob;
 import ioann.uwu.runeruin.preview.jobs.WaterLilyPreviewJob;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +46,7 @@ public final class PreviewCatalog {
         register(new CaveMushroomPreviewJob());
         register(new WaterLilyPreviewJob());
         register(new TerrainRegionPreviewJob());
+        register(new TopLayerMapPreviewJob());
         register(new TerrainBenchmarkPreviewJob());
         register(new FeaturePreviewJob());
         register(new PowderedMossShaftPreviewJob());
