@@ -11,7 +11,8 @@
                                   around it, so prepared ground does not set the scale; "--box all" shows everything.
     --cut x=12                    cut at that coordinate and look inside; "--cut x" cuts through the middle,
                                   where the text slice is. Also y and z. The half nearer to the camera is removed.
-    --prepared faint|hide|solid   the ground, ceiling and pool the preview prepared (default: faint)
+    --prepared faint|hide|solid   the ground, ceiling and pool the preview prepared (default: faint, which darkens
+                                  it; nearly transparent with --flat)
     --diff before.json            one picture of the changes: added blocks green, removed red, replaced orange
     --flat                        flat colours instead of textures: each block one colour (the average of its texture),
                                   every block a full cube. --diff always draws flat.
@@ -25,8 +26,8 @@ Coordinates are local, as in the text slices: the edges of the box carry them, w
 Faces are shaded by direction as in the game and darken with distance. Every block is drawn from its model with
 its textures (blockstate variants and multiparts of src/main and src/generated, the model of the block's own name
 for vanilla blocks), so slabs, plants and vines keep their shape; a block with no model found is a cube of the
-average colour of its texture. Water is translucent, a cut face is pale and unshaded. With --flat blocks without
-collision (plants, vines) are outlines. The JSON and the text slices stay the exact source of truth; pictures are
+average colour of its texture. Water is translucent, the ground the preview prepared is darker (with --flat, nearly
+transparent) and a cut face is drawn like any other. With --flat blocks without collision (plants, vines) are outlines. The JSON and the text slices stay the exact source of truth; pictures are
 for judging shape: no lighting, and a tint (grass, vanilla leaves) is the plains colour.
 """
 import argparse
@@ -85,7 +86,8 @@ TINTS.update({name: GRASS for name in ("grass_block", "short_grass", "tall_grass
 # How a block is drawn. Faces between two blocks of one group are not drawn: a pool is one volume.
 EMPTY, CUT, SOLID, WATER, WET_PLANT, FAINT, GHOST, HOLLOW = range(8)
 GROUP = [0, 0, 1, 2, 2, 3, 4, 5]
-ALPHA = {WATER: 70, WET_PLANT: 70, FAINT: 40, GHOST: 110}
+ALPHA = {WATER: 140, WET_PLANT: 70, FAINT: 40, GHOST: 110}
+PREPARED_DIM = 0.75 # textured: the ground the preview prepared is this much darker than the subject
 OUTLINED = (WET_PLANT, HOLLOW)
 SUFFIX = {FAINT: " (prepared)", HOLLOW: " (outline)", WET_PLANT: " (outline)"}
 ADDED, REMOVED, CHANGED, UNCHANGED = (60, 200, 80), (230, 60, 60), (240, 170, 40), (150, 150, 150)
@@ -341,9 +343,8 @@ def block_tint(name, state):
     return TINTS.get(name) or (FOLIAGE if name.endswith("_leaves") else GRASS)
 
 
-def paint(image, corners, uv, texture, u, v, scale, view, color, opacity, pale):
-    """One face of a model: its parallelogram on the sheet filled from the texture, multiplied by color
-    (a pale unshaded cut face instead of it)."""
+def paint(image, corners, uv, texture, u, v, scale, view, color):
+    """One face of a model: its parallelogram on the sheet filled from the texture, multiplied by color."""
     points = [(u + dot(c, view.right) * scale, v - dot(c, view.up) * scale) for c in corners]
     left, top = math.floor(min(x for x, _ in points)), math.floor(min(y for _, y in points))
     width, height = math.ceil(max(x for x, _ in points)) - left + 1, math.ceil(max(y for _, y in points)) - top + 1
@@ -369,13 +370,8 @@ def paint(image, corners, uv, texture, u, v, scale, view, color, opacity, pale):
     mask = Image.new("L", (width, height), 0)
     ImageDraw.Draw(mask).polygon(local, fill=255, outline=255)  # the outline overlaps neighbours: no seams
     alpha = ImageChops.multiply(tile.getchannel("A"), mask)
-    if opacity < 255:
-        alpha = alpha.point(lambda a: a * opacity // 255)
     rgb = tile.convert("RGB")
-    if pale:
-        rgb = Image.blend(rgb, Image.new("RGB", rgb.size, (255, 255, 255)), 0.6)
-    else:
-        rgb = ImageChops.multiply(rgb, Image.new("RGB", rgb.size, color))
+    rgb = ImageChops.multiply(rgb, Image.new("RGB", rgb.size, color))
     image.paste(rgb, (left, top), alpha)
 
 
@@ -467,7 +463,7 @@ class Scene:
     def hides(self, look):
         """Whether a block of this look hides the faces that touch it: a full cube of the solid kind."""
         model = self.model(look)
-        return self.looks[look][0] == SOLID and (model.full if model else True)
+        return self.looks[look][0] in (SOLID, FAINT) and (model.full if model else True)
 
     def clipped(self, lo, hi):
         """The grid with the blocks outside lo..hi cut away, and the blocks inside that can show a face."""
@@ -640,7 +636,7 @@ def render(scene, view, lo, hi, scale):
                 continue
             points = [(u + du, v + dv) for du, dv in offsets]
             if kind == SOLID:
-                fill = tuple((c * 3 + 255 * 2) // 5 for c in rgb) if other == CUT else scaled(rgb, shade * fog)
+                fill = scaled(rgb, shade * fog)
                 draw.polygon(points, fill=fill, outline=scaled(fill, 0.82) if grid_lines else fill)
                 continue
             if kind != HOLLOW and GROUP[other] != GROUP[kind]:
@@ -654,14 +650,14 @@ def render(scene, view, lo, hi, scale):
             ordered[look] = sorted((face for face in model.faces if dot(face[3], camera) > 1e-6),
                                    key=lambda face: dot(face[7], camera))
         tint = block_tint(label, state)
-        opacity = ALPHA[kind] if kind == FAINT else 255
+        dim = PREPARED_DIM if kind == FAINT else 1
         for corners, uv, texture, normal, shade, tinted, cull, _ in ordered[look]:
             near = grid[index + sum(c * step for c, step in zip(cull, scene.steps))] if cull else 0
             if hides[near]:
                 continue
-            light = shade / brightest * fog
+            light = shade / brightest * fog * dim
             color = tuple(round(c * light) for c in (tint if tinted else (255, 255, 255)))
-            paint(image, corners, uv, texture, u, v, scale, view, color, opacity, near == CUT)
+            paint(image, corners, uv, texture, u, v, scale, view, color)
 
     written = []
 

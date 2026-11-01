@@ -47,7 +47,7 @@ Pick the view by the question:
 | What a change did | both exports on one sheet (before and after side by side), or the new export with `--diff exports/<before>.json` |
 | Exact positions and counts | the text slices and `_info.txt`, not the picture |
 
-The syntax of every option and how the picture is drawn: `python scripts/render_preview.py --help`. `--flat` draws one colour per block, a full cube each, faster and with a clearer silhouette when the textures are dark or alike; `--diff` is always flat. On the picture, faint blocks are the ground, ceiling or pool the preview prepared and a cut face is pale (with `--flat`, blocks without collision are outlines); coordinates are local, as in the text slices, and world = origin + local.
+The syntax of every option and how the picture is drawn: `python scripts/render_preview.py --help`. `--flat` draws one colour per block, a full cube each, faster and with a clearer silhouette when the textures are dark or alike; `--diff` is always flat. On the picture, the darker blocks are the ground, ceiling or pool the preview prepared (with `--flat`, nearly transparent ones) and a cut face looks like any other (with `--flat`, blocks without collision are outlines); coordinates are local, as in the text slices, and world = origin + local.
 
 For before and after, export the old shape first under another name (`-PpreviewName=preview_boulder_before`) before you change the code, then the new one. `--diff` draws added blocks green, removed ones red and replaced ones orange.
 
@@ -84,6 +84,6 @@ In game: `/rrpreview list`, `/rrpreview <job> [seed] [key=value | name]…`. The
 
 Most features need no job: use `feature`. A job of its own is for parameters the registry does not hold or for structures: a class in `preview/jobs/` implementing `PreviewJob`, registered in `PreviewCatalog`. For write-only features build the config and call `PreviewJobs.placeFeature`; features that scan terrain need a floor or ceiling first. Structures build their pieces directly (see `BaobabPreviewJob`, `GiantGobletPreviewJob`).
 
-Build the ground, ceiling or pool with `PreviewWorld.fillBox`, and only those: the export marks the blocks it filled as prepared, and the renderer fades them and frames the picture on everything else. A block the feature replaces is no longer prepared.
+Build the ground, ceiling or pool with `PreviewWorld.fillBox`, and only those: the export marks the blocks it filled as prepared, and the renderer darkens them and frames the picture on everything else. A block the feature replaces is no longer prepared.
 
 `PreviewWorld` answers block reads from its own map; a `WorldGenLevel` method it does not handle goes to the live server level and reads the real world. If a feature places nothing in the preview but works in game, look for such a method and add a case to `PreviewWorld.invoke` (as for `isStateAtPosition`).
