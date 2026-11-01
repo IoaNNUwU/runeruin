@@ -1,5 +1,6 @@
 package ioann.uwu.runeruin.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
@@ -13,8 +14,6 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.entity.PartEntity;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -64,29 +63,34 @@ public class ColossusPart extends PartEntity<Colossus> {
         return this.origin.add(world.x, world.y, world.z);
     }
 
-    /** Whether something stands on the top of the cube with its feet: over the top face, less than half a block from it. */
+    /**
+     * Whether something stands on the top of the cube with its feet: over the top face or a little past its edge, where
+     * the boxes of a turned cube reach, and near the face, on those boxes or sunk into the cube.
+     */
     boolean carries(Vec3 feet) {
         Vector3f point = this.toCube(feet);
-        float margin = 0.3F * BLOCK;
+        float margin = 0.8F * BLOCK;
         return point.x > this.cube[0] - margin && point.x < this.cube[3] + margin
                 && point.z > this.cube[2] - margin && point.z < this.cube[5] + margin
-                && Math.abs(point.y - this.cube[1]) < 0.5F * BLOCK;
+                && Math.abs(point.y - this.cube[1]) < 1.2F * BLOCK;
     }
 
     /**
-     * Whether the cube stops another entity. Not a player on the server: a player stands on the cubes as the client sees
-     * them, which run a tick apart from the server's, and the server would take every step against its own cubes for a
-     * collision and pull the player back. A moving happy ghast leaves its players to their clients in the same way.
+     * Whether the cube stops another entity. Not what the colossus is carrying, whose way is along the cube. Not a player
+     * on the server: a player stands on the cubes as the client sees them, which run a tick apart from the server's, and
+     * the server would take every step against its own cubes for a collision and pull the player back. A moving happy
+     * ghast leaves its players to their clients in the same way.
      */
     public boolean blocks(Entity other) {
-        return !this.is(other) && (this.level().isClientSide() || !(other instanceof Player));
+        return !this.is(other) && !this.getParent().isCarrying(other) && (this.level().isClientSide() || !(other instanceof Player));
     }
 
     /**
-     * Adds the cube where it meets an area, as boxes of a block of the world turned with it: the game collides with
-     * boxes square to the blocks only, and one box around a turned cube would stand out of it like a wall of air.
+     * The cube where it meets an area, as boxes of a block of the world turned with it: the game collides with boxes
+     * square to the blocks only, and one box around a turned cube would stand out of it like a wall of air.
      */
-    public void addCollisions(AABB area, List<VoxelShape> shapes) {
+    public List<AABB> cells(AABB area) {
+        List<AABB> cells = new ArrayList<>();
         float[] local = bounds(this.toCube, area.move(this.origin.scale(-1.0)));
         int[] from = new int[3];
         int[] to = new int[3];
@@ -102,10 +106,11 @@ public class ColossusPart extends PartEntity<Colossus> {
                             Math.min(this.cube[3], this.cube[0] + (x + 1) * BLOCK),
                             Math.min(this.cube[4], this.cube[1] + (y + 1) * BLOCK),
                             Math.min(this.cube[5], this.cube[2] + (z + 1) * BLOCK)));
-                    shapes.add(Shapes.create(new AABB(cell[0], cell[1], cell[2], cell[3], cell[4], cell[5]).move(this.origin)));
+                    cells.add(new AABB(cell[0], cell[1], cell[2], cell[3], cell[4], cell[5]).move(this.origin));
                 }
             }
         }
+        return cells;
     }
 
     /** The eight corners of the cube in the world, for drawing it: bit 1 of an index is x, bit 2 y, bit 4 z. */
@@ -132,7 +137,7 @@ public class ColossusPart extends PartEntity<Colossus> {
         return bounds;
     }
 
-    // The game collides with the cube through addCollisions, not with this box.
+    // The game collides with the cube through its cells, not with this box.
     @Override
     public boolean canBeCollidedWith(@Nullable Entity other) {
         return false;

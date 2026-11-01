@@ -1593,8 +1593,9 @@ public final class RRGameTests {
 
     // The colossus stands turned by 45 degrees. Its turned cubes are solid, not the boxes square to the blocks around
     // them: a snail dropped beside the chest, inside such a box, falls to the ground, and one dropped onto a shoulder
-    // stays up there while the colossus turns to its target. Its slam brings both fists down where the target stands,
-    // and the shockwave hurts what stands on the ground there, not what stands above.
+    // stays up there while the colossus turns to its target, even pushed into the shoulder: it rises back onto it. Its
+    // slam brings both fists down where the target stands, and the shockwave hurts what stands on the ground there, not
+    // what stands above.
     private static void colossusSlam(GameTestHelper helper) {
         // Higher than every other test: the colossus stands about 97 blocks tall and reaches 40 blocks to the sides.
         int y = 270;
@@ -1623,6 +1624,7 @@ public final class RRGameTests {
             if (++ticks[0] == 80) {
                 heights[0] = beside.getY() - colossus.getY();
                 heights[1] = rider.onGround() ? rider.getY() - colossus.getY() : -1.0;
+                rider.setPos(rider.getX(), rider.getY() - 1.5, rider.getZ());
                 beside.discard();
                 colossus.setTarget(target);
             } else if (ticks[0] == 95) {
@@ -1635,7 +1637,7 @@ public final class RRGameTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(heights[0] < 2.0, "the snail dropped beside the chest stopped " + heights[0] + " over the feet");
             helper.assertTrue(heights[1] > 75.0, "the snail dropped onto the shoulder stands " + heights[1] + " over the feet");
-            helper.assertTrue(heights[2] > 75.0, "the snail on the shoulder stands " + heights[2] + " over the feet after the turn");
+            helper.assertTrue(heights[2] > heights[1] - 1.0, "the snail on the shoulder at " + heights[1] + " over the feet stands at " + heights[2] + " after the turn");
             helper.assertTrue(slammed[0], "the colossus did not slam");
             helper.assertTrue(target.getHealth() < 200.0F, "the shockwave missed the target");
             helper.assertTrue(bystander.getHealth() < 200.0F, "the shockwave missed the bystander on the ground");

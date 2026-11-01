@@ -250,8 +250,7 @@ public final class ColossusRig {
 
     /**
      * Puts the bones as {@code LivingEntityRenderer} puts the model: turned by the body, turned over and scaled. Every
-     * cube gets the box around it, its top lowered to the middle of its upper face: on a turned cube that box would
-     * reach up to the highest corner, and one would stand in the air over the middle of the face.
+     * cube gets the box around it.
      */
     public Posed posed(float[][] pose, float bodyRot, float scale) {
         Matrix4f[] matrices = new Matrix4f[this.bones.size()];
@@ -282,14 +281,7 @@ public final class ColossusRig {
                     bounds[axis + 3] = Math.max(bounds[axis + 3], point.get(axis));
                 }
             }
-            double top = -Double.MAX_VALUE;
-            for (int face = 0; face < 6; face++) {
-                float[] center = {(cube[0] + cube[3]) / 2.0F, (cube[1] + cube[4]) / 2.0F, (cube[2] + cube[5]) / 2.0F};
-                center[face % 3] = cube[face % 3 + (face < 3 ? 0 : 3)];
-                matrix.transformPosition(center[0] / 16.0F, center[1] / 16.0F, center[2] / 16.0F, point);
-                top = Math.max(top, point.y);
-            }
-            boxes[c] = new AABB(bounds[0], bounds[1], bounds[2], bounds[3], top, bounds[5]);
+            boxes[c] = new AABB(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]);
         }
         return new Posed(matrices, boxes);
     }

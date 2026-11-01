@@ -55,6 +55,7 @@ import net.minecraft.world.level.pathfinder.PathfindingContext;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.entity.PartEntity;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -98,6 +99,9 @@ public class Colossus extends Monster {
     private static final int SLAM_COOLDOWN = 60;
     private static final float SHOCKWAVE_SPEED = 0.9F;
     private static final float SHOCKWAVE_RADIUS = 24.0F;
+    // What has sunk into the cubes by no more than this rises out of them at this speed, in blocks and blocks a tick.
+    private static final double LIFT_DEPTH = 3.0;
+    private static final double LIFT_SPEED = 0.5;
 
     /** What the body does besides walking; each action is the animation of the same name in the project. */
     public enum Action {
@@ -120,6 +124,7 @@ public class Colossus extends Monster {
     private float placedBodyRot;
     private static @Nullable Colossus carryingLocalPlayer;
     private int carriedLocalPlayerAt;
+    private @Nullable Entity carrying;
     private float stride;
     private float strideO;
     private float walkWeight;
@@ -331,6 +336,7 @@ public class Colossus extends Monster {
         }
         this.partsPlaced = true;
         this.placedBodyRot = this.yBodyRot;
+        this.liftOutOfCubes();
     }
 
     /** What stands on a cube and no other cube yet, of what this side moves: the server its mobs, a client its player. */
@@ -355,7 +361,7 @@ public class Colossus extends Monster {
     private void carry(Entity rider, Vec3 to, float turn) {
         // A move along the cube is no landing, but the rider still stands: it can jump from there.
         boolean onGround = rider.onGround();
-        rider.move(MoverType.SHULKER_BOX, to.subtract(rider.position()));
+        this.moveThroughCubes(rider, to.subtract(rider.position()));
         rider.setOnGround(onGround);
         if (rider instanceof Player && this.level().isClientSide()) {
             // The camera shows the player's turn as it is, without easing it between ticks: the client turns its
@@ -366,6 +372,61 @@ public class Colossus extends Monster {
             rider.setYRot(rider.getYRot() + turn);
             rider.setYHeadRot(rider.getYHeadRot() + turn);
         }
+    }
+
+    /** Moves an entity that the cubes of this colossus do not stop on this move, only the blocks and all else. */
+    private void moveThroughCubes(Entity entity, Vec3 by) {
+        this.carrying = entity;
+        entity.move(MoverType.SHULKER_BOX, by);
+        this.carrying = null;
+    }
+
+    boolean isCarrying(Entity entity) {
+        return this.carrying == entity;
+    }
+
+    /**
+     * The game stops a mover only at a box it is outside of: feet inside a box fall through it, so whatever a cube came
+     * into would drop down the colossus. Lifts it back onto the cube, standing; what a cube swallowed deeper, such as
+     * something under a falling fist, stays there.
+     */
+    private void liftOutOfCubes() {
+        for (LivingEntity entity : this.level().getEntitiesOfClass(LivingEntity.class, this.getBodyBox(),
+                entity -> !(entity instanceof Colossus) && !entity.isPassenger() && !entity.noPhysics && entity.isLocalInstanceAuthoritative()
+                        && !(entity instanceof Player player && player.getAbilities().flying))) {
+            double depth = this.depthInCubes(entity.getBoundingBox());
+            if (depth > 0.0 && depth <= LIFT_DEPTH) {
+                this.moveThroughCubes(entity, new Vec3(0.0, Math.min(depth, LIFT_SPEED), 0.0));
+                Vec3 motion = entity.getDeltaMovement();
+                entity.setDeltaMovement(motion.x, Math.max(motion.y, 0.0), motion.z);
+                entity.setOnGround(true);
+                entity.resetFallDistance();
+            }
+        }
+    }
+
+    /** How far a box has to rise to stand on the cubes its lower part is in; more than LIFT_DEPTH when it is too deep. */
+    private double depthInCubes(AABB box) {
+        double depth = 0.0;
+        while (depth <= LIFT_DEPTH) {
+            AABB at = box.move(0.0, depth, 0.0);
+            double top = at.minY;
+            for (ColossusPart part : this.parts) {
+                if (part.getBoundingBox().intersects(at)) {
+                    for (AABB cell : part.cells(at)) {
+                        // Not a cell at the head only, which walks into nothing.
+                        if (cell.intersects(at) && cell.minY <= at.minY + 1.0) {
+                            top = Math.max(top, cell.maxY);
+                        }
+                    }
+                }
+            }
+            if (top - at.minY < 1.0E-6) {
+                break;
+            }
+            depth = top - box.minY;
+        }
+        return depth;
     }
 
     /**
@@ -380,7 +441,9 @@ public class Colossus extends Monster {
                 if (all == shapes) {
                     all = new ArrayList<>(shapes);
                 }
-                cube.addCollisions(reach, all);
+                for (AABB cell : cube.cells(reach)) {
+                    all.add(Shapes.create(cell));
+                }
             }
         }
         return all;
