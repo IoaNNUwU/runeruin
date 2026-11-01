@@ -277,7 +277,7 @@ def bake(state):
 
             def spin(vector, centre=0):
                 x, y, z = apply(spin_y, apply(spin_x, tuple(c - centre for c in vector)))
-                return x + centre, y, z + centre
+                return x + centre, y + centre, z + centre
 
             for index, element in enumerate(model["elements"]):
                 lo = numbers(element.get("from"), f"element {index} from", 3)
