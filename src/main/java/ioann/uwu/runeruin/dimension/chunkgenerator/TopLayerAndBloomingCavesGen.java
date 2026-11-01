@@ -38,7 +38,7 @@ public class TopLayerAndBloomingCavesGen {
 
     private static final HangingTerrainGenerator.Profile HANGING_SOIL = new HangingTerrainGenerator.Profile(
             TopLayerAndBloomingCavesGen::topLayerColumnAt,
-            BLOOMING_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_OFFSET,
+            Integer.MIN_VALUE, // Inland cliffs need core candidates even below the highest island underside.
             new HangingTerrainGenerator.Supports(
                     state -> state.is(Blocks.DIRT) || state.is(Blocks.SANDSTONE),
                     state -> state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.SAND),

@@ -197,6 +197,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("void_ceiling", () -> RRGameTests::voidCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOOMING_CAVES_CEILING =
         TEST_FUNCTIONS.register("blooming_caves_ceiling", () -> RRGameTests::bloomingCavesCeiling);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LOW_CLIFF_HANGING_SOIL =
+        TEST_FUNCTIONS.register("low_cliff_hanging_soil", () -> RRGameTests::lowCliffHangingSoil);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> TEMPLATE_PIECE =
@@ -586,6 +588,13 @@ public final class RRGameTests {
             RR.id("blooming_caves_ceiling"),
             new FunctionGameTestInstance(
                 BLOOMING_CAVES_CEILING.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("low_cliff_hanging_soil"),
+            new FunctionGameTestInstance(
+                LOW_CLIFF_HANGING_SOIL.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -1114,6 +1123,21 @@ public final class RRGameTests {
             helper.assertTrue(misread * 10_000L < reads, misread + " of " + reads + " biomes around the air of the Void and of the Lost caves are of the other layer");
             helper.assertTrue(highest - lowest >= 15, "the ceiling of the Void only spans Y " + lowest + " to " + highest);
             helper.assertTrue(ledges > 0, "the ceiling of the Void has no ledge");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    // The reported cliff is below the highest island underside but still needs soil over its lower floor.
+    private static void lowCliffHangingSoil(GameTestHelper helper) {
+        try {
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(helper.getLevel().getServer(), 2376931683883930175L,
+                new BoundingBox(-3034, 295, 28916, -3033, 303, 28916));
+            helper.assertTrue(terrain.get(new BlockPos(-3033, 302, 28916)).is(Blocks.GRASS_BLOCK), "the cliff top moved");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 301, 28916)).is(Blocks.GRASS_BLOCK), "the low cliff has no hanging soil cap");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 300, 28916)).is(Blocks.DIRT), "the low cliff has no hanging soil body");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 297, 28916)).is(Blocks.GRASS_BLOCK), "the lower floor changed");
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());
