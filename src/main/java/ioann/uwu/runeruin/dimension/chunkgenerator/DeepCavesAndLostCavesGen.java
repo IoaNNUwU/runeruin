@@ -35,14 +35,11 @@ public class DeepCavesAndLostCavesGen {
             LOST_CAVES_CEILING_Y + TOP_LAYER_MAX_BASELINE_HEIGHT + TOP_LAYER_OFFSET,
             new HangingTerrainGenerator.Supports(
                     state -> state.is(Blocks.STONE) || state.is(BlockTags.MOSS_BLOCKS),
-                    state -> state.is(BlockTags.MOSS_BLOCKS),
-                    state -> state.is(BlockTags.MOSS_BLOCKS),
-                    state -> state.is(BlockTags.BASE_STONE_OVERWORLD)
+                    state -> state.is(BlockTags.MOSS_BLOCKS)
             ),
             new HangingTerrainGenerator.Materials(
                     DeepCavesAndLostCavesGen::mossAt,
-                    DeepCavesAndLostCavesGen::mossAt,
-                    Blocks.STONE.defaultBlockState()
+                    DeepCavesAndLostCavesGen::mossAt
             ),
             RR.id("hanging_moss_shape")
     );

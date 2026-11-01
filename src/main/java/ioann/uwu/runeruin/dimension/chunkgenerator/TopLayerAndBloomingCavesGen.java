@@ -10,7 +10,6 @@ import java.util.OptionalInt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
@@ -41,14 +40,11 @@ public class TopLayerAndBloomingCavesGen {
             Integer.MIN_VALUE, // Inland cliffs need core candidates even below the highest island underside.
             new HangingTerrainGenerator.Supports(
                     state -> state.is(Blocks.DIRT) || state.is(Blocks.SANDSTONE),
-                    state -> state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.SAND),
-                    state -> state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT) || state.is(Blocks.SAND) || state.is(Blocks.SANDSTONE),
-                    state -> state.is(BlockTags.BASE_STONE_OVERWORLD)
+                    state -> state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.SAND)
             ),
             new HangingTerrainGenerator.Materials(
                     TopLayerAndBloomingCavesGen::hangingSoilCap,
-                    TopLayerAndBloomingCavesGen::hangingSoilBody,
-                    Blocks.STONE.defaultBlockState()
+                    TopLayerAndBloomingCavesGen::hangingSoilBody
             ),
             RR.id("hanging_soil_shape")
     );

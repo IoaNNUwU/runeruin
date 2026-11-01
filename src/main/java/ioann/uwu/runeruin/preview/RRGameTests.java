@@ -16,7 +16,9 @@ import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.RRFeatures;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesAndLostCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
+import ioann.uwu.runeruin.dimension.chunkgenerator.HangingTerrainGenerator;
 import ioann.uwu.runeruin.dimension.chunkgenerator.RRTerrainSurfaces;
+import ioann.uwu.runeruin.dimension.chunkgenerator.TerrainWriter;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.features.CaveMushroomKind;
@@ -199,6 +201,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("blooming_caves_ceiling", () -> RRGameTests::bloomingCavesCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LOW_CLIFF_HANGING_SOIL =
         TEST_FUNCTIONS.register("low_cliff_hanging_soil", () -> RRGameTests::lowCliffHangingSoil);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> HANGING_TERRAIN_SEPARATION =
+        TEST_FUNCTIONS.register("hanging_terrain_separation", () -> RRGameTests::hangingTerrainSeparation);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> TEMPLATE_PIECE =
@@ -595,6 +599,13 @@ public final class RRGameTests {
             RR.id("low_cliff_hanging_soil"),
             new FunctionGameTestInstance(
                 LOW_CLIFF_HANGING_SOIL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("hanging_terrain_separation"),
+            new FunctionGameTestInstance(
+                HANGING_TERRAIN_SEPARATION.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -1137,7 +1148,64 @@ public final class RRGameTests {
             helper.assertTrue(terrain.get(new BlockPos(-3033, 302, 28916)).is(Blocks.GRASS_BLOCK), "the cliff top moved");
             helper.assertTrue(terrain.get(new BlockPos(-3034, 301, 28916)).is(Blocks.GRASS_BLOCK), "the low cliff has no hanging soil cap");
             helper.assertTrue(terrain.get(new BlockPos(-3034, 300, 28916)).is(Blocks.DIRT), "the low cliff has no hanging soil body");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 298, 28916)).isAir(), "the hanging soil joins the lower floor");
             helper.assertTrue(terrain.get(new BlockPos(-3034, 297, 28916)).is(Blocks.GRASS_BLOCK), "the lower floor changed");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    private static void hangingTerrainSeparation(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            RandomState randomState = HeadlessTerrainGenerator.randomState(server, 1);
+            var chunks = HeadlessTerrainGenerator.chunkFactory(HeadlessTerrainGenerator.generator(server), server, randomState);
+            BlockState grass = Blocks.GRASS_BLOCK.defaultBlockState();
+            BlockState dirt = Blocks.DIRT.defaultBlockState();
+            BlockState moss = RRBlocks.DEEP_MOSS.get().defaultBlockState();
+            for (var materials : List.of(List.of(grass, dirt), List.of(moss, moss))) {
+                BlockState cap = materials.get(0);
+                BlockState body = materials.get(1);
+                for (BlockState ground : List.of(grass, Blocks.STONE.defaultBlockState(), moss)) {
+                    for (int clearance = 1; clearance <= 8; clearance++) {
+                        int floorY = 63 - clearance;
+                        var chunk = chunks.apply(new ChunkPos(0, 0));
+                        var profile = new HangingTerrainGenerator.Profile(
+                            (x, z, state) -> new HangingTerrainGenerator.TerrainColumn(true, 40, x < 8 ? 64 : floorY),
+                            Integer.MIN_VALUE,
+                            new HangingTerrainGenerator.Supports(state -> state.equals(body), state -> state.equals(cap)),
+                            new HangingTerrainGenerator.Materials((c, p, r) -> cap, (c, p, r) -> body),
+                            RR.id("hanging_separation_test")
+                        );
+                        try (TerrainWriter terrain = new TerrainWriter(chunk)) {
+                            for (int x = 0; x < 16; x++) {
+                                for (int z = 0; z < 16; z++) {
+                                    int top = x < 8 ? 64 : floorY;
+                                    for (int y = 40; y < top; y++) {
+                                        terrain.set(x, y, z, x < 8 ? body : Blocks.STONE.defaultBlockState());
+                                    }
+                                    terrain.set(x, top, z, x < 8 ? cap : ground);
+                                }
+                            }
+                            HangingTerrainGenerator.generate(terrain, randomState, profile);
+                        }
+                        for (int z = 1; z < 15; z++) {
+                            String at = " over " + ground + " with clearance " + clearance + " at z " + z;
+                            helper.assertTrue(chunk.getBlockState(new BlockPos(8, floorY, z)).equals(ground), "the lower floor changed" + at);
+                            helper.assertTrue(chunk.getBlockState(new BlockPos(8, floorY + 1, z)).isAir(), "the tip touches the lower floor" + at);
+                            helper.assertTrue(chunk.getBlockState(new BlockPos(7, 63, z)).equals(body), "the supporting wall changed" + at);
+                            helper.assertTrue(clearance == 1
+                                ? chunk.getBlockState(new BlockPos(8, 63, z)).isAir()
+                                : chunk.getBlockState(new BlockPos(8, 63, z)).equals(cap), "the cap lost its wall attachment" + at);
+                            for (int y = floorY + 2; y < 63; y++) {
+                                BlockState state = chunk.getBlockState(new BlockPos(8, y, z));
+                                helper.assertTrue(state.isAir() || state.equals(body), "a bridge fills the air under the tip" + at);
+                            }
+                        }
+                    }
+                }
+            }
             helper.succeed();
         } catch (IOException e) {
             helper.fail(e.toString());
