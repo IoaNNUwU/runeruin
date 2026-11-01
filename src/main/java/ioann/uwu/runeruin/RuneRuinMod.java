@@ -93,3 +93,5 @@ public class RuneRuinMod {
         );
     }
 }
+
+# Automated fix for issue #159: Cover the top layer arches with soil and end them without a flat wall
