@@ -109,6 +109,7 @@ public final class TopLayerRelief {
         float total = 0;
         float height = 0;
         float hills = 0;
+        float stepHills = 0;
         float bumps = 0;
         float plateau = 0;
         float calm = 0;
@@ -121,7 +122,8 @@ public final class TopLayerRelief {
                 float weight = (RADIUS + 1 - Math.abs(dx)) * (RADIUS + 1 - Math.abs(dz));
                 total += weight;
                 height += weight * profile.height();
-                hills += weight * profile.hills();
+                hills += weight * profile.hills() * (1 - profile.plateau());
+                stepHills += weight * profile.hills() * profile.plateau();
                 bumps += weight * profile.bumps();
                 plateau += weight * profile.plateau();
                 calm += weight * profile.calm();
@@ -130,11 +132,14 @@ public final class TopLayerRelief {
                 cliffThreshold += weight * profile.cliffs().threshold();
             }
         }
-        return new Land(height / total, hills / total, bumps / total, plateau / total, calm / total, cliffHeight / total, cliffWinding / total, cliffThreshold / total);
+        return new Land(height / total, hills / total, stepHills / total, bumps / total, plateau / total, calm / total, cliffHeight / total, cliffWinding / total, cliffThreshold / total);
     }
 
-    /** A blended {@link TerrainProfile}. */
-    record Land(float height, float hills, float bumps, float plateau, float calm, float cliffHeight, float cliffWinding, float cliffThreshold) {
+    /**
+     * A blended {@link TerrainProfile}, with its hills split into the round ones and the ones cut into steps, so that
+     * the steps keep their own height and only the share of the stepped land tells how near a border is.
+     */
+    record Land(float height, float hills, float stepHills, float bumps, float plateau, float calm, float cliffHeight, float cliffWinding, float cliffThreshold) {
 
         /** 1 on the wild land of the biomes around, 0 on their calm land, smooth between. */
         float wild(int x, int z, RandomState randomState) {
@@ -148,6 +153,7 @@ public final class TopLayerRelief {
             return new Land(
                     lerp(x, z, x0z0.height, x1z0.height, x0z1.height, x1z1.height),
                     lerp(x, z, x0z0.hills, x1z0.hills, x0z1.hills, x1z1.hills),
+                    lerp(x, z, x0z0.stepHills, x1z0.stepHills, x0z1.stepHills, x1z1.stepHills),
                     lerp(x, z, x0z0.bumps, x1z0.bumps, x0z1.bumps, x1z1.bumps),
                     lerp(x, z, x0z0.plateau, x1z0.plateau, x0z1.plateau, x1z1.plateau),
                     lerp(x, z, x0z0.calm, x1z0.calm, x0z1.calm, x1z1.calm),

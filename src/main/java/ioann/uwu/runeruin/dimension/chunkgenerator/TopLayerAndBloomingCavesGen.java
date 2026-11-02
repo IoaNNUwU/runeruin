@@ -289,6 +289,9 @@ public class TopLayerAndBloomingCavesGen {
     private static final LazyNoise stepEdgesNoise = LazyNoise.single("topLayerStepEdges", 5f);
     private static final int PLATEAU_STEPS = 4;
     private static final float PLATEAU_RISE_WHOLE = 0.25f;
+    // The steps are gone where half of the land around a column is plateau (its border) and whole from the second value.
+    private static final float PLATEAU_BORDER = 0.5f;
+    private static final float PLATEAU_INLAND = 0.85f;
     // How far inland a column lies is measured by the island noise above its edge, which rises evenly from the edge.
     // Up to the first value the island keeps its own shape and the hanging soil on its edge. From there the ground
     // turns into the height of the biomes, whole at the second value, and their hills and bumps rise with it, to
@@ -330,14 +333,16 @@ public class TopLayerAndBloomingCavesGen {
     private static float biomeRelief(int x, int z, float inland, TopLayerRelief.Land land, RandomState randomState) {
         float rise = Noise.smooth(inland, EDGE_KEPT, BIOME_RELIEF_WHOLE);
         float hills = hillsNoise.getOrCreateNoise(randomState).noise(x, z);
-        float round = rise * hills;
+        float relief = land.hills() * rise * hills + rise * land.bumps() * bumpsNoise.getOrCreateNoise(randomState).noise(x, z);
         if (land.plateau() > 0) {
-            // The edge lowers the hills before they are cut, so that the steps follow the land and not the edge.
+            // The edge of the island and the border of the plateau lower the hills before they are cut, so that the
+            // steps follow the land and descend to the border instead of the height fading while the steps end.
             float wobble = 0.05f * (stepEdgesNoise.getOrCreateNoise(randomState).noise(x, z) - 0.5f);
-            float stepped = Noise.smooth(inland, EDGE_KEPT, PLATEAU_RISE_WHOLE) * Noise.smooth(hills + wobble, 0.25f, 0.75f);
-            round = Mth.lerp(land.plateau(), round, steps(stepped));
+            float stepped = Noise.smooth(inland, EDGE_KEPT, PLATEAU_RISE_WHOLE) * Noise.smooth(hills + wobble, 0.25f, 0.75f)
+                    * Noise.smooth(land.plateau(), PLATEAU_BORDER, PLATEAU_INLAND);
+            relief += land.stepHills() / land.plateau() * steps(stepped);
         }
-        return land.hills() * round + rise * land.bumps() * bumpsNoise.getOrCreateNoise(randomState).noise(x, z);
+        return relief;
     }
 
     /** Cut into steps with steep sides; each tread still rises towards the next step, so that none is a flat shelf. */
