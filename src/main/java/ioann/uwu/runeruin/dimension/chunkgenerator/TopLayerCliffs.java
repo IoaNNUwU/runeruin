@@ -30,22 +30,33 @@ final class TopLayerCliffs {
     private static final float SHOULDER = 0.55f;
     private static final float SHOULDER_WIDTH = 0.09f;
     private static final float CALM_THRESHOLD = 0.25f;
+    // The hills level out over this much of the noise before a cliff, so that its wall stands on level ground on every
+    // side and not on the slope of a hill, which would bury it on the uphill side.
+    private static final float LEVELLING_WIDTH = 0.25f;
 
     private TopLayerCliffs() {}
 
-    /** How high a cliff stands above the ground of this column, 0 where there is none. */
-    static float heightAt(int x, int z, float wild, TopLayerRelief.Land land, RandomState randomState) {
+    /**
+     * @param height how high the cliff stands above the ground of the column, 0 where there is none
+     * @param level  0 away from cliffs, 1 on and under them: how much the hills around a cliff are levelled out
+     */
+    record Cliff(float height, float level) {
+
+        static final Cliff NONE = new Cliff(0, 0);
+    }
+
+    static Cliff at(int x, int z, float wild, TopLayerRelief.Land land, RandomState randomState) {
         if (land.cliffHeight() <= 0 || wild <= 0) {
-            return 0;
+            return Cliff.NONE;
         }
         // On the way to the calm land of a biome the cliffs grow rarer and end before it.
         float threshold = land.cliffThreshold() + (1 - wild) * CALM_THRESHOLD;
         float margin = field(x, z, land.cliffWinding(), randomState) - threshold;
         if (margin <= 0) {
-            return 0;
+            return new Cliff(0, Noise.smooth(margin, -LEVELLING_WIDTH, 0));
         }
         float wall = LOWEST_WALL + (1 - LOWEST_WALL) * Noise.smooth(WALL_HEIGHT.getOrCreateNoise(randomState).noise(x, z), 0.25f, 0.75f);
-        return land.cliffHeight() * (wall + SHOULDER * Noise.smooth(margin, 0, SHOULDER_WIDTH));
+        return new Cliff(land.cliffHeight() * (wall + SHOULDER * Noise.smooth(margin, 0, SHOULDER_WIDTH)), 1);
     }
 
     /** What the threshold of a biome is compared with: the relief of the islands for winding cliffs, a wider noise for calm ones. */
