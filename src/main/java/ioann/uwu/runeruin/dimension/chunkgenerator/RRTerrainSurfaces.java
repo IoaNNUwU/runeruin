@@ -134,10 +134,12 @@ public final class RRTerrainSurfaces {
         return PROFILES.containsKey(biome);
     }
 
-    /** What lies under the floor: dirt under grass, sandstone under sand, stone under the rest. */
+    /** What lies under the floor: mud in the swamp, dirt under grass, sandstone under sand, stone under the rest. */
     public static BlockState subfloorFor(Holder<Biome> biome) {
         SurfaceResolver floor = profile(biome).floor;
-        return (floor == GRASS ? Blocks.DIRT : floor == SAND ? Blocks.SANDSTONE : Blocks.STONE).defaultBlockState();
+        Block block = biome.is(RRBiomes.SWAMP) ? Blocks.MUD
+                : floor == GRASS ? Blocks.DIRT : floor == SAND ? Blocks.SANDSTONE : Blocks.STONE;
+        return block.defaultBlockState();
     }
 
     private static Profile profile(Holder<Biome> biome) {
