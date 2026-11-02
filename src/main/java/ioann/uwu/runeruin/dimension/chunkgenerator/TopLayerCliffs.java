@@ -35,10 +35,16 @@ final class TopLayerCliffs {
     private static final float SHOULDER = 0.55f;
     private static final float SHOULDER_WIDTH = 0.09f;
     private static final float CALM_THRESHOLD = 0.25f;
-    // A tall wall keeps this many blocks at its foot and under its top, where the hanging soil goes;
-    // the blocks of its face between them are dug out.
+    // A tall wall keeps this many blocks at its foot and under its top, and the blocks of its face between them are
+    // dug out. The top is one block lower than the hanging soil reaches, so that the stone steps under it instead
+    // of being flush with it. Both vary a little from column to column.
     private static final int NICHE_FOOT = 2;
-    private static final int NICHE_ROOF = 5;
+    private static final int NICHE_ROOF = 6;
+    private static final int NICHE_FOOT_EXTRA = 2;
+    private static final int NICHE_ROOF_EXTRA = 1;
+    // A niche of fewer blocks is not worth it: such a wall stays flat.
+    private static final int LOWEST_NICHE = 4;
+    private static final LazyNoise NICHE_JITTER = LazyNoise.single("topLayerCliffNiches", 20f);
 
     private TopLayerCliffs() {}
 
@@ -56,11 +62,17 @@ final class TopLayerCliffs {
 
     /**
      * What is dug out of the face of a tall wall in this column, one block deep in the middle of the wall: the wall
-     * rises, steps back and rises again. A column is dug only with two columns of rock behind it, so that no thin
-     * cliff is left hanging, and not at the edge of an island, which keeps its shape.
+     * rises, steps back and rises again. Next to an inner corner of the wall one more block stays at the foot and
+     * under the top, so that the niche narrows towards the corner instead of ending in a flat wall. A column is dug
+     * only with two columns of rock behind it, so that no thin cliff is left hanging, and not at the edge of an
+     * island, which keeps its shape.
      */
     static List<Niche> nichesAt(int worldX, int worldZ, HangingTerrainGenerator.TerrainColumn column, RandomState randomState) {
-        int nicheTop = column.topY() - NICHE_ROOF;
+        float jitter = NICHE_JITTER.getOrCreateNoise(randomState).noise(worldX, worldZ);
+        float roofJitter = NICHE_JITTER.getOrCreateNoise(randomState).noise(worldX + 1000, worldZ + 1000);
+        int rockTop = column.topY() - NICHE_ROOF;
+        int roofExtra = Math.min((int) (roofJitter * (NICHE_ROOF_EXTRA + 1)), NICHE_ROOF_EXTRA);
+        int footExtra = Math.min((int) (jitter * (NICHE_FOOT_EXTRA + 1)), NICHE_FOOT_EXTRA);
         HangingTerrainGenerator.TerrainColumn[] around = new HangingTerrainGenerator.TerrainColumn[4];
         for (Direction side : Direction.Plane.HORIZONTAL) {
             around[side.get2DDataValue()] = TopLayerAndBloomingCavesGen.topLayerColumnAt(worldX + side.getStepX(), worldZ + side.getStepZ(), randomState);
@@ -71,11 +83,32 @@ final class TopLayerCliffs {
         List<Niche> niches = new ArrayList<>(2);
         for (Direction side : Direction.Plane.HORIZONTAL) {
             int footY = around[side.get2DDataValue()].topY() + 1 + NICHE_FOOT;
-            if (footY <= nicheTop && isRockBehind(worldX, worldZ, side.getOpposite(), nicheTop, around[side.getOpposite().get2DDataValue()], randomState)) {
-                niches.add(new Niche(footY, nicheTop));
+            // The wall decides whether it is dug; the variation only shortens the niche, never below the lowest.
+            int spare = rockTop - footY + 1 - LOWEST_NICHE;
+            if (spare < 0 || !isRockBehind(worldX, worldZ, side.getOpposite(), rockTop, around[side.getOpposite().get2DDataValue()], randomState)) {
+                continue;
             }
+            int lessFoot = Math.min(footExtra, spare);
+            int lessRoof = Math.min(roofExtra, spare - lessFoot);
+            int inner = isInnerCorner(worldX, worldZ, side, rockTop, around, randomState) ? 1 : 0;
+            niches.add(new Niche(footY + lessFoot + inner, rockTop - lessRoof - inner));
         }
         return niches;
+    }
+
+    /** Whether the wall that faces {@code side} meets another wall right next to this column. */
+    private static boolean isInnerCorner(int worldX, int worldZ, Direction side, int rockTop, HangingTerrainGenerator.TerrainColumn[] around, RandomState randomState) {
+        for (Direction along : new Direction[]{side.getClockWise(), side.getCounterClockWise()}) {
+            if (around[along.get2DDataValue()].topY() <= rockTop) {
+                continue;
+            }
+            HangingTerrainGenerator.TerrainColumn corner = TopLayerAndBloomingCavesGen.topLayerColumnAt(
+                    worldX + along.getStepX() + side.getStepX(), worldZ + along.getStepZ() + side.getStepZ(), randomState);
+            if (corner.present() && corner.topY() > rockTop) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isRockBehind(int worldX, int worldZ, Direction back, int nicheTop, HangingTerrainGenerator.TerrainColumn first, RandomState randomState) {
