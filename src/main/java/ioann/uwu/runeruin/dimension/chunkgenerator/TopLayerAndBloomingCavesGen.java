@@ -296,15 +296,14 @@ public class TopLayerAndBloomingCavesGen {
     // How far inland a column lies is measured by the island noise above its edge, which rises evenly from the edge.
     // Up to the first value the island keeps its own shape and the hanging soil on its edge. From there the ground
     // turns into the height of the biomes, whole at the second value, and their hills and bumps rise with it, to
-    // their full height only at the third: the edge never ends in a wall, and the big hills stand inland.
+    // their full height only at the third: the hills never end in a wall at the edge, and the big ones stand inland.
+    // A cliff may stand right at the edge, with its stone open to the void: it is whole just after the edge is kept.
     private static final float EDGE_KEPT = 0.01f;
     private static final float BIOME_HEIGHT_WHOLE = 0.12f;
     private static final float BIOME_RELIEF_WHOLE = 0.45f;
-    private static final float CLIFFS_WHOLE = 0.2f;
+    private static final float CLIFFS_WHOLE = 0.03f;
     // On the calm land of a biome its hills and bumps keep this share of their height.
     private static final float CALM_RELIEF = 0.3f;
-    // Under and around a cliff the hills and bumps keep only this share of their height.
-    private static final float LEVELLED_RELIEF = 0.1f;
     private static final TopLayerGround NO_GROUND = new TopLayerGround(HangingTerrainGenerator.TerrainColumn.NONE, false);
 
     /** A column of the top layer and whether a cliff stands on it. */
@@ -323,12 +322,11 @@ public class TopLayerAndBloomingCavesGen {
         TopLayerRelief.Land land = TopLayerRelief.at(x, z, randomState.sampler());
         float islandHeight = island.topY() - island.baseline();
         float wild = land.wild(x, z, randomState);
-        TopLayerCliffs.Cliff cliffs = TopLayerCliffs.at(x, z, wild, land, randomState);
         float ground = Mth.lerp(Noise.smooth(inland, EDGE_KEPT, BIOME_HEIGHT_WHOLE), islandHeight, land.height())
-                + Mth.lerp(wild, CALM_RELIEF, 1) * Mth.lerp(cliffs.level(), 1, LEVELLED_RELIEF) * biomeRelief(x, z, inland, land, randomState);
+                + Mth.lerp(wild, CALM_RELIEF, 1) * biomeRelief(x, z, inland, land, randomState);
         // No biome makes an island thinner than its edge, so none opens holes in it.
         ground = Math.max(ground, Math.min(islandHeight, 3));
-        float cliff = cliffs.height() * Noise.smooth(inland, EDGE_KEPT, CLIFFS_WHOLE);
+        float cliff = TopLayerCliffs.heightAt(x, z, wild, land, randomState) * Noise.smooth(inland, EDGE_KEPT, CLIFFS_WHOLE);
         int topY = (int) (island.baseline() + ground + cliff);
         return new TopLayerGround(new HangingTerrainGenerator.TerrainColumn(true, island.baseline(), topY), topY > (int) (island.baseline() + ground));
     }
