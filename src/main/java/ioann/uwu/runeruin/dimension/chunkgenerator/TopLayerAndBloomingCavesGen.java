@@ -40,9 +40,9 @@ public class TopLayerAndBloomingCavesGen {
             TopLayerAndBloomingCavesGen::topLayerColumnAt,
             Integer.MIN_VALUE, // Inland cliffs need core candidates even below the highest island underside.
             new HangingTerrainGenerator.Supports(
-                    state -> state.is(Blocks.DIRT) || state.is(Blocks.SANDSTONE),
+                    state -> state.is(Blocks.DIRT) || state.is(Blocks.MUD) || state.is(Blocks.SANDSTONE),
                     state -> state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.SAND),
-                    state -> state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT) || state.is(Blocks.SAND) || state.is(Blocks.SANDSTONE),
+                    state -> state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT) || state.is(Blocks.MUD) || state.is(Blocks.SAND) || state.is(Blocks.SANDSTONE),
                     state -> state.is(BlockTags.BASE_STONE_OVERWORLD)
             ),
             new HangingTerrainGenerator.Materials(
@@ -358,10 +358,12 @@ public class TopLayerAndBloomingCavesGen {
     }
 
     // The hanging soil is of the floor of the island beside it: no sand, which would fall, but what lies under it.
+    // The swamp hangs mud all through, not grass over mud.
     private static BlockState hangingSoilCap(ChunkAccess chunk, BlockPos start, RandomState randomState) {
         Holder<Biome> biome = TopLayerRelief.floorBiome(start.getX(), start.getZ(), randomState);
         BlockState floor = RRTerrainSurfaces.floorFor(biome, start.getX(), start.getY() + 1, start.getZ(), randomState);
-        return floor.getBlock() instanceof FallingBlock ? RRTerrainSurfaces.subfloorFor(biome) : floor;
+        BlockState subfloor = RRTerrainSurfaces.subfloorFor(biome);
+        return floor.getBlock() instanceof FallingBlock || subfloor.is(Blocks.MUD) ? subfloor : floor;
     }
 
     private static BlockState hangingSoilBody(ChunkAccess chunk, BlockPos start, RandomState randomState) {
