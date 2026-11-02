@@ -289,9 +289,10 @@ public class TopLayerAndBloomingCavesGen {
     private static final LazyNoise stepEdgesNoise = LazyNoise.single("topLayerStepEdges", 5f);
     private static final int PLATEAU_STEPS = 4;
     private static final float PLATEAU_RISE_WHOLE = 0.25f;
-    // The steps are gone where half of the land around a column is plateau (its border) and whole from the second value.
+    // The steps are gone where half of the land around a column is plateau (its border) and whole a few blocks inland,
+    // so that a mountain keeps its whole width up to the border and ends in a wall there, the same on every side.
     private static final float PLATEAU_BORDER = 0.5f;
-    private static final float PLATEAU_INLAND = 0.85f;
+    private static final float PLATEAU_INLAND = 0.6f;
     // How far inland a column lies is measured by the island noise above its edge, which rises evenly from the edge.
     // Up to the first value the island keeps its own shape and the hanging soil on its edge. From there the ground
     // turns into the height of the biomes, whole at the second value, and their hills and bumps rise with it, to
