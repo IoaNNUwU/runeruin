@@ -1133,10 +1133,10 @@ public final class RRGameTests {
     private static void lowCliffHangingSoil(GameTestHelper helper) {
         try {
             PreviewWorld terrain = HeadlessTerrainGenerator.generate(helper.getLevel().getServer(), 2376931683883930175L,
-                new BoundingBox(-3034, 295, 28916, -3033, 303, 28916));
-            helper.assertTrue(terrain.get(new BlockPos(-3033, 302, 28916)).is(Blocks.GRASS_BLOCK), "the cliff top moved");
-            helper.assertTrue(terrain.get(new BlockPos(-3034, 301, 28916)).is(Blocks.GRASS_BLOCK), "the low cliff has no hanging soil cap");
-            helper.assertTrue(terrain.get(new BlockPos(-3034, 300, 28916)).is(Blocks.DIRT), "the low cliff has no hanging soil body");
+                new BoundingBox(-3034, 295, 28916, -3033, 307, 28916));
+            helper.assertTrue(terrain.get(new BlockPos(-3033, 306, 28916)).is(Blocks.GRASS_BLOCK), "the cliff top moved");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 305, 28916)).is(Blocks.GRASS_BLOCK), "the low cliff has no hanging soil cap");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 304, 28916)).is(Blocks.DIRT), "the low cliff has no hanging soil body");
             helper.assertTrue(terrain.get(new BlockPos(-3034, 297, 28916)).is(Blocks.GRASS_BLOCK), "the lower floor changed");
             helper.succeed();
         } catch (IOException e) {
