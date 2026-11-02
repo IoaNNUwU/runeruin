@@ -289,10 +289,10 @@ public class TopLayerAndBloomingCavesGen {
     private static final LazyNoise stepEdgesNoise = LazyNoise.single("topLayerStepEdges", 5f);
     private static final int PLATEAU_STEPS = 4;
     private static final float PLATEAU_RISE_WHOLE = 0.25f;
-    // The steps are gone where half of the land around a column is plateau (its border) and whole a few blocks inland,
-    // so that a mountain keeps its whole width up to the border and ends in a wall there, the same on every side.
-    private static final float PLATEAU_BORDER = 0.5f;
-    private static final float PLATEAU_INLAND = 0.6f;
+    // The steps are gone up to this many blocks from the border of the plateau (the quart over it) and whole from the
+    // second distance: the same width on every side, and a narrow plateau never rises to its full height.
+    private static final float PLATEAU_BORDER = 4;
+    private static final float PLATEAU_INLAND = 16;
     // How far inland a column lies is measured by the island noise above its edge, which rises evenly from the edge.
     // Up to the first value the island keeps its own shape and the hanging soil on its edge. From there the ground
     // turns into the height of the biomes, whole at the second value, and their hills and bumps rise with it, to
@@ -343,7 +343,7 @@ public class TopLayerAndBloomingCavesGen {
             // steps follow the land and descend to the border instead of the height fading while the steps end.
             float wobble = 0.05f * (stepEdgesNoise.getOrCreateNoise(randomState).noise(x, z) - 0.5f);
             float stepped = Noise.smooth(inland, EDGE_KEPT, PLATEAU_RISE_WHOLE) * Noise.smooth(hills + wobble, 0.25f, 0.75f)
-                    * Noise.smooth(land.plateau(), PLATEAU_BORDER, PLATEAU_INLAND);
+                    * Noise.smooth(land.stepBorder(), PLATEAU_BORDER, PLATEAU_INLAND);
             relief += land.stepHills() / land.plateau() * steps(stepped);
         }
         return relief;
