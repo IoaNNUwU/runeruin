@@ -263,6 +263,9 @@ public class TopLayerAndBloomingCavesGen {
                     terrain.set(x, y, z, subfloor);
                 }
                 terrain.set(x, topY, z, RRTerrainSurfaces.floorFor(biome, xx, topY, zz, randomState));
+                if (ground.onCliff()) {
+                    TopLayerCliffs.hollowWall(terrain, x, z, xx, zz, column, randomState);
+                }
             }
         }
         for (TopLayerArches.Arch arch : TopLayerArches.around(chunk.getPos(), randomState)) {
@@ -280,7 +283,13 @@ public class TopLayerAndBloomingCavesGen {
         return column.present() ? OptionalInt.of(column.topY()) : OptionalInt.empty();
     }
 
-    private static HangingTerrainGenerator.TerrainColumn topLayerColumnAt(int x, int z, RandomState randomState) {
+    /** Whether this block of the top layer is dug out of the face of a tall cliff wall. */
+    public static boolean isCliffNiche(int x, int y, int z, RandomState randomState) {
+        TopLayerGround ground = topLayerGroundAt(x, z, randomState);
+        return ground.onCliff() && TopLayerCliffs.nichesAt(x, z, ground.column(), randomState).stream().anyMatch(niche -> y >= niche.footY() && y <= niche.topY());
+    }
+
+    static HangingTerrainGenerator.TerrainColumn topLayerColumnAt(int x, int z, RandomState randomState) {
         return topLayerGroundAt(x, z, randomState).column();
     }
 
