@@ -1206,7 +1206,8 @@ public final class RRGameTests {
                     // Soil hangs over the surface under a cliff, so the highest block of a column is not its surface.
                     int surfaceY = Math.min(TopLayerAndBloomingCavesGen.topLayerSurfaceY(x, z, randomState).orElse(ceilingY), minY + height - 1);
                     for (int y = ceilingY; y <= surfaceY; y++) {
-                        helper.assertTrue(y < surfaceY - 8 || !terrain.get(pos.set(x, y, z)).isAir(), "the top layer is open from below at " + x + " " + y + " " + z);
+                        // The face of a tall cliff wall is dug out on purpose.
+                        helper.assertTrue(y < surfaceY - 8 || !terrain.get(pos.set(x, y, z)).isAir() || TopLayerAndBloomingCavesGen.isCliffNiche(x, y, z, randomState), "the top layer is open from below at " + x + " " + y + " " + z);
                     }
                     // What lies on the edge may hang on something outside.
                     boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;
