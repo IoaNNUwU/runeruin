@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.dimension.chunkgenerator;
 
-import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.RRChunkGenerator;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
@@ -12,7 +11,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.RandomState;
 
 /**
@@ -39,15 +37,15 @@ final class TopLayerCliffs {
     private static final float CALM_THRESHOLD = 0.25f;
     // A tall wall keeps at least this many blocks at its foot and under its top, and the blocks of its face between
     // them are dug out. The top is one block lower than the hanging soil reaches, so that the stone steps under it
-    // instead of being flush with it. Each of them grows by 0 to 2 blocks from column to column.
+    // instead of being flush with it. Each of them grows by up to RAMP blocks, one block a column along the wall and
+    // back, as a cliff steps down by itself; a slow noise shifts where the steps turn.
     private static final int NICHE_FOOT = 1;
     private static final int NICHE_ROOF = 6;
-    private static final int VARIANTS = 3;
+    private static final int RAMP = 2;
+    private static final LazyNoise RAMP_SHIFT = LazyNoise.single("topLayerCliffNicheShift", 2f);
+    private static final float RAMP_SHIFT_BLOCKS = 12;
     // A niche of fewer blocks is not worth it: such a wall stays flat.
     private static final int LOWEST_NICHE = 4;
-    // Three blocks of a row, each of the values 0 to 2, so that the second differs from the third: the last block of a
-    // row ends a run of equal values after one block, the first begins one of up to two, never more than three in all.
-    private static final int[][] RUN_PATTERNS = {{0, 0, 1}, {0, 0, 2}, {0, 1, 0}, {0, 1, 2}, {0, 2, 0}, {0, 2, 1}};
 
     private TopLayerCliffs() {}
 
@@ -71,14 +69,9 @@ final class TopLayerCliffs {
      * island, which keeps its shape.
      */
     static List<Niche> nichesAt(int worldX, int worldZ, HangingTerrainGenerator.TerrainColumn column, RandomState randomState) {
-        // The foot and the top of the niche come from two rows, one along X and one along Z, in such a way that two
-        // columns share both only where they share both values of the rows. A row never repeats a value more than three
-        // times, so neither does a line of columns in any direction.
-        PositionalRandomFactory random = randomState.getOrCreateRandomFactory(RR.id("cliff_niches"));
-        int along = variant(worldX, 0, random);
-        int across = variant(worldZ, 1, random);
-        int footExtra = (along + across) % VARIANTS;
-        int roofExtra = (along + 2 * across) % VARIANTS;
+        Noise shift = RAMP_SHIFT.getOrCreateNoise(randomState);
+        int footShift = Math.round(shift.noise(worldX, worldZ) * RAMP_SHIFT_BLOCKS);
+        int roofShift = Math.round(shift.noise(worldX + 1000, worldZ + 1000) * RAMP_SHIFT_BLOCKS);
         int rockTop = column.topY() - NICHE_ROOF;
         HangingTerrainGenerator.TerrainColumn[] around = new HangingTerrainGenerator.TerrainColumn[4];
         for (Direction side : Direction.Plane.HORIZONTAL) {
@@ -95,18 +88,19 @@ final class TopLayerCliffs {
             if (spare < 0 || !isRockBehind(worldX, worldZ, side.getOpposite(), rockTop, around[side.getOpposite().get2DDataValue()], randomState)) {
                 continue;
             }
-            int lessFoot = Math.min(footExtra, spare);
-            int lessRoof = Math.min(roofExtra, spare - lessFoot);
+            // The wall facing this side runs along the other axis.
+            int along = side.getAxis() == Direction.Axis.X ? worldZ : worldX;
+            int lessFoot = Math.min(ramp(along + footShift), spare);
+            int lessRoof = Math.min(ramp(along + roofShift), spare - lessFoot);
             int inner = isInnerCorner(worldX, worldZ, side, rockTop, around, randomState) ? 1 : 0;
             niches.add(new Niche(footY + lessFoot + inner, rockTop - lessRoof - inner));
         }
         return niches;
     }
 
-    /** The value of a row at {@code index}: 0 to 2, equal for one to three indices in a row. */
-    private static int variant(int index, int row, PositionalRandomFactory random) {
-        int pick = random.at(Math.floorDiv(index, 3), row, 0).nextInt(VARIANTS * RUN_PATTERNS.length);
-        return (RUN_PATTERNS[pick / VARIANTS][Math.floorMod(index, 3)] + pick % VARIANTS) % VARIANTS;
+    /** 0 up to {@link #RAMP} and down again, one step a block. */
+    private static int ramp(int index) {
+        return Math.abs(Math.floorMod(index, 2 * RAMP) - RAMP);
     }
 
     /** Whether the wall that faces {@code side} meets another wall right next to this column. */
