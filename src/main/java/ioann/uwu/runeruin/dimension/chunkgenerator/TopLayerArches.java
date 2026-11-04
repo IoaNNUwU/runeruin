@@ -16,7 +16,8 @@ import net.minecraft.world.level.levelgen.RandomState;
 /**
  * Arches of rock over the gaps between the cliffs of the top layer. A point is scattered per square, in a random
  * direction; it makes an arch when it lies in a gap with a cliff on both sides of it. So arches come where the cliffs
- * of a biome are, and every arch stands on two of them, read from the terrain alone, the same in any chunk.
+ * of a biome are, and every arch stands on two of them, read from the terrain alone, the same in any chunk. Each end
+ * goes on past its cliff and sinks into the ground; an arch whose end would stand over the edge of an island is not built.
  */
 final class TopLayerArches {
 
@@ -37,7 +38,9 @@ final class TopLayerArches {
     private static final float RISE_PER_SPAN = 0.18f;
     private static final float MAX_RISE = 7;
     private static final float MAX_BEND_PER_SPAN = 0.14f;
-    private static final int REACH = MAX_HALF_SPAN + END_INSIDE + (int) (CROWN_HALF_WIDTH + FOOT_FLARE) + 1;
+    // How far past its ends an arch goes on, sinking into the ground, so that it never ends in a flat wall.
+    private static final float END_FADE = 6;
+    private static final int REACH = MAX_HALF_SPAN + END_INSIDE + (int) END_FADE + (int) (CROWN_HALF_WIDTH + FOOT_FLARE) + 1;
 
     private TopLayerArches() {}
 
@@ -91,6 +94,9 @@ final class TopLayerArches {
         if (!start.onCliff() || !end.onCliff() || Math.abs(start.column().topY() - end.column().topY()) > MAX_END_DIFFERENCE) {
             return null;
         }
+        if (!footOnLand(startX, startZ, -dirX, -dirZ, randomState) || !footOnLand(endX, endZ, dirX, dirZ, randomState)) {
+            return null;
+        }
         float span = before + after + 2 * END_INSIDE;
         float rise = Math.min(RISE_PER_SPAN * span, MAX_RISE);
         int crownUnderside = (int) ((start.column().topY() + end.column().topY()) / 2f + rise - CROWN_THICKNESS);
@@ -98,6 +104,21 @@ final class TopLayerArches {
             return null;
         }
         return new Arch(startX, startZ, dirX, dirZ, span, start.column().topY(), end.column().topY(), rise, bend * MAX_BEND_PER_SPAN * span, floorY);
+    }
+
+    /** Whether land lies under the whole width of an arch end and under the tail past it, which would hang in the air at the edge of an island. */
+    private static boolean footOnLand(float x, float z, float outX, float outZ, RandomState randomState) {
+        float across = CROWN_HALF_WIDTH + FOOT_FLARE;
+        for (float past = 0; past <= END_FADE; past += END_FADE) {
+            for (int side = -1; side <= 1; side++) {
+                float footX = x + outX * past - outZ * side * across;
+                float footZ = z + outZ * past + outX * side * across;
+                if (!TopLayerAndBloomingCavesGen.topLayerGroundAt(Mth.floor(footX), Mth.floor(footZ), randomState).column().present()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** How far the wall of a cliff lies in this direction, -1 when none is near or the island ends before it. */
@@ -129,35 +150,47 @@ final class TopLayerArches {
         }
 
         private void placeColumn(TerrainWriter terrain, int localX, int localZ, int worldX, int worldZ, RandomState randomState) {
+            float pastEnd = pastEnd(worldX, worldZ);
             float aside = aside(worldX, worldZ);
             // A column that touches the rest of the arch only at a corner would float.
-            if (aside >= 1 || aside(worldX + 1, worldZ) >= 1 && aside(worldX - 1, worldZ) >= 1 && aside(worldX, worldZ + 1) >= 1 && aside(worldX, worldZ - 1) >= 1) {
+            if (pastEnd >= END_FADE || aside >= 1 || aside(worldX + 1, worldZ) >= 1 && aside(worldX - 1, worldZ) >= 1 && aside(worldX, worldZ + 1) >= 1 && aside(worldX, worldZ - 1) >= 1) {
                 return;
             }
-            float along = along(worldX, worldZ);
+            float along = Mth.clamp(along(worldX, worldZ), 0, 1);
             float arc = arc(along);
             // The arch is round across as well: its sides lie lower on top and higher underneath.
             float side = SIDE_DROP * (1 - Mth.sqrt(1 - aside * aside));
             float deck = Mth.lerp(along, this.startY, this.endY) + this.rise * arc;
             float underside = this.floorY + (deck - CROWN_THICKNESS - this.floorY) * Mth.sqrt(arc);
-            int top = (int) (deck - side);
             int columnTop = TopLayerAndBloomingCavesGen.topLayerSurfaceY(worldX, worldZ, randomState).orElse(Integer.MIN_VALUE);
-            if (columnTop == Integer.MIN_VALUE || top <= columnTop) {
+            if (columnTop == Integer.MIN_VALUE) {
                 return;
             }
-            int bottom = Math.min(top - 1, Math.max(columnTop, (int) (underside + side)));
+            // Past its ends the arch goes on in the same shape and sinks into the ground, instead of ending in a flat wall.
+            float whole = 1 - Noise.smooth(pastEnd, 0, END_FADE);
+            int topY = (int) Mth.lerp(whole, columnTop, deck - side);
+            if (topY <= columnTop) {
+                return;
+            }
+            int bottomY = Math.min(topY - 1, (int) Mth.lerp(whole, columnTop, Math.max(columnTop, underside + side)));
             Holder<Biome> biome = TopLayerRelief.floorBiome(worldX, worldZ, randomState);
             BlockState stone = Blocks.STONE.defaultBlockState();
             BlockState subfloor = RRTerrainSurfaces.subfloorFor(biome);
-            for (int y = bottom; y < top; y++) {
-                terrain.set(localX, y, localZ, y >= top - 2 ? subfloor : stone);
+            for (int y = bottomY; y < topY; y++) {
+                terrain.set(localX, y, localZ, y >= topY - 2 ? subfloor : stone);
             }
-            terrain.set(localX, top, localZ, RRTerrainSurfaces.floorFor(biome, worldX, top, worldZ, randomState));
+            terrain.set(localX, topY, localZ, RRTerrainSurfaces.floorFor(biome, worldX, topY, worldZ, randomState));
         }
 
         /** How far along the arch a column lies, from 0 at its start to 1 at its end. */
         private float along(int worldX, int worldZ) {
             return ((worldX + 0.5f - this.x) * this.dirX + (worldZ + 0.5f - this.z) * this.dirZ) / this.span;
+        }
+
+        /** How many blocks a column lies beyond the start or the end of the arch, 0 along it. */
+        private float pastEnd(int worldX, int worldZ) {
+            float along = along(worldX, worldZ);
+            return Math.max(0, Math.max(-along, along - 1)) * this.span;
         }
 
         /** 1 in the middle of the arch, 0 at its ends. */
@@ -168,11 +201,7 @@ final class TopLayerArches {
 
         /** How far a column lies from the middle line of the arch, from 0 to 1 at its side and more outside it. */
         private float aside(int worldX, int worldZ) {
-            float along = along(worldX, worldZ);
-            if (along < 0 || along > 1) {
-                return 1;
-            }
-            float arc = arc(along);
+            float arc = arc(Mth.clamp(along(worldX, worldZ), 0, 1));
             float line = (worldZ + 0.5f - this.z) * this.dirX - (worldX + 0.5f - this.x) * this.dirZ - this.bend * arc;
             return Math.abs(line) / (CROWN_HALF_WIDTH + FOOT_FLARE * (1 - arc));
         }
