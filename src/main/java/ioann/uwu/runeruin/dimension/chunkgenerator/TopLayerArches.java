@@ -17,7 +17,8 @@ import net.minecraft.world.level.levelgen.RandomState;
  * Arches of rock over the gaps between the cliffs of the top layer. A point is scattered per square, in a random
  * direction; it makes an arch when it lies in a gap with a cliff on both sides of it. So arches come where the cliffs
  * of a biome are, and every arch stands on two of them, read from the terrain alone, the same in any chunk. Each end
- * goes on past its cliff and sinks into the ground; an arch whose end would stand over the edge of an island is not built.
+ * goes on past its cliff, narrowing into a rounded end that sinks into the ground; an arch whose end would stand over
+ * the edge of an island is not built.
  */
 final class TopLayerArches {
 
@@ -33,7 +34,7 @@ final class TopLayerArches {
     private static final float CROWN_THICKNESS = 3;
     private static final float CROWN_HALF_WIDTH = 2.2f;
     // How much wider each foot of an arch is than its crown.
-    private static final float FOOT_FLARE = 3.5f;
+    private static final float FOOT_FLARE = 1.5f;
     private static final float SIDE_DROP = 1.2f;
     private static final float RISE_PER_SPAN = 0.18f;
     private static final float MAX_RISE = 7;
@@ -153,7 +154,7 @@ final class TopLayerArches {
             float pastEnd = pastEnd(worldX, worldZ);
             float aside = aside(worldX, worldZ);
             // A column that touches the rest of the arch only at a corner would float.
-            if (pastEnd >= END_FADE || aside >= 1 || aside(worldX + 1, worldZ) >= 1 && aside(worldX - 1, worldZ) >= 1 && aside(worldX, worldZ + 1) >= 1 && aside(worldX, worldZ - 1) >= 1) {
+            if (aside >= 1 || aside(worldX + 1, worldZ) >= 1 && aside(worldX - 1, worldZ) >= 1 && aside(worldX, worldZ + 1) >= 1 && aside(worldX, worldZ - 1) >= 1) {
                 return;
             }
             float along = Mth.clamp(along(worldX, worldZ), 0, 1);
@@ -201,9 +202,15 @@ final class TopLayerArches {
 
         /** How far a column lies from the middle line of the arch, from 0 to 1 at its side and more outside it. */
         private float aside(int worldX, int worldZ) {
+            float pastEnd = pastEnd(worldX, worldZ);
+            if (pastEnd >= END_FADE) {
+                return 1;
+            }
             float arc = arc(Mth.clamp(along(worldX, worldZ), 0, 1));
             float line = (worldZ + 0.5f - this.z) * this.dirX - (worldX + 0.5f - this.x) * this.dirZ - this.bend * arc;
-            return Math.abs(line) / (CROWN_HALF_WIDTH + FOOT_FLARE * (1 - arc));
+            // Past its ends the arch narrows into a rounded end.
+            float rounding = Mth.sqrt(1 - pastEnd * pastEnd / (END_FADE * END_FADE));
+            return Math.abs(line) / ((CROWN_HALF_WIDTH + FOOT_FLARE * (1 - arc)) * rounding);
         }
     }
 }
