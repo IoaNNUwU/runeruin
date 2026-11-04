@@ -5,9 +5,12 @@ import ioann.uwu.runeruin.dimension.noise.LazyNoise;
 import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
@@ -36,23 +39,31 @@ final class TopLayerCliffs {
     private static final float SHOULDER = 0.55f;
     private static final float SHOULDER_WIDTH = 0.09f;
     private static final float CALM_THRESHOLD = 0.25f;
-    // The face of a wall is dug out between a foot of stone over the ground in front and a lip of stone under the soil
-    // that hangs in front, and under the soil of the column itself. In a cut through the wall the niche is a bracket:
-    // nothing at the foot and the lip, deepest in the middle: LOW_DEPTH blocks between a foot and a lip LOWEST_BAND
-    // blocks apart, DEPTH_GROWTH more for each block more, up to NICHE_DEPTH; a lower wall stays flat. A noise bends
-    // the outline by up to NICHE_BEND blocks.
+    // The face of a wall is hollowed into a concave surface that follows the wall around: between a row of stone over
+    // the ground in front and a row under the soil that hangs in front, a cut through the wall is an arc of a circle,
+    // DEPTH_SHARE of its height deep and at most NICHE_DEPTH; one lower than LOWEST_BAND stays flat. How deep a block
+    // lies in the wall is how far the open air nearest to it is, so the surface keeps the bends of the wall. A noise
+    // bends the surface by up to NICHE_BEND blocks.
     private static final int NICHE_FOOT = 1;
-    private static final int NICHE_LIP = 2;
+    private static final int NICHE_LIP = 1;
     private static final int COLUMN_SOIL = 3;
-    private static final int LOWEST_BAND = 4;
-    private static final float LOW_DEPTH = 1.2f;
-    private static final float DEPTH_GROWTH = 0.15f;
-    private static final float NICHE_DEPTH = 2.2f;
-    private static final float NICHE_BEND = 0.7f;
-    private static final int DEEPEST = 2;
-    // How many columns of a wall each way share their foot and lip with a column.
-    private static final int WALL_REACH = 2;
-    private static final LazyNoise NICHE_NOISE = new LazyNoise(seed -> new SingleNoise(Noise.hashString("topLayerCliffNiches" + seed), 12f, 12f));
+    private static final float LOWEST_BAND = 3;
+    private static final float DEPTH_SHARE = 0.4f;
+    private static final float NICHE_DEPTH = 2.1f;
+    private static final float NICHE_BEND = 0.25f;
+    private static final LazyNoise NICHE_NOISE = new LazyNoise(seed -> new SingleNoise(Noise.hashString("topLayerCliffNiches" + seed), 8f, 8f));
+    // How far the open air is looked for; the ground and the soil of the wall within BAND_REACH shape the arc, the
+    // nearer the more. Rock that goes on less than THINNEST_ROCK blocks behind a block, as at the narrow end of a
+    // cliff, is left whole.
+    private static final int OPEN_REACH = 4;
+    private static final int BAND_REACH = 3;
+    private static final float BAND_SPREAD = 4.5f;
+    // The ground and the soil within sqrt(NEAR) blocks bound the surface: it is at most EDGE_SLOPE blocks deep for
+    // each block of height away from them.
+    private static final int NEAR = 5;
+    private static final float EDGE_SLOPE = 1.5f;
+    private static final int THINNEST_ROCK = 6;
+    private static final int[][] AROUND = around();
 
     private TopLayerCliffs() {}
 
@@ -66,14 +77,14 @@ final class TopLayerCliffs {
             for (int z = 0; z < 16; z++) {
                 int worldX = minX + x;
                 int worldZ = minZ + z;
-                if (!TopLayerAndBloomingCavesGen.topLayerGroundAt(worldX, worldZ, randomState).onCliff()) {
+                if (!walls.onCliff(worldX, worldZ)) {
                     continue;
                 }
                 // Nothing is dug below the foot over the lowest ground in front.
                 int lowestY = Integer.MAX_VALUE;
-                for (Direction side : Direction.Plane.HORIZONTAL) {
-                    for (int k = 1; k <= DEEPEST; k++) {
-                        lowestY = Math.min(lowestY, walls.column(worldX + k * side.getStepX(), worldZ + k * side.getStepZ()).topY() + 1 + NICHE_FOOT);
+                for (int[] offset : AROUND) {
+                    if (offset[2] <= BAND_REACH * BAND_REACH) {
+                        lowestY = Math.min(lowestY, walls.column(worldX + offset[0], worldZ + offset[1]).topY() + 1 + NICHE_FOOT);
                     }
                 }
                 HangingTerrainGenerator.TerrainColumn column = walls.column(worldX, worldZ);
@@ -88,16 +99,19 @@ final class TopLayerCliffs {
 
     /** Whether this block of the top layer is dug out of the face of a cliff wall. */
     static boolean isDug(int x, int y, int z, RandomState randomState) {
-        return TopLayerAndBloomingCavesGen.topLayerGroundAt(x, z, randomState).onCliff() && new Walls(randomState).isDug(x, y, z);
+        return new Walls(randomState).isDug(x, y, z);
     }
 
-    /** The columns around the walls of a chunk and the soil that hangs into them, each looked up once. */
+    /** The columns around the walls of a chunk, the soil that hangs into them and their dug blocks, each found once. */
     private static final class Walls {
 
         private final RandomState randomState;
         private final Noise noise;
         private final Map<Long, HangingTerrainGenerator.TerrainColumn> columns = new HashMap<>();
+        private final Map<Long, Boolean> cliffs = new HashMap<>();
         private final Map<Long, Integer> hangingSoil = new HashMap<>();
+        private final Map<Long, Boolean> hollowed = new HashMap<>();
+        private final Map<Long, Boolean> dug = new HashMap<>();
 
         Walls(RandomState randomState) {
             this.randomState = randomState;
@@ -108,101 +122,181 @@ final class TopLayerCliffs {
             return columns.computeIfAbsent(ChunkPos.pack(x, z), key -> TopLayerAndBloomingCavesGen.topLayerColumnAt(x, z, randomState));
         }
 
+        boolean onCliff(int x, int z) {
+            return cliffs.computeIfAbsent(ChunkPos.pack(x, z), key -> TopLayerAndBloomingCavesGen.topLayerGroundAt(x, z, randomState).onCliff());
+        }
+
         private int lowestHangingSoil(int x, int z) {
             return hangingSoil.computeIfAbsent(ChunkPos.pack(x, z), key -> TopLayerAndBloomingCavesGen.lowestHangingSoilY(x, z, randomState));
         }
 
-        /**
-         * Whether a block of a cliff column is dug: it lies one or two blocks behind the open air in front of a wall,
-         * with two columns of rock behind it, so that no thin cliff is left, and the bracket of that wall reaches as
-         * deep at its height. Nothing is dug at the edge of an island, which keeps its shape.
-         */
+        /** Whether a block of a cliff column is dug: hollowed, or a fin of rock that hollowing would leave. */
         boolean isDug(int x, int y, int z) {
+            long key = BlockPos.asLong(x, y, z);
+            Boolean known = dug.get(key);
+            if (known == null) {
+                known = isHollowed(x, y, z) || isFin(x, y, z);
+                dug.put(key, known);
+            }
+            return known;
+        }
+
+        private boolean isHollowed(int x, int y, int z) {
+            long key = BlockPos.asLong(x, y, z);
+            Boolean known = hollowed.get(key);
+            if (known == null) {
+                known = hollows(x, y, z);
+                hollowed.put(key, known);
+            }
+            return known;
+        }
+
+        private boolean isInWall(int x, int y, int z) {
+            return y <= column(x, z).topY() - COLUMN_SOIL - NICHE_LIP && onCliff(x, z);
+        }
+
+        /**
+         * Whether a block of a cliff column is hollowed: the concave surface of the wall around passes behind it, the
+         * rock goes on far enough behind it, so that no thin cliff is left, and the block in front of it towards the
+         * air is hollowed too, so that no hollow is left inside. Nothing is dug towards the edge of an island, which
+         * keeps its shape.
+         */
+        private boolean hollows(int x, int y, int z) {
             HangingTerrainGenerator.TerrainColumn self = column(x, z);
-            if (y > self.topY()) {
+            if (!isInWall(x, y, z)) {
                 return false;
             }
-            for (Direction side : Direction.Plane.HORIZONTAL) {
-                if (!column(x + side.getStepX(), z + side.getStepZ()).present()) {
-                    return false;
-                }
+            int nearest = nearestOpen(x, y, z);
+            if (nearest < 0 || !column(x + AROUND[nearest][0], z + AROUND[nearest][1]).present()) {
+                return false;
             }
-            for (Direction side : Direction.Plane.HORIZONTAL) {
-                for (int behind = 1; behind <= DEEPEST; behind++) {
-                    // The face of the wall stands behind - 1 blocks towards the side, the open air one block further.
-                    int faceX = x + (behind - 1) * side.getStepX();
-                    int faceZ = z + (behind - 1) * side.getStepZ();
-                    HangingTerrainGenerator.TerrainColumn face = column(faceX, faceZ);
-                    HangingTerrainGenerator.TerrainColumn open = column(faceX + side.getStepX(), faceZ + side.getStepZ());
-                    if (face.topY() < y) {
-                        break;
-                    }
-                    if (!open.present()) {
-                        break;
-                    }
-                    if (open.topY() >= y) {
-                        continue;
-                    }
-                    int footY = footY(open);
-                    int lipY = lipY(faceX, faceZ, face, side);
-                    if (y < footY || y > lipY || self.topY() <= lipY || !isRockBehind(x, z, side, lipY)) {
-                        break;
-                    }
-                    // The bracket follows the wall, not each column: the soil hangs to a different length from column
-                    // to column, and the ground in front steps. It spans the foot and the lip of the columns of the
-                    // wall around on average, and only the column's own bound what is dug.
-                    float footSum = 0;
-                    float lipSum = 0;
-                    int count = 0;
-                    Direction along = side.getClockWise();
-                    for (int k = -WALL_REACH; k <= WALL_REACH; k++) {
-                        int wallX = faceX + k * along.getStepX();
-                        int wallZ = faceZ + k * along.getStepZ();
-                        HangingTerrainGenerator.TerrainColumn wall = column(wallX, wallZ);
-                        HangingTerrainGenerator.TerrainColumn front = column(wallX + side.getStepX(), wallZ + side.getStepZ());
-                        if (wall.topY() >= y && front.present() && front.topY() < y) {
-                            footSum += footY(front);
-                            lipSum += lipY(wallX, wallZ, wall, side);
-                            count++;
-                        }
-                    }
-                    if (bracket(faceX, y, faceZ, footSum / count, lipSum / count) >= behind) {
-                        return true;
-                    }
+            float open = distance(AROUND[nearest]);
+            if (open >= NICHE_DEPTH + NICHE_BEND) {
+                return false;
+            }
+            // The arc spans the ground and the soil of the wall around on average: the soil hangs to a different
+            // length from column to column, and the ground in front steps. Next to the ground and the soil in front
+            // the surface steps in by one block a row.
+            float weights = 0;
+            float bottom = 0;
+            float top = 0;
+            float nearBottom = -Float.MAX_VALUE;
+            float nearTop = Float.MAX_VALUE;
+            for (int[] offset : AROUND) {
+                if (offset[2] > BAND_REACH * BAND_REACH) {
                     break;
                 }
+                HangingTerrainGenerator.TerrainColumn front = column(x + offset[0], z + offset[1]);
+                int soilY = front.present() && front.topY() < y ? lowestHangingSoil(x + offset[0], z + offset[1]) : Integer.MAX_VALUE;
+                if (soilY == Integer.MAX_VALUE) {
+                    continue;
+                }
+                int footY = front.topY() + 1 + NICHE_FOOT;
+                int lipY = Math.min(soilY, self.topY() - COLUMN_SOIL + 1) - NICHE_LIP;
+                if (offset[2] <= NEAR) {
+                    nearBottom = Math.max(nearBottom, footY);
+                    nearTop = Math.min(nearTop, lipY);
+                }
+                float weight = (float) Math.exp(-offset[2] / BAND_SPREAD);
+                weights += weight;
+                bottom += weight * footY;
+                top += weight * lipY;
             }
-            return false;
+            if (weights == 0) {
+                return false;
+            }
+            float middle = y + 0.5f;
+            float depth = arc(middle, bottom / weights, top / weights) + NICHE_BEND * (2 * noise.noise(x, y, z) - 1);
+            depth = Math.min(depth, EDGE_SLOPE * Math.min(middle - nearBottom, nearTop - middle));
+            int[] towards = AROUND[nearest];
+            if (open >= depth || !isThick(x, y, z, towards)) {
+                return false;
+            }
+            return towards[0] != 0 && isOpenOrHollowed(x + Integer.signum(towards[0]), y, z)
+                    || towards[1] != 0 && isOpenOrHollowed(x, y, z + Integer.signum(towards[1]));
         }
 
-        private static int footY(HangingTerrainGenerator.TerrainColumn open) {
-            return open.topY() + 1 + NICHE_FOOT;
+        /** Whether a block is a fin of rock one block thick between a hollowed block and the air or another one. */
+        private boolean isFin(int x, int y, int z) {
+            return isInWall(x, y, z) && (isFinAlong(x, y, z, 1, 0) || isFinAlong(x, y, z, 0, 1));
         }
 
-        private int lipY(int faceX, int faceZ, HangingTerrainGenerator.TerrainColumn face, Direction side) {
-            return Math.min(lowestHangingSoil(faceX + side.getStepX(), faceZ + side.getStepZ()), face.topY() - COLUMN_SOIL) - 1 - NICHE_LIP;
+        private boolean isFinAlong(int x, int y, int z, int dx, int dz) {
+            boolean before = isHollowed(x - dx, y, z - dz);
+            boolean after = isHollowed(x + dx, y, z + dz);
+            return (before || after) && (before || isOpen(x - dx, y, z - dz)) && (after || isOpen(x + dx, y, z + dz));
         }
 
-        private boolean isRockBehind(int x, int z, Direction side, int lipY) {
-            for (int k = 1; k <= 2; k++) {
-                HangingTerrainGenerator.TerrainColumn back = column(x - k * side.getStepX(), z - k * side.getStepZ());
-                if (!back.present() || back.topY() <= lipY) {
-                    return false;
+        private boolean isOpenOrHollowed(int x, int y, int z) {
+            return isOpen(x, y, z) || isHollowed(x, y, z);
+        }
+
+        private boolean isOpen(int x, int y, int z) {
+            HangingTerrainGenerator.TerrainColumn column = column(x, z);
+            return column.present() && column.topY() < y;
+        }
+
+        /** The index in {@link #AROUND} of the nearest column open at {@code y} or beyond an island, -1 if none. */
+        private int nearestOpen(int x, int y, int z) {
+            for (int i = 0; i < AROUND.length; i++) {
+                HangingTerrainGenerator.TerrainColumn column = column(x + AROUND[i][0], z + AROUND[i][1]);
+                if (!column.present() || column.topY() < y) {
+                    return i;
                 }
             }
-            return true;
+            return -1;
         }
 
-        /** How deep the niche of the face in this column reaches at {@code y}, in blocks. */
-        private float bracket(int faceX, int y, int faceZ, float footY, float lipY) {
-            float height = lipY - footY + 1;
+        /** Whether the rock at this height goes on THINNEST_ROCK blocks from the block away from the air it faces. */
+        private boolean isThick(int x, int y, int z, int[] towards) {
+            return (towards[0] == 0 || inwards(x, y, z, -Integer.signum(towards[0]), 0) >= THINNEST_ROCK)
+                    && (towards[1] == 0 || inwards(x, y, z, 0, -Integer.signum(towards[1])) >= THINNEST_ROCK);
+        }
+
+        private int inwards(int x, int y, int z, int dx, int dz) {
+            int length = 1;
+            while (length < THINNEST_ROCK && isSolid(x + length * dx, y, z + length * dz)) {
+                length++;
+            }
+            return length;
+        }
+
+        private boolean isSolid(int x, int y, int z) {
+            HangingTerrainGenerator.TerrainColumn column = column(x, z);
+            return column.present() && column.topY() >= y;
+        }
+
+        /** How deep an arc from {@code bottom} to {@code top} reaches at {@code y}, negative beyond its ends. */
+        private static float arc(float y, float bottom, float top) {
+            float height = top - bottom;
             if (height < LOWEST_BAND) {
                 return 0;
             }
-            float t = Math.clamp((y - footY + 0.5f) / height, 0f, 1f);
-            float depth = Math.min(NICHE_DEPTH, LOW_DEPTH + DEPTH_GROWTH * (height - LOWEST_BAND)) * Mth.sin(Mth.PI * t);
-            return depth + NICHE_BEND * (2 * noise.noise(faceX, y, faceZ) - 1);
+            float depth = Math.min(NICHE_DEPTH, DEPTH_SHARE * height);
+            float radius = (height * height / 4 + depth * depth) / (2 * depth);
+            float off = y - (bottom + top) / 2;
+            return (float) Math.sqrt(Math.max(0, radius * radius - off * off)) - (radius - depth);
         }
+    }
+
+    /** How far the face of a column at this offset lies from the middle of a block, in blocks. */
+    private static float distance(int[] offset) {
+        return (float) Math.sqrt(offset[2]) - 0.5f;
+    }
+
+    /** The columns within {@link #OPEN_REACH} as {dx, dz, squared distance}, the nearest first. */
+    private static int[][] around() {
+        List<int[]> offsets = new ArrayList<>();
+        for (int dx = -OPEN_REACH; dx <= OPEN_REACH; dx++) {
+            for (int dz = -OPEN_REACH; dz <= OPEN_REACH; dz++) {
+                int squared = dx * dx + dz * dz;
+                if (squared > 0 && squared <= OPEN_REACH * OPEN_REACH) {
+                    offsets.add(new int[]{dx, dz, squared});
+                }
+            }
+        }
+        offsets.sort(Comparator.comparingInt(offset -> offset[2]));
+        return offsets.toArray(int[][]::new);
     }
 
     /** How high a cliff stands above the ground of this column, 0 where there is none. */
