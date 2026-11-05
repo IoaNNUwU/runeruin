@@ -1,6 +1,5 @@
 package ioann.uwu.runeruin.dimension.biomes.toplayer;
 
-import ioann.uwu.runeruin.dimension.RRConfiguredCarvers;
 import ioann.uwu.runeruin.dimension.RRPlacedFeatures;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
@@ -33,7 +32,6 @@ public class SimilarForest {
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.BIG_RED_WALL_MUSHROOM);
         generation.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, RRPlacedFeatures.BIG_BROWN_WALL_MUSHROOM);
 
-        generation.addCarver(RRConfiguredCarvers.TOP_LAYER_CAVES);
         generation.addFeature(GenerationStep.Decoration.LAKES, MiscOverworldPlacements.LAKE_LAVA_UNDERGROUND);
         generation.addFeature(GenerationStep.Decoration.LAKES, MiscOverworldPlacements.LAKE_LAVA_SURFACE);
         BiomeDefaultFeatures.addDefaultCrystalFormations(generation);

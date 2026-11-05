@@ -1,19 +1,23 @@
 package ioann.uwu.runeruin.dimension;
 
-import com.mojang.serialization.Codec;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.MapCodec;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.dimension.chunkgenerator.DeepCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.TopLayerAndBloomingCavesGen;
 import ioann.uwu.runeruin.dimension.chunkgenerator.VoidGen;
 import ioann.uwu.runeruin.dimension.noise.LazyNoise;
+import ioann.uwu.runeruin.dimension.noise.Noise;
+import ioann.uwu.runeruin.dimension.noise.PositionalRandomNoise;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
-import net.minecraft.core.HolderSet;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
@@ -37,8 +41,8 @@ public class RRBiomeSource extends BiomeSource {
     public static final DeferredHolder<MapCodec<? extends BiomeSource>, MapCodec<RRBiomeSource>> BIOME_SOURCE =
             REGISTRY.register("runeruin_biome_source", () -> RRBiomeSource.CODEC);
 
-    // Biome choice noise of each layer, top to bottom like the biome lists. The name seeds the noise:
-    // renaming one reshapes that layer's biome map.
+    // Temperature of each layer, top to bottom like the biome lists: the layers under the top one pick their biomes
+    // by it alone. The name seeds the noise: renaming one reshapes that layer's biome map.
     private static final List<LazyNoise> LAYER_NOISES = List.of(
             LazyNoise.single("topLevelBiomeNoise", 0.2f),
             LazyNoise.single("bloomingCavesCeilingBiomeNoise", 0.4f),
@@ -49,6 +53,21 @@ public class RRBiomeSource extends BiomeSource {
             LazyNoise.single("lostCavesBiomesNoise", 0.2f),
             LazyNoise.single("voidCeilingBiomesNoise", 0.4f)
     );
+    // The top layer picks its biomes like the overworld does, from climate parameters between -1 and 1: temperature,
+    // humidity, the landform (erosion: steep land where it is low, flat land where it is high) and the distance to
+    // the edge of the island (continentalness), which every biome takes whole for now.
+    private static final LazyNoise TOP_HUMIDITY = LazyNoise.single("topLevelHumidityNoise", 0.2f);
+    private static final LazyNoise TOP_LANDFORM = LazyNoise.single("topLevelLandformNoise", 0.25f);
+    // The top layer is cut into cells around scattered points, their borders bent by a noise, and each cell takes
+    // the biome of the climate at its point. A biome is never narrower than a cell: picked straight from the
+    // climate, it ran in thin strips where the climate passed through its range on the way between two others.
+    private static final int CELL = 80;
+    private static final float CELL_BEND = 24;
+    private static final LazyNoise CELL_POINTS = new LazyNoise(seed -> new PositionalRandomNoise("topLevelBiomeCells", seed));
+    private static final LazyNoise CELL_BEND_X = LazyNoise.single("topLevelBiomeBendX", 1f);
+    private static final LazyNoise CELL_BEND_Z = LazyNoise.single("topLevelBiomeBendZ", 1f);
+    private static final Climate.Parameter ANY = Climate.Parameter.span(-1, 1);
+    private static final Climate.Parameter UNUSED = Climate.Parameter.point(0);
 
     /** The ceiling biomes of the Blooming caves start above this Y, under the lowest terrace of their ceiling. */
     public static final int BLOOMING_CEILING_BIOME_BOTTOM = TopLayerAndBloomingCavesGen.CEILING_LOWEST_Y - 10;
@@ -60,16 +79,16 @@ public class RRBiomeSource extends BiomeSource {
      * Biome lists top to bottom: top layer, blooming caves ceiling, blooming caves, deep caves ceiling,
      * deep caves, lost caves ceiling, lost caves, void.
      */
-    private final List<HolderSet<Biome>> layers;
+    private final List<Climate.ParameterList<Holder<Biome>>> layers;
 
-    public RRBiomeSource(List<HolderSet<Biome>> layers) {
+    public RRBiomeSource(List<Climate.ParameterList<Holder<Biome>>> layers) {
         if (layers.size() != LAYER_NOISES.size()) {
             throw new IllegalArgumentException("Expected " + LAYER_NOISES.size() + " biome lists, got " + layers.size());
         }
         this.layers = List.copyOf(layers);
     }
 
-    public static final MapCodec<RRBiomeSource> CODEC = Codec.list(Biome.LIST_CODEC)
+    public static final MapCodec<RRBiomeSource> CODEC = Climate.ParameterList.codec(Biome.CODEC.fieldOf("biome")).listOf()
             .xmap(RRBiomeSource::new, biomeSource -> biomeSource.layers)
             .fieldOf("top_to_bottom_biomes");
 
@@ -80,61 +99,112 @@ public class RRBiomeSource extends BiomeSource {
 
     @Override
     protected Stream<Holder<Biome>> collectPossibleBiomes() {
-        return layers.stream().flatMap(HolderSet::stream);
+        return layers.stream().flatMap(layer -> layer.values().stream().map(Pair::getSecond));
     }
 
     public static RRBiomeSource newDefault(HolderGetter<Biome> biomeRegistry) {
         return new RRBiomeSource(List.of(
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.ELDEN_GARDEN),
-                        biomeRegistry.getOrThrow(RRBiomes.SIMILAR_FOREST)
+                new Climate.ParameterList<>(List.of(
+                        // Steep land: round hills where it is cooler, flat-topped plateaus where it is warmer.
+                        topLayerBiome(biomeRegistry, RRBiomes.HILLS, -1, 0.2f, ANY, -1, -0.2f),
+                        topLayerBiome(biomeRegistry, RRBiomes.PLATEAU, 0.2f, 1, ANY, -1, -0.2f),
+                        // Rolling land: the forests, split by temperature as before.
+                        topLayerBiome(biomeRegistry, RRBiomes.ELDEN_GARDEN, -1, 0, ANY, -0.2f, 0.2f),
+                        topLayerBiome(biomeRegistry, RRBiomes.SIMILAR_FOREST, 0, 1, ANY, -0.2f, 0.2f),
+                        // Flat land: swamps where it is wet, deserts where it is hot and dry, plains elsewhere.
+                        topLayerBiome(biomeRegistry, RRBiomes.PLAINS, -1, 0.2f, Climate.Parameter.span(-1, 0.2f), 0.2f, 1),
+                        topLayerBiome(biomeRegistry, RRBiomes.SWAMP, -1, 1, Climate.Parameter.span(0.2f, 1), 0.2f, 1),
+                        topLayerBiome(biomeRegistry, RRBiomes.DESERT, 0.2f, 1, Climate.Parameter.span(-1, 0.2f), 0.2f, 1)
+                )),
+                evenly(biomeRegistry, RRBiomes.GLOWING_ROOTS, RRBiomes.GLOWING_BALLS),
+                // RRBiomes.GHOST_GROVE is parked.
+                evenly(biomeRegistry, RRBiomes.JUNGLE_SWAMP, RRBiomes.STONE_FOREST),
+                evenly(biomeRegistry, RRBiomes.DEEP_ROOTS, RRBiomes.INVERTED_FOREST),
+                // Glowing moss keeps one sixth, the three spike biomes split the rest evenly:
+                // 3/18 glowing moss, 5/18 stone, 5/18 deepslate, 5/18 dripstone spikes.
+                // The moss stays first so its regions did not move when dripstone was appended.
+                evenly(biomeRegistry,
+                        RRBiomes.GLOWING_MOSS_CAVES,
+                        RRBiomes.GLOWING_MOSS_CAVES,
+                        RRBiomes.GLOWING_MOSS_CAVES,
+                        RRBiomes.STONE_SPIKE_CAVES,
+                        RRBiomes.STONE_SPIKE_CAVES,
+                        RRBiomes.STONE_SPIKE_CAVES,
+                        RRBiomes.STONE_SPIKE_CAVES,
+                        RRBiomes.STONE_SPIKE_CAVES,
+                        RRBiomes.DEEPSLATE_SPIKE_CAVES,
+                        RRBiomes.DEEPSLATE_SPIKE_CAVES,
+                        RRBiomes.DEEPSLATE_SPIKE_CAVES,
+                        RRBiomes.DEEPSLATE_SPIKE_CAVES,
+                        RRBiomes.DEEPSLATE_SPIKE_CAVES,
+                        RRBiomes.DEEP_DRIPSTONE_CAVES,
+                        RRBiomes.DEEP_DRIPSTONE_CAVES,
+                        RRBiomes.DEEP_DRIPSTONE_CAVES,
+                        RRBiomes.DEEP_DRIPSTONE_CAVES,
+                        RRBiomes.DEEP_DRIPSTONE_CAVES
                 ),
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_ROOTS),
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_BALLS)
-                ),
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.JUNGLE_SWAMP),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_FOREST)
-                        // biomeRegistry.getOrThrow(RRBiomes.GHOST_GROVE)
-                ),
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.DEEP_ROOTS),
-                        biomeRegistry.getOrThrow(RRBiomes.INVERTED_FOREST)
-                ),
-                HolderSet.direct(
-                        // Glowing moss keeps one sixth, the three spike biomes split the rest evenly:
-                        // 3/18 glowing moss, 5/18 stone, 5/18 deepslate, 5/18 dripstone spikes.
-                        // The moss stays first so its regions did not move when dripstone was appended.
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.GLOWING_MOSS_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.STONE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEPSLATE_SPIKE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES),
-                        biomeRegistry.getOrThrow(RRBiomes.DEEP_DRIPSTONE_CAVES)
-                ),
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.SPARKLING_CAVES_CEILING)
-                ),
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.SPARKLING_CAVES)
-                ),
-                HolderSet.direct(
-                        biomeRegistry.getOrThrow(RRBiomes.VOID)
-                )
+                evenly(biomeRegistry, RRBiomes.SPARKLING_CAVES_CEILING),
+                evenly(biomeRegistry, RRBiomes.SPARKLING_CAVES),
+                evenly(biomeRegistry, RRBiomes.VOID)
         ));
+    }
+
+    private static Pair<Climate.ParameterPoint, Holder<Biome>> topLayerBiome(
+            HolderGetter<Biome> biomeRegistry, ResourceKey<Biome> biome,
+            float minTemperature, float maxTemperature, Climate.Parameter humidity, float minLandform, float maxLandform
+    ) {
+        Climate.ParameterPoint point = Climate.parameters(
+                Climate.Parameter.span(minTemperature, maxTemperature), humidity, ANY,
+                Climate.Parameter.span(minLandform, maxLandform), UNUSED, UNUSED, 0
+        );
+        return Pair.of(point, biomeRegistry.getOrThrow(biome));
+    }
+
+    /** Splits the temperature evenly between the biomes in their order: a biome listed n times gets n shares. */
+    @SafeVarargs
+    private static Climate.ParameterList<Holder<Biome>> evenly(HolderGetter<Biome> biomeRegistry, ResourceKey<Biome>... biomes) {
+        List<Pair<Climate.ParameterPoint, Holder<Biome>>> values = new ArrayList<>();
+        for (int i = 0; i < biomes.length; i++) {
+            Climate.Parameter temperature = Climate.Parameter.span(-1 + 2f * i / biomes.length, -1 + 2f * (i + 1) / biomes.length);
+            values.add(Pair.of(Climate.parameters(temperature, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, 0), biomeRegistry.getOrThrow(biomes[i])));
+        }
+        return new Climate.ParameterList<>(values);
+    }
+
+    /** The biome of the top layer in this column. The land of the column follows its {@link TerrainProfile}. */
+    public Holder<Biome> topLayerBiome(int x, int z, Climate.Sampler sampler) {
+        float bentX = x + (CELL_BEND_X.getOrCreateNoise(sampler).noise(x, z) * 2 - 1) * CELL_BEND;
+        float bentZ = z + (CELL_BEND_Z.getOrCreateNoise(sampler).noise(x, z) * 2 - 1) * CELL_BEND;
+        Noise points = CELL_POINTS.getOrCreateNoise(sampler);
+        int cellX = Mth.floor(bentX / CELL);
+        int cellZ = Mth.floor(bentZ / CELL);
+        float nearest = Float.MAX_VALUE;
+        int pointX = 0;
+        int pointZ = 0;
+        for (int i = cellX - 1; i <= cellX + 1; i++) {
+            for (int j = cellZ - 1; j <= cellZ + 1; j++) {
+                float candidateX = (i + points.noise(i, 0, j)) * CELL;
+                float candidateZ = (j + points.noise(i, 1, j)) * CELL;
+                float distance = Mth.square(candidateX - bentX) + Mth.square(candidateZ - bentZ);
+                if (distance < nearest) {
+                    nearest = distance;
+                    pointX = (int) candidateX;
+                    pointZ = (int) candidateZ;
+                }
+            }
+        }
+        return layers.getFirst().findValue(Climate.target(
+                climate(LAYER_NOISES.getFirst(), pointX, pointZ, sampler),
+                climate(TOP_HUMIDITY, pointX, pointZ, sampler),
+                climate(RRChunkGenerator.flattenedBaseTopLevelNoise, pointX, pointZ, sampler),
+                climate(TOP_LANDFORM, pointX, pointZ, sampler),
+                0,
+                0
+        ));
+    }
+
+    private static float climate(LazyNoise noise, int x, int z, Climate.Sampler sampler) {
+        return noise.getOrCreateNoise(sampler).noise(x, z) * 2 - 1;
     }
 
     @Override
@@ -183,8 +253,9 @@ public class RRBiomeSource extends BiomeSource {
             layer++;
         }
 
-        HolderSet<Biome> biomes = layers.get(layer);
-        float noise = LAYER_NOISES.get(layer).getOrCreateNoise(sampler).noise(x, z);
-        return biomes.get((int) (biomes.size() * noise * 0.99999f));
+        if (layer == 0) {
+            return topLayerBiome(x, z, sampler);
+        }
+        return layers.get(layer).findValue(Climate.target(climate(LAYER_NOISES.get(layer), x, z, sampler), 0, 0, 0, 0, 0));
     }
 }

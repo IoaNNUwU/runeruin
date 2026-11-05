@@ -1,35 +1,23 @@
 package ioann.uwu.runeruin.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.client.model.MossyRamModel;
 import ioann.uwu.runeruin.entities.MossyRam;
 import java.util.function.Function;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.resources.Identifier;
 
 public class MossyRamRenderer extends MobRenderer<MossyRam, MossyRamRenderState, MossyRamModel> {
     private final Identifier texture;
 
-    public MossyRamRenderer(EntityRendererProvider.Context context, ModelLayerLocation main, ModelLayerLocation moss,
+    public MossyRamRenderer(EntityRendererProvider.Context context, ModelLayerLocation layer,
                             Function<ModelPart, MossyRamModel> model, float shadowRadius) {
-        super(context, model.apply(context.bakeLayer(main)), shadowRadius);
-        String name = main.model().getPath();
+        super(context, model.apply(context.bakeLayer(layer)), shadowRadius);
+        String name = layer.model().getPath();
         this.texture = RR.id("textures/entity/" + name + "/" + name + ".png");
-
-        MossyRamModel mossModel = model.apply(context.bakeLayer(moss));
-        Identifier mossTexture = RR.id("textures/entity/" + name + "/" + name + "_moss.png");
-        this.addLayer(new RenderLayer<>(this) {
-            @Override
-            public void submit(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int lightCoords, MossyRamRenderState state, float yRot, float xRot) {
-                coloredCutoutModelCopyLayerRender(mossModel, mossTexture, poseStack, submitNodeCollector, lightCoords, state, -1, 1);
-            }
-        });
     }
 
     @Override

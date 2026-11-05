@@ -13,7 +13,6 @@ import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.util.Mth;
 import org.jspecify.annotations.Nullable;
@@ -29,9 +28,7 @@ import org.jspecify.annotations.Nullable;
  * the project and fails when the animations were changed in Blockbench but not exported.</p>
  */
 public class ColossusModel extends EntityModel<ColossusRenderState> {
-    public static final ModelLayerLocation MAIN = new ModelLayerLocation(RR.id("colossus"), "main");
-    public static final ModelLayerLocation MOSS = new ModelLayerLocation(RR.id("colossus"), "moss");
-    public static final CubeDeformation MOSS_DEPTH = new CubeDeformation(0.25F);
+    public static final ModelLayerLocation LAYER = new ModelLayerLocation(RR.id("colossus"), "main");
 
     private static final Map<String, AnimationDefinition> EXPORTED = Map.of(
             "walk", ColossusAnimation.walk,
@@ -56,8 +53,8 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
         this.slamGround = ColossusAnimation.slam_ground.bake(root);
     }
 
-    public static LayerDefinition create(CubeDeformation deformation) {
-        return BlockbenchModel.layer("colossus", deformation, root -> {
+    public static LayerDefinition create() {
+        return BlockbenchModel.layer("colossus", root -> {
             matchProject(root);
             return new ColossusModel(root);
         });

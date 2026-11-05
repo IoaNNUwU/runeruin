@@ -100,6 +100,7 @@ public class RRPlacedFeatures {
     public static final ResourceKey<PlacedFeature> DEEPSLATE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "deepslate_spike");
     public static final ResourceKey<PlacedFeature> DEEP_DEEPSLATE_SPIKE = RR.resourceKey(Registries.PLACED_FEATURE, "deep_deepslate_spike");
 
+    public static final ResourceKey<PlacedFeature> SWAMP_POOL = RR.resourceKey(Registries.PLACED_FEATURE, "swamp_pool");
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch");
     public static final ResourceKey<PlacedFeature> GOBLET_MOSS_PATCH_UNDERWATER = RR.resourceKey(Registries.PLACED_FEATURE, "goblet_moss_patch_underwater");
     public static final ResourceKey<PlacedFeature> FLOATING_MOSS_PATCH = RR.resourceKey(Registries.PLACED_FEATURE, "floating_moss_patch");
@@ -252,6 +253,10 @@ public class RRPlacedFeatures {
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.MOSS_POOL_WITH_DRIPLEAVES),
                 floorPlacement(CountPlacement.of(16), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP, BlockPredicate.hasSturdyFace(Direction.UP), 16, 0)
         ));
+        ctx.register(SWAMP_POOL, new PlacedFeature(
+                configuredFeatures.getOrThrow(RRConfiguredFeatures.SWAMP_POOL),
+                List.of(CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP_WORLD_SURFACE, BiomeFilter.biome())
+        ));
         ctx.register(RARE_STONE_LILY, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.STONE_LILY),
                 floorPlacement(CountPlacement.of(1), BLOOMING_CAVES_Y, BLOOMING_FLOOR_TOP, BlockPredicate.hasSturdyFace(Direction.UP), 16, 0)
@@ -272,7 +277,7 @@ public class RRPlacedFeatures {
 
         ctx.register(POWDERED_MOSS, new PlacedFeature(
                 configuredFeatures.getOrThrow(RRConfiguredFeatures.POWDERED_MOSS),
-                floorPlacement(CountPlacement.of(6), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 0)
+                floorPlacement(CountPlacement.of(3), BLOOMING_CAVES_Y, BLOOMING_CAVES_CEILING_Y, BlockPredicate.matchesBlocks(RRBlocks.DEEP_MOSS.get()), 16, 0)
         ));
 
         // The count follows a slow noise: glades with several groups of mounds, and none between them.

@@ -7,8 +7,8 @@ one of its animations into a GIF.
     python scripts/render_entity_model.py out.png minecraft:creeper exports/new_charge.png --layer armor
     python scripts/render_entity_model.py out.png minecraft:cow entity/cow/cow_temperate --view 20,10 160,45 300,-60
     python scripts/render_entity_model.py out.png minecraft:cow entity/cow/cow_temperate --pose head.xRot=30 right_front_leg.xRot=-40
-    python scripts/render_entity_model.py out.gif mossy_warrior runeruin:entity/mossy_warrior/mossy_warrior
-        --layer main moss=runeruin:entity/mossy_warrior/mossy_warrior_moss --animation punch
+    python scripts/render_entity_model.py out.png minecraft:sheep entity/sheep/sheep --layer main wool=entity/sheep/sheep_wool
+    python scripts/render_entity_model.py out.gif mossy_warrior runeruin:entity/mossy_warrior/mossy_warrior --animation punch
     python scripts/render_entity_model.py out.gif minecraft:camel entity/camel/camel --animation CamelAnimation.CAMEL_WALK
 
 The game builds entity models in code, vanilla ones from Java and ours from the Blockbench projects in
@@ -16,8 +16,8 @@ assets/runeruin/models/entity, so the geometry comes from the game: `gradlew run
 to build/entity_models/<namespace>/<model>/<layer>.json (EntityModelExport), the parts with their initial poses
 and the faces of their boxes as ModelPart builds them. Run it again after a change to a model or its project.
 A bare model name tries runeruin: then minecraft:. The texture is an id resolved through src/main and
-.mc-sources/textures, or a path to a PNG. --layer draws several layers of the model together, such as a mob and its
-moss: <layer>=<texture> gives a layer a texture of its own, a layer without one takes the texture argument.
+.mc-sources/textures, or a path to a PNG. --layer draws several layers of the model together, such as a sheep and its
+wool: <layer>=<texture> gives a layer a texture of its own, a layer without one takes the texture argument.
 
 The model stands as the game draws it, turned over from the model space where Y points down; the front is -Z,
 where a mob faces. --view replaces the five views with cameras at yaw,pitch in degrees: yaw goes around the model

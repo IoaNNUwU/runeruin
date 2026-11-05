@@ -40,6 +40,7 @@ import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob;
 import ioann.uwu.runeruin.preview.jobs.FeaturePreviewJob.Surface;
+import ioann.uwu.runeruin.preview.jobs.PowderedMossShaftPreviewJob;
 import ioann.uwu.runeruin.region.RegionExport;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -199,6 +200,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("void_ceiling", () -> RRGameTests::voidCeiling);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOOMING_CAVES_CEILING =
         TEST_FUNCTIONS.register("blooming_caves_ceiling", () -> RRGameTests::bloomingCavesCeiling);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LOW_CLIFF_HANGING_SOIL =
+        TEST_FUNCTIONS.register("low_cliff_hanging_soil", () -> RRGameTests::lowCliffHangingSoil);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> DINOSAUR_SKELETON_BURIAL =
         TEST_FUNCTIONS.register("dinosaur_skeleton_burial", () -> RRGameTests::dinosaurSkeletonBurial);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> TEMPLATE_PIECE =
@@ -214,6 +217,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("feature_placement", () -> RRGameTests::featurePlacement);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PREVIEW_EXPORT_MARKS =
         TEST_FUNCTIONS.register("preview_export_marks", () -> RRGameTests::previewExportMarks);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> POWDERED_MOSS_SHAFT =
+        TEST_FUNCTIONS.register("powdered_moss_shaft", () -> RRGameTests::powderedMossShaft);
 
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FEATURE_REACH =
         TEST_FUNCTIONS.register("feature_reach", () -> RRGameTests::featureReach);
@@ -266,6 +271,7 @@ public final class RRGameTests {
             new FeatureCase("glowing_moss_vegetation", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("wispberry_bush_patch", Surface.FLOOR, deepMoss, 1),
             new FeatureCase("moss_pool_with_dripleaves", Surface.FLOOR, deepMoss, 1),
+            new FeatureCase("swamp_pool", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
             new FeatureCase("small_glowing_mushroom", Surface.FLOOR, glowingMoss, 1),
             new FeatureCase("elden_giant_tree", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
             new FeatureCase("swamp_jungle_trees", Surface.FLOOR, Blocks.GRASS_BLOCK, 1),
@@ -336,6 +342,29 @@ public final class RRGameTests {
         RR.LOGGER.info("Feature reach over {} seeds: {}", FEATURE_REACH_SEEDS, String.join(", ", measured));
         helper.assertTrue(problems.isEmpty(), "the limit is " + FEATURE_REACH_LIMIT + " blocks: " + String.join("; ", problems));
         helper.succeed();
+    }
+
+    // On the real terrain a patch goes through the thinnest floor of the Blooming caves into the caves under it,
+    // and stays two blocks deep on the thickest.
+    private static void powderedMossShaft(GameTestHelper helper) {
+        try {
+            MinecraftServer server = helper.getLevel().getServer();
+            helper.assertTrue(mossOverOpenCaves(server, true) > 0, "the patch on the thinnest floor does not go through");
+            helper.assertTrue(mossOverOpenCaves(server, false) == 0, "the patch on the thickest floor goes through");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
+    private static int mossOverOpenCaves(MinecraftServer server, boolean thin) throws IOException {
+        PowderedMossShaftPreviewJob.Placement placement = PowderedMossShaftPreviewJob.place(server, 1, 0, 0, thin);
+        BlockPos origin = placement.origin();
+        int count = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-8, -40, -8), origin.offset(8, 0, 8))) {
+            count += placement.world().get(pos).is(RRBlocks.POWDERED_MOSS.get()) && placement.world().get(pos.below()).canBeReplaced() ? 1 : 0;
+        }
+        return count;
     }
 
     // scripts/render_preview.py fades what the preview prepared and outlines blocks without collision.
@@ -566,6 +595,13 @@ public final class RRGameTests {
             )
         );
         event.registerTest(
+            RR.id("low_cliff_hanging_soil"),
+            new FunctionGameTestInstance(
+                LOW_CLIFF_HANGING_SOIL.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
             RR.id("dinosaur_skeleton_burial"),
             new FunctionGameTestInstance(
                 DINOSAUR_SKELETON_BURIAL.getKey(),
@@ -611,6 +647,13 @@ public final class RRGameTests {
             RR.id("preview_export_marks"),
             new FunctionGameTestInstance(
                 PREVIEW_EXPORT_MARKS.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("powdered_moss_shaft"),
+            new FunctionGameTestInstance(
+                POWDERED_MOSS_SHAFT.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 20, 0, true)
             )
         );
@@ -1096,6 +1139,21 @@ public final class RRGameTests {
         }
     }
 
+    // The reported cliff is below the highest island underside but still needs soil over its lower floor.
+    private static void lowCliffHangingSoil(GameTestHelper helper) {
+        try {
+            PreviewWorld terrain = HeadlessTerrainGenerator.generate(helper.getLevel().getServer(), 2376931683883930175L,
+                new BoundingBox(-3034, 295, 28916, -3033, 307, 28916));
+            helper.assertTrue(terrain.get(new BlockPos(-3033, 306, 28916)).is(Blocks.GRASS_BLOCK), "the cliff top moved");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 305, 28916)).is(Blocks.GRASS_BLOCK), "the low cliff has no hanging soil cap");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 304, 28916)).is(Blocks.DIRT), "the low cliff has no hanging soil body");
+            helper.assertTrue(terrain.get(new BlockPos(-3034, 297, 28916)).is(Blocks.GRASS_BLOCK), "the lower floor changed");
+            helper.succeed();
+        } catch (IOException e) {
+            helper.fail(e.toString());
+        }
+    }
+
     // The ceiling of the Blooming caves has terraces inside the islands and stays even at their edges, nothing
     // floats under it, it leaves the top layer closed, and all of it lies in the ceiling biomes, whose plants hang from it.
     private static void bloomingCavesCeiling(GameTestHelper helper) {
@@ -1158,7 +1216,8 @@ public final class RRGameTests {
                     // Soil hangs over the surface under a cliff, so the highest block of a column is not its surface.
                     int surfaceY = Math.min(TopLayerAndBloomingCavesGen.topLayerSurfaceY(x, z, randomState).orElse(ceilingY), minY + height - 1);
                     for (int y = ceilingY; y <= surfaceY; y++) {
-                        helper.assertTrue(y < surfaceY - 8 || !terrain.get(pos.set(x, y, z)).isAir(), "the top layer is open from below at " + x + " " + y + " " + z);
+                        // The face of a tall cliff wall is dug out on purpose.
+                        helper.assertTrue(y < surfaceY - 8 || !terrain.get(pos.set(x, y, z)).isAir() || TopLayerAndBloomingCavesGen.isCliffNiche(x, y, z, randomState), "the top layer is open from below at " + x + " " + y + " " + z);
                     }
                     // What lies on the edge may hang on something outside.
                     boolean edge = x == 0 || z == 0 || x == size - 1 || z == size - 1;

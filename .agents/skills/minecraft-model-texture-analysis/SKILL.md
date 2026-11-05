@@ -43,7 +43,7 @@ Use these instead of writing a renderer; `--help` describes every option. Under 
 
   ```powershell
   python scripts/render_entity_model.py exports/snail.png snail runeruin:entity/snail/snail
-  python scripts/render_entity_model.py exports/punch.gif mossy_warrior runeruin:entity/mossy_warrior/mossy_warrior --layer main moss=runeruin:entity/mossy_warrior/mossy_warrior_moss --animation punch
+  python scripts/render_entity_model.py exports/punch.gif mossy_warrior runeruin:entity/mossy_warrior/mossy_warrior --animation punch
   ```
 
 ## Report

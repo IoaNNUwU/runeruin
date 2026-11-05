@@ -18,7 +18,7 @@ description: >-
 python scripts/render_preview.py exports/boulder.png exports/preview_boulder.json
 ```
 
-Jobs: `giant_goblet` (default; `'-Parg.moss=1'` adds goblet moss patches and floating moss, placed chunk by chunk as in the world), `baobab`, `dinosaur_skeleton`, `hanging_tracks` (a whole network, or one piece with `'-Parg.piece=stairs'`, a platform template with `'-Parg.piece=platform' '-Parg.template=hanging_tracks/dungeon/huts'`; `'-Parg.terrain=real'` puts it under the Deep caves ceiling of the seed), `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `feature` (any configured feature, below) and `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill). `terrain_bench` is in the list too, but it measures speed, not shapes: follow the `benchmark` skill.
+Jobs: `giant_goblet` (default; `'-Parg.moss=1'` adds goblet moss patches and floating moss, placed chunk by chunk as in the world), `baobab`, `dinosaur_skeleton`, `hanging_tracks` (a whole network, or one piece with `'-Parg.piece=stairs'`, a platform template with `'-Parg.piece=platform' '-Parg.template=hanging_tracks/dungeon/huts'`; `'-Parg.terrain=real'` puts it under the Deep caves ceiling of the seed), `boulder`, `monolith`, `mini_volcano`, `glowing_ball`, `goblet_moss`, `glowing_mushroom`, `ashen_mushroom`, `cave_mushroom`, `water_lily`, `powdered_moss_shaft` (a powdered moss patch on the real Blooming caves floor of the seed where it is the thinnest near `x z`, or the thickest with `'-Parg.floor=thick'`, down to the Lost caves), `feature` (any configured feature, below), `world_region` (terrain replay of a `/rrexport` region; follow the `region-export-compare` skill; a hand-written region file with `format`, `worldSeed`, `dimension`, `origin` and `size` works too) and `top_layer_map` (the top layer from above without building chunks, a PNG coloured by biome, shaded by height, water in blue, with the share of each biome in `_info.txt`; `'-Parg.x=0' '-Parg.z=0' '-Parg.radius=1024' '-Parg.step=2'`). `terrain_bench` is in the list too, but it measures speed, not shapes: follow the `benchmark` skill.
 
 Parameters: `-Pseed`, `-Pseeds`, `-Pheight`, `-Pradius`, `-Pstage`, `-Pregion=<export.json>`, `-PpreviewName=<name>`, or any `-Parg.<key>=<value>` (becomes `runeruin.preview.<key>`). In PowerShell quote the `-Parg.` ones: `'-Parg.id=runeruin:stone_spike'`; unquoted, PowerShell splits them at the dot and Gradle looks for a task.
 
@@ -47,7 +47,7 @@ Pick the view by the question:
 | What a change did | both exports on one sheet (before and after side by side), or the new export with `--diff exports/<before>.json` |
 | Exact positions and counts | the text slices and `_info.txt`, not the picture |
 
-The syntax of every option and how the picture is drawn: `python scripts/render_preview.py --help`. On the picture, faint blocks are the ground, ceiling or pool the preview prepared, blocks without collision are outlines and a cut face is pale; coordinates are local, as in the text slices, and world = origin + local.
+The syntax of every option and how the picture is drawn: `python scripts/render_preview.py --help`. `--flat` draws one colour per block, a full cube each, faster and with a clearer silhouette when the textures are dark or alike; `--diff` is always flat. On the picture, the darker blocks are the ground, ceiling or pool the preview prepared (with `--flat`, nearly transparent ones) and a cut face looks like any other (with `--flat`, blocks without collision are outlines); coordinates are local, as in the text slices, and world = origin + local.
 
 For before and after, export the old shape first under another name (`-PpreviewName=preview_boulder_before`) before you change the code, then the new one. `--diff` draws added blocks green, removed ones red and replaced ones orange.
 
@@ -57,7 +57,7 @@ Then:
 2. Compare it with the request. Change the code only for a difference you can name.
 3. Show the final pictures in the report, each with its job, seed and parameters.
 
-Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. Every block is drawn as a full cube in one colour.
+Limits: a preview skips placement modifiers and real terrain and uses its own random source, so it reproduces a shape, not a real chunk. The picture draws every block from its model with its textures (slabs, stairs, plants and vines keep their shape), without lighting; vanilla blockstates are read from the client jar of NeoForm Runtime (`.mc-sources` does not hold them), so stairs, slabs and mushrooms turn as in the game, and a block with no model found is a cube of the average colour of its texture, which the script lists. Tints are the plains colours for vanilla blocks and none for ours.
 
 ## Any feature by id
 
@@ -84,6 +84,6 @@ In game: `/rrpreview list`, `/rrpreview <job> [seed] [key=value | name]…`. The
 
 Most features need no job: use `feature`. A job of its own is for parameters the registry does not hold or for structures: a class in `preview/jobs/` implementing `PreviewJob`, registered in `PreviewCatalog`. For write-only features build the config and call `PreviewJobs.placeFeature`; features that scan terrain need a floor or ceiling first. Structures build their pieces directly (see `BaobabPreviewJob`, `GiantGobletPreviewJob`).
 
-Build the ground, ceiling or pool with `PreviewWorld.fillBox`, and only those: the export marks the blocks it filled as prepared, and the renderer fades them and frames the picture on everything else. A block the feature replaces is no longer prepared.
+Build the ground, ceiling or pool with `PreviewWorld.fillBox`, and only those: the export marks the blocks it filled as prepared, and the renderer darkens them and frames the picture on everything else. A block the feature replaces is no longer prepared.
 
 `PreviewWorld` answers block reads from its own map; a `WorldGenLevel` method it does not handle goes to the live server level and reads the real world. If a feature places nothing in the preview but works in game, look for such a method and add a case to `PreviewWorld.invoke` (as for `isStateAtPosition`).

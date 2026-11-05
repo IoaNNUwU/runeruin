@@ -4,7 +4,6 @@ import ioann.uwu.runeruin.RR;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 
@@ -17,6 +16,6 @@ public class SnailModel extends EntityModel<LivingEntityRenderState> {
     }
 
     public static LayerDefinition createBodyLayer() {
-        return BlockbenchModel.layer("snail", CubeDeformation.NONE, SnailModel::new);
+        return BlockbenchModel.layer("snail", SnailModel::new);
     }
 }

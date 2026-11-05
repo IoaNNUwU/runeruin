@@ -44,6 +44,12 @@ public interface Noise {
         }
     }
 
+    /// @return 0 up to `from`, 1 from `to`, smooth between
+    static float smooth(float value, float from, float to) {
+        float t = Math.clamp((value - from) / (to - from), 0f, 1f);
+        return t * t * (3 - 2 * t);
+    }
+
     static long hashString(String string) {
         return UUID.nameUUIDFromBytes(string.getBytes()).getMostSignificantBits();
     }
