@@ -14,14 +14,12 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
-import net.minecraft.util.Mth;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Colossus: a machine of rusty plates, its arms and legs bending at the elbows and knees. Its shape and
- * animations are the Blockbench project {@code colossus.bbmodel}, the animations exported into
- * {@link ColossusAnimation}; a second layer, the same boxes a little larger, carries the moss of its shoulders,
- * head and chest.
+ * The Colossus: a giant of stone bricks, its arms and legs bending at the elbows and knees, moss growing on its head
+ * and body and white crystals out of it. Its shape and animations are the Blockbench project {@code colossus.bbmodel},
+ * the animations exported into {@link ColossusAnimation}.
  *
  * <p>The server moves the solid parts of the colossus with the animations of the project itself
  * ({@link ColossusRig}). So that both play the same movement, building the model compares the exported class with
@@ -36,7 +34,6 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
             "slam_high", ColossusAnimation.slam_high,
             "slam_ground", ColossusAnimation.slam_ground);
 
-    private final ModelPart head;
     private final KeyframeAnimation idle;
     private final KeyframeAnimation walk;
     private final float walkLength;
@@ -45,7 +42,6 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
 
     public ColossusModel(ModelPart root) {
         super(root);
-        this.head = root.getChild("whole").getChild("body").getChild("head");
         this.idle = ColossusAnimation.idle.bake(root);
         this.walk = ColossusAnimation.walk.bake(root);
         this.walkLength = ColossusAnimation.walk.lengthInSeconds();
@@ -71,7 +67,6 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
             case NONE -> {
             }
         }
-        this.head.yRot += Mth.clamp(state.yRot, -40.0F, 40.0F) * Mth.DEG_TO_RAD;
     }
 
     /** Fails unless every exported animation moves every bone as the animation of the same name in the project. */
