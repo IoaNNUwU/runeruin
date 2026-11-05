@@ -48,8 +48,8 @@ final class TopLayerCliffs {
     private static final int NICHE_LIP = 1;
     private static final int COLUMN_SOIL = 3;
     private static final float LOWEST_BAND = 3;
-    private static final float DEPTH_SHARE = 0.4f;
-    private static final float NICHE_DEPTH = 2.1f;
+    private static final float DEPTH_SHARE = 0.25f;
+    private static final float NICHE_DEPTH = 0.9f;
     private static final float NICHE_BEND = 0.25f;
     private static final LazyNoise NICHE_NOISE = new LazyNoise(seed -> new SingleNoise(Noise.hashString("topLayerCliffNiches" + seed), 8f, 8f));
     // How far the open air is looked for; the ground and the soil of the wall within BAND_REACH shape the arc, the
