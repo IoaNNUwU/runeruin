@@ -1,29 +1,33 @@
 package ioann.uwu.runeruin.items;
 
 import ioann.uwu.runeruin.entities.GrapplingAnchor;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.level.Level;
 
 /**
- * Drawn and released like a bow, shoots its anchor on a chain ({@link GrapplingAnchor}); used again, pulls the
- * anchor back.
+ * A click shoots the anchor on a chain ({@link GrapplingAnchor}), of the hook in the main hand first, then of the one
+ * in the other hand. While an anchor holds onto a block, holding the button reels in the chains of the hooks in hand,
+ * and a click while sneaking lets go of the lowest anchor out: the one left behind when climbing hook over hook. The
+ * left button lets the chains out ({@code GrapplingHookControls} on the client).
  */
 public class GrapplingHookItem extends Item {
 
-    /** Blocks per tick of an anchor shot at full draw: it reaches the end of the chain before it drops much. */
-    private static final float MAX_SPEED = 2.5F;
+    /** Blocks per tick of a shot anchor: it reaches the end of the chain before it drops much. */
+    private static final float SPEED = 4.0F;
 
     public GrapplingHookItem(Properties properties) {
         super(properties);
@@ -31,43 +35,47 @@ public class GrapplingHookItem extends Item {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        GrapplingAnchor anchor = GrapplingAnchor.of(player);
-        if (anchor != null) {
+        List<GrapplingAnchor> out = GrapplingAnchor.of(player);
+        if (player.isSecondaryUseActive() && !out.isEmpty()) {
             if (!level.isClientSide()) {
-                anchor.discard();
+                Collections.min(out, Comparator.comparingDouble(Entity::getY)).discard();
             }
             level.playSound(player, player.getX(), player.getY(), player.getZ(), SoundEvents.CHAIN_BREAK, SoundSource.PLAYERS, 1.0F, 1.2F);
             return InteractionResult.SUCCESS;
         }
-        player.startUsingItem(hand);
+        if (GrapplingAnchor.of(player, hand) == null) {
+            shoot(level, player, hand);
+            return InteractionResult.SUCCESS;
+        }
+        if (hand == InteractionHand.MAIN_HAND && player.getOffhandItem().is(this) && GrapplingAnchor.of(player, InteractionHand.OFF_HAND) == null) {
+            return InteractionResult.PASS;
+        }
+        if (GrapplingAnchor.inHands(player).stream().anyMatch(GrapplingAnchor::hooksBlock)) {
+            player.startUsingItem(hand);
+        }
         return InteractionResult.CONSUME;
     }
 
-    @Override
-    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int remainingTime) {
-        float power = BowItem.getPowerForTime(getUseDuration(stack, entity) - remainingTime);
-        if (power < 0.1F || !(entity instanceof Player player)) {
-            return false;
-        }
+    private void shoot(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
         if (level instanceof ServerLevel serverLevel) {
+            int slot = GrapplingAnchor.slotOf(player, hand);
             Projectile.spawnProjectileFromRotation(
-                    (projectileLevel, owner, _) -> new GrapplingAnchor(projectileLevel, owner),
-                    serverLevel, stack, player, 0.0F, power * MAX_SPEED, 0.5F);
-            stack.hurtAndBreak(1, player, player.getUsedItemHand());
+                    (projectileLevel, owner, _) -> new GrapplingAnchor(projectileLevel, owner, slot),
+                    serverLevel, stack, player, 0.0F, SPEED, 0.5F);
+            stack.hurtAndBreak(1, player, hand);
         }
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS,
-                1.0F, 0.8F + power * 0.2F);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
         player.awardStat(Stats.ITEM_USED.get(this));
-        return true;
+    }
+
+    @Override
+    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int ticksRemaining) {
+        GrapplingAnchor.inHands(entity).forEach(anchor -> anchor.reelIn(entity));
     }
 
     @Override
     public int getUseDuration(ItemStack stack, LivingEntity user) {
         return 72000;
-    }
-
-    @Override
-    public ItemUseAnimation getUseAnimation(ItemStack stack) {
-        return ItemUseAnimation.BOW;
     }
 }

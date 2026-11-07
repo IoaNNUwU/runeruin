@@ -174,6 +174,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("blowpipe_shoots_berries", () -> RRGameTests::blowpipeShootsBerries);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_CLIMBS_WALL =
         TEST_FUNCTIONS.register("grappling_hook_climbs_wall", () -> RRGameTests::grapplingHookClimbsWall);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_SWINGS_UNDER_ANCHOR =
+        TEST_FUNCTIONS.register("grappling_hook_swings_under_anchor", () -> RRGameTests::grapplingHookSwingsUnderAnchor);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_PULLS_CREATURE =
         TEST_FUNCTIONS.register("grappling_hook_pulls_creature", () -> RRGameTests::grapplingHookPullsCreature);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ASHEN_MUSHROOM_SMALL_RADII =
@@ -716,6 +718,13 @@ public final class RRGameTests {
             new FunctionGameTestInstance(
                 GRAPPLING_HOOK_CLIMBS_WALL.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("grappling_hook_swings_under_anchor"),
+            new FunctionGameTestInstance(
+                GRAPPLING_HOOK_SWINGS_UNDER_ANCHOR.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 300, 0, true)
             )
         );
         event.registerTest(
@@ -1871,14 +1880,14 @@ public final class RRGameTests {
     /** A creature that holds the grappling hook and shoots its anchor at the given point, as a player would. */
     private static GrapplingAnchor shootAnchor(GameTestHelper helper, Mob owner, Vec3 at) {
         owner.setItemSlot(EquipmentSlot.MAINHAND, RRItems.GRAPPLING_HOOK.toStack());
-        GrapplingAnchor anchor = new GrapplingAnchor(helper.getLevel(), owner);
+        GrapplingAnchor anchor = new GrapplingAnchor(helper.getLevel(), owner, 0);
         Vec3 aim = helper.absoluteVec(at).subtract(anchor.position());
         anchor.shoot(aim.x, aim.y, aim.z, 2.5F, 0.0F);
         helper.getLevel().addFreshEntity(anchor);
         return anchor;
     }
 
-    // An anchor in the side of the top of a wall pulls its owner up onto the wall, then comes back.
+    // Reeled in to the end, an anchor in the side of the top of a wall lifts its owner onto the wall, then comes back.
     private static void grapplingHookClimbsWall(GameTestHelper helper) {
         // Thirty blocks over the blowpipe test and under the next one: endFight clears sixteen blocks around its floor.
         int y = 210;
@@ -1890,6 +1899,7 @@ public final class RRGameTests {
         }
         Snail owner = fightTarget(helper, 4, y, 12);
         GrapplingAnchor anchor = shootAnchor(helper, owner, new Vec3(12.0, y + 2.5, 12.5));
+        owner.startUsingItem(InteractionHand.MAIN_HAND);
 
         helper.succeedWhen(() -> {
             helper.assertTrue(anchor.isRemoved(), "the anchor is still out");
@@ -1897,6 +1907,38 @@ public final class RRGameTests {
             helper.assertTrue(owner.onGround() && Math.abs(at.y - (y + 3)) < 0.01 && at.x > 12.0 && at.x < 13.0,
                 "the owner of the anchor stands at " + at + ", not on the wall");
             endFight(helper, y);
+        });
+    }
+
+    // An anchor in a ceiling lifts its reeling owner off the floor; once the owner stops reeling, it swings under the
+    // anchor, and the swing dies down.
+    private static void grapplingHookSwingsUnderAnchor(GameTestHelper helper) {
+        // Between the floors of the blowpipe test and the wall test, the reach of endFight clear of either.
+        int y = 180;
+        fightFloor(helper, y);
+        helper.getLevel().setBlockAndUpdate(helper.absolutePos(new BlockPos(12, y + 9, 12)), Blocks.STONE.defaultBlockState());
+        Snail owner = fightTarget(helper, 6, y, 12);
+        GrapplingAnchor anchor = shootAnchor(helper, owner, new Vec3(12.5, y + 9.0, 12.5));
+        owner.startUsingItem(InteractionHand.MAIN_HAND);
+        helper.runAfterDelay(25, owner::stopUsingItem);
+
+        // The furthest the owner gets from under the anchor in its first swings and in its last ones.
+        double[] swing = {0.0, 0.0};
+        helper.onEachTick(() -> {
+            long tick = helper.getTick();
+            double off = owner.position().subtract(anchor.position()).horizontalDistance();
+            if (tick >= 30 && tick < 100) {
+                swing[0] = Math.max(swing[0], off);
+            } else if (tick >= 230) {
+                swing[1] = Math.max(swing[1], off);
+            }
+        });
+        helper.runAtTickTime(290, () -> {
+            helper.assertTrue(anchor.hooksBlock() && !anchor.isRemoved() && !owner.onGround(), "the owner does not hang on the anchor");
+            helper.assertTrue(swing[0] > 1.5 && swing[1] < swing[0] / 3.0,
+                "the owner swings " + swing[0] + " blocks out from under the anchor at first and " + swing[1] + " at last");
+            endFight(helper, y);
+            helper.succeed();
         });
     }
 
