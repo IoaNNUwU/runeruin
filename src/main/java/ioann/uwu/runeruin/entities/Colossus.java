@@ -824,7 +824,7 @@ public class Colossus extends Monster {
                 level.playSound(null, center.x, surface, center.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 6.0F, 0.5F);
                 level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.x, surface + 1.0, center.z, 1, 0.0, 0.0, 0.0, 0.0);
             }
-            this.shockwaves.add(new Shockwave(center.x, surface, center.z, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), action.onBody));
+            this.shockwaves.add(new Shockwave(center.x, surface, center.z, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), action));
         }
     }
 
@@ -843,8 +843,8 @@ public class Colossus extends Monster {
 
     /**
      * A ring that runs out from where a fist or a foot hit, hurting and throwing what stands on the ground it runs
-     * over and what stands on the colossus near that height; one from a blow onto the colossus only the latter, and it
-     * throws them less, so that they keep their footing.
+     * over; one from a stamp also what stands on the foot, one from a blow onto the colossus only what stands on the
+     * colossus near that height, and it throws them less, so that they keep their footing.
      */
     public static final class Shockwave {
         /** How wide the ring is that hurts, and how far below and above where it started it hurts what stands on the ground. */
@@ -853,7 +853,7 @@ public class Colossus extends Monster {
         public static final double GROUND_ABOVE = 2.0;
         /**
          * How far below and above where it started it hurts what stands on the colossus: one from a blow onto the
-         * colossus, and one over the ground, which reaches what stands on its feet.
+         * colossus, and one from a stamp, which reaches what stands on the foot.
          */
         public static final double BODY_REACH = 14.0;
         public static final double FOOT_ABOVE = 6.0;
@@ -863,15 +863,18 @@ public class Colossus extends Monster {
         private final double z;
         private final float damage;
         private final boolean onBody;
+        // How far above where it started it hurts what stands on the colossus; not at all below zero.
+        private final double colossusAbove;
         private final Set<UUID> hit = new HashSet<>();
         private float radius;
 
-        Shockwave(double x, double y, double z, float damage, boolean onBody) {
+        Shockwave(double x, double y, double z, float damage, Action action) {
             this.x = x;
             this.y = y;
             this.z = z;
             this.damage = damage;
-            this.onBody = onBody;
+            this.onBody = action.onBody;
+            this.colossusAbove = action.onBody ? BODY_REACH : action == Action.STOMP_RIGHT || action == Action.STOMP_LEFT ? FOOT_ABOVE : -1.0;
         }
 
         /** Where it started: the ground under a fist or a foot, or the bottom of a fist on the colossus. */
@@ -888,6 +891,11 @@ public class Colossus extends Monster {
             return this.onBody;
         }
 
+        /** Whether it hurts what stands on the colossus. */
+        public boolean reachesColossus() {
+            return this.colossusAbove >= 0.0;
+        }
+
         /** How far below where it started it hurts what stands on the colossus. */
         public double colossusBelow() {
             return this.onBody ? BODY_REACH : GROUND_BELOW;
@@ -895,7 +903,7 @@ public class Colossus extends Monster {
 
         /** How far above where it started it hurts what stands on the colossus. */
         public double colossusAbove() {
-            return this.onBody ? BODY_REACH : FOOT_ABOVE;
+            return this.colossusAbove;
         }
 
         /** Runs the ring on by a tick, on the server hurting what it reaches; true once it has run out. */
@@ -911,7 +919,7 @@ public class Colossus extends Monster {
                 // Only what stands where the ring runs: not what is above it, not what it has passed.
                 double dy = entity.getY() - this.y;
                 boolean onGround = !this.onBody && dy >= -GROUND_BELOW && dy <= GROUND_ABOVE;
-                boolean onColossus = dy >= -this.colossusBelow() && dy <= this.colossusAbove() && colossus.isStandingOn(entity);
+                boolean onColossus = dy >= -this.colossusBelow() && dy <= this.colossusAbove && colossus.isStandingOn(entity);
                 if (distance > this.radius || distance < this.radius - WIDTH || !(onGround || onColossus) || !this.hit.add(entity.getUUID())) {
                     continue;
                 }

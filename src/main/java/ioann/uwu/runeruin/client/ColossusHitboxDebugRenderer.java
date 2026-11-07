@@ -60,7 +60,9 @@ public class ColossusHitboxDebugRenderer implements DebugRenderer.SimpleDebugRen
                     if (!shockwave.onBody()) {
                         drawRing(shockwave, -Colossus.Shockwave.GROUND_BELOW, Colossus.Shockwave.GROUND_ABOVE, ARGB.colorFromFloat(1.0F, 1.0F, 0.1F, 0.1F));
                     }
-                    drawRing(shockwave, -shockwave.colossusBelow(), shockwave.colossusAbove(), ARGB.colorFromFloat(0.8F, 1.0F, 0.55F, 0.0F));
+                    if (shockwave.reachesColossus()) {
+                        drawRing(shockwave, -shockwave.colossusBelow(), shockwave.colossusAbove(), ARGB.colorFromFloat(0.8F, 1.0F, 0.55F, 0.0F));
+                    }
                 }
             }
         }
