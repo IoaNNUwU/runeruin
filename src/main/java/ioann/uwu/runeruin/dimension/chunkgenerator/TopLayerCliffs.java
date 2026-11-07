@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.dimension.noise.Noise;
 import ioann.uwu.runeruin.dimension.noise.SingleNoise;
 import ioann.uwu.runeruin.dimension.noise.TopLevelNoise;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -62,8 +63,14 @@ final class TopLayerCliffs {
     // each block of height away from them.
     private static final int NEAR = 5;
     private static final float EDGE_SLOPE = 1.5f;
+    // Where a wall steps, the hollow grows taller round each outer corner, so that its edges do not run level from one
+    // stretch of the wall to the next: up and down by CORNER_RISE blocks for each column within sqrt(NEAR) open more
+    // than in front of a straight wall, by at most CORNER_REACH.
+    private static final float CORNER_RISE = 0.5f;
+    private static final int CORNER_REACH = 1;
     private static final int THINNEST_ROCK = 6;
     private static final int[][] AROUND = around();
+    private static final long STRAIGHT_OPEN = Arrays.stream(AROUND).filter(offset -> offset[2] <= NEAR && offset[0] < 0).count();
 
     private TopLayerCliffs() {}
 
@@ -80,11 +87,11 @@ final class TopLayerCliffs {
                 if (!walls.onCliff(worldX, worldZ)) {
                     continue;
                 }
-                // Nothing is dug below the foot over the lowest ground in front.
+                // Nothing is dug below the foot over the lowest ground in front, lowered round a corner.
                 int lowestY = Integer.MAX_VALUE;
                 for (int[] offset : AROUND) {
                     if (offset[2] <= BAND_REACH * BAND_REACH) {
-                        lowestY = Math.min(lowestY, walls.column(worldX + offset[0], worldZ + offset[1]).topY() + 1 + NICHE_FOOT);
+                        lowestY = Math.min(lowestY, walls.column(worldX + offset[0], worldZ + offset[1]).topY() + 1 + NICHE_FOOT - CORNER_REACH);
                     }
                 }
                 HangingTerrainGenerator.TerrainColumn column = walls.column(worldX, worldZ);
@@ -205,15 +212,31 @@ final class TopLayerCliffs {
             if (weights == 0) {
                 return false;
             }
+            float rise = corner(x, y, z);
             float middle = y + 0.5f;
-            float depth = arc(middle, bottom / weights, top / weights) + NICHE_BEND * (2 * noise.noise(x, y, z) - 1);
-            depth = Math.min(depth, EDGE_SLOPE * Math.min(middle - nearBottom, nearTop - middle));
+            float depth = arc(middle, bottom / weights - rise, top / weights + rise) + NICHE_BEND * (2 * noise.noise(x, y, z) - 1);
+            depth = Math.min(depth, EDGE_SLOPE * Math.min(middle - nearBottom + rise, nearTop + rise - middle));
             int[] towards = AROUND[nearest];
             if (open >= depth || !isThick(x, y, z, towards)) {
                 return false;
             }
             return towards[0] != 0 && isOpenOrHollowed(x + Integer.signum(towards[0]), y, z)
                     || towards[1] != 0 && isOpenOrHollowed(x, y, z + Integer.signum(towards[1]));
+        }
+
+        /** How far the hollow reaches up and down beyond its ends at this block, round an outer corner of the wall. */
+        private float corner(int x, int y, int z) {
+            int open = 0;
+            for (int[] offset : AROUND) {
+                if (offset[2] > NEAR) {
+                    break;
+                }
+                HangingTerrainGenerator.TerrainColumn column = column(x + offset[0], z + offset[1]);
+                if (!column.present() || column.topY() < y) {
+                    open++;
+                }
+            }
+            return Mth.clamp((open - STRAIGHT_OPEN) * CORNER_RISE, 0, CORNER_REACH);
         }
 
         /** Whether a block is a fin of rock one block thick between a hollowed block and the air or another one. */
