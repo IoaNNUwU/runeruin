@@ -109,8 +109,10 @@ public class GrapplingAnchor extends Projectile {
 
     /** All the anchors the owner has out. */
     public static List<GrapplingAnchor> of(Entity owner) {
+        // Entities with one id are equal: in singleplayer a player on the client and on the server shares one list.
         List<GrapplingAnchor> anchors = BY_OWNER.get(owner);
-        return anchors == null ? List.of() : anchors.stream().filter(anchor -> !anchor.isRemoved()).toList();
+        return anchors == null ? List.of()
+                : anchors.stream().filter(anchor -> !anchor.isRemoved() && anchor.level() == owner.level()).toList();
     }
 
     /** The anchor out of the hook in the hand of the owner. */
