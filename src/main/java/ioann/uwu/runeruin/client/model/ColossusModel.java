@@ -6,6 +6,7 @@ import ioann.uwu.runeruin.entities.ColossusRig;
 import ioann.uwu.runeruin.entities.Colossus;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import net.minecraft.client.animation.AnimationDefinition;
 import net.minecraft.client.animation.KeyframeAnimation;
@@ -39,21 +40,47 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
     private final float walkLength;
     private final KeyframeAnimation slamHigh;
     private final KeyframeAnimation slamGround;
+    // The crystals in their order in the project: each is a part of its own, as a turned cube.
+    private final ModelPart[] crystals;
+    // Draws only the crystals that flash red after a hit, over the model that draws the rest.
+    private final boolean flashing;
 
-    public ColossusModel(ModelPart root) {
+    public ColossusModel(ModelPart root, boolean flashing) {
         super(root);
         this.idle = ColossusAnimation.idle.bake(root);
         this.walk = ColossusAnimation.walk.bake(root);
         this.walkLength = ColossusAnimation.walk.lengthInSeconds();
         this.slamHigh = ColossusAnimation.slam_high.bake(root);
         this.slamGround = ColossusAnimation.slam_ground.bake(root);
+        this.crystals = crystals(root);
+        this.flashing = flashing;
+        if (flashing) {
+            Set<ModelPart> crystals = Set.of(this.crystals);
+            root.getAllParts().forEach(part -> part.skipDraw = !crystals.contains(part));
+        }
     }
 
     public static LayerDefinition create() {
         return BlockbenchModel.layer("colossus", root -> {
             matchProject(root);
-            return new ColossusModel(root);
+            return new ColossusModel(root, false);
         });
+    }
+
+    private static ModelPart[] crystals(ModelPart root) {
+        ColossusRig rig = Colossus.rig();
+        Function<String, @Nullable ModelPart> parts = root.createPartLookup();
+        ModelPart[] crystals = new ModelPart[rig.crystalCount()];
+        for (int crystal = 0; crystal < crystals.length; crystal++) {
+            String bone = rig.boneName(rig.cubeBone(rig.crystalCube(crystal)));
+            String part = rig.crystalPart(crystal);
+            if (part == null) {
+                throw new IllegalStateException("a crystal in the bone '" + bone
+                        + "' has no rotation of its own: turn it a little, so that the game can draw it apart from the bone");
+            }
+            crystals[crystal] = Objects.requireNonNull(parts.apply(bone), bone).getChild(part);
+        }
+        return crystals;
     }
 
     @Override
@@ -66,6 +93,10 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
             case SLAM_GROUND -> this.slamGround.apply((long) (state.actionSeconds * 1000.0F), 1.0F);
             case NONE -> {
             }
+        }
+        for (int crystal = 0; crystal < this.crystals.length; crystal++) {
+            this.crystals[crystal].visible = (state.wholeCrystals >> crystal & 1) != 0
+                    && ((state.flashingCrystals >> crystal & 1) != 0) == this.flashing;
         }
     }
 

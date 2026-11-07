@@ -1,13 +1,22 @@
 package ioann.uwu.runeruin.entities;
 
 import ioann.uwu.runeruin.RR;
+import java.util.List;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 public final class RREntityTypes {
     public static final DeferredRegister.Entities REGISTRY = DeferredRegister.createEntities(RR.MODID);
+    public static final DeferredRegister<EntityDataSerializer<?>> DATA_SERIALIZERS = DeferredRegister.create(NeoForgeRegistries.Keys.ENTITY_DATA_SERIALIZERS, RR.MODID);
+
+    /** A list of numbers that the server keeps in step with the clients, such as what is left of each crystal of a Colossus. */
+    public static final DeferredHolder<EntityDataSerializer<?>, EntityDataSerializer<List<Float>>> FLOATS = DATA_SERIALIZERS.register(
+            "floats", () -> EntityDataSerializer.forValueType(ByteBufCodecs.FLOAT.apply(ByteBufCodecs.list())));
 
     public static final DeferredHolder<EntityType<?>, EntityType<Snail>> SNAIL = REGISTRY.registerEntityType(
             "snail",

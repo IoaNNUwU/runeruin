@@ -1,7 +1,9 @@
 package ioann.uwu.runeruin.entities;
 
+import com.mojang.serialization.Codec;
 import ioann.uwu.runeruin.dimension.Const;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -15,13 +17,16 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -47,12 +52,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.PathfindingContext;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -72,6 +80,10 @@ import org.jspecify.annotations.Nullable;
  * <p>Its shape and its animations are the Blockbench project {@code colossus.bbmodel}. Every cube is a solid
  * {@link ColossusPart} that follows its bone through the animations ({@link ColossusRig}), so players can climb the
  * colossus and ride on it, turning with it. It walks only where nothing hangs over it, and it is slow to turn.</p>
+ *
+ * <p>Only its crystals, the cubes of the project named crystal, can be hurt. Its health is theirs, an equal stage
+ * for each, which a hit on a crystal takes from that one only ({@code ColossusBossBar} shows the stages). A broken
+ * crystal is gone, and the colossus falls with the last one.</p>
  */
 public class Colossus extends Monster {
     /** A pixel of the model is this many sixteenths of a block: the colossus stands about 97 blocks tall. */
@@ -102,6 +114,10 @@ public class Colossus extends Monster {
     // What has sunk into the cubes by no more than this rises out of them at this speed, in blocks and blocks a tick.
     private static final double LIFT_DEPTH = 3.0;
     private static final double LIFT_SPEED = 0.5;
+    // Players this far from its feet, on the ground or up on the top layer, see its health bar.
+    private static final double BAR_RANGE = 64.0;
+    // How long a crystal flashes red after a hit, in ticks: as long as a hurt mob.
+    private static final int FLASH = 10;
 
     /** What the body does besides walking; each action is the animation of the same name in the project. */
     public enum Action {
@@ -115,6 +131,8 @@ public class Colossus extends Monster {
     }
 
     private static final EntityDataAccessor<Byte> DATA_ACTION = SynchedEntityData.defineId(Colossus.class, EntityDataSerializers.BYTE);
+    // What is left of each crystal, from 1 whole to 0 broken.
+    private static final EntityDataAccessor<List<Float>> DATA_CRYSTALS = SynchedEntityData.defineId(Colossus.class, RREntityTypes.FLOATS.get());
     private static @Nullable ColossusRig rig;
     private static final double[] REACH = {Double.NaN, Double.NaN, Double.NaN};
 
@@ -132,13 +150,20 @@ public class Colossus extends Monster {
     private int actionTicks;
     private int cooldown;
     private final List<Shockwave> shockwaves = new ArrayList<>();
+    // Its health bar, under its own id: a client finds the colossus of a bar by it.
+    private @Nullable ServerBossEvent bossEvent;
+    // The crystal a hit lands on while the game hurts the colossus.
+    private int hitCrystal = -1;
+    // On a client: how long each crystal still flashes red, and what was left of the crystals before the last change.
+    private final int[] flashes = new int[rig().crystalCount()];
+    private List<Float> crystalsBefore = List.of();
 
     public Colossus(EntityType<? extends Colossus> type, Level level) {
         super(type, level);
         ColossusRig rig = rig();
         this.parts = new ColossusPart[rig.cubeCount()];
         for (int cube = 0; cube < this.parts.length; cube++) {
-            this.parts[cube] = new ColossusPart(this, rig.cubeBone(cube), rig.cube(cube));
+            this.parts[cube] = new ColossusPart(this, rig.cubeBone(cube), rig.cube(cube), rig.crystalOf(cube));
         }
         this.moveControl = new SlowTurnControl();
         this.xpReward = 100;
@@ -154,9 +179,7 @@ public class Colossus extends Monster {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
-                .add(Attributes.MAX_HEALTH, 600.0)
-                .add(Attributes.ARMOR, 20.0)
-                .add(Attributes.ARMOR_TOUGHNESS, 8.0)
+                .add(Attributes.MAX_HEALTH, 1200.0)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.FOLLOW_RANGE, 128.0)
@@ -244,6 +267,99 @@ public class Colossus extends Monster {
     protected void defineSynchedData(SynchedEntityData.Builder entityData) {
         super.defineSynchedData(entityData);
         entityData.define(DATA_ACTION, (byte) 0);
+        entityData.define(DATA_CRYSTALS, Collections.nCopies(rig().crystalCount(), 1.0F));
+    }
+
+    /** What is left of a crystal, from 1 whole to 0 broken. */
+    public float crystal(int crystal) {
+        return this.entityData.get(DATA_CRYSTALS).get(crystal);
+    }
+
+    /** Whether a crystal flashes red after a hit, on a client. */
+    public boolean isFlashing(int crystal) {
+        return this.flashes[crystal] > 0;
+    }
+
+    /** A hit on a crystal: the game hurts the colossus as it hurts any mob, and the health comes off that crystal. */
+    boolean hurtCrystal(ServerLevel level, int crystal, DamageSource source, float damage) {
+        if (this.crystal(crystal) <= 0.0F) {
+            return false;
+        }
+        this.hitCrystal = crystal;
+        try {
+            return super.hurtServer(level, source, damage);
+        } finally {
+            this.hitCrystal = -1;
+        }
+    }
+
+    // Anywhere but a crystal it takes no hit, except from what hurts the invulnerable too: /kill, the void.
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        return source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && super.hurtServer(level, source, damage);
+    }
+
+    @Override
+    protected void actuallyHurt(ServerLevel level, DamageSource source, float damage) {
+        int crystal = this.hitCrystal;
+        if (crystal < 0) {
+            super.actuallyHurt(level, source, damage);
+            return;
+        }
+        float stage = this.getMaxHealth() / rig().crystalCount();
+        List<Float> crystals = new ArrayList<>(this.entityData.get(DATA_CRYSTALS));
+        float before = this.getHealth();
+        super.actuallyHurt(level, source, Math.min(damage, crystals.get(crystal) * stage));
+        float left = crystals.get(crystal) - (before - this.getHealth()) / stage;
+        crystals.set(crystal, left < 1.0E-4F ? 0.0F : left);
+        this.entityData.set(DATA_CRYSTALS, List.copyOf(crystals));
+        if (crystals.get(crystal) == 0.0F) {
+            Vec3 at = this.parts[rig().crystalCube(crystal)].getBoundingBox().getCenter();
+            level.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.HOSTILE, 6.0F, 0.6F);
+            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.QUARTZ_BLOCK.defaultBlockState()), at.x, at.y, at.z, 120, 1.5, 1.5, 1.5, 0.2);
+        }
+    }
+
+    private ServerBossEvent bossEvent() {
+        if (this.bossEvent == null) {
+            this.bossEvent = new ServerBossEvent(this.getUUID(), this.getDisplayName(), BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.PROGRESS);
+        }
+        return this.bossEvent;
+    }
+
+    @Override
+    protected void customServerAiStep(ServerLevel level) {
+        super.customServerAiStep(level);
+        if (this.tickCount % 20 == 0) {
+            for (ServerPlayer player : level.players()) {
+                if (Math.hypot(player.getX() - this.getX(), player.getZ() - this.getZ()) < BAR_RANGE && this.isAlive()) {
+                    this.bossEvent().addPlayer(player);
+                } else {
+                    this.bossEvent().removePlayer(player);
+                }
+            }
+        }
+    }
+
+    // A colossus that is gone, dead or out of sight takes its bar along.
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        this.bossEvent().removePlayer(player);
+    }
+
+    @Override
+    protected void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.store("crystals", Codec.FLOAT.listOf(), this.entityData.get(DATA_CRYSTALS));
+    }
+
+    @Override
+    protected void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        input.read("crystals", Codec.FLOAT.listOf())
+                .filter(crystals -> crystals.size() == rig().crystalCount())
+                .ifPresent(crystals -> this.entityData.set(DATA_CRYSTALS, List.copyOf(crystals)));
     }
 
     public Action getAction() {
@@ -260,6 +376,15 @@ public class Colossus extends Monster {
         super.onSyncedDataUpdated(accessor);
         if (DATA_ACTION.equals(accessor)) {
             this.actionTicks = 0;
+        }
+        if (DATA_CRYSTALS.equals(accessor) && this.level().isClientSide()) {
+            List<Float> crystals = this.entityData.get(DATA_CRYSTALS);
+            for (int crystal = 0; crystal < Math.min(crystals.size(), this.crystalsBefore.size()); crystal++) {
+                if (crystals.get(crystal) < this.crystalsBefore.get(crystal)) {
+                    this.flashes[crystal] = FLASH;
+                }
+            }
+            this.crystalsBefore = crystals;
         }
     }
 
@@ -287,6 +412,9 @@ public class Colossus extends Monster {
         }
         if (this.cooldown > 0) {
             this.cooldown--;
+        }
+        for (int crystal = 0; crystal < this.flashes.length; crystal++) {
+            this.flashes[crystal] = Math.max(0, this.flashes[crystal] - 1);
         }
         this.updateParts();
         if (this.level() instanceof ServerLevel level) {
@@ -412,7 +540,7 @@ public class Colossus extends Monster {
             AABB at = box.move(0.0, depth, 0.0);
             double top = at.minY;
             for (ColossusPart part : this.parts) {
-                if (part.getBoundingBox().intersects(at)) {
+                if (part.isWhole() && part.getBoundingBox().intersects(at)) {
                     for (AABB cell : part.cells(at)) {
                         // Not a cell at the head only, which walks into nothing.
                         if (cell.intersects(at) && cell.minY <= at.minY + 1.0) {
