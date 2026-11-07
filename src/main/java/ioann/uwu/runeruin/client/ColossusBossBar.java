@@ -27,8 +27,8 @@ public final class ColossusBossBar {
     private static final Identifier PROGRESS = Identifier.withDefaultNamespace("boss_bar/white_progress");
     private static final int WIDTH = 182;
     private static final int HEIGHT = 5;
-    // Pixels between two stages.
-    private static final int GAP = 2;
+    // The line between two stages, in the dark grey of the frame of the bar.
+    private static final int BORDER = 0xFF262626;
 
     private ColossusBossBar() {
     }
@@ -42,17 +42,21 @@ public final class ColossusBossBar {
         }
         event.setCanceled(true);
         GuiGraphicsExtractor graphics = event.getGuiGraphics();
+        int x = event.getX();
+        int y = event.getY();
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, WIDTH, HEIGHT, 0, 0, x, y, WIDTH, HEIGHT);
         int stages = Colossus.rig().crystalCount();
         for (int stage = 0; stage < stages; stage++) {
-            int from = WIDTH * stage / stages + (stage > 0 ? GAP / 2 : 0);
-            int to = WIDTH * (stage + 1) / stages - (stage < stages - 1 ? GAP / 2 : 0);
-            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, WIDTH, HEIGHT, from, 0, event.getX() + from, event.getY(), to - from, HEIGHT);
-            int left = Mth.lerpDiscrete(colossus.crystal(stage), 0, to - from);
+            int from = WIDTH * stage / stages;
+            int left = Mth.lerpDiscrete(colossus.crystal(stage), 0, WIDTH * (stage + 1) / stages - from);
             if (left > 0) {
-                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, PROGRESS, WIDTH, HEIGHT, from, 0, event.getX() + from, event.getY(), left, HEIGHT);
+                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, PROGRESS, WIDTH, HEIGHT, from, 0, x + from, y, left, HEIGHT);
+            }
+            if (stage > 0) {
+                graphics.fill(x + from, y, x + from + 1, y + HEIGHT, BORDER);
             }
         }
         Component name = bar.getName();
-        graphics.text(minecraft.font, name, event.getX() + WIDTH / 2 - minecraft.font.width(name) / 2, event.getY() - 9, -1);
+        graphics.text(minecraft.font, name, x + WIDTH / 2 - minecraft.font.width(name) / 2, y - 9, -1);
     }
 }
