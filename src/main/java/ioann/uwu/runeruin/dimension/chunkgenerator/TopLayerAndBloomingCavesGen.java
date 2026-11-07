@@ -263,11 +263,9 @@ public class TopLayerAndBloomingCavesGen {
                     terrain.set(x, y, z, subfloor);
                 }
                 terrain.set(x, topY, z, RRTerrainSurfaces.floorFor(biome, xx, topY, zz, randomState));
-                if (ground.onCliff()) {
-                    TopLayerCliffs.hollowWall(terrain, x, z, xx, zz, column, randomState);
-                }
             }
         }
+        TopLayerCliffs.hollowWalls(terrain, randomState);
         for (TopLayerArches.Arch arch : TopLayerArches.around(chunk.getPos(), randomState)) {
             arch.place(terrain, randomState);
         }
@@ -285,8 +283,12 @@ public class TopLayerAndBloomingCavesGen {
 
     /** Whether this block of the top layer is dug out of the face of a tall cliff wall. */
     public static boolean isCliffNiche(int x, int y, int z, RandomState randomState) {
-        TopLayerGround ground = topLayerGroundAt(x, z, randomState);
-        return ground.onCliff() && TopLayerCliffs.nichesAt(x, z, ground.column(), randomState).stream().anyMatch(niche -> y >= niche.footY() && y <= niche.topY());
+        return TopLayerCliffs.isDug(x, y, z, randomState);
+    }
+
+    /** The lowest block of the soil that hangs into this column of the top layer, {@link Integer#MAX_VALUE} if none. */
+    static int lowestHangingSoilY(int x, int z, RandomState randomState) {
+        return HangingTerrainGenerator.lowestHangingY(x, z, randomState, HANGING_SOIL);
     }
 
     static HangingTerrainGenerator.TerrainColumn topLayerColumnAt(int x, int z, RandomState randomState) {

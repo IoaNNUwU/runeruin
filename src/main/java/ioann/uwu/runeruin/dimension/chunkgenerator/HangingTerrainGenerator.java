@@ -133,6 +133,29 @@ public final class HangingTerrainGenerator {
         }
     }
 
+    /**
+     * The lowest block of the soil that would hang into this column from the highest column next to it, as
+     * {@link #generate} hangs it where the column below is clear of blocks, or {@link Integer#MAX_VALUE} where none
+     * hangs.
+     */
+    public static int lowestHangingY(int x, int z, RandomState randomState, Profile profile) {
+        TerrainColumn target = profile.columns().at(x, z, randomState);
+        int startY = Integer.MIN_VALUE;
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            TerrainColumn support = profile.columns().at(x + direction.getStepX(), z + direction.getStepZ(), randomState);
+            if (support.present() && support.topY() > profile.highUndersideY() + 1) {
+                startY = Math.max(startY, support.topY() - 1);
+            }
+        }
+        int clearLength = target.present() ? Math.min(MAX_CLEAR_LENGTH, startY - target.topY()) : MAX_CLEAR_LENGTH;
+        if (startY == Integer.MIN_VALUE || clearLength <= 0) {
+            return Integer.MAX_VALUE;
+        }
+        Candidate candidate = new Candidate(new BlockPos(x, startY, z), clearLength, true, false);
+        PositionalRandomFactory shapeRandom = randomState.getOrCreateRandomFactory(profile.shapeRandom());
+        return startY - planHanging(candidate, shapedHangingLength(candidate, randomState, shapeRandom, profile)).length();
+    }
+
     private static void addCandidate(
             ChunkAccess chunk,
             Profile profile,
