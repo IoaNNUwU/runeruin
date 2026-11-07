@@ -118,6 +118,7 @@ final class TopLayerCliffs {
         private final Map<Long, Boolean> cliffs = new HashMap<>();
         private final Map<Long, Integer> hangingSoil = new HashMap<>();
         private final Map<Long, Boolean> hollowed = new HashMap<>();
+        private final Map<Long, Boolean> cut = new HashMap<>();
         private final Map<Long, Boolean> dug = new HashMap<>();
 
         Walls(RandomState randomState) {
@@ -137,15 +138,53 @@ final class TopLayerCliffs {
             return hangingSoil.computeIfAbsent(ChunkPos.pack(x, z), key -> TopLayerAndBloomingCavesGen.lowestHangingSoilY(x, z, randomState));
         }
 
-        /** Whether a block of a cliff column is dug: hollowed, or a fin of rock that hollowing would leave. */
+        /**
+         * Whether a block of a cliff column is dug: cut, but not in a square corner of the hollow, which is left round,
+         * and with the block in front of it towards the air open or dug, so that no hollow is left inside.
+         */
         boolean isDug(int x, int y, int z) {
             long key = BlockPos.asLong(x, y, z);
             Boolean known = dug.get(key);
             if (known == null) {
-                known = isHollowed(x, y, z) || isFin(x, y, z);
+                dug.put(key, false);
+                int[] towards = isCut(x, y, z) ? AROUND[nearestOpen(x, y, z)] : null;
+                known = towards != null && !isSquareCorner(x, y, z, towards)
+                        && (towards[0] != 0 && isOpenOrDug(x + Integer.signum(towards[0]), y, z)
+                        || towards[1] != 0 && isOpenOrDug(x, y, z + Integer.signum(towards[1])));
                 dug.put(key, known);
             }
             return known;
+        }
+
+        /** Whether a block of a cliff column is cut out of the wall: hollowed, or a fin of rock that hollowing would leave. */
+        private boolean isCut(int x, int y, int z) {
+            long key = BlockPos.asLong(x, y, z);
+            Boolean known = cut.get(key);
+            if (known == null) {
+                known = isHollowed(x, y, z) || isFin(x, y, z);
+                cut.put(key, known);
+            }
+            return known;
+        }
+
+        /**
+         * Whether a hollowed block of the face of a wall has the rock of the wall both over or under it and beside it
+         * along the face: the corner where the hollow meets the end of a stretch of the wall, as in the inner corner of
+         * a step.
+         */
+        private boolean isSquareCorner(int x, int y, int z, int[] towards) {
+            int alongX = towards[0] == 0 ? 1 : 0;
+            int alongZ = 1 - alongX;
+            // A block open on two sides is an outer corner, as each one of a wall that steps by single blocks.
+            if (towards[0] != 0 && towards[1] != 0 || isOpen(x + alongX, y, z + alongZ) || isOpen(x - alongX, y, z - alongZ)) {
+                return false;
+            }
+            return (isUncut(x, y + 1, z) || isUncut(x, y - 1, z))
+                    && (isUncut(x + alongX, y, z + alongZ) || isUncut(x - alongX, y, z - alongZ));
+        }
+
+        private boolean isUncut(int x, int y, int z) {
+            return isSolid(x, y, z) && !isCut(x, y, z);
         }
 
         private boolean isHollowed(int x, int y, int z) {
@@ -252,6 +291,10 @@ final class TopLayerCliffs {
 
         private boolean isOpenOrHollowed(int x, int y, int z) {
             return isOpen(x, y, z) || isHollowed(x, y, z);
+        }
+
+        private boolean isOpenOrDug(int x, int y, int z) {
+            return isOpen(x, y, z) || isDug(x, y, z);
         }
 
         private boolean isOpen(int x, int y, int z) {
