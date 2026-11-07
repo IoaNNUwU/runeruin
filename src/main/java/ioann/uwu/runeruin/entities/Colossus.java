@@ -816,6 +816,8 @@ public class Colossus extends Monster {
     private void impact() {
         ColossusRig.Posed posed = this.posed();
         Action action = this.getAction();
+        // On the colossus a blow reaches as high as the zone it strikes; the fists on the ground none of it.
+        AABB zone = zones().stream().filter(each -> each.action() == action).map(Zone::box).findFirst().orElse(null);
         for (String striker : action.strikers) {
             AABB fist = rig().boneBox(posed, rig().bone(striker)).move(this.position());
             Vec3 center = fist.getCenter();
@@ -824,8 +826,25 @@ public class Colossus extends Monster {
                 level.playSound(null, center.x, surface, center.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 6.0F, 0.5F);
                 level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.x, surface + 1.0, center.z, 1, 0.0, 0.0, 0.0, 0.0);
             }
-            this.shockwaves.add(new Shockwave(center.x, surface, center.z, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), action));
+            this.shockwaves.add(new Shockwave(center.x, surface, center.z, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), action.onBody,
+                    zone == null ? Double.NaN : this.getY() + zone.minY, zone == null ? Double.NaN : this.getY() + zone.maxY));
         }
+    }
+
+    /** The top of the cubes in a column of the world between two heights, or NaN where there are none. */
+    private double topOfCubes(double x, double z, double bottom, double top) {
+        AABB column = new AABB(x - 0.5, bottom, z - 0.5, x + 0.5, top, z + 0.5);
+        double surface = Double.NaN;
+        for (ColossusPart part : this.parts) {
+            if (part.isWhole() && part.getBoundingBox().intersects(column)) {
+                for (AABB cell : part.cells(column)) {
+                    if (cell.intersects(column) && (Double.isNaN(surface) || cell.maxY > surface)) {
+                        surface = cell.maxY;
+                    }
+                }
+            }
+        }
+        return surface;
     }
 
     /** The top of the ground a fist comes down on: the first solid block from a little over the fist downward. */
@@ -843,38 +862,34 @@ public class Colossus extends Monster {
 
     /**
      * A ring that runs out from where a fist or a foot hit, hurting and throwing what stands on the ground it runs
-     * over; one from a stamp also what stands on the foot, one from a blow onto the colossus only what stands on the
-     * colossus near that height, and it throws them less, so that they keep their footing.
+     * over. One from a blow onto the colossus or a stamp also hurts what stands on the colossus as high as the zone of
+     * that blow; one from a blow onto the colossus only that, and it throws them less, so that they keep their footing.
      */
     public static final class Shockwave {
         /** How wide the ring is that hurts, and how far below and above where it started it hurts what stands on the ground. */
         public static final double WIDTH = 3.0;
         public static final double GROUND_BELOW = 1.5;
         public static final double GROUND_ABOVE = 2.0;
-        /**
-         * How far below and above where it started it hurts what stands on the colossus: one from a blow onto the
-         * colossus, and one from a stamp, which reaches what stands on the foot.
-         */
-        public static final double BODY_REACH = 14.0;
-        public static final double FOOT_ABOVE = 6.0;
 
         private final double x;
         private final double y;
         private final double z;
         private final float damage;
         private final boolean onBody;
-        // How far above where it started it hurts what stands on the colossus; not at all below zero.
-        private final double colossusAbove;
+        // Between which heights it hurts what stands on the colossus; NaN for none.
+        private final double colossusBottom;
+        private final double colossusTop;
         private final Set<UUID> hit = new HashSet<>();
         private float radius;
 
-        Shockwave(double x, double y, double z, float damage, Action action) {
+        Shockwave(double x, double y, double z, float damage, boolean onBody, double colossusBottom, double colossusTop) {
             this.x = x;
             this.y = y;
             this.z = z;
             this.damage = damage;
-            this.onBody = action.onBody;
-            this.colossusAbove = action.onBody ? BODY_REACH : action == Action.STOMP_RIGHT || action == Action.STOMP_LEFT ? FOOT_ABOVE : -1.0;
+            this.onBody = onBody;
+            this.colossusBottom = colossusBottom;
+            this.colossusTop = colossusTop;
         }
 
         /** Where it started: the ground under a fist or a foot, or the bottom of a fist on the colossus. */
@@ -893,17 +908,17 @@ public class Colossus extends Monster {
 
         /** Whether it hurts what stands on the colossus. */
         public boolean reachesColossus() {
-            return this.colossusAbove >= 0.0;
+            return !Double.isNaN(this.colossusBottom);
         }
 
-        /** How far below where it started it hurts what stands on the colossus. */
-        public double colossusBelow() {
-            return this.onBody ? BODY_REACH : GROUND_BELOW;
+        /** The height from which it hurts what stands on the colossus. */
+        public double colossusBottom() {
+            return this.colossusBottom;
         }
 
-        /** How far above where it started it hurts what stands on the colossus. */
-        public double colossusAbove() {
-            return this.colossusAbove;
+        /** The height up to which it hurts what stands on the colossus. */
+        public double colossusTop() {
+            return this.colossusTop;
         }
 
         /** Runs the ring on by a tick, on the server hurting what it reaches; true once it has run out. */
@@ -912,14 +927,19 @@ public class Colossus extends Monster {
             if (!(colossus.level() instanceof ServerLevel level)) {
                 return this.radius >= SHOCKWAVE_RADIUS;
             }
-            AABB area = new AABB(this.x - this.radius - 1, this.y - BODY_REACH, this.z - this.radius - 1,
-                    this.x + this.radius + 1, this.y + BODY_REACH, this.z + this.radius + 1);
+            double bottom = this.y - GROUND_BELOW;
+            double top = this.y + GROUND_ABOVE;
+            if (this.reachesColossus()) {
+                bottom = Math.min(bottom, this.colossusBottom);
+                top = Math.max(top, this.colossusTop);
+            }
+            AABB area = new AABB(this.x - this.radius - 1, bottom, this.z - this.radius - 1, this.x + this.radius + 1, top, this.z + this.radius + 1);
             for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area, entity -> entity != colossus && entity.isAlive())) {
                 double distance = Math.hypot(entity.getX() - this.x, entity.getZ() - this.z);
                 // Only what stands where the ring runs: not what is above it, not what it has passed.
                 double dy = entity.getY() - this.y;
                 boolean onGround = !this.onBody && dy >= -GROUND_BELOW && dy <= GROUND_ABOVE;
-                boolean onColossus = dy >= -this.colossusBelow() && dy <= this.colossusAbove && colossus.isStandingOn(entity);
+                boolean onColossus = entity.getY() >= this.colossusBottom && entity.getY() <= this.colossusTop && colossus.isStandingOn(entity);
                 if (distance > this.radius || distance < this.radius - WIDTH || !(onGround || onColossus) || !this.hit.add(entity.getUUID())) {
                     continue;
                 }
@@ -934,7 +954,15 @@ public class Colossus extends Monster {
                 double angle = Mth.TWO_PI * i / points;
                 double px = this.x + Math.cos(angle) * this.radius;
                 double pz = this.z + Math.sin(angle) * this.radius;
-                BlockState ground = this.onBody ? Blocks.STONE_BRICKS.defaultBlockState() : level.getBlockState(BlockPos.containing(px, this.y - 1.0, pz));
+                if (this.onBody) {
+                    // Over the colossus only, where the ring runs over its cubes.
+                    double surface = colossus.topOfCubes(px, pz, this.colossusBottom, this.colossusTop);
+                    if (!Double.isNaN(surface)) {
+                        level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE_BRICKS.defaultBlockState()), px, surface + 0.1, pz, 2, 0.3, 0.1, 0.3, 0.15);
+                    }
+                    continue;
+                }
+                BlockState ground = level.getBlockState(BlockPos.containing(px, this.y - 1.0, pz));
                 if (!ground.isAir()) {
                     level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, ground), px, this.y + 0.1, pz, 2, 0.3, 0.1, 0.3, 0.15);
                 }
