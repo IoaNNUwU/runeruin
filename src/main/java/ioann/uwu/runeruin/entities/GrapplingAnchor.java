@@ -79,8 +79,10 @@ public class GrapplingAnchor extends Projectile {
     private static final EntityDataAccessor<Boolean> DATA_CLIMBING =
             SynchedEntityData.defineId(GrapplingAnchor.class, EntityDataSerializers.BOOLEAN);
 
-    // The anchors each owner has out, on both sides: meanwhile their hooks fire none and show none at the muzzle.
-    private static final Map<Entity, CopyOnWriteArrayList<GrapplingAnchor>> BY_OWNER = Collections.synchronizedMap(new WeakHashMap<>());
+    // The anchors each owner has out: meanwhile their hooks fire none and show none at the muzzle. A map for each side,
+    // because entities with one id are equal, and in singleplayer the client gives its entities the ids of the server.
+    private static final Map<Entity, CopyOnWriteArrayList<GrapplingAnchor>> ON_CLIENT = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Entity, CopyOnWriteArrayList<GrapplingAnchor>> ON_SERVER = Collections.synchronizedMap(new WeakHashMap<>());
 
     private final InterpolationHandler interpolation = new InterpolationHandler(this);
     private @Nullable Entity hookedEntity;
@@ -109,10 +111,12 @@ public class GrapplingAnchor extends Projectile {
 
     /** All the anchors the owner has out. */
     public static List<GrapplingAnchor> of(Entity owner) {
-        // Entities with one id are equal: in singleplayer a player on the client and on the server shares one list.
-        List<GrapplingAnchor> anchors = BY_OWNER.get(owner);
-        return anchors == null ? List.of()
-                : anchors.stream().filter(anchor -> !anchor.isRemoved() && anchor.level() == owner.level()).toList();
+        List<GrapplingAnchor> anchors = byOwner(owner.level()).get(owner);
+        return anchors == null ? List.of() : anchors.stream().filter(anchor -> !anchor.isRemoved()).toList();
+    }
+
+    private static Map<Entity, CopyOnWriteArrayList<GrapplingAnchor>> byOwner(Level level) {
+        return level.isClientSide() ? ON_CLIENT : ON_SERVER;
     }
 
     /** The anchor out of the hook in the hand of the owner. */
@@ -348,7 +352,7 @@ public class GrapplingAnchor extends Projectile {
     public void setOwner(@Nullable Entity owner) {
         super.setOwner(owner);
         if (owner != null) {
-            BY_OWNER.computeIfAbsent(owner, _ -> new CopyOnWriteArrayList<>()).addIfAbsent(this);
+            byOwner(level()).computeIfAbsent(owner, _ -> new CopyOnWriteArrayList<>()).addIfAbsent(this);
         }
     }
 
@@ -375,7 +379,7 @@ public class GrapplingAnchor extends Projectile {
     private void forget() {
         Entity owner = getOwner();
         if (owner != null) {
-            BY_OWNER.computeIfPresent(owner, (_, anchors) -> {
+            byOwner(level()).computeIfPresent(owner, (_, anchors) -> {
                 anchors.remove(this);
                 return anchors.isEmpty() ? null : anchors;
             });
