@@ -24,6 +24,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -89,7 +90,7 @@ public class GrapplingAnchorRenderer extends EntityRenderer<GrapplingAnchor, Gra
                 .mul(Axis.YP.rotationDegrees(180.0F));
         state.chainStart = state.rotation.transform(new Vector3f(EYE).sub(CROWN).div(16.0F));
         if (entity.getOwner() instanceof Player owner) {
-            Vec3 hand = handPosition(owner, partialTicks);
+            Vec3 hand = handPosition(owner, entity, partialTicks);
             state.chainEnd = hand.subtract(entity.getPosition(partialTicks)).toVector3f();
             BlockPos handPos = BlockPos.containing(hand);
             state.handLight = LightCoordsUtil.pack(
@@ -160,15 +161,14 @@ public class GrapplingAnchorRenderer extends EntityRenderer<GrapplingAnchor, Gra
                 Math.round(Mth.lerp(t, LightCoordsUtil.sky(from), LightCoordsUtil.sky(to))));
     }
 
-    /** The arm that holds the hook: the main one unless only the other hand has it. */
-    public static HumanoidArm holdingArm(Player owner) {
-        return owner.getMainHandItem().is(RRItems.GRAPPLING_HOOK) ? owner.getMainArm() : owner.getMainArm().getOpposite();
-    }
-
-    /** The muzzle of the hook in the hand, as FishingHookRenderer finds the tip of a fishing rod (Minecraft 26.2). */
-    private Vec3 handPosition(Player owner, float partialTicks) {
+    /**
+     * The muzzle of the hook in the hand, as FishingHookRenderer finds the tip of a fishing rod (Minecraft 26.2): of the
+     * other hand for an anchor shot from it, else of the main one, which holds the chain of a hook put away too.
+     */
+    private Vec3 handPosition(Player owner, GrapplingAnchor anchor, float partialTicks) {
         float swing = Mth.sin(Mth.sqrt(owner.getAttackAnim(partialTicks)) * (float) Math.PI);
-        int side = holdingArm(owner) == HumanoidArm.RIGHT ? 1 : -1;
+        HumanoidArm arm = anchor.getSlot() == Inventory.SLOT_OFFHAND ? owner.getMainArm().getOpposite() : owner.getMainArm();
+        int side = arm == HumanoidArm.RIGHT ? 1 : -1;
         if (entityRenderDispatcher.options.getCameraType().isFirstPerson() && owner == Minecraft.getInstance().player
                 && entityRenderDispatcher.camera != null) {
             float fov = entityRenderDispatcher.options.fov().get().intValue();
