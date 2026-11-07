@@ -80,9 +80,9 @@ public class Colossus extends Monster {
     public static final float WALK_CYCLE = 56.0F;
     // Its speed in blocks a tick at the full swing of the walk.
     private static final float WALK_SPEED = 0.3F;
-    // How far its body turns in a tick, in degrees: half a turn takes six seconds. Its head turns a little faster
+    // How far its body turns in a tick, in degrees: half a turn takes twelve seconds. Its head turns faster
     // and only so far from the body; a way that turns more than the last of these it turns to standing.
-    private static final float TURN_SPEED = 1.5F;
+    private static final float TURN_SPEED = 0.75F;
     private static final float HEAD_TURN_SPEED = 3.0F;
     private static final int HEAD_TURN = 30;
     private static final float TURN_IN_PLACE = 45.0F;
