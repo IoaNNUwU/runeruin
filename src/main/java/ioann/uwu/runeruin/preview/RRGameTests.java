@@ -36,6 +36,7 @@ import ioann.uwu.runeruin.entities.RREntityTypes;
 import ioann.uwu.runeruin.entities.RunicMinecart;
 import ioann.uwu.runeruin.entities.Colossus;
 import ioann.uwu.runeruin.entities.ColossusPart;
+import ioann.uwu.runeruin.entities.ColossusRig;
 import ioann.uwu.runeruin.entities.Snail;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
@@ -51,11 +52,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
 import java.util.function.Predicate;
 import net.minecraft.commands.CommandSourceStack;
@@ -80,6 +83,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.PermissionSet;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.InteractionHand;
@@ -170,6 +174,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("colossus_crystals", () -> RRGameTests::colossusCrystals);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> COLOSSUS_WALLS =
         TEST_FUNCTIONS.register("colossus_walls", () -> RRGameTests::colossusWalls);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> COLOSSUS_STRIKES =
+        TEST_FUNCTIONS.register("colossus_strikes", () -> RRGameTests::colossusStrikes);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOWPIPE_SHOOTS_BERRIES =
         TEST_FUNCTIONS.register("blowpipe_shoots_berries", () -> RRGameTests::blowpipeShootsBerries);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_CLIMBS_WALL =
@@ -753,6 +759,13 @@ public final class RRGameTests {
             new FunctionGameTestInstance(
                 COLOSSUS_WALLS.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("colossus_strikes"),
+            new FunctionGameTestInstance(
+                COLOSSUS_STRIKES.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 200, 0, true)
             )
         );
     }
@@ -1830,6 +1843,61 @@ public final class RRGameTests {
                 deep.discard();
                 helper.succeed();
             }
+        });
+    }
+
+    // The colossus strikes its own body where its target is: the fists on the head and the face, the folded arms on
+    // the shoulders, the foot the target stands by; no blow at its back or out in front of it. A snail standing on top
+    // of the body by a shoulder gets the blow there, and the colossus does not turn to it.
+    private static void colossusStrikes(GameTestHelper helper) {
+        // Over the colossi of the crystals and the walls, out of reach of their cubes: it hangs there and cannot walk.
+        Colossus colossus = helper.spawn(RREntityTypes.COLOSSUS.get(), new BlockPos(2, 530, 2));
+        colossus.setNoGravity(true);
+        colossus.setYRot(30.0F);
+        colossus.setYBodyRot(30.0F);
+        ColossusRig rig = Colossus.rig();
+        ColossusRig.Posed rest = rig.posed(rig.restPose(), 30.0F, Colossus.SCALE);
+        Function<String, AABB> bone = name -> rig.boneBox(rest, rig.bone(name)).move(colossus.position());
+        Vec3 forward = Vec3.directionFromRotation(0.0F, 30.0F);
+        AABB head = bone.apply("head");
+        AABB arm = bone.apply("right_arm");
+        AABB body = bone.apply("body");
+        Map<Vec3, Colossus.Action> places = new LinkedHashMap<>();
+        places.put(new Vec3(head.getCenter().x, head.maxY, head.getCenter().z), Colossus.Action.SLAM_HEAD);
+        places.put(head.getCenter().add(forward.scale(15.0)), Colossus.Action.SLAM_FACE);
+        places.put(new Vec3(arm.getCenter().x, arm.maxY, arm.getCenter().z), Colossus.Action.SLAM_SHOULDERS);
+        for (String shin : List.of("right_shin", "left_shin")) {
+            AABB foot = bone.apply(shin);
+            places.put(new Vec3(foot.getCenter().x, foot.minY, foot.getCenter().z).add(forward.scale(14.0)),
+                    shin.startsWith("right") ? Colossus.Action.STOMP_RIGHT : Colossus.Action.STOMP_LEFT);
+        }
+        places.put(body.getCenter().subtract(forward.scale(20.0)), Colossus.Action.NONE);
+        places.put(colossus.position().add(forward.scale(60.0)), Colossus.Action.NONE);
+        places.forEach((at, action) -> {
+            Colossus.Action strike = colossus.strikeAt(at);
+            helper.assertTrue(strike == action, "the colossus strikes " + strike + " at " + at.subtract(colossus.position()) + " from its feet, not " + action);
+        });
+
+        // Not on the shoulder itself, which the arm lifts as it folds.
+        Vec3 side = arm.getCenter().subtract(body.getCenter()).multiply(1.0, 0.0, 1.0).normalize();
+        Snail rider = fightTarget(helper, 0, 0, 0);
+        rider.setPos(body.getCenter().add(side.scale(18.0)).with(Direction.Axis.Y, body.maxY + 1.0));
+        int[] ticks = {0};
+        boolean[] struck = {false};
+        float[] turned = {0.0F};
+        helper.onEachTick(() -> {
+            if (++ticks[0] == 40) {
+                colossus.setTarget(rider);
+            }
+            struck[0] |= colossus.getAction() == Colossus.Action.SLAM_SHOULDERS;
+            turned[0] = Math.max(turned[0], Math.abs(Mth.degreesDifference(colossus.yBodyRot, 30.0F)));
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(struck[0], "the colossus did not strike its shoulders");
+            helper.assertTrue(rider.getHealth() < 200.0F, "the blow missed the snail on the shoulder");
+            helper.assertTrue(turned[0] < 1.0F, "the colossus turned by " + turned[0] + " degrees");
+            colossus.discard();
+            rider.discard();
         });
     }
 

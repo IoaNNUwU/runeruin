@@ -4,6 +4,7 @@ import ioann.uwu.runeruin.RR;
 import ioann.uwu.runeruin.client.ColossusRenderState;
 import ioann.uwu.runeruin.entities.ColossusRig;
 import ioann.uwu.runeruin.entities.Colossus;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -33,13 +34,17 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
             "walk", ColossusAnimation.walk,
             "idle", ColossusAnimation.idle,
             "slam_high", ColossusAnimation.slam_high,
-            "slam_ground", ColossusAnimation.slam_ground);
+            "slam_ground", ColossusAnimation.slam_ground,
+            "slam_head", ColossusAnimation.slam_head,
+            "slam_face", ColossusAnimation.slam_face,
+            "slam_shoulders", ColossusAnimation.slam_shoulders,
+            "stomp_right", ColossusAnimation.stomp_right,
+            "stomp_left", ColossusAnimation.stomp_left);
 
     private final KeyframeAnimation idle;
     private final KeyframeAnimation walk;
     private final float walkLength;
-    private final KeyframeAnimation slamHigh;
-    private final KeyframeAnimation slamGround;
+    private final Map<Colossus.Action, KeyframeAnimation> actions = new EnumMap<>(Colossus.Action.class);
     // The crystals in their order in the project: each is a part of its own, as a turned cube.
     private final ModelPart[] crystals;
     // Draws only the crystals that flash red after a hit, over the model that draws the rest.
@@ -50,8 +55,11 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
         this.idle = ColossusAnimation.idle.bake(root);
         this.walk = ColossusAnimation.walk.bake(root);
         this.walkLength = ColossusAnimation.walk.lengthInSeconds();
-        this.slamHigh = ColossusAnimation.slam_high.bake(root);
-        this.slamGround = ColossusAnimation.slam_ground.bake(root);
+        for (Colossus.Action action : Colossus.Action.values()) {
+            if (action != Colossus.Action.NONE) {
+                this.actions.put(action, Objects.requireNonNull(EXPORTED.get(action.animation), action.animation).bake(root));
+            }
+        }
         this.crystals = crystals(root);
         this.flashing = flashing;
         if (flashing) {
@@ -88,11 +96,9 @@ public class ColossusModel extends EntityModel<ColossusRenderState> {
         super.setupAnim(state);
         this.idle.apply((long) (state.ageInTicks * 50.0F), 1.0F);
         this.walk.apply((long) (Colossus.walkSeconds(state.stride, this.walkLength) * 1000.0F), state.walkWeight);
-        switch (state.action) {
-            case SLAM_HIGH -> this.slamHigh.apply((long) (state.actionSeconds * 1000.0F), 1.0F);
-            case SLAM_GROUND -> this.slamGround.apply((long) (state.actionSeconds * 1000.0F), 1.0F);
-            case NONE -> {
-            }
+        KeyframeAnimation action = this.actions.get(state.action);
+        if (action != null) {
+            action.apply((long) (state.actionSeconds * 1000.0F), 1.0F);
         }
         for (int crystal = 0; crystal < this.crystals.length; crystal++) {
             this.crystals[crystal].visible = (state.wholeCrystals >> crystal & 1) != 0
