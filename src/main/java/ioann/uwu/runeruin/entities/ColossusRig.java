@@ -22,6 +22,7 @@ import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The bones of a mob as the server sees them: a Blockbench project read the way the client builds the model from it
@@ -37,6 +38,9 @@ public final class ColossusRig {
     // Every cube as ModelPart builds it, in the space of its bone: min x, y, z, max x, y, z in pixels.
     private final List<float[]> cubes = new ArrayList<>();
     private final List<Integer> cubeBones = new ArrayList<>();
+    // The cubes named crystal, where the colossus can be hurt, and the part of the model each is under its bone.
+    private final List<Integer> crystals = new ArrayList<>();
+    private final List<@Nullable String> crystalParts = new ArrayList<>();
     private final Map<String, Animation> animations = new HashMap<>();
 
     private record Bone(String name, int parent, Vector3f offset, Vector3f rotation) {}
@@ -136,6 +140,7 @@ public final class ColossusRig {
             float[] degrees = bone.has("rotation") ? vector(bone, "rotation") : new float[3];
             int index = this.bones.size();
             JsonArray children = new JsonArray();
+            int turned = 0;
             for (JsonElement child : entry.getAsJsonObject().getAsJsonArray("children")) {
                 if (child.isJsonObject()) {
                     children.add(child);
@@ -153,6 +158,17 @@ public final class ColossusRig {
                         pivot[0] - to[0] - grow, pivot[1] - to[1] - grow, from[2] - pivot[2] - grow,
                         pivot[0] - from[0] + grow, pivot[1] - from[1] + grow, to[2] - pivot[2] + grow});
                 this.cubeBones.add(index);
+                // BlockbenchModel makes a turned cube a part of its own, <name>_r<number among the turned cubes of the bone>.
+                float[] turn = cube.has("rotation") ? vector(cube, "rotation") : new float[3];
+                boolean isTurned = turn[0] != 0 || turn[1] != 0 || turn[2] != 0;
+                if (isTurned) {
+                    turned++;
+                }
+                String name = GsonHelper.getAsString(cube, "name");
+                if (name.startsWith("crystal")) {
+                    this.crystals.add(this.cubes.size() - 1);
+                    this.crystalParts.add(isTurned ? name + "_r" + turned : null);
+                }
             }
             byUuid.put(uuid, index);
             this.bones.add(new Bone(GsonHelper.getAsString(bone, "name"), parent,
@@ -207,6 +223,24 @@ public final class ColossusRig {
     /** A cube in the space of its bone, in pixels as ModelPart builds it: min x, y, z, max x, y, z. */
     public float[] cube(int cube) {
         return this.cubes.get(cube).clone();
+    }
+
+    public int crystalCount() {
+        return this.crystals.size();
+    }
+
+    public int crystalCube(int crystal) {
+        return this.crystals.get(crystal);
+    }
+
+    /** Which crystal a cube is, or -1. */
+    public int crystalOf(int cube) {
+        return this.crystals.indexOf(cube);
+    }
+
+    /** The part of the model a crystal is, a child of its bone; null for a crystal that is not turned and has none. */
+    public @Nullable String crystalPart(int crystal) {
+        return this.crystalParts.get(crystal);
     }
 
     /** A pose of no animation: every bone where the project puts it. */

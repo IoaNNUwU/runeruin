@@ -22,13 +22,15 @@ import org.jspecify.annotations.Nullable;
 /**
  * One cube of the Colossus, turned and moved with its bone. Its box, which the game keeps square to the blocks, is
  * where a hit lands; what stands on the cube collides with the cube itself (ColossusCollisionMixin), so players can
- * climb the colossus and stand on its shoulders. A hit on it hurts the colossus.
+ * climb the colossus and stand on its shoulders. Only a hit on a crystal hurts the colossus; a broken crystal is gone.
  */
 public class ColossusPart extends PartEntity<Colossus> {
     // A block of the world, in pixels of the model.
     private static final float BLOCK = 16.0F / Colossus.SCALE;
 
     public final int bone;
+    /** Which crystal of the colossus the cube is, or -1. */
+    public final int crystal;
     // The cube in the space of its bone, in pixels: min x, y, z, max x, y, z. Up is towards the smaller y.
     private final float[] cube;
     // From the space of the bone to the world relative to the origin, and back.
@@ -36,9 +38,10 @@ public class ColossusPart extends PartEntity<Colossus> {
     private final Matrix4f toCube = new Matrix4f();
     private Vec3 origin = Vec3.ZERO;
 
-    public ColossusPart(Colossus parent, int bone, float[] cube) {
+    public ColossusPart(Colossus parent, int bone, float[] cube, int crystal) {
         super(parent);
         this.bone = bone;
+        this.crystal = crystal;
         this.cube = cube;
         this.noPhysics = true;
     }
@@ -82,7 +85,7 @@ public class ColossusPart extends PartEntity<Colossus> {
      * ghast leaves its players to their clients in the same way.
      */
     public boolean blocks(Entity other) {
-        return !this.is(other) && !this.getParent().isCarrying(other) && (this.level().isClientSide() || !(other instanceof Player));
+        return this.isWhole() && !this.is(other) &&!this.getParent().isCarrying(other) && (this.level().isClientSide() || !(other instanceof Player));
     }
 
     /**
@@ -155,9 +158,14 @@ public class ColossusPart extends PartEntity<Colossus> {
     protected void addAdditionalSaveData(ValueOutput output) {
     }
 
+    /** Whether the cube is there: any but a broken crystal. */
+    public boolean isWhole() {
+        return this.crystal < 0 || this.getParent().crystal(this.crystal) > 0.0F;
+    }
+
     @Override
     public boolean isPickable() {
-        return true;
+        return this.isWhole();
     }
 
     @Override
@@ -167,7 +175,7 @@ public class ColossusPart extends PartEntity<Colossus> {
 
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
-        return !this.isInvulnerableToBase(source) && this.getParent().hurtServer(level, source, damage);
+        return this.crystal >= 0 && !this.isInvulnerableToBase(source) && this.getParent().hurtCrystal(level, this.crystal, source, damage);
     }
 
     @Override

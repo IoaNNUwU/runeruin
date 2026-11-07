@@ -8,4 +8,7 @@ public class ColossusRenderState extends LivingEntityRenderState {
     public float walkWeight;
     public Colossus.Action action = Colossus.Action.NONE;
     public float actionSeconds;
+    // Which crystals are whole and which flash red after a hit, a bit for each.
+    public int wholeCrystals;
+    public int flashingCrystals;
 }

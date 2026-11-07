@@ -35,6 +35,7 @@ import ioann.uwu.runeruin.entities.MossyWarrior;
 import ioann.uwu.runeruin.entities.RREntityTypes;
 import ioann.uwu.runeruin.entities.RunicMinecart;
 import ioann.uwu.runeruin.entities.Colossus;
+import ioann.uwu.runeruin.entities.ColossusPart;
 import ioann.uwu.runeruin.entities.Snail;
 import ioann.uwu.runeruin.items.RRItems;
 import ioann.uwu.runeruin.loottables.RRLootTables;
@@ -47,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +81,7 @@ import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -160,6 +163,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("mossy_warrior_spin_jump", () -> RRGameTests::mossyWarriorSpinJump);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> COLOSSUS_SLAM =
         TEST_FUNCTIONS.register("colossus_slam", () -> RRGameTests::colossusSlam);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> COLOSSUS_CRYSTALS =
+        TEST_FUNCTIONS.register("colossus_crystals", () -> RRGameTests::colossusCrystals);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOWPIPE_SHOOTS_BERRIES =
         TEST_FUNCTIONS.register("blowpipe_shoots_berries", () -> RRGameTests::blowpipeShootsBerries);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_CLIMBS_WALL =
@@ -720,6 +725,13 @@ public final class RRGameTests {
             new FunctionGameTestInstance(
                 COLOSSUS_SLAM.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 400, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("colossus_crystals"),
+            new FunctionGameTestInstance(
+                COLOSSUS_CRYSTALS.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
             )
         );
     }
@@ -1705,6 +1717,39 @@ public final class RRGameTests {
             AABB floor = AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, y, 0)), helper.absolutePos(new BlockPos(size - 1, y + 120, size - 1)));
             level.getEntitiesOfClass(Mob.class, floor.inflate(16)).forEach(Mob::discard);
         });
+    }
+
+    // Only the crystals of the colossus take a hit: a hit at its body takes nothing, one at a crystal only the stage of
+    // that crystal, and the colossus falls with its last crystal.
+    private static void colossusCrystals(GameTestHelper helper) {
+        // High over every other test, so that its body lifts nothing of theirs; without AI it hangs there.
+        Colossus colossus = helper.spawn(RREntityTypes.COLOSSUS.get(), new BlockPos(2, 420, 2));
+        colossus.setNoAi(true);
+        colossus.setNoGravity(true);
+        ServerLevel level = helper.getLevel();
+        DamageSource hit = level.damageSources().generic();
+        float full = colossus.getHealth();
+        int crystals = Colossus.rig().crystalCount();
+        ColossusPart[] parts = Arrays.stream(colossus.getParts()).map(ColossusPart.class::cast).toArray(ColossusPart[]::new);
+        ColossusPart body = Arrays.stream(parts).filter(part -> part.crystal < 0).findFirst().orElseThrow();
+        ColossusPart first = Arrays.stream(parts).filter(part -> part.crystal == 0).findFirst().orElseThrow();
+
+        helper.assertTrue(crystals == 5, "the colossus has " + crystals + " crystals");
+        helper.assertFalse(body.hurtServer(level, hit, 50.0F) || colossus.hurtServer(level, hit, 50.0F), "a hit at the body hurt the colossus");
+        helper.assertTrue(first.hurtServer(level, hit, 30.0F), "a hit at a crystal missed");
+        helper.assertTrue(colossus.getHealth() == full - 30.0F, "a hit of 30 at a crystal left health " + colossus.getHealth() + " of " + full);
+        helper.assertTrue(colossus.crystal(0) == 1.0F - 30.0F / (full / crystals) && colossus.crystal(1) == 1.0F,
+                "a hit at the first crystal left the crystals at " + colossus.crystal(0) + " and " + colossus.crystal(1));
+        for (ColossusPart part : parts) {
+            colossus.invulnerableTime = 0;
+            if (part.crystal >= 0) {
+                part.hurtServer(level, hit, full);
+            }
+        }
+        helper.assertFalse(first.isWhole() || first.isPickable(), "a broken crystal can still be hit");
+        helper.assertTrue(colossus.isDeadOrDying(), "the colossus stands with health " + colossus.getHealth() + " after its last crystal broke");
+        colossus.discard();
+        helper.succeed();
     }
 
     // A full breath blows one berry at a snail ten blocks away: a mossberry from the bag poisons it, a glow berry
