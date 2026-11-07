@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -78,6 +79,10 @@ import org.jspecify.annotations.Nullable;
  * fists on the ground in front of it or, at a player up on the top layer, down onto the islands, and from where a
  * fist hits a shockwave runs over the ground.
  *
+ * <p>A player who climbed it gets a blow where they are: the fists on its head or its face, folded arms on its
+ * shoulders, a stamp of the foot they stand on or by. Between the blows it goes about as it likes, without turning
+ * after the player on it.</p>
+ *
  * <p>Its shape and its animations are the Blockbench project {@code colossus.bbmodel}. Every cube is a solid
  * {@link ColossusPart} that follows its bone through the animations ({@link ColossusRig}), so players can climb the
  * colossus and ride on it, turning with it. It walks only where nothing hangs over it, and it is slow to turn.</p>
@@ -112,6 +117,17 @@ public class Colossus extends Monster {
     private static final int SLAM_COOLDOWN = 60;
     private static final float SHOCKWAVE_SPEED = 0.9F;
     private static final float SHOCKWAVE_RADIUS = 24.0F;
+    // A shockwave hurts what stands on the colossus this far above or below where it started.
+    private static final double SHOCKWAVE_BODY_REACH = 14.0;
+    // How a target stands on its own body, in blocks from the bones of its rest pose: on the head down to this far
+    // below its top, at the face this far in front of it, on the shoulders down to this far below the top of the
+    // body, by a foot this high over its sole.
+    private static final double HEAD_TOP = 6.0;
+    private static final double FACE_REACH = 8.0;
+    private static final double SHOULDERS_DEPTH = 12.0;
+    private static final double FOOT_HEIGHT = 8.0;
+    // A target that stood on the colossus this many ticks ago is still on it, jumping or falling.
+    private static final int ABOARD_TICKS = 40;
     // Feet sunk into the cubes by no more than this rise out of them at this speed, in blocks and blocks a tick.
     private static final double LIFT_DEPTH = 3.0;
     private static final double LIFT_SPEED = 0.5;
@@ -123,22 +139,40 @@ public class Colossus extends Monster {
     // How long a crystal flashes red after a hit, in ticks: as long as a hurt mob.
     private static final int FLASH = 10;
 
-    /** What the body does besides walking; each action is the animation of the same name in the project. */
+    /**
+     * What the body does besides walking; each action is the animation of the same name in the project. A shockwave
+     * starts under each of its strikers, the bones that hit: on the ground, or on its own body.
+     */
     public enum Action {
-        NONE(""), SLAM_GROUND("slam_ground"), SLAM_HIGH("slam_high");
+        NONE("", false),
+        SLAM_GROUND("slam_ground", false, "right_hand", "left_hand"),
+        SLAM_HIGH("slam_high", false, "right_hand", "left_hand"),
+        SLAM_HEAD("slam_head", true, "right_hand", "left_hand"),
+        SLAM_FACE("slam_face", true, "right_hand", "left_hand"),
+        SLAM_SHOULDERS("slam_shoulders", true, "right_hand", "left_hand"),
+        STOMP_RIGHT("stomp_right", false, "right_shin"),
+        STOMP_LEFT("stomp_left", false, "left_shin");
 
         public final String animation;
+        private final boolean onBody;
+        private final String[] strikers;
 
-        Action(String animation) {
+        Action(String animation, boolean onBody, String... strikers) {
             this.animation = animation;
+            this.onBody = onBody;
+            this.strikers = strikers;
         }
     }
+
+    // The bones of the rest pose where a target on the colossus gets a blow, in blocks from its feet as it faces +z.
+    private record Zones(AABB head, AABB body, AABB rightShin, AABB leftShin) {}
 
     private static final EntityDataAccessor<Byte> DATA_ACTION = SynchedEntityData.defineId(Colossus.class, EntityDataSerializers.BYTE);
     // What is left of each crystal, from 1 whole to 0 broken.
     private static final EntityDataAccessor<List<Float>> DATA_CRYSTALS = SynchedEntityData.defineId(Colossus.class, RREntityTypes.FLOATS.get());
     private static @Nullable ColossusRig rig;
     private static final double[] REACH = {Double.NaN, Double.NaN, Double.NaN};
+    private static @Nullable Zones zones;
 
     private final ColossusPart[] parts;
     private boolean partsPlaced;
@@ -153,6 +187,8 @@ public class Colossus extends Monster {
     private float walkWeightO;
     private int actionTicks;
     private int cooldown;
+    // When its target last stood on it.
+    private int targetAboardAt = -ABOARD_TICKS;
     private final List<Shockwave> shockwaves = new ArrayList<>();
     // Its health bar, under its own id: a client finds the colossus of a bar by it.
     private @Nullable ServerBossEvent bossEvent;
@@ -237,7 +273,8 @@ public class Colossus extends Monster {
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new SlamGoal());
+        this.goalSelector.addGoal(1, new StrikeGoal());
+        this.goalSelector.addGoal(2, new SlamGoal());
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.7, 0.02F));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 64.0F));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -334,6 +371,9 @@ public class Colossus extends Monster {
     @Override
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
+        if (this.getTarget() != null && this.isStandingOn(this.getTarget())) {
+            this.targetAboardAt = this.tickCount;
+        }
         if (this.tickCount % 20 == 0) {
             for (ServerPlayer player : level.players()) {
                 if (Math.hypot(player.getX() - this.getX(), player.getZ() - this.getZ()) < BAR_RANGE && this.isAlive()) {
@@ -696,17 +736,84 @@ public class Colossus extends Monster {
         return (rig.boneBox(posed, rig.bone("right_hand")).getCenter().z + rig.boneBox(posed, rig.bone("left_hand")).getCenter().z) / 2.0;
     }
 
-    /** Each fist hits the ground under it, or the top layer, and starts a shockwave there. */
+    /** Whether something stands on a cube of the colossus: one is right under its feet. */
+    public boolean isStandingOn(Entity entity) {
+        AABB box = entity.getBoundingBox();
+        AABB feet = new AABB(box.minX, box.minY - 0.25, box.minZ, box.maxX, box.minY + 0.25, box.maxZ);
+        for (ColossusPart part : this.parts) {
+            if (part.isWhole() && part.getBoundingBox().intersects(feet) && part.cells(feet).stream().anyMatch(feet::intersects)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether the target is up on the colossus or by its feet, where it gets the blows onto the colossus itself. */
+    private boolean isAboard(LivingEntity target) {
+        return this.tickCount - this.targetAboardAt < ABOARD_TICKS || this.strikeAt(target.position()) != Action.NONE;
+    }
+
+    /** The blow onto its own body that reaches a place on the head, at the face, on the shoulders or by a foot; or NONE. */
+    public Action strikeAt(Vec3 at) {
+        Zones zones = zones();
+        // The place as if the colossus faced +z, as its rest pose does.
+        float yaw = this.yBodyRot * Mth.DEG_TO_RAD;
+        double dx = at.x - this.getX();
+        double dz = at.z - this.getZ();
+        Vec3 local = new Vec3(dx * Mth.cos(yaw) + dz * Mth.sin(yaw), at.y - this.getY(), dz * Mth.cos(yaw) - dx * Mth.sin(yaw));
+        AABB head = zones.head();
+        if (within(head, local, 2.0) && local.y >= head.maxY - HEAD_TOP && local.y <= head.maxY + FACE_REACH) {
+            return Action.SLAM_HEAD;
+        }
+        if (Math.abs(local.x - head.getCenter().x) <= head.getXsize() / 2.0 + FACE_REACH && local.z >= head.maxZ - 4.0
+                && local.z <= head.maxZ + FACE_REACH && local.y >= head.minY - 2.0 && local.y < head.maxY - HEAD_TOP) {
+            return Action.SLAM_FACE;
+        }
+        AABB body = zones.body();
+        if (within(body, local, 2.0) && local.y >= body.maxY - SHOULDERS_DEPTH && local.y <= body.maxY + FACE_REACH) {
+            return Action.SLAM_SHOULDERS;
+        }
+        boolean right = within(zones.rightShin(), local, 4.0) && local.y <= zones.rightShin().minY + FOOT_HEIGHT;
+        boolean left = within(zones.leftShin(), local, 4.0) && local.y <= zones.leftShin().minY + FOOT_HEIGHT;
+        if (right && left) {
+            right = local.distanceToSqr(zones.rightShin().getCenter()) < local.distanceToSqr(zones.leftShin().getCenter());
+        }
+        return right ? Action.STOMP_RIGHT : left ? Action.STOMP_LEFT : Action.NONE;
+    }
+
+    /** Whether a place is over or under a box, no further from it to the sides than the margin. */
+    private static boolean within(AABB box, Vec3 at, double margin) {
+        return at.x >= box.minX - margin && at.x <= box.maxX + margin && at.z >= box.minZ - margin && at.z <= box.maxZ + margin;
+    }
+
+    private static Zones zones() {
+        if (zones == null) {
+            ColossusRig rig = rig();
+            ColossusRig.Posed rest = rig.posed(rig.restPose(), 0.0F, SCALE);
+            AABB body = rig.boneBox(rest, rig.bone("body"))
+                    .minmax(rig.boneBox(rest, rig.bone("right_arm")))
+                    .minmax(rig.boneBox(rest, rig.bone("left_arm")));
+            zones = new Zones(rig.boneBox(rest, rig.bone("head")), body,
+                    rig.boneBox(rest, rig.bone("right_shin")), rig.boneBox(rest, rig.bone("left_shin")));
+        }
+        return zones;
+    }
+
+    /**
+     * Each striker hits what is under it, the ground, the top layer or the colossus itself, and starts a shockwave
+     * there.
+     */
     private void impact() {
         ServerLevel level = (ServerLevel) this.level();
         ColossusRig.Posed posed = this.posed();
-        for (String hand : new String[]{"right_hand", "left_hand"}) {
-            AABB fist = rig().boneBox(posed, rig().bone(hand)).move(this.position());
+        Action action = this.getAction();
+        for (String striker : action.strikers) {
+            AABB fist = rig().boneBox(posed, rig().bone(striker)).move(this.position());
             Vec3 center = fist.getCenter();
-            double surface = this.surfaceUnder(center.x, fist.minY, center.z);
+            double surface = action.onBody ? fist.minY : this.surfaceUnder(center.x, fist.minY, center.z);
             level.playSound(null, center.x, surface, center.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 6.0F, 0.5F);
             level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.x, surface + 1.0, center.z, 1, 0.0, 0.0, 0.0, 0.0);
-            this.shockwaves.add(new Shockwave(center.x, surface, center.z, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE)));
+            this.shockwaves.add(new Shockwave(center.x, surface, center.z, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), action.onBody));
         }
     }
 
@@ -723,36 +830,45 @@ public class Colossus extends Monster {
         return fistY;
     }
 
-    /** A ring that runs out over the ground from where a fist hit, hurting and throwing what stands on that ground. */
+    /**
+     * A ring that runs out from where a fist or a foot hit, hurting and throwing what stands on the ground it runs
+     * over and what stands on the colossus near that height; one from a blow onto the colossus only the latter, and it
+     * throws them less, so that they keep their footing.
+     */
     private static final class Shockwave {
         private final double x;
         private final double y;
         private final double z;
         private final float damage;
+        private final boolean onBody;
         private final Set<UUID> hit = new HashSet<>();
         private float radius;
 
-        Shockwave(double x, double y, double z, float damage) {
+        Shockwave(double x, double y, double z, float damage, boolean onBody) {
             this.x = x;
             this.y = y;
             this.z = z;
             this.damage = damage;
+            this.onBody = onBody;
         }
 
         /** Runs the ring on by a tick; true once it has run out. */
         boolean tick(ServerLevel level, Colossus colossus) {
             this.radius += SHOCKWAVE_SPEED;
-            AABB area = new AABB(this.x - this.radius - 1, this.y - 1.5, this.z - this.radius - 1, this.x + this.radius + 1, this.y + 2.5, this.z + this.radius + 1);
+            AABB area = new AABB(this.x - this.radius - 1, this.y - SHOCKWAVE_BODY_REACH, this.z - this.radius - 1,
+                    this.x + this.radius + 1, this.y + SHOCKWAVE_BODY_REACH, this.z + this.radius + 1);
             for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area, entity -> entity != colossus && entity.isAlive())) {
                 double distance = Math.hypot(entity.getX() - this.x, entity.getZ() - this.z);
-                // Only what stands on the ground the ring runs over: not what is above it, not what it has passed.
-                if (distance > this.radius || distance < this.radius - 3.0 || entity.getY() > this.y + 2.0 || !this.hit.add(entity.getUUID())) {
+                // Only what stands where the ring runs: not what is above it, not what it has passed.
+                boolean onGround = !this.onBody && entity.getY() >= this.y - 1.5 && entity.getY() <= this.y + 2.0;
+                if (distance > this.radius || distance < this.radius - 3.0 || !(onGround || colossus.isStandingOn(entity))
+                        || !this.hit.add(entity.getUUID())) {
                     continue;
                 }
                 entity.hurtServer(level, colossus.damageSources().mobAttack(colossus), this.damage);
                 Vec3 away = new Vec3(entity.getX() - this.x, 0.0, entity.getZ() - this.z);
-                away = away.lengthSqr() < 1.0E-4 ? Vec3.ZERO : away.normalize().scale(1.4);
-                entity.setDeltaMovement(entity.getDeltaMovement().add(away.x, 0.6, away.z));
+                away = away.lengthSqr() < 1.0E-4 ? Vec3.ZERO : away.normalize().scale(this.onBody ? 0.5 : 1.4);
+                entity.setDeltaMovement(entity.getDeltaMovement().add(away.x, this.onBody ? 0.3 : 0.6, away.z));
                 entity.hurtMarked = true;
             }
             int points = Mth.ceil(this.radius * 2.0F);
@@ -760,7 +876,7 @@ public class Colossus extends Monster {
                 double angle = Mth.TWO_PI * i / points;
                 double px = this.x + Math.cos(angle) * this.radius;
                 double pz = this.z + Math.sin(angle) * this.radius;
-                BlockState ground = level.getBlockState(BlockPos.containing(px, this.y - 1.0, pz));
+                BlockState ground = this.onBody ? Blocks.STONE_BRICKS.defaultBlockState() : level.getBlockState(BlockPos.containing(px, this.y - 1.0, pz));
                 if (!ground.isAir()) {
                     level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, ground), px, this.y + 0.1, pz, 2, 0.3, 0.1, 0.3, 0.15);
                 }
@@ -770,8 +886,38 @@ public class Colossus extends Monster {
     }
 
     /**
+     * Strikes the place on its own body where the target is, standing where it stands: the head, the face, the
+     * shoulders or a foot. A target elsewhere on it, on the back or the legs, it leaves to the other goals until then.
+     */
+    private class StrikeGoal extends Goal {
+        StrikeGoal() {
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            Colossus colossus = Colossus.this;
+            LivingEntity target = colossus.getTarget();
+            return target != null && target.isAlive() && colossus.getAction() == Action.NONE && colossus.cooldown == 0
+                    && colossus.strikeAt(target.position()) != Action.NONE;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return Colossus.this.getAction() != Action.NONE;
+        }
+
+        @Override
+        public void start() {
+            Colossus colossus = Colossus.this;
+            colossus.getNavigation().stop();
+            colossus.setAction(colossus.strikeAt(Objects.requireNonNull(colossus.getTarget()).position()));
+        }
+    }
+
+    /**
      * Walks to where its fists come down on the target, turns to it and slams: onto the ground in front of it, or
-     * from above onto a target up on the top layer.
+     * from above onto a target up on the top layer. Not at a target on the colossus, which would turn round with it.
      */
     private class SlamGoal extends Goal {
         private int repath;
@@ -783,7 +929,7 @@ public class Colossus extends Monster {
         @Override
         public boolean canUse() {
             LivingEntity target = Colossus.this.getTarget();
-            return target != null && target.isAlive();
+            return target != null && target.isAlive() && !Colossus.this.isAboard(target);
         }
 
         @Override
