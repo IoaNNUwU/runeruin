@@ -112,10 +112,12 @@ public class Colossus extends Monster {
     private static final int SLAM_COOLDOWN = 60;
     private static final float SHOCKWAVE_SPEED = 0.9F;
     private static final float SHOCKWAVE_RADIUS = 24.0F;
-    // What is in the cubes by no more than this leaves them at this speed, in blocks and blocks a tick: up if it can.
-    private static final double PUSH_DEPTH = 3.0;
-    private static final double PUSH_SPEED = 0.5;
+    // Feet sunk into the cubes by no more than this rise out of them at this speed, in blocks and blocks a tick.
+    private static final double LIFT_DEPTH = 3.0;
+    private static final double LIFT_SPEED = 0.5;
+    // Anything else in the cubes is shoved out of them the shortest of these ways, if one is no longer than this.
     private static final Direction[] PUSH_OUT = {Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
+    private static final double PUSH_REACH = 32.0;
     // Players this far from its feet, on the ground or up on the top layer, see its health bar.
     private static final double BAR_RANGE = 64.0;
     // How long a crystal flashes red after a hit, in ticks: as long as a hurt mob.
@@ -518,52 +520,59 @@ public class Colossus extends Monster {
     /**
      * The game stops a mover only at a box it is outside of: whatever is inside a box goes on through it. So whatever a
      * cube came into, a foot stepping under it or a side walking against it, would drop down the colossus or walk into
-     * it. Puts it back out: up onto the cube, standing, or where the cube is too high for that, out of its side the
-     * shortest way. What a cube swallowed deeper, such as something under a falling fist, stays there.
+     * it. Lifts it back onto the cube, standing, if its feet sank in a little; anything else it shoves out the shortest
+     * way at once, sideways or up, as far as the cube came into it in a tick or however deep it got.
      */
     private void pushOutOfCubes() {
         for (LivingEntity entity : this.level().getEntitiesOfClass(LivingEntity.class, this.getBodyBox(),
                 entity -> !(entity instanceof Colossus) && !entity.isPassenger() && !entity.noPhysics && entity.isLocalInstanceAuthoritative()
                         && !(entity instanceof Player player && player.getAbilities().flying))) {
+            AABB box = entity.getBoundingBox();
+            double lift = this.depthInCubes(box, Direction.UP, true, LIFT_DEPTH);
+            if (lift > 0.0 && lift <= LIFT_DEPTH) {
+                this.moveOutOfCubes(entity, new Vec3(0.0, Math.min(lift, LIFT_SPEED), 0.0));
+                entity.setOnGround(true);
+                entity.resetFallDistance();
+                continue;
+            }
             Direction out = null;
-            double least = PUSH_DEPTH;
+            double least = PUSH_REACH;
             for (Direction direction : PUSH_OUT) {
-                double depth = this.depthInCubes(entity.getBoundingBox(), direction);
+                double depth = this.depthInCubes(box, direction, false, least);
                 if (depth > 0.0 && depth <= least) {
                     out = direction;
                     least = depth;
-                    if (out == Direction.UP) {
-                        break;
-                    }
                 }
             }
             if (out != null) {
-                Vec3 way = out.getUnitVec3();
-                this.moveThroughCubes(entity, way.scale(Math.min(least, PUSH_SPEED)));
-                // Nothing goes on into the cube.
-                Vec3 motion = entity.getDeltaMovement();
-                entity.setDeltaMovement(motion.subtract(way.scale(Math.min(motion.dot(way), 0.0))));
-                if (out == Direction.UP) {
-                    entity.setOnGround(true);
-                    entity.resetFallDistance();
-                }
+                this.moveOutOfCubes(entity, out.getUnitVec3().scale(least));
             }
         }
     }
 
-    /** How far a box has to move one way to leave the cubes it is in; more than PUSH_DEPTH when it is too deep. */
-    private double depthInCubes(AABB box, Direction out) {
+    private void moveOutOfCubes(Entity entity, Vec3 by) {
+        this.moveThroughCubes(entity, by);
+        // Nothing goes on into the cube.
+        Vec3 way = by.normalize();
+        Vec3 motion = entity.getDeltaMovement();
+        entity.setDeltaMovement(motion.subtract(way.scale(Math.min(motion.dot(way), 0.0))));
+    }
+
+    /**
+     * How far a box has to move one way to leave the cubes it is in, up to the reach; more than that when it is too
+     * deep. Feet only: up out of the cubes its lower part is in, not those at the head, which walks into nothing.
+     */
+    private double depthInCubes(AABB box, Direction out, boolean feet, double reach) {
         Direction.Axis axis = out.getAxis();
         boolean positive = out.getAxisDirection() == Direction.AxisDirection.POSITIVE;
         double depth = 0.0;
-        while (depth <= PUSH_DEPTH) {
+        while (depth <= reach) {
             AABB at = box.move(out.getUnitVec3().scale(depth));
             double exit = 0.0;
             for (ColossusPart part : this.parts) {
                 if (part.isWhole() && part.getBoundingBox().intersects(at)) {
                     for (AABB cell : part.cells(at)) {
-                        // Up, not a cell at the head only, which walks into nothing.
-                        if (cell.intersects(at) && (out != Direction.UP || cell.minY <= at.minY + 1.0)) {
+                        if (cell.intersects(at) && (!feet || cell.minY <= at.minY + 1.0)) {
                             exit = Math.max(exit, positive ? cell.max(axis) - at.min(axis) : at.max(axis) - cell.min(axis));
                         }
                     }

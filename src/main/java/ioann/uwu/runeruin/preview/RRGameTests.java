@@ -57,6 +57,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntBinaryOperator;
+import java.util.function.Predicate;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -1763,16 +1764,24 @@ public final class RRGameTests {
         helper.succeed();
     }
 
-    // A side of the colossus stops what walks into it, also while the side comes on: a pig walking into the body as
-    // the colossus moves against it stays outside the body.
+    // A side of the colossus stops what walks into it, also while the side comes on faster than a push out of the
+    // cubes went: a pig walking into the body as the colossus moves against it stays outside the body. What got deep
+    // into the colossus comes out: a pig put into the middle of the body is out the next tick.
     private static void colossusWalls(GameTestHelper helper) {
         Colossus colossus = helper.spawn(RREntityTypes.COLOSSUS.get(), new BlockPos(2, 420, 2));
         colossus.setNoAi(true);
         colossus.setNoGravity(true);
         Pig pig = helper.spawn(EntityTypes.PIG, new BlockPos(2, 420, 2));
-        pig.setNoAi(true);
-        pig.setNoGravity(true);
+        Pig deep = helper.spawn(EntityTypes.PIG, new BlockPos(2, 420, 2));
+        for (Pig each : List.of(pig, deep)) {
+            each.setNoAi(true);
+            each.setNoGravity(true);
+        }
         ColossusPart[] parts = Arrays.stream(colossus.getParts()).map(ColossusPart.class::cast).toArray(ColossusPart[]::new);
+        Predicate<Pig> inside = each -> {
+            AABB box = each.getBoundingBox().deflate(1.0E-3);
+            return Arrays.stream(parts).anyMatch(part -> part.isWhole() && part.cells(box).stream().anyMatch(box::intersects));
+        };
         ColossusPart[] body = new ColossusPart[1];
         Vec3[] side = new Vec3[2];
         int[] ticks = {0};
@@ -1794,20 +1803,22 @@ public final class RRGameTests {
             }
             side[0] = face;
             side[1] = new Vec3(face.x - center.x, 0.0, face.z - center.z).normalize();
-            AABB box = pig.getBoundingBox().deflate(1.0E-3);
-            boolean inside = Arrays.stream(parts).anyMatch(part -> part.isWhole() && part.cells(box).stream().anyMatch(box::intersects));
             if (++ticks[0] == 1) {
                 pig.setPos(face.add(side[1].scale(0.5)).subtract(0.0, 0.45, 0.0));
-            } else if (ticks[0] <= 40) {
-                helper.assertFalse(inside, "the pig is inside the colossus after " + ticks[0] + " ticks");
-                colossus.setPos(colossus.position().add(side[1].scale(0.1)));
+                deep.setPos(center.subtract(0.0, 0.45, 0.0));
+                return;
+            }
+            helper.assertFalse(inside.test(pig), "the pig walking into the colossus is inside it after " + ticks[0] + " ticks");
+            helper.assertFalse(inside.test(deep), "the pig put into the colossus is inside it after " + ticks[0] + " ticks");
+            if (ticks[0] <= 40) {
+                colossus.setPos(colossus.position().add(side[1].scale(0.6)));
                 pig.move(MoverType.SELF, side[1].scale(-0.2));
-            } else if (ticks[0] == 41) {
-                helper.assertFalse(inside, "the pig walked into the colossus");
+            } else {
                 double before = pig.position().subtract(side[0]).dot(side[1]);
                 helper.assertTrue(before > 0.4, "the pig stands " + before + " before the side of the body");
                 colossus.discard();
                 pig.discard();
+                deep.discard();
                 helper.succeed();
             }
         });
