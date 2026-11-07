@@ -49,6 +49,7 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntBinaryOperator;
+import java.util.function.Predicate;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -87,6 +89,7 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -165,6 +168,8 @@ public final class RRGameTests {
         TEST_FUNCTIONS.register("colossus_slam", () -> RRGameTests::colossusSlam);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> COLOSSUS_CRYSTALS =
         TEST_FUNCTIONS.register("colossus_crystals", () -> RRGameTests::colossusCrystals);
+    public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> COLOSSUS_WALLS =
+        TEST_FUNCTIONS.register("colossus_walls", () -> RRGameTests::colossusWalls);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> BLOWPIPE_SHOOTS_BERRIES =
         TEST_FUNCTIONS.register("blowpipe_shoots_berries", () -> RRGameTests::blowpipeShootsBerries);
     public static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> GRAPPLING_HOOK_CLIMBS_WALL =
@@ -731,6 +736,13 @@ public final class RRGameTests {
             RR.id("colossus_crystals"),
             new FunctionGameTestInstance(
                 COLOSSUS_CRYSTALS.getKey(),
+                new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
+            )
+        );
+        event.registerTest(
+            RR.id("colossus_walls"),
+            new FunctionGameTestInstance(
+                COLOSSUS_WALLS.getKey(),
                 new TestData<>(env, Identifier.withDefaultNamespace("empty"), 100, 0, true)
             )
         );
@@ -1750,6 +1762,66 @@ public final class RRGameTests {
         helper.assertTrue(colossus.isDeadOrDying(), "the colossus stands with health " + colossus.getHealth() + " after its last crystal broke");
         colossus.discard();
         helper.succeed();
+    }
+
+    // A side of the colossus stops what walks into it, also while the side comes on faster than a push out of the
+    // cubes went: a pig walking into the body as the colossus moves against it stays outside the body. What got deep
+    // into the colossus comes out: a pig put into the middle of the body is out the next tick.
+    private static void colossusWalls(GameTestHelper helper) {
+        Colossus colossus = helper.spawn(RREntityTypes.COLOSSUS.get(), new BlockPos(2, 420, 2));
+        colossus.setNoAi(true);
+        colossus.setNoGravity(true);
+        Pig pig = helper.spawn(EntityTypes.PIG, new BlockPos(2, 420, 2));
+        Pig deep = helper.spawn(EntityTypes.PIG, new BlockPos(2, 420, 2));
+        for (Pig each : List.of(pig, deep)) {
+            each.setNoAi(true);
+            each.setNoGravity(true);
+        }
+        ColossusPart[] parts = Arrays.stream(colossus.getParts()).map(ColossusPart.class::cast).toArray(ColossusPart[]::new);
+        Predicate<Pig> inside = each -> {
+            AABB box = each.getBoundingBox().deflate(1.0E-3);
+            return Arrays.stream(parts).anyMatch(part -> part.isWhole() && part.cells(box).stream().anyMatch(box::intersects));
+        };
+        ColossusPart[] body = new ColossusPart[1];
+        Vec3[] side = new Vec3[2];
+        int[] ticks = {0};
+        helper.onEachTick(() -> {
+            // The cubes are in place once the colossus has ticked. The largest is the body; the pig walks into its side
+            // that faces along its z, the chest or the back.
+            if (colossus.tickCount == 0) {
+                return;
+            }
+            if (body[0] == null) {
+                body[0] = Arrays.stream(parts).max(Comparator.comparingDouble(part -> part.getBoundingBox().getSize())).orElseThrow();
+            }
+            Vec3[] corners = body[0].corners();
+            Vec3 center = Vec3.ZERO;
+            Vec3 face = Vec3.ZERO;
+            for (int c = 0; c < 8; c++) {
+                center = center.add(corners[c].scale(1.0 / 8.0));
+                face = (c & 4) == 0 ? face : face.add(corners[c].scale(1.0 / 4.0));
+            }
+            side[0] = face;
+            side[1] = new Vec3(face.x - center.x, 0.0, face.z - center.z).normalize();
+            if (++ticks[0] == 1) {
+                pig.setPos(face.add(side[1].scale(0.5)).subtract(0.0, 0.45, 0.0));
+                deep.setPos(center.subtract(0.0, 0.45, 0.0));
+                return;
+            }
+            helper.assertFalse(inside.test(pig), "the pig walking into the colossus is inside it after " + ticks[0] + " ticks");
+            helper.assertFalse(inside.test(deep), "the pig put into the colossus is inside it after " + ticks[0] + " ticks");
+            if (ticks[0] <= 40) {
+                colossus.setPos(colossus.position().add(side[1].scale(0.6)));
+                pig.move(MoverType.SELF, side[1].scale(-0.2));
+            } else {
+                double before = pig.position().subtract(side[0]).dot(side[1]);
+                helper.assertTrue(before > 0.4, "the pig stands " + before + " before the side of the body");
+                colossus.discard();
+                pig.discard();
+                deep.discard();
+                helper.succeed();
+            }
+        });
     }
 
     // A full breath blows one berry at a snail ten blocks away: a mossberry from the bag poisons it, a glow berry
