@@ -49,6 +49,7 @@ public class RuneRuinMod {
         RRBlocks.REGISTRY.register(modEventBus);
         RRItems.REGISTRY.register(modEventBus);
         RREntityTypes.REGISTRY.register(modEventBus);
+        RREntityTypes.DATA_SERIALIZERS.register(modEventBus);
         RRPoiTypes.REGISTRY.register(modEventBus);
         RRCreativeModeTabs.REGISTRY.register(modEventBus);
 
